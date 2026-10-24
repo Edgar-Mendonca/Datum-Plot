@@ -1,0 +1,154 @@
+// Title bar, quick access toolbar, Tell Me and the ribbon (Data, Analyze, Graph, Format, View, Help).
+import { For, Show, JSX, createSignal, createMemo, onMount } from "solid-js";
+import { call, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, item, graph, table, navOpen, setNavOpen, open as openView, toast } from "./store";
+import { C, ALL_CMDS } from "./cmds";
+import * as D from "./dialogs";
+import { Icon } from "./ui";
+import * as F from "./fmt";
+import { setG, ERRORS, SIZES, FONTS as GFONTS } from "./format";
+import { GraphSettings } from "./api";
+
+const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
+export const FONTS = ["Arial", "Calibri", "Segoe UI", "Tahoma", "Verdana", "Times New Roman", "Cambria", "Georgia", "Consolas", "IBM Plex Sans"];
+const COLORS: [string, string][] = [["Red", "#C0392B"], ["Orange", "#E67E22"], ["Amber", "#B7950B"], ["Green", "#1E8449"], ["Blue", "#0E8C7F"], ["Dark Blue", "#0C1A2B"], ["Purple", "#7D3C98"], ["Grey", "#7F8C8D"]];
+const FILLS: [string, string][] = [["Yellow", "#FFF2CC"], ["Green", "#E2F0D9"], ["Blue", "#DDEBF7"], ["Red", "#FADBD8"], ["Orange", "#FCE4D6"], ["Purple", "#E8DAEF"], ["Grey", "#EDEDED"]];
+const pickColor = (k: "c" | "f") => { const i = document.createElement("input"); i.type = "color"; i.value = F.current()[k] || (k === "c" ? "#000000" : "#ffffff"); i.onchange = () => F.setProp(k, i.value); i.click(); };
+const colorMenu = (k: "c" | "f"): Item[] => [{ label: k === "c" ? "Automatic" : "No Fill", run: () => F.setProp(k, undefined) }, ...(k === "c" ? COLORS : FILLS).map(([l, v]) => ({ label: l, run: () => F.setProp(k, v), on: F.current()[k] === v })), "-", { label: "More Colors…", run: () => pickColor(k) }];
+/** Excel-style Font and Alignment controls; they act on the selected cells of the task sheet or a sheet tab. */
+const Font = () => {
+  const s = () => F.current(), [last, setLast] = createSignal<[string, string]>(["#C0392B", "#FFF2CC"]);
+  const T = (p: { k: "b" | "i" | "u" | "s"; l: string; t: string; st: JSX.CSSProperties }) => <button class="rb fb" classList={{ on: !!s()[p.k] }} title={p.t} onClick={() => F.toggle(p.k)}><span style={p.st}>{p.l}</span></button>;
+  const A = (p: { a: string; i: string; t: string }) => <button class="rb fb" classList={{ on: (s().a || "") === p.a }} title={p.t} onClick={() => F.setProp("a", p.a || undefined)}><Icon n={p.i} /></button>;
+  return <>
+    <G l="Font"><div class="fontg">
+      <div><select class="ffam" title="Font" value={s().n || ""} onChange={e => F.setProp("n", e.currentTarget.value || undefined)}><option value="">Default font</option><For each={FONTS}>{f => <option value={f} style={{ "font-family": `'${f}'` }}>{f}</option>}</For></select>
+        <select class="fsize" title="Font size" value={String(s().z || 12)} onChange={e => F.setProp("z", +e.currentTarget.value === 12 ? undefined : +e.currentTarget.value)}><For each={[8, 9, 10, 11, 12, 13, 14]}>{z => <option value={z}>{z}</option>}</For></select>
+        <button class="rb fb" title="Increase font size" onClick={() => F.setProp("z", Math.min(14, (s().z || 12) + 1))}><span>A<sup>+</sup></span></button><button class="rb fb" title="Decrease font size" onClick={() => F.setProp("z", Math.max(8, (s().z || 12) - 1))}><span>A<sup>−</sup></span></button></div>
+      <div><T k="b" l="B" t="Bold (Ctrl+B)" st={{ "font-weight": 700 }} /><T k="i" l="I" t="Italic (Ctrl+I)" st={{ "font-style": "italic" }} /><T k="u" l="U" t="Underline (Ctrl+U)" st={{ "text-decoration": "underline" }} /><T k="s" l="S" t="Strikethrough" st={{ "text-decoration": "line-through" }} />
+        <span class="fcol"><button class="rb fb" title="Font color" onClick={() => F.setProp("c", last()[0])}><span class="ca">A<i style={{ background: last()[0] }} /></span></button><button class="rb split" onClick={e => openMenu(e, colorMenu("c").map(x => x === "-" || !x.run ? x : { ...x, run: () => { x.run!(); const v = F.current().c; if (v) setLast([v, last()[1]]); } }))}>▾</button></span>
+        <span class="fcol"><button class="rb fb" title="Fill color" onClick={() => F.setProp("f", last()[1])}><span class="ca"><Icon n="bucket" /><i style={{ background: last()[1] }} /></span></button><button class="rb split" onClick={e => openMenu(e, colorMenu("f").map(x => x === "-" || !x.run ? x : { ...x, run: () => { x.run!(); const v = F.current().f; if (v) setLast([last()[0], v]); } }))}>▾</button></span></div>
+    </div></G>
+    <G l="Alignment"><div class="fontg"><div><A a="" i="al" t="Align left" /><A a="c" i="ac" t="Center" /><A a="r" i="ar" t="Align right" /></div><div><button class="rb fb" title="Clear Formatting" onClick={F.clearFmt}><Icon n="clear" /></button></div></div></G>
+  </>;
+};
+
+const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string }) => p.big && p.run && p.dd ? (
+  // MS Project split button: the picture runs the command, the label opens the menu.
+  <div class="rbw big splitbig" classList={{ on: p.on }}>
+    <button class="rb top" title={p.title ?? p.l} onClick={e => p.run!(e)}><Icon n={p.i} /></button>
+    <button class="rb bot" title={`${p.l} options`} onClick={e => p.dd!(e)}><span>{p.l}</span><b class="car">▾</b></button>
+  </div>
+) : (
+  <div class="rbw" classList={{ big: p.big }}>
+    <button class="rb" classList={{ big: p.big, on: p.on }} disabled={p.off} title={p.title ?? p.l} onClick={e => (p.run ?? p.dd)?.(e)}><Icon n={p.i} />{p.big ? <span>{p.l}{p.dd && !p.run ? " ▾" : ""}</span> : <span>{p.l}</span>}{!p.big && p.dd && !p.run && <b class="car">▾</b>}</button>
+    {p.run && p.dd && <button class="rb split" onClick={e => p.dd!(e)}>▾</button>}
+  </div>
+);
+const G = (p: { l: string; children: JSX.Element }) => <div class="grp"><div class="items">{p.children}</div><div class="cap">{p.l}</div></div>;
+const S = (p: { children: JSX.Element }) => <div class="stack">{p.children}</div>;
+
+/** Tell Me / command search (Ctrl+K, Alt+Q). */
+export const palette = () => openDialog(() => {
+  const [q, setQ] = createSignal(""), [k, setK] = createSignal(0);
+  const list = createMemo(() => { const s = q().toLowerCase(); return ALL_CMDS.filter(c => c[0].toLowerCase().includes(s)).slice(0, 14); });
+  const go = (i: number) => { const c = list()[i]; if (c) { closeDialog(); setTimeout(() => c[1]()); } };
+  let input!: HTMLInputElement;
+  onMount(() => input.focus());
+  return (
+    <div class="ov top" onMouseDown={e => e.target === e.currentTarget && closeDialog()}>
+      <div class="pal">
+        <input ref={input} placeholder="Tell me what you want to do" value={q()} onInput={e => { setQ(e.currentTarget.value); setK(0); }}
+          onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setK(Math.min(list().length - 1, k() + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setK(Math.max(0, k() - 1)); } else if (e.key === "Enter") { e.preventDefault(); go(k()); } else if (e.key === "Escape") closeDialog(); }} />
+        <div class="pl"><For each={list()}>{(c, i) => <button classList={{ on: i() === k() }} onMouseEnter={() => setK(i())} onClick={() => go(i())}><span>{c[0]}</span>{c[2] && <kbd>{c[2]}</kbd>}</button>}</For></div>
+      </div>
+    </div>
+  );
+});
+
+export const TitleBar = (p: { update: string | null }) => (
+  <header class="top">
+    <div class="bar">
+      <div class="qat">
+        <img src="logo.svg" alt="" class="logo" />
+        <button title="Save (Ctrl+S)" onClick={() => C.save()}><Icon n="save" /></button>
+        <button title="Undo (Ctrl+Z)" disabled={!out()?.undo} onClick={C.undo}><Icon n="undo" /></button>
+        <button title="Redo (Ctrl+Y)" disabled={!out()?.redo} onClick={C.redo}><Icon n="redo" /></button>
+        <button title="Print (Ctrl+P)" onClick={C.print}><Icon n="print" /></button>
+      </div>
+      <div class="title">{out() ? `${out()!.project.name}${out()!.dirty ? " •" : ""} — Datum Plot` : "Datum Plot"}</div>
+      <button class="search" onClick={palette} title="Tell me what you want to do (Alt+Q)"><Icon n="search" /><span>Tell me what you want to do</span><kbd>Ctrl+K</kbd></button>
+      <Show when={p.update}><button class="upd" onClick={() => setBackstage("about")}>Update {p.update} available</button></Show>
+      <button class="theme" title="Theme: Auto follows Windows" onClick={() => setTheme(theme() === "auto" ? "light" : theme() === "light" ? "dark" : "auto")}>Theme · {theme()}</button>
+    </div>
+    <nav class="tabs">
+      <button class="file" onClick={() => setBackstage("home")}>File</button>
+      <For each={[["data", "Data"], ["analyze", "Analyze"], ["graph", "Graph"], ["view", "View"], ["help", "Help"]]}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For>
+      <Show when={item().s === "graphs"}><div class="ctxgrp"><small>Graph Tools</small><button classList={{ on: tab() === "format" }} onClick={() => setTab("format")}>Format</button></div></Show>
+    </nav>
+  </header>
+);
+
+/** Shrinks the ribbon in steps (labels of small buttons, then of big ones) instead of scrolling sideways. */
+const fitRibbon = (el: HTMLElement) => {
+  // Tighten everything first, then fold groups from the right: small-button labels, then big-button labels.
+  const fit = () => {
+    const gs = [...el.querySelectorAll<HTMLElement>(":scope > .grp")];
+    el.dataset.fit = "0"; gs.forEach(g => delete g.dataset.fit);
+    const over = () => el.scrollWidth > el.clientWidth + 1;
+    if (!over()) return;
+    el.dataset.fit = "1";
+    for (const lvl of ["2", "3"]) for (let i = gs.length - 1; i >= 0 && over(); i--) gs[i].dataset.fit = lvl;
+  };
+  new ResizeObserver(fit).observe(el);
+  new MutationObserver(() => requestAnimationFrame(fit)).observe(el, { childList: true, subtree: false });
+};
+const gs = (): GraphSettings | undefined => graph()?.settings;
+const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) return toast("Open a graph first."); setG(g, s => { f(s); return s; }); };
+const errorMenu = (): Item[] => ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && gs()?.points !== "each", run: () => setGS(s => { s.error = k; s.points = "mean"; }) }));
+const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
+const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
+const AN: [string, string, string][] = [["sigma", "Column Statistics", "0.1.1"], ["check", "Normality Tests", "0.1.1"], ["err", "t-tests", "0.2.0"], ["table", "One-way ANOVA", "0.2.0"], ["line", "Linear Regression", "0.2.0"], ["curve", "Nonlinear Fit", "0.2.0"]];
+
+export const Ribbon = () => (
+  <section class="ribbon" ref={fitRibbon}>
+    <Show when={tab() === "data"}>
+      <G l="Clipboard"><B big i="paste" l="Paste" run={() => document.execCommand("paste")} dd={e => openMenu(e, [{ label: "Paste", icon: "paste", run: () => document.execCommand("paste"), keys: "Ctrl+V" }, { label: "Paste Special…", icon: "paste", run: () => D.pasteSpecial(), keys: "Ctrl+Alt+V" }, "-", { label: "Paste Values", run: () => F.target()?.paste?.("values", false) }, { label: "Paste Formatting", icon: "paint", run: () => F.target()?.paste?.("formats", false) }, { label: "Transpose", run: () => F.target()?.paste?.("all", true) }])} />
+        <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
+      <Font />
+      <G l="Insert"><B big i="sheet" l="New Table" title="A new XY data table, with its graph" run={C.newTable} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
+      <G l="Values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
+      <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Show Graph" run={() => openView("graphs")} /></G>
+      <G l="Item"><S><B i="rename" l="Rename" run={C.rename} /><B i="copy" l="Duplicate" run={C.duplicate} /><B i="del" l="Delete" run={C.del} /></S></G>
+    </Show>
+    <Show when={tab() === "analyze"}>
+      <G l="Analyze"><B big i="sigma" l="Analyze…" run={() => C.analyze("Analyze")} /></G>
+      <G l="Coming next"><For each={AN}>{([i, l, v]) => <B big i={i} l={l} title={`Arrives in ${v}`} run={() => C.analyze(l)} />}</For></G>
+    </Show>
+    <Show when={tab() === "graph"}>
+      <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="sheet" l="Data Table" run={() => openView("data", graph()?.table ?? table()?.id ?? 0)} /></G>
+      <G l="Data"><B big i="err" l="Error Bars" dd={e => openMenu(e, errorMenu())} /><S><B i="symbol" l="Each Replicate" on={gs()?.points === "each"} run={() => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; })} /><B i="line" l="Connect Points" on={!!gs()?.line} run={() => setGS(s => { s.line = !s.line; })} /><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /></S></G>
+      <G l="Axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
+        <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
+      <G l="Size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
+      <G l="Share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
+    </Show>
+    <Show when={tab() === "format"}>
+      <G l="Format"><B big i="style" l="Format Graph" run={() => C.format("sets")} /><S><B i="symbol" l="Data Sets" run={() => C.format("sets")} /><B i="axis" l="X Axis" run={() => C.format("x")} /><B i="axis" l="Y Axis" run={() => C.format("y")} /></S></G>
+      <G l="Text"><div class="fontg"><div><select class="ffam" title="Graph font" value={gs()?.font ?? "Arial"} onChange={e => { const v = e.currentTarget.value; setGS(s => { s.font = v; }); }}><For each={GFONTS}>{f => <option value={f} style={{ "font-family": `'${f}'` }}>{f}</option>}</For></select>
+        <select class="fsize" title="Font size (pt)" value={String(gs()?.fontSize ?? 10)} onChange={e => { const v = +e.currentTarget.value; setGS(s => { s.fontSize = v; }); }}><For each={[6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24]}>{z => <option value={z}>{z}</option>}</For></select></div>
+        <div><button class="rb fb" classList={{ on: !!gs()?.boldTitles }} title="Bold axis titles" onClick={() => setGS(s => { s.boldTitles = !s.boldTitles; })}><span style={{ "font-weight": 700 }}>B</span></button>
+          <button class="rb fb" title="Increase font size" onClick={() => setGS(s => { s.fontSize = Math.min(36, s.fontSize + 1); })}><span>A<sup>+</sup></span></button><button class="rb fb" title="Decrease font size" onClick={() => setGS(s => { s.fontSize = Math.max(5, s.fontSize - 1); })}><span>A<sup>−</sup></span></button></div></div></G>
+      <G l="Layout"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /><S><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /><B i="opts" l="Graph Options" run={() => C.format("graph")} /></S></G>
+    </Show>
+    <Show when={tab() === "view"}>
+      <G l="Show"><B big i="infosheet" l="Info" run={() => openView("info")} /><B big i="sheet" l="Data" run={() => openView("data")} /><B big i="graph" l="Graphs" run={() => openView("graphs")} /><S><B i="list" l="Navigator" on={navOpen()} run={() => setNavOpen(!navOpen())} /></S></G>
+      <G l="Zoom"><S><B i="zin" l="Zoom In" run={() => C.zoom(1.15)} /><B i="zout" l="Zoom Out" run={() => C.zoom(1 / 1.15)} /><B i="fit" l="Normal Size" run={() => C.zoom(0)} /></S></G>
+      <G l="Theme"><S><For each={[["auto", "Auto (Windows)"], ["light", "Light"], ["dark", "Dark"]]}>{([k, l]) => <B i="style" l={l} on={theme() === k} run={() => setTheme(k)} />}</For></S></G>
+    </Show>
+    <Show when={tab() === "help"}>
+      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="info" l="Glossary" title="SD, SEM, CI, replicate and other terms" run={() => D.glossary()} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
+      <G l="Datum Plot on GitHub"><B big i="github" l="GitHub" title="The project and its code" run={() => call("open_url", { url: GH })} /><B big i="tag" l="Releases" title="Every version and its change log" run={() => call("open_url", { url: `${GH}/releases` })} /><B big i="bug" l="Report an Issue" run={() => call("open_url", { url: `${GH}/issues/new` })} /></G>
+      <G l="Updates"><B big i="upd" l="Check for Updates" run={() => setBackstage("about")} /></G>
+    </Show>
+  </section>
+);

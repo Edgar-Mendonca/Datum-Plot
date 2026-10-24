@@ -1,0 +1,79 @@
+name: Release
+# Builds the Windows installer, with its own Python (numpy, scipy, matplotlib), and publishes a
+# GitHub Release that the in-app updater picks up. Bump the version in src-tauri/Cargo.toml and
+# crates/core/Cargo.toml, add a CHANGELOG.md section, then push a tag (git tag v0.1.0 && git push
+# origin v0.1.0) or run this workflow from the Actions tab.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: npm ci
+      - name: Read the app version
+        shell: bash
+        run: |
+          V=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
+          if [[ "$GITHUB_REF" == refs/tags/* && "v$V" != "$GITHUB_REF_NAME" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $V in src-tauri/Cargo.toml"; exit 1
+          fi
+          echo "V=$V" >> "$GITHUB_ENV"
+      - name: Bundled Python (the newest embeddable CPython 3.13 + py/requirements.txt)
+        shell: bash
+        run: |
+          for n in $(seq 25 -1 5); do
+            curl -fsSL -o py.zip "https://www.python.org/ftp/python/3.13.$n/python-3.13.$n-embed-amd64.zip" && PYV=3.13.$n && break
+          done
+          test -n "$PYV" || { echo "No embeddable Python 3.13 found on python.org"; exit 1; }
+          echo "Embedded Python $PYV"
+          mkdir -p src-tauri/python && unzip -q py.zip -d src-tauri/python
+          echo "Lib/site-packages" >> src-tauri/python/python313._pth
+          python -m pip install --target src-tauri/python/Lib/site-packages --only-binary=:all: --no-compile -r py/requirements.txt
+          # Leave out what the app never runs: test suites, pip's scripts, sample data.
+          SP=src-tauri/python/Lib/site-packages
+          find "$SP" -type d \( -name tests -o -name __pycache__ \) -prune -exec rm -rf {} +
+          rm -rf "$SP/bin" "$SP/matplotlib/mpl-data/sample_data"
+          src-tauri/python/python.exe -m compileall -q -j 0 "$SP" py
+          printf '{"cmd":"ping"}\n' | src-tauri/python/python.exe -X utf8 py/worker.py | tee ping.txt
+          grep -q '"matplotlib"' ping.txt
+          du -sh src-tauri/python
+      - run: cargo test -p datum-core
+      - run: npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
+      - name: Installer and checksum
+        shell: bash
+        run: |
+          mkdir out
+          cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-setup.exe"
+          cd out && sha256sum "DatumPlot-$V-setup.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
+      - name: Release notes from CHANGELOG.md
+        shell: bash
+        run: |
+          awk -v v="$V" 'index($0, "## " v " ") == 1 || $0 == "## " v {f=1; next} /^## / {f=0} f' CHANGELOG.md > notes.md
+          cat notes.md
+          test -s notes.md || { echo "CHANGELOG.md has no section for $V"; exit 1; }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.V }}
+          target_commitish: ${{ github.sha }}
+          name: Datum Plot ${{ env.V }}
+          body_path: notes.md
+          make_latest: true
+          files: |
+            out/DatumPlot-${{ env.V }}-setup.exe
+            out/SHA256SUMS.txt

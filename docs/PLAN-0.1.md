@@ -1,6 +1,6 @@
 # Datum Plot 0.1: brainstorm, comparison and release plan
 
-Status: **draft for discussion, nothing built yet.** Build 0.1.0 after your answers to §8.
+Status: **answered and built as 0.1.0.** The user approved the plan, icon and colours, asked to see the app before answering the detailed questions, and decided that **Python is built in** (see §9, which replaces the engine parts of §3).
 
 <img src="brand/datum-plot-icon.svg" width="96" align="right" alt="Draft Datum Plot icon">
 
@@ -265,3 +265,36 @@ Small numbered releases, every one through the in-app updater. Each step after 0
 **Process**
 13. Same workflow as Datum Plan (you review each release with screenshots; plan files for big asks; small numbered releases; betas through the opt-in channel)? Any change?
 14. Python: FAMILY §2 says no Python inside the apps, and the earlier Plan note said Datum Plot "may use Python". I propose **no Python** (everything in Rust, verified against NIST/R), with "Show as R/Python code" as text export later. Agreed?
+
+---
+
+## 9. Decision after the review: Python inside the app (24 Oct 2026)
+
+**The user's answer:** use Python and its libraries (numpy, SciPy, matplotlib and more) inside Datum Plot. Rust stays the shell that holds everything together and SolidJS stays the window, in the same style as Datum Plan. A 200–300 MB app is acceptable (the Compressor Engineering Suite already ships Python with FEA and CadQuery). Questions 1–14 wait until the user has seen the app.
+
+**What changes from §3:**
+
+| | §3 proposal | Built in 0.1.0 |
+| --- | --- | --- |
+| Statistics | `statrs` + our own Levenberg-Marquardt in Rust | **numpy + SciPy** in a Python worker (`py/datum/stats.py`); curve fitting later with `scipy.optimize` |
+| Graphs | Our own SVG engine fed by a Rust `GraphOut` scene | **matplotlib** draws the SVG the window shows and every export (PNG, TIFF, SVG, PDF, EPS) — one renderer for screen, print and files |
+| Rust core | Model, ops, stats, fitting, scales | Model, edit ops, undo, `.dplot`, templates, validation (`crates/core`) — no numerics |
+| Tests | NIST/R values in Rust tests | NIST/R values in Python `unittest` (`py/tests`), run in CI |
+
+**How it fits together:**
+
+```mermaid
+flowchart LR
+  W[Window · SolidJS] -- invoke --> S[Rust shell · src-tauri]
+  S -- edit ops --> C[crates/core · project, undo, .dplot]
+  S -- "JSON line: table + graph settings" --> P[Python worker · py/worker.py<br/>numpy · SciPy · matplotlib]
+  P -- "JSON line: SVG + plot geometry" --> S
+```
+
+- **One worker process**, started when the app starts (so the first graph is quick) and kept running. Requests and answers are single JSON lines on stdin/stdout; a crash restarts it once and the window shows why if Python cannot start.
+- **The window never calculates.** Rust validates and stores every edit; Python computes statistics and draws; the SVG comes back with the plot area, axis limits and legend box so the window can show values under the mouse and open the right page of Format Graph on a double-click.
+- **The shell caches** the last renders, so switching between graphs costs nothing when the data did not change. A render takes about 15 ms after warm-up.
+- **Bundled runtime:** the release workflow puts the official embeddable CPython 3.13 into the installer with `py/requirements.txt` (numpy, SciPy, matplotlib), removes test suites and precompiles everything. Development builds use the Python on the PATH (or `DATUM_PYTHON`).
+- **Size:** about 200 MB installed, roughly 70 MB to download. Every update downloads the whole installer for now; a later release can ship the Python runtime separately so updates are small again (see MEMORY › next steps).
+
+**What Python makes easier in the next releases:** `scipy.stats` for every test in §2.2 (t, Welch, Mann-Whitney, ANOVA via `scipy.stats.f_oneway`, Tukey via `scipy.stats.tukey_hsd`, Shapiro-Wilk, Kruskal-Wallis, Fisher, log-rank via `scipy.stats.logrank`), `scipy.optimize.curve_fit`/`least_squares` for nonlinear regression with bounds and weights, `scipy.signal` for peaks, smoothing and FFT (the Origin features of 0.5), and matplotlib for 3D, contour, polar and multi-panel graphs. Candidates to add when needed: `statsmodels` (mixed models, Cox regression), `lifelines` (survival), `pandas` (import).

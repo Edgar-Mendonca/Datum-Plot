@@ -10,17 +10,18 @@ At the end of every session that changes anything, update `docs/MEMORY.md`:
 - refresh the architecture section if files moved
 
 User preferences:
-- Rust and Tauri 2, small and efficient code, Windows first. No Python inside the app.
+- Rust and Tauri 2 for the shell and the project engine, SolidJS for the window, **Python (numpy, SciPy, matplotlib) inside the app** for every calculation and graph (the user's decision; it overrides FAMILY §2 for Datum Plot). Small, efficient, robust code. Windows first; the installer bundles embeddable CPython 3.13.
 - Ship in small numbered releases (0.1.0, 0.1.1, …), always three numbers. Every release appears in the in-app updater.
 - The family look with the **Teal** accent (FAMILY §3): MS Office ribbon, Cairn-style sidebar, IBM Plex, square controls, light/dark/auto themes.
 - Prism's linked chain (data table → analysis → results → graph → layout) with OriginPro's power.
-- Keep code compact and match the surrounding style. Engine logic (statistics, fitting, scales, ticks) belongs in `crates/core` (pure Rust, unit-tested against NIST/R values), not in the UI.
+- Keep code compact and match the surrounding style. The project model, edit ops, undo and files belong in `crates/core` (Rust, unit-tested). Statistics, fitting and drawing belong in `py/datum` (Python, unit-tested against NIST/R values). Never in the UI.
 - The UI is SolidJS + Vite in `ui/src/*.tsx` (built to `ui/dist`). State lives in `ui/src/store.ts`; the engine computes all values, the window only shows them.
 - Big asks get a `docs/PLAN-x.y.md` with questions first; build after the answers. Report in plain language.
 
 Identity: "Datum Plot", `.dplot`, `com.edgarmendonca.datumplot`, `REPO = "Edgar-Mendonca/Datum-Plot"` in `src-tauri/src/update.rs`, installer `DatumPlot-x.y.z-setup.exe`.
 
 Checks before pushing:
+- `python -m unittest discover -s py/tests` (needs `pip install -r py/requirements.txt`)
 - `cargo clippy --workspace --all-targets -- -D warnings`
 - `cargo test --workspace`
 - `npm run check:ui`

@@ -1,0 +1,13 @@
+Datum Plot
+Copyright (c) 2026 Edgar Mendonca. MIT licence.
+
+The Windows installer bundles a Python runtime and these libraries, each under its own licence:
+- CPython (Python Software Foundation License, https://www.python.org)
+- NumPy (BSD-3-Clause, https://numpy.org)
+- SciPy (BSD-3-Clause, https://scipy.org)
+- matplotlib (matplotlib License, based on the PSF licence, https://matplotlib.org), with its
+  dependencies: contourpy, cycler, fonttools, kiwisolver, packaging, pillow, pyparsing,
+  python-dateutil and six (BSD, MIT, Apache-2.0, HPND or PSF licences)
+- DejaVu fonts shipped with matplotlib (Bitstream Vera / DejaVu licence)
+
+The window also bundles SolidJS (MIT) and the IBM Plex fonts (SIL Open Font Licence 1.1).

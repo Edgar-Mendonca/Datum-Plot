@@ -42,16 +42,16 @@ export const Toast = () => (
 );
 
 /** A modal dialog. `ok` returns false to keep it open. */
-export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element; ok?: () => boolean | void | Promise<boolean | void>; okText?: string; extra?: JSX.Element; cancel?: string }) => {
+export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element; ok?: () => boolean | void | Promise<boolean | void>; okText?: string; extra?: JSX.Element; cancel?: string; side?: boolean }) => {
   const done = async () => { if (!p.ok || (await p.ok()) !== false) closeDialog(); };
   const key = (e: KeyboardEvent) => {
     if (e.key === "Escape") { e.stopPropagation(); closeDialog(); }
     if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); done(); }
   };
   let el!: HTMLDivElement;
-  onMount(() => ((el.querySelector("input:not([type=checkbox]),textarea") ?? el.querySelector(".btn.pri")) as HTMLElement | null)?.focus());
+  onMount(() => ((el.querySelector("input:not([type=checkbox]),textarea") ?? el.querySelector(".btn.pri") ?? el.querySelector("footer .btn")) as HTMLElement | null)?.focus());
   return (
-    <div class="ov" onKeyDown={key}>
+    <div class="ov" classList={{ dock: p.side }} onKeyDown={key}>
       <div class="dlg" classList={{ wide: p.wide }} ref={el}>
         <header>{p.title}<button class="x" onClick={closeDialog}>×</button></header>
         <div class="bd">{p.children}</div>

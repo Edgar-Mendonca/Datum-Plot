@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries for Tauri
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Python engine (numpy, scipy, matplotlib)
+        run: python -m pip install -r py/requirements.txt
+      - run: python -m unittest discover -s py/tests -v
+      - run: npm ci
+      - run: npm run check:ui
+      - run: npm run build:ui
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: UI tests (Playwright)
+        run: |
+          npm i -g playwright@1.63.0
+          npx -y playwright@1.63.0 install --with-deps chromium
+          cargo run -q -p datum-core --example dump > tests_ui/fixture.json
+          NODE_PATH=$(npm root -g) PYTHON=python node tests_ui/run.cjs

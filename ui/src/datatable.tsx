@@ -3,11 +3,12 @@
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter } from "./api";
-import { act, opts, openMenu, toast, Item, openDialog } from "./store";
+import { act, opts, openMenu, toast, Item, openDialog, closeDialog } from "./store";
 import * as F from "./fmt";
 import { parseTsv, toTsv, transpose, series, clip } from "./cells";
 import { createSel, aggregate } from "./selection";
 import { Dialog, Pick, Text, Icon } from "./ui";
+import { pasteSpecial as pasteDialog } from "./dialogs";
 
 const RH = 22, HW = 40, TW = 96, XW = 86, CW = 76, HEAD = 2 * RH;
 const SUB: Record<string, string[]> = { msn: ["Mean", "SD", "N"], mesn: ["Mean", "SEM", "N"] };
@@ -101,8 +102,15 @@ export const DataTable = (p: { t: Table }) => {
     return [Math.floor(y / RH), lefts().findIndex((l, j) => x >= l && x < l + colW(j))];
   };
   const keys = (e: KeyboardEvent) => {
-    if (edit() !== null) return;
     const ctrl = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+    // Keys typed before the edit box has the focus still belong to the cell being typed.
+    if (edit() !== null) {
+      if (e.target !== box) return;
+      if (e.key.length === 1 && !ctrl && !e.altKey) { e.preventDefault(); setEdit(edit() + e.key); }
+      else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commit(e.key === "Tab" ? [0, e.shiftKey ? -1 : 1] : [e.shiftKey ? -1 : 1, 0]); }
+      else if (e.key === "Escape") setEdit(null);
+      return;
+    }
     const g = S.ranges()[S.ranges().length - 1], [r, c] = e.shiftKey && g ? [g.r1, g.c1] : cur();
     const mv = (dr: number, dc: number) => { e.preventDefault(); go(r + dr, c + dc, e.shiftKey); };
     switch (e.key) {
@@ -111,7 +119,7 @@ export const DataTable = (p: { t: Table }) => {
       case "Enter": case "F2": e.preventDefault(); return setEdit(text(...cur()));
       case "Delete": case "Backspace": e.preventDefault(); return clear();
     }
-    if (ctrl && e.altKey && k === "v") { e.preventDefault(); return import("./dialogs").then(d => d.pasteSpecial()); }
+    if (ctrl && e.altKey && k === "v") { e.preventDefault(); return pasteDialog(); }
     if (ctrl && k === "e") { e.preventDefault(); return exclude(); }
     if (ctrl && k === "d") { e.preventDefault(); const [a, b, c2, d] = range(); if (c2 > a) { S.setCur({ row: a, col: b }); S.setRanges([{ r0: a, c0: b, r1: a, c1: d }]); fillRange(c2, d, true); } return; }
     if (ctrl && k === "r") { e.preventDefault(); const [a, b, c2, d] = range(); if (d > b) { S.setCur({ row: a, col: b }); S.setRanges([{ r0: a, c0: b, r1: c2, c1: b }]); fillRange(c2, d, true); } return; }
@@ -136,7 +144,7 @@ export const DataTable = (p: { t: Table }) => {
     const [a, b] = rowsSel(), k = t().sets.length ? setAt(cur()[1]) : -1;
     const items: Item[] = [
       { label: "Cut", icon: "cut", keys: "Ctrl+X", run: () => document.execCommand("cut") }, { label: "Copy", icon: "copy", keys: "Ctrl+C", run: () => document.execCommand("copy") },
-      { label: "Paste Special…", icon: "paste", keys: "Ctrl+Alt+V", run: () => import("./dialogs").then(d => d.pasteSpecial()) }, "-",
+      { label: "Paste Special…", icon: "paste", keys: "Ctrl+Alt+V", run: () => pasteDialog() }, "-",
       { label: "Exclude / Include Values", icon: "exclude", keys: "Ctrl+E", run: exclude }, { label: "Clear Contents", icon: "clear", keys: "Del", run: clear }, "-",
       { label: `Insert ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"} Above`, icon: "addrow", run: () => act({ Rows: { table: t().id, at: a, count: b - a + 1 } }) },
       { label: `Delete ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"}`, icon: "delrow", run: () => act({ Rows: { table: t().id, at: a, count: -(b - a + 1) } }) }, "-",
@@ -225,7 +233,7 @@ export const setDialog = (t: Table, k: number) => openDialog(() => {
   const [v, setV] = createSignal<DataSet>({ ...s });
   return (
     <Dialog title={`Data set ${letter(k)}`} ok={() => act({ SetDef: { table: t.id, k, set: { ...v(), reps: Math.max(1, Math.min(50, Math.round(v().reps))) } } })}
-      extra={<button class="btn" disabled={t.sets.length < 2} onClick={() => { if (confirm(`Delete data set ${letter(k)} and its values?`)) act({ SetDef: { table: t.id, k, set: null } }).then(ok => ok && import("./store").then(m => m.closeDialog())); }}>Delete data set</button>}>
+      extra={<button class="btn" disabled={t.sets.length < 2} onClick={() => { if (confirm(`Delete data set ${letter(k)} and its values?`)) act({ SetDef: { table: t.id, k, set: null } }).then(ok => { if (ok) closeDialog(); }); }}>Delete data set</button>}>
       <div class="form">
         <label>Title</label><Text value={v().title} set={x => setV({ ...v(), title: x })} />
         <label>Enter values as</label><Pick value={v().entry} set={x => setV({ ...v(), entry: x as DataSet["entry"] })} options={[["rep", "Replicate values (Y1, Y2, …)"], ["msn", "Mean, SD and N"], ["mesn", "Mean, SEM and N"]]} />
