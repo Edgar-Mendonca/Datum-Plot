@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.1.1** (2026-10-24). Earlier: 0.1.0 |
+| **Current version** | **0.1.1** (released 2026-10-24: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.1.1). Earlier: 0.1.0 |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -184,7 +184,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - Engine: `Import` op (+ test); Python `io.py` (CSV/TSV/TXT with delimiter sniffing and decimal commas, XLSX with openpyxl) + 2 tests; worker `read`.
   - Shell: `runtime.rs` (runtime pack, unzip test), `update.rs` download/asset helpers and `-update.exe` preference, `py.rs` reader thread with timeouts and `restart()`, clipboard commands, `import_file`, `restart_engine`.
   - UI: `features.ts` (99-feature catalogue), `roadmap.tsx` (Roadmap page, planned-command cards, New Table / Analyze / Graph Type galleries, Import dialog), planned commands across Data, Analyze, Graph, Format and the new Layout and Tools tabs, Copy Picture via Rust, engine status while the runtime unpacks or downloads.
-  - Release: runtime zip + update installer + full installer.
+  - Release: runtime zip + update installer + full installer. Released 0.1.1 (CI green): setup 89 MB, update 2.3 MB, runtime-1.zip 87 MB.
 - Checked in the real app (Xvfb): Analyze tab and gallery; Import through the real file dialog of a tensile-test CSV (2 replicates guessed from the headings) → table and graph; Copy Picture put a 944 × 708 PNG (80 × 60 mm at 300 dpi) on the clipboard (`xclip`); ribbon folds the Item group at 1440 px. 31 UI checks, 14 Python tests, 12 + 1 Rust tests pass.
 
 ---
