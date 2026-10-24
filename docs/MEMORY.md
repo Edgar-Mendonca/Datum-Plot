@@ -7,12 +7,12 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.1.0** (built 2026-10-24) |
+| **Current version** | **0.1.0** (released 2026-10-24: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.1.0) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
 | **Code size** | About 4,300 lines: core 900 (with 11 tests), shell 740, Python 300 (+ 12 tests), UI 2,100 TSX/TS + CSS, UI tests 160 |
-| **Installer** | NSIS `.exe`, per-user, with Python inside (size to be confirmed by the first release build; expected about 70 MB download, about 200 MB installed). UI bundle 129 kB JS (43 kB gzip). |
+| **Installer** | NSIS `.exe`, per-user, with Python inside: **55 MB** download (0.1.0); the bundled Python folder is 229 MB installed (embeddable CPython 3.13.17, numpy 2.5.4, SciPy 1.18.1, matplotlib 3.11.2). UI bundle 129 kB JS (43 kB gzip). |
 
 ---
 
@@ -133,7 +133,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | Version | Theme | Contents | Status |
 | --- | --- | --- | --- |
 | — | Brainstorm | Comparison, plan, memory, logo | ✅ |
-| **0.1.0** | Shell + XY + Python | Installer with Python, updater, Home with samples, File page, Options, Help, Info sheet, navigator, XY table (replicates or mean/SD/N, paste with headings, exclude), XY graph (matplotlib: means ± SD/SEM/CI/range or each replicate, lines, log axes, ranges, legend, journal sizes, Prism or framed), docked Format Graph, hover values, export PNG/TIFF/SVG/PDF/EPS, copy picture, Print with captions, `.dplot`, undo, recovery | ✅ (release build to be confirmed) |
+| **0.1.0** | Shell + XY + Python | Installer with Python, updater, Home with samples, File page, Options, Help, Info sheet, navigator, XY table (replicates or mean/SD/N, paste with headings, exclude), XY graph (matplotlib: means ± SD/SEM/CI/range or each replicate, lines, log axes, ranges, legend, journal sizes, Prism or framed), docked Format Graph, hover values, export PNG/TIFF/SVG/PDF/EPS, copy picture, Print with captions, `.dplot`, undo, recovery | ✅ |
 | 0.1.1 | Column data + statistics | Column table and graphs (dot plot, bar, box, violin), column statistics, normality (Shapiro-Wilk, D'Agostino) + QQ, histogram, CSV/XLSX import, Results section, Explain panel | 🔜 |
 | 0.2.0 | Compare groups + curve fitting | t-tests, nonparametric, one-way ANOVA + multiple comparisons (`scipy.stats`), significance brackets, test chooser, methods text, linear regression, nonlinear fitting (`scipy.optimize`) with ~20 models, styles | ⬜ |
 | 0.2.1 | Curve fitting power | Global fitting, compare models, interpolation, ROUT, ~60 models, AUC, transforms | ⬜ |
@@ -157,7 +157,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The user approved the plan, icon and colours, wants to see the app before answering the questions, and decided **Python goes inside the app** (numpy, SciPy, matplotlib; Rust as the shell, SolidJS as the window; 200–300 MB is fine). Recorded in PLAN-0.1 §9 and the decisions above.
 - Built: Rust core (model, ops, undo, files, templates; 11 tests), Python engine (stats, Prism-style matplotlib graphs, exports, worker protocol; 12 tests against R values), shell (commands, Python worker manager with cache and restart, updater, recovery), UI (navigator, XY grid on Plan's grid engine, graph view with hover and double-click hits, docked Format Graph, ribbon, File page, Options, Print, help), CI and release workflows with the bundled Python.
 - Checked in the real app under Xvfb: Home, opening each sample, typing and Ctrl+E (the excluded value leaves the graph), range selection with Sum/Average/Count, double-click on the X axis → Format Graph › X Axis, live "Connect the points", log X dose-response. Fixed: missing base grid-cell CSS (headings were shifted one column); Format Graph hid the graph (now docked right); docked overlay class clashed with the sidebar's `.side`; dialogs without inputs or OK did not close on Escape (focus fallback).
-- 23 Playwright checks pass, with a real Python render. Screenshots in `docs/images/`.
+- 23 Playwright checks pass, with a real Python render. Screenshots in `docs/images/`. Also fixed: fast typing lost characters (and Enter) pressed before the edit box had the focus.
+- Released 0.1.0 with `release.yml` (workflow_dispatch): CI green; the release build's smoke test started the bundled Python on Windows and got the versions back; installer 55 MB.
 
 ---
 
@@ -167,7 +168,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 **Not yet checked on a real Windows PC:**
 - The bundled Python: first start time (matplotlib builds its font cache in `%LOCALAPPDATA%`), Arial/Calibri found by matplotlib, `CREATE_NO_WINDOW`, antivirus scanning many files.
-- Copy picture to the clipboard in WebView2 (`ClipboardItem` image/png), Print/Save as PDF of graph pages, the installer size and install time.
+- Copy picture to the clipboard in WebView2 (`ClipboardItem` image/png), Print/Save as PDF of graph pages, install time (many small files).
 
 **Known limits:**
 - Every update downloads the whole installer (with Python). Later: ship the Python runtime as its own versioned download and update it only when `py/requirements.txt` changes.
