@@ -2,4 +2,6 @@
 /node_modules
 /ui/dist
 /src-tauri/gen
+/src-tauri/python
 /tests_ui/fixture.json
+__pycache__/

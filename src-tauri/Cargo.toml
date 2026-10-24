@@ -1,0 +1,19 @@
+[package]
+name = "datum-plot"
+version = "0.1.0"
+edition = "2021"
+description = "Datum Plot: scientific graphs and statistics for Windows."
+license = "MIT"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+datum-core = { path = "../crates/core" }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ureq = { version = "2", features = ["json", "native-certs"] }
+sha2 = "0.10"

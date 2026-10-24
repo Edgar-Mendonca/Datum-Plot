@@ -1,0 +1,4 @@
+# Bundled with Datum Plot (pinned; the release workflow installs these into the embedded Python).
+numpy==2.5.4
+scipy==1.18.1
+matplotlib==3.11.2
