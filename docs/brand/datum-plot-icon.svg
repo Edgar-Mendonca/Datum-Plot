@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Datum Plot: same tile as Datum Plan (rounded square, white to accent tint), glyph in the app accent (teal), one light tint, one amber highlight. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E3F5F2"/></linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)" stroke="#BFE3DD" stroke-width="4"/>
+  <path d="M58 52v146h146" fill="none" stroke="#0E8C7F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M74 176C104 170 128 140 146 112S184 74 202 70" fill="none" stroke="#0E8C7F" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="92" cy="160" r="9" fill="#8FD3C9"/>
+  <circle cx="122" cy="146" r="9" fill="#8FD3C9"/>
+  <circle cx="140" cy="112" r="9" fill="#8FD3C9"/>
+  <circle cx="168" cy="96" r="9" fill="#8FD3C9"/>
+  <path d="M190 62l13 13-13 13-13-13z" fill="#F2B233"/>
+</svg>

@@ -1,0 +1,5 @@
+/target
+/node_modules
+/ui/dist
+/src-tauri/gen
+/tests_ui/fixture.json
