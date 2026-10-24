@@ -123,26 +123,30 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-24 | Default graph look is Prism's (open axes, ticks out, bold titles, Arial 10 pt, 80 × 60 mm, Y from zero); framed (Origin) is one click | Most likely users are Prism users; both looks available (question 6 still open). |
 | 2026-10-24 | Format Graph is docked on the right and applies each change immediately (each is an undo step) | The graph stays visible, as in Prism's live formatting. |
 | 2026-10-24 | Excluded values: blue italic, struck through; stored as [row, col] in the table | Prism's convention, plus a strike so it reads in greyscale. |
+| Session 2 | Brainstorm the full feature set first (catalogue A–J with IDs and releases in PLAN-0.2), then build release by release | The user wants to see what Datum Plot will do before evaluating more. |
+| Session 2 (proposed) | Python runtime as a separate, versioned pack in the user's data folder; app updates about 4 MB | Updates are slow because the 50 MB runtime is re-downloaded each time. Waiting for the user's OK (PLAN-0.2 Q3). |
+| Session 2 (proposed) | Clipboard writes go through Rust, not `navigator.clipboard` | WebView2 blocks the browser clipboard on `http://tauri.localhost`. |
+| Session 2 (proposed) | Python libraries: pandas, openpyxl, statsmodels, scikit-posthocs, lmfit, lifelines, pybaselines, python-pptx/docx; no pingouin (GPL), no scikit-learn, no seaborn | Licences that fit an MIT app; size kept reasonable. Waiting for the user's OK (PLAN-0.2 Q4). |
 
 ---
 
 ## 3. Roadmap
 
-✅ done · 🔜 next · ⬜ planned. Small releases; every one goes through the in-app updater. Details in [PLAN-0.1.md](PLAN-0.1.md) §6 and §9.
+✅ done · 🔜 next · ⬜ planned. Small releases; every one goes through the in-app updater. **The full feature catalogue (IDs A1–J4) and the release plan are in [PLAN-0.2.md](PLAN-0.2.md)** (proposed 2026-10-24, waiting for the user's answers); this table is its summary.
 
-| Version | Theme | Contents | Status |
+| Version | Theme | Contents (catalogue IDs) | Status |
 | --- | --- | --- | --- |
-| — | Brainstorm | Comparison, plan, memory, logo | ✅ |
-| **0.1.0** | Shell + XY + Python | Installer with Python, updater, Home with samples, File page, Options, Help, Info sheet, navigator, XY table (replicates or mean/SD/N, paste with headings, exclude), XY graph (matplotlib: means ± SD/SEM/CI/range or each replicate, lines, log axes, ranges, legend, journal sizes, Prism or framed), docked Format Graph, hover values, export PNG/TIFF/SVG/PDF/EPS, copy picture, Print with captions, `.dplot`, undo, recovery | ✅ |
-| 0.1.1 | Column data + statistics | Column table and graphs (dot plot, bar, box, violin), column statistics, normality (Shapiro-Wilk, D'Agostino) + QQ, histogram, CSV/XLSX import, Results section, Explain panel | 🔜 |
-| 0.2.0 | Compare groups + curve fitting | t-tests, nonparametric, one-way ANOVA + multiple comparisons (`scipy.stats`), significance brackets, test chooser, methods text, linear regression, nonlinear fitting (`scipy.optimize`) with ~20 models, styles | ⬜ |
-| 0.2.1 | Curve fitting power | Global fitting, compare models, interpolation, ROUT, ~60 models, AUC, transforms | ⬜ |
-| 0.3.0 | Two factors, counts, layouts | Grouped + two-way ANOVA, contingency, correlation, pie, ROC, Bland-Altman, axis breaks, double Y, Layouts, `.pzfx` import, journal presets | ⬜ |
-| 0.4.0 | Survival, nested, many variables | Kaplan-Meier, log-rank, Cox; nested t/ANOVA; multiple/logistic regression, PCA; volcano, forest; power | ⬜ |
-| 0.5.0 | Origin power | Worksheets + formulas, matrices, contour/3D/polar/waterfall/ternary, layers/insets/multi-panel, peaks, smoothing, FFT (`scipy.signal`), ROI gadgets | ⬜ |
-| 0.6.0 | Automation | Batch processing, analysis templates, batch export, plate import, "show as Python/R code" | ⬜ |
-| 0.6.1 | Hardening | Large data, signing, signed updates, crash reports, separate Python runtime package for small updates | ⬜ |
-| 1.0.0 | Stable | User guide, validation report | ⬜ |
+| — | Brainstorm | Comparison, plan, memory, logo ([PLAN-0.1.md](PLAN-0.1.md)) | ✅ |
+| **0.1.0** | Shell + XY + Python | Installer with Python, updater, Home with samples, File page, Options, Help, Info sheet, navigator, XY table, XY graph (matplotlib), docked Format Graph, hover values, export PNG/TIFF/SVG/PDF/EPS, Print, `.dplot`, undo, recovery | ✅ |
+| — | Feature brainstorm | Catalogue A–J (~110 features), Python libraries, fast updates, release plan ([PLAN-0.2.md](PLAN-0.2.md)) | ✅ written, ⏳ answers |
+| **0.1.1** | Fix and speed | Copy Picture through Rust (G2), runtime pack so updates are ~4 MB (I1), worker timeout/restart (I2), faster start (I5), CSV/XLSX import (A12), Format Graph pane tidy, fit-to-window | 🔜 |
+| 0.2.0 | Compare groups | Column table, transforms, outliers, descriptive, normality, t-tests, nonparametric, one-way ANOVA + post hoc, effect sizes, results sheets + Explain + test chooser + methods text, column graphs (dot, bar, box, violin, swarm, estimation), significance brackets, styles, copy look, batch export, Excel export | ⬜ |
+| 0.3.0 | Curve fitting and regression | Linear/Deming regression, lmfit curve fitting with ~60 models, global fits, model comparison, interpolation, AUC/smoothing, fitted curves with bands, residuals, "show as Python code", second worker | ⬜ |
+| 0.4.0 | Two factors, interactive graphs, layouts | Grouped + two-way ANOVA, contingency, correlation, ROC, Bland-Altman, `.pzfx` import, grouped bars, heat map, pie, axis breaks, double Y, annotations, click/drag/edit on the graph, layouts, CMYK TIFF | ⬜ |
+| 0.5.0 | Survival, nested, many variables | Kaplan-Meier, log-rank, Cox (lifelines), nested, multiple/logistic regression, PCA, clustering, power, survival/volcano/forest graphs | ⬜ |
+| 0.6.0 | Origin power | Worksheets, matrices, numpy column formulas, instrument/plate import, peaks, signal processing, surface fits, 3D/contour/polar/ternary/waterfall, multi-panel, large data, ROI, posters, code signing | ⬜ |
+| 0.7.0 | Python scripting and automation | Python console, own analyses and fit equations, analysis templates, batch processing, notebooks, PowerPoint and Word export | ⬜ |
+| 1.0.0 | Stable | Validation report (R/NIST), user guide | ⬜ |
 
 ---
 
@@ -160,18 +164,26 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - 23 Playwright checks pass, with a real Python render. Screenshots in `docs/images/`. Also fixed: fast typing lost characters (and Enter) pressed before the edit box had the focus.
 - Released 0.1.0 with `release.yml` (workflow_dispatch): CI green; the release build's smoke test started the bundled Python on Windows and got the versions back; installer 55 MB.
 
+### 2026-10-24: Session 2 (review of 0.1.0, feature brainstorm)
+- Feedback on 0.1.0 (one screenshot: Growth graph with Format Graph docked): first start 3–6 s, install under a minute, the app is fast and should stay so; graph text is in Arial as intended; **Copy Picture does not work**; **updates are slow** (the whole 55 MB installer each time); too little to evaluate yet, so brainstorm the full feature set first, then build in steps; asked how graphs are made.
+- Diagnosis: Copy Picture uses the browser clipboard, which WebView2 disables because the window's address (`http://tauri.localhost`) is not a secure origin (the Linux test browser allowed it, so tests passed); same for Paste Special's fallback and the Print page's code copy. Updates: 50 of the 55 MB is the Python runtime, re-downloaded every time.
+- Wrote [PLAN-0.2.md](PLAN-0.2.md): how a graph is made (diagram), diagnosis, **feature catalogue A–J** (data tables, analyses with their Python libraries, results, graphs, on-screen editing, layouts, export, Python scripting, speed, help), libraries and sizes (pandas, openpyxl, statsmodels, scikit-posthocs, lmfit, lifelines, pybaselines, python-pptx/docx; not pingouin: GPL), architecture changes, release plan 0.1.1 → 1.0, 10 questions. Roadmap above replaced by its summary. No code changed. **Waiting for the answers.**
+
 ---
 
 ## 5. Known limits and next steps
 
-**Waiting for the user (PLAN-0.1 §8):** the remaining questions (field of work, results style, P-value style, `.pzfx`, `.dplan` link). Defaults chosen meanwhile are in the decisions table.
+**Waiting for the user ([PLAN-0.2.md](PLAN-0.2.md) §9):** order after 0.1.1 (compare groups or curve fitting), field of work, 0.1.1 scope, extra libraries and size, results style, P-value style, when the Python console and on-screen graph editing come, `.pzfx`, anything missing.
+
+**Checked by the user on Windows (0.1.0):** first start 3–6 s; install under a minute; graph text in Arial. **Copy Picture fails** (cause in PLAN-0.2 §3.1; fix in 0.1.1).
 
 **Not yet checked on a real Windows PC:**
 - The bundled Python: first start time (matplotlib builds its font cache in `%LOCALAPPDATA%`), Arial/Calibri found by matplotlib, `CREATE_NO_WINDOW`, antivirus scanning many files.
-- Copy picture to the clipboard in WebView2 (`ClipboardItem` image/png), Print/Save as PDF of graph pages, install time (many small files).
+- Print/Save as PDF of graph pages; export files opened in Word, Illustrator and a journal's checker.
 
 **Known limits:**
-- Every update downloads the whole installer (with Python). Later: ship the Python runtime as its own versioned download and update it only when `py/requirements.txt` changes.
+- Every update downloads the whole installer (with Python): the runtime pack in 0.1.1 fixes this (PLAN-0.2 §3.2).
+- Copy Picture, Paste Special's clipboard fallback and the Print page's code copy use `navigator.clipboard`, which WebView2 blocks on `http://tauri.localhost`: move clipboard writes to Rust in 0.1.1.
 - If the Python worker hangs (not crashes), calls wait on its lock; add a timeout and restart in 0.1.1.
 - On Linux (development) graph text shows in a fallback font when Arial is missing.
 - No analyses, one table type (XY), no import, no layouts (see the roadmap).
