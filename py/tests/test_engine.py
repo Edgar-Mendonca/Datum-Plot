@@ -118,3 +118,36 @@ class Worker(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Import(unittest.TestCase):
+    def test_csv_and_semicolon_decimal_comma(self):
+        from datum import io as dio
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "a.csv")
+            open(p, "w", encoding="utf-8").write("Strain,Sample 1,Sample 2\n0,0,0\n0.01,70.5,68\n\n")
+            s = dio.read_file(p)["sheets"][0]
+            self.assertEqual(s["rows"], [["Strain", "Sample 1", "Sample 2"], ["0", "0", "0"], ["0.01", "70.5", "68"]])
+            p = os.path.join(d, "b.txt")
+            open(p, "w", encoding="cp1252").write("Temp;Résistance\n20;1,5\n30;2,25\n")
+            s = dio.read_file(p)["sheets"][0]
+            self.assertEqual(s["rows"][0][1], "Résistance")
+            self.assertEqual(s["rows"][2], ["30", "2.25"])
+
+    def test_excel_every_sheet(self):
+        from openpyxl import Workbook
+        from datum import io as dio
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "w.xlsx")
+            wb = Workbook()
+            wb.active.title = "Run 1"
+            for r in (["T", "R"], [1, 2.5], [2.0, None]):
+                wb.active.append(r)
+            wb.create_sheet("Empty")
+            wb.save(p)
+            s = dio.read_file(p)["sheets"]
+            self.assertEqual([x["name"] for x in s], ["Run 1", "Empty"])
+            self.assertEqual(s[0]["rows"], [["T", "R"], ["1", "2.5"], ["2", ""]])
+            self.assertEqual(s[1]["rows"], [])
+        with self.assertRaises(ValueError):
+            dio.read_file("x.ods")

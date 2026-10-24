@@ -65,7 +65,8 @@ pub fn check(beta: bool) -> Result<Info, String> {
     let latest = rel["tag_name"].as_str().unwrap_or("").trim_start_matches('v').to_string();
     let assets = rel["assets"].as_array().cloned().unwrap_or_default();
     let find = |suffix: &str| assets.iter().find(|a| a["name"].as_str().is_some_and(|n| n.to_lowercase().ends_with(suffix)));
-    let exe = find("-setup.exe");
+    // The small app-only installer when the release has one (the Python runtime is separate).
+    let exe = find("-update.exe").or_else(|| find("-setup.exe"));
     Ok(Info {
         current,
         available: !latest.is_empty() && parts(&latest) > parts(current),
@@ -80,19 +81,17 @@ pub fn check(beta: bool) -> Result<Info, String> {
     })
 }
 
-pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), String> {
+/// Downloads `url` to `dest` with progress events, checking its SHA-256 against `sums` (a
+/// SHA256SUMS.txt from the same release). Only this repo's release files are accepted.
+pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path::Path, event: &str) -> Result<(), String> {
     let base = format!("https://github.com/{REPO}/releases/download/");
     if !url.starts_with(&base) || sums.is_some_and(|s| !s.starts_with(&base)) {
-        return Err("Updates are only installed from the Datum Plot releases page.".into());
+        return Err("Files are only downloaded from the Datum Plot releases page.".into());
     }
-    if !cfg!(windows) {
-        return Err("Automatic install is for Windows. Download the new version from the releases page.".into());
-    }
-    let name = url.rsplit('/').next().unwrap_or("DatumPlot-setup.exe").to_string();
-    let dest = std::env::temp_dir().join(&name);
+    let name = url.rsplit('/').next().unwrap_or("download").to_string();
     let resp = agent().get(url).call().map_err(|e| format!("Download failed: {e}"))?;
     let total: u64 = resp.header("Content-Length").and_then(|v| v.parse().ok()).unwrap_or(0);
-    let (mut src, mut file) = (resp.into_reader(), std::fs::File::create(&dest).map_err(|e| e.to_string())?);
+    let (mut src, mut file) = (resp.into_reader(), std::fs::File::create(dest).map_err(|e| e.to_string())?);
     let (mut hash, mut buf, mut done, mut last) = (Sha256::new(), vec![0u8; 1 << 16], 0u64, 0u64);
     loop {
         let n = src.read(&mut buf).map_err(|e| format!("Download failed: {e}"))?;
@@ -104,7 +103,7 @@ pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), Str
         done += n as u64;
         if total > 0 && done * 100 / total > last {
             last = done * 100 / total;
-            let _ = app.emit("update-progress", last);
+            let _ = app.emit(event, last);
         }
     }
     drop(file);
@@ -114,11 +113,26 @@ pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), Str
         let want = list.lines().find(|l| l.trim_end().ends_with(&name)).and_then(|l| l.split_whitespace().next()).unwrap_or("");
         let got: String = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
         if !want.eq_ignore_ascii_case(&got) {
-            let _ = std::fs::remove_file(&dest);
+            let _ = std::fs::remove_file(dest);
             return Err("The download did not match its checksum and was deleted. Try again.".into());
         }
     }
-    let _ = app.emit("update-progress", 100u64);
+    let _ = app.emit(event, 100u64);
+    Ok(())
+}
+
+/// The release page's download address of one of this version's files.
+pub fn asset_url(file: &str) -> String {
+    format!("https://github.com/{REPO}/releases/download/v{}/{file}", env!("CARGO_PKG_VERSION"))
+}
+
+pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), String> {
+    if !cfg!(windows) {
+        return Err("Automatic install is for Windows. Download the new version from the releases page.".into());
+    }
+    let name = url.rsplit('/').next().unwrap_or("DatumPlot-setup.exe").to_string();
+    let dest = std::env::temp_dir().join(&name);
+    download(app, url, sums, &dest, "update-progress")?;
     launch(&dest)?;
     app.exit(0);
     Ok(())

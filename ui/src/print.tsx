@@ -137,7 +137,7 @@ export const PrintPage = () => {
           <Show when={tab() === "page"}><div class="prow">{(["Top", "Right", "Bottom", "Left"] as const).map((l, i) => <label>{l} (mm)<input type="number" min="0" max="60" value={ps.margins[i]} onChange={e => setPs("margins", i, +e.currentTarget.value)} /></label>)}</div></Show>
           <Show when={tab() === "header"}><Slots k="header" label="Header" /></Show>
           <Show when={tab() === "footer"}><Slots k="footer" label="Footer" /></Show>
-          <Show when={tab() !== "page"}><p class="muted pcodes">Codes: <For each={CODES}>{([c, l]) => <code title={l} onClick={() => navigator.clipboard?.writeText(c).then(() => toast(`${c} copied: paste it into a box.`, true))}>{c}</code>}</For></p></Show>
+          <Show when={tab() !== "page"}><p class="muted pcodes">Codes: <For each={CODES}>{([c, l]) => <code title={l} onClick={() => call("copy_text", { text: c }).then(() => toast(`${c} copied: paste it into a box.`, true))}>{c}</code>}</For></p></Show>
         </div>
         <p><button class="btn sm" onClick={() => setPs(defaults())}>Reset to defaults</button></p>
       </div>

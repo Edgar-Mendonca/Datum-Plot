@@ -20,6 +20,9 @@ pub enum Op {
     /// Pasted rows from Excel at a cell. A first row of words becomes the column titles; the
     /// table grows (rows, and data sets like the last one) to fit.
     Paste { table: u32, row: usize, col: i64, rows: Vec<Vec<String>> },
+    /// A new table from imported rows (CSV, Excel): column 0 is X, then the Y columns, `reps` (or
+    /// 3 for mean/SD/N) per data set. With `header`, the first row holds the titles.
+    Import { name: String, entry: Entry, reps: usize, header: bool, rows: Vec<Vec<String>>, graph: Option<Box<GraphSettings>> },
     Exclude { table: u32, cells: Vec<(usize, usize)>, on: bool },
     /// name, xTitle, xUnits, yTitle, yUnits or notes.
     TableSet { table: u32, field: String, value: String },
@@ -232,6 +235,24 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                     put(t, row + i, col + j as i64, s);
                 }
             }
+        }
+        Op::Import { name, entry, reps, header, mut rows, graph } => {
+            let head = if header && !rows.is_empty() { rows.remove(0) } else { vec![] };
+            let set = DataSet { title: String::new(), entry, reps: reps.clamp(1, 50) };
+            let (w, ny) = (set.width(), rows.iter().map(|r| r.len()).max().unwrap_or(1).saturating_sub(1).max(1));
+            let n = ny.div_ceil(w);
+            let mut t = Table { name, rows: rows.len().max(1), sets: (0..n).map(|k| DataSet { title: format!("Data set {}", set_letter(k)), ..set.clone() }).collect(), ..Default::default() };
+            t.normalize();
+            if let Some(x) = head.first().map(|h| h.trim()).filter(|h| !h.is_empty()) { t.x_title = x.into(); }
+            for k in 0..n {
+                if let Some(h) = head.get(1 + k * w).map(|h| h.trim()).filter(|h| !h.is_empty()) { t.sets[k].title = h.into(); }
+            }
+            for (i, l) in rows.iter().enumerate() {
+                for (j, v) in l.iter().enumerate() {
+                    put(&mut t, i, j as i64, v);
+                }
+            }
+            p.add_table(t, graph.map(|g| *g));
         }
         Op::Exclude { table, cells, on } => {
             let t = p.table_mut(table)?;

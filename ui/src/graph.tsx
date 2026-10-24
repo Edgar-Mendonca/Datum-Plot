@@ -74,7 +74,7 @@ export const GraphView = (p: { g: Graph }) => {
   return (
     <section class="gview" tabindex="0" onKeyDown={keys}>
       <div class="gpage" onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setZoomG(z => Math.min(4, Math.max(0.5, z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)))); } }}>
-        <Show when={r()} fallback={<div class="gwait">{err() || (engine()?.error ?? "Drawing the graph…")}</div>}>{R => (
+        <Show when={r()} fallback={<div class="gwait">{err() || (engine()?.error ?? engine()?.status ?? "Drawing the graph…")}</div>}>{R => (
           <div class="gpaper" style={{ width: `${R().w * k()}px`, height: `${R().h * k()}px` }} onMouseMove={move} onMouseLeave={() => { setTip(null); setCross(null); }} onDblClick={dbl} onContextMenu={menu}>
             <GraphImg r={R()} scale={k()} />
             <Show when={cross()}>{c => <><i class="xh" style={{ left: `${c()[0] * k()}px`, top: `${R().plot[1] * k()}px`, height: `${(R().plot[3] - R().plot[1]) * k()}px` }} /><i class="yh" style={{ top: `${c()[1] * k()}px`, left: `${R().plot[0] * k()}px`, width: `${(R().plot[2] - R().plot[0]) * k()}px` }} /></>}</Show>
@@ -89,15 +89,11 @@ export const GraphView = (p: { g: Graph }) => {
   );
 };
 
-/** Copies a PNG of the graph to the clipboard, for Word and PowerPoint. */
+/** Copies the graph to the Windows clipboard as a picture (through Rust; WebView2 blocks the
+ *  browser clipboard), for Word and PowerPoint. */
 export const copyGraph = async (id: number) => {
-  const b64 = await call<string>("graph_png", { id, dpi: Math.min(600, opts().dpi) });
-  if (!b64) return;
-  try {
-    const blob = await (await fetch(`data:image/png;base64,${b64}`)).blob();
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-    toast("Graph copied as a picture. Paste it into Word, PowerPoint or an email.", true);
-  } catch (e) { toast(`Could not copy the picture: ${e}`); }
+  try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into Word, PowerPoint or an email.", true); }
+  catch (e) { toast(`Could not copy the picture: ${e}`); }
 };
 
 const FORMATS: [string, string][] = [["png", "PNG picture"], ["tiff", "TIFF picture (journals)"], ["svg", "SVG vector (editable text)"], ["pdf", "PDF vector"], ["eps", "EPS vector"]];

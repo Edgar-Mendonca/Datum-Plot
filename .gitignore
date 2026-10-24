@@ -3,5 +3,6 @@
 /ui/dist
 /src-tauri/gen
 /src-tauri/python
+/src-tauri/runtime.zip
 /tests_ui/fixture.json
 __pycache__/

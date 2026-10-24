@@ -8,6 +8,7 @@ import * as D from "./dialogs";
 import { Icon, Text, Pick, Check } from "./ui";
 import { listen, invoke } from "./api";
 import { ERRORS, FONTS, SIZES } from "./format";
+import { RoadmapPage, importFile, newTable } from "./roadmap";
 
 type Tpl = { id: string; name: string; desc: string; dots: [number, number][] };
 type Info = { current: string; latest: string | null; beta: boolean; available: boolean; notes: string; published: string; url: string | null; sums: string | null; size: number; page: string };
@@ -55,6 +56,8 @@ const Home = () => {
           <button class="tile" onClick={() => neu(null)}><div class="pic"><svg class="ic"><use href="#i-xy" /></svg></div><b>Blank XY table</b><span>An X column and data sets with replicates, and its graph.</span></button>
           <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><Mini t={t} /><small>sample</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
           <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Plot project (.dplot).</span></button>
+          <button class="tile" onClick={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }}><div class="pic"><svg class="ic"><use href="#i-import" /></svg></div><b>Import data</b><span>A CSV, TXT or Excel file into a new XY table.</span></button>
+          <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Plot will do, and when.</span></button>
         </div>
         <h2>Recent</h2>
         <table class="recent"><tbody>
@@ -154,10 +157,11 @@ export const Backstage = () => (
       <button class="back" onClick={() => out() && setBackstage(null)} title="Back">←</button>
       <For each={[["home", "home", "Home"], ["new", "new", "New"], ["open", "open", "Open"], ["import", "import", "Import"], ["save", "save", "Save"], ["saveas", "save", "Save As"], ["export", "export", "Export"], ["print", "print", "Print"]]}>{([k, i, l]) =>
         <button classList={{ on: backstage() === k }} onClick={() => {
-          if (k === "open") C.open(); else if (k === "import") toast("CSV and Excel import arrive in 0.1.1. Until then, copy the cells in Excel and paste them into a data table."); else if (k === "save") C.save(); else if (k === "saveas") C.save(true);
-          else setBackstage(k === "new" ? "home" : k);
+          if (k === "open") C.open(); else if (k === "import") importFile(); else if (k === "new") newTable(); else if (k === "save") C.save(); else if (k === "saveas") C.save(true);
+          else setBackstage(k);
         }}><Icon n={i} size={22} />{l}</button>}</For>
       <span class="grow" />
+      <button classList={{ on: backstage() === "roadmap" }} onClick={() => setBackstage("roadmap")}><Icon n="list" size={22} />Roadmap</button>
       <button classList={{ on: backstage() === "options" }} onClick={() => setBackstage("options")}><Icon n="opts" size={22} />Options</button>
       <button classList={{ on: backstage() === "about" }} onClick={() => setBackstage("about")}><Icon n="upd" size={22} />Updates</button>
     </aside>
@@ -165,6 +169,7 @@ export const Backstage = () => (
       <Show when={backstage() === "home"}><Home /></Show>
       <Show when={backstage() === "export"}><Export /></Show>
       <Show when={backstage() === "options"}><OptionsPage /></Show>
+      <Show when={backstage() === "roadmap"}><RoadmapPage /></Show>
       <Show when={backstage() === "print"}><PrintPage /></Show>
       <Show when={backstage() === "about"}><div class="about"><h1>Updates</h1><UpdateCard /><p><button class="btn" onClick={() => D.shortcuts()}>Keyboard shortcuts</button></p></div></Show>
     </section>

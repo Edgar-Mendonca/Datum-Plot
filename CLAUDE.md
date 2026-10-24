@@ -17,7 +17,8 @@ User preferences:
 - Keep code compact and match the surrounding style. The project model, edit ops, undo and files belong in `crates/core` (Rust, unit-tested). Statistics, fitting and drawing belong in `py/datum` (Python, unit-tested against NIST/R values). Never in the UI.
 - The UI is SolidJS + Vite in `ui/src/*.tsx` (built to `ui/dist`). State lives in `ui/src/store.ts`; the engine computes all values, the window only shows them.
 - Big asks get a `docs/PLAN-x.y.md` with questions first; build after the answers. Report in plain language.
-- The feature catalogue lives in `docs/PLAN-0.2.md` (IDs A1–J4, each with a release). Tick features there and in the MEMORY roadmap as they ship; add new ideas to it with an ID.
+- The feature catalogue lives in `docs/PLAN-0.2.md` (IDs A1–J4; release order in §10) and in the app in `ui/src/features.ts` (Help › Roadmap; planned commands open their card). When a feature ships: set its release in `features.ts` to the shipping version (and `VERSION_NOW`), replace its planned command with the real one, tick it in PLAN-0.2 and the MEMORY roadmap. New ideas get an ID in both.
+- When `py/requirements.txt` changes, bump `py/runtime.txt` so installed apps download the new Python runtime pack.
 
 Identity: "Datum Plot", `.dplot`, `com.edgarmendonca.datumplot`, `REPO = "Edgar-Mendonca/Datum-Plot"` in `src-tauri/src/update.rs`, installer `DatumPlot-x.y.z-setup.exe`.
 

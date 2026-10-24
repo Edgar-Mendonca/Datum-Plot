@@ -1,10 +1,13 @@
 // Commands shared by the ribbon, menus, shortcuts and Tell Me.
 import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, graph, curTable, open, P, openDialog } from "./store";
 import { Out } from "./api";
+import { FEATURES, ready } from "./features";
+import { soon } from "./roadmap";
 import { addSet, setDialog } from "./datatable";
 import { copyGraph, exportGraph, newGraph, setZoomG } from "./graph";
 import { formatGraph } from "./format";
 import * as D from "./dialogs";
+import { analyze, importFile, newTable, graphTypes } from "./roadmap";
 
 const need = <T,>(v: T | undefined, what: string) => { if (!v) toast(`Open ${what} first.`); return v; };
 export const C = {
@@ -36,7 +39,7 @@ export const C = {
     if (t && P().tables.length === 1) return toast("A project keeps at least one data table.");
     if (confirm(t ? `Delete the data table “${t.name}”${gs ? ` and its ${gs} ${gs === 1 ? "graph" : "graphs"}` : ""}?` : `Delete the graph “${cur.name}”?`)) act({ Delete: { id: cur.id } });
   },
-  analyze: (what = "Analyses") => D.comingSoon(what),
+  analyze: () => analyze(),
 };
 
 /** Tell Me: [label, run, keys]. */
@@ -49,6 +52,7 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Info sheet", () => open("info")], ["Show data table", () => open("data")], ["Show graph", () => open("graphs")],
   ["Rename", C.rename], ["Duplicate", C.duplicate], ["Delete table or graph", C.del],
   ["Options", () => setBackstage("options")], ["Check for updates", () => setBackstage("about")], ["Keyboard shortcuts", D.shortcuts, "F1"], ["Getting started", D.gettingStarted], ["Glossary", D.glossary],
-  ["Column statistics (0.1.1)", () => C.analyze("Column statistics")], ["t-test (0.2.0)", () => C.analyze("t-tests")], ["Nonlinear regression (0.2.0)", () => C.analyze("Curve fitting")],
+  ["Import CSV, TXT or Excel", importFile], ["New data table (choose a kind)", newTable], ["Graph type", graphTypes], ["Analyze data", analyze], ["Roadmap: what comes when", () => setBackstage("roadmap")],
+  ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),
 ];
 export { out, openDialog };

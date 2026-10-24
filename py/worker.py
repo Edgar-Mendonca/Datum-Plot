@@ -26,6 +26,9 @@ def main():
             return graph.render(q["table"], q["graph"])
         if cmd == "export":
             return graph.export(q["table"], q["graph"], q.get("fmt", "png"), q.get("path"), q.get("dpi", 300), q.get("transparent", False))
+        if cmd == "read":
+            from datum import io as dio
+            return dio.read_file(q["path"])
         if cmd == "summary":
             return {"sets": stats.summarize(q["table"])}
         raise ValueError(f"Unknown request {cmd!r}")

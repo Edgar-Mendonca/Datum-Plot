@@ -1,6 +1,6 @@
 [package]
 name = "datum-plot"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Datum Plot: scientific graphs and statistics for Windows."
 license = "MIT"
@@ -10,8 +10,10 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 datum-core = { path = "../crates/core" }
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["image-png"] }
 tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
 chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true

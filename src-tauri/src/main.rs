@@ -2,6 +2,7 @@
 //! window, and passes graphs to the Python engine.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod py;
+mod runtime;
 mod update;
 
 use datum_core::{doc::{Doc, Op}, templates, DataSet, Entry, GraphSettings, Project, Table};
@@ -10,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
 use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
+use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_dialog::DialogExt;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -106,6 +108,7 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
     // New tables and graphs without settings follow the options.
     let op = match op {
         Op::AddGraph { table, settings: None } => Op::AddGraph { table, settings: Some(Box::new(a.opts.graph())) },
+        Op::Import { name, entry, reps, header, rows, graph: None } => Op::Import { name, entry, reps, header, rows, graph: Some(Box::new(a.opts.graph())) },
         o => o,
     };
     a.doc.apply(op)?;
@@ -264,14 +267,58 @@ async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, d
     tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
 }
 
-/// A PNG of a graph as base64, for the clipboard.
+/// Puts a PNG of a graph on the Windows clipboard (Word and PowerPoint paste it as a picture).
 #[tauri::command]
-async fn graph_png(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<String> {
+async fn copy_graph(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<()> {
     let mut q = graph_req(&st, id, "export")?;
     q["fmt"] = json!("png");
     q["dpi"] = json!(dpi.clamp(72, 1200));
-    let r = tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q)).await.map_err(|e| e.to_string())??;
-    Ok(r["data"].as_str().unwrap_or("").to_string())
+    let h = app.clone();
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let png = base64_decode(r["data"].as_str().unwrap_or(""))?;
+    let img = tauri::image::Image::from_bytes(&png).map_err(|e| format!("Could not read the picture: {e}"))?;
+    app.clipboard().write_image(&img).map_err(|e| format!("Could not copy the picture: {e}"))
+}
+
+#[tauri::command]
+fn copy_text(app: AppHandle, text: String) -> R<()> {
+    app.clipboard().write_text(text).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn read_clipboard(app: AppHandle) -> String {
+    app.clipboard().read_text().unwrap_or_default()
+}
+
+/// File › Import: a CSV, TXT or Excel file read by Python, for the Import dialog.
+#[tauri::command]
+async fn import_file(app: AppHandle) -> R<Option<Value>> {
+    let Some(path) = pick(&app, "Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm"]) else { return Ok(None) };
+    let q = json!({ "cmd": "read", "path": path.display().to_string() });
+    let h = app.clone();
+    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    r["name"] = json!(path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default());
+    Ok(Some(r))
+}
+
+fn base64_decode(s: &str) -> R<Vec<u8>> {
+    let val = |c: u8| match c { b'A'..=b'Z' => Some(c - b'A'), b'a'..=b'z' => Some(c - b'a' + 26), b'0'..=b'9' => Some(c - b'0' + 52), b'+' => Some(62), b'/' => Some(63), _ => None };
+    let mut out = Vec::with_capacity(s.len() * 3 / 4);
+    let (mut acc, mut bits) = (0u32, 0);
+    for c in s.bytes().filter(|c| !c.is_ascii_whitespace() && *c != b'=') {
+        acc = acc << 6 | val(c).ok_or("The picture data is damaged.")? as u32;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((acc >> bits) as u8);
+        }
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+async fn restart_engine(app: AppHandle) -> R<()> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().restart(&app).map(|_| ())).await.map_err(|e| e.to_string())?
 }
 
 /// The engine's versions, or why it could not start.
@@ -435,6 +482,7 @@ async fn install_update(app: AppHandle, url: String, sums: Option<String>) -> R<
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let opts: Options = options_file(app.handle()).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             let mut p = Project::new("Project1");
@@ -462,7 +510,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, export_graph, graph_png, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

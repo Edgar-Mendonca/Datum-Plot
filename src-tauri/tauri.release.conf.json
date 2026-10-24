@@ -3,7 +3,7 @@
     "resources": {
       "../py/worker.py": "py/worker.py",
       "../py/datum/*.py": "py/datum/",
-      "python/": "python/"
+      "runtime.zip": "runtime.zip"
     }
   }
 }

@@ -6,6 +6,7 @@ import { P, item, open, Section, navOpen, act, openMenu, setBackstage } from "./
 import { C } from "./cmds";
 import { newGraph } from "./graph";
 import { Icon } from "./ui";
+import { analyze, soon } from "./roadmap";
 
 export const SIDE: [Section, string, string][] = [["info", "infosheet", "Info"], ["data", "sheet", "Data"], ["results", "results", "Results"], ["graphs", "graph", "Graphs"], ["layouts", "layout", "Layouts"]];
 
@@ -25,12 +26,12 @@ export const Navigator = () => {
         <button class="nitem" classList={{ on: item().s === "info" }} onClick={() => open("info")}><Icon n="infosheet" /><span>{P().info.title || "Project info"}</span></button>
         <Head l="Data tables" add={C.newTable} title="New XY data table" />
         <For each={P().tables}>{t => <button class="nitem" classList={{ on: item().s === "data" && item().id === t.id }} onClick={() => open("data", t.id)} onContextMenu={e => ctx(e, t.id, "data")} onDblClick={C.rename}><Icon n="sheet" /><span>{t.name}</span></button>}</For>
-        <Head l="Results" />
-        <p class="nnone">Analyses arrive in 0.1.1</p>
+        <Head l="Results" add={() => analyze()} title="Analyze data" />
+        <p class="nnone">Statistics and regression arrive in 0.2</p>
         <Head l="Graphs" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
-        <Head l="Layouts" />
-        <p class="nnone">Page layouts arrive in 0.3</p>
+        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.4)" />
+        <p class="nnone">Page layouts arrive in 0.4</p>
       </aside>
     </Show>
   );
@@ -63,14 +64,14 @@ export const Empty = (p: { icon: string; title: string; children: JSX.Element })
 export const ResultsPage = () => (
   <Empty icon="results" title="Results">
     <p>Results are the output of analyses: column statistics, t-tests, ANOVA, curve fits. Each one stays linked to its data table and updates when the data change.</p>
-    <p class="muted">Column statistics and normality tests arrive in 0.1.1; t-tests, ANOVA and curve fitting in 0.2.0. The engine (numpy and SciPy) is already in place.</p>
-    <p><button class="btn" onClick={() => C.analyze("Analyses")}>What's coming</button> <button class="btn pri" onClick={() => open("graphs")}>Open the graph</button></p>
+    <p class="muted">Descriptive statistics, linear regression and curve fitting arrive in 0.2; comparing groups (t-tests, ANOVA) in 0.3. The engine (numpy and SciPy) is already in place.</p>
+    <p><button class="btn" onClick={() => analyze()}>See the analyses</button> <button class="btn" onClick={() => setBackstage("roadmap")}>Roadmap</button> <button class="btn pri" onClick={() => open("graphs")}>Open the graph</button></p>
   </Empty>
 );
 export const LayoutsPage = () => (
   <Empty icon="layout" title="Layouts">
     <p>A layout is a page that arranges several graphs, tables and text, with panel letters A, B, C, ready for a paper or a poster.</p>
-    <p class="muted">Layouts arrive in 0.3. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
+    <p class="muted">Layouts arrive in 0.4. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
     <p><button class="btn" onClick={() => setBackstage("print")}>Print a graph</button></p>
   </Empty>
 );

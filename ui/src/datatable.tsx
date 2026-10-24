@@ -3,7 +3,7 @@
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter } from "./api";
-import { act, opts, openMenu, toast, Item, openDialog, closeDialog } from "./store";
+import { act, call, opts, openMenu, toast, Item, openDialog, closeDialog } from "./store";
 import * as F from "./fmt";
 import { parseTsv, toTsv, transpose, series, clip } from "./cells";
 import { createSel, aggregate } from "./selection";
@@ -73,7 +73,7 @@ export const DataTable = (p: { t: Table }) => {
   const pasteRows = (m: string[][]) => { const [r, k] = cur(); return act({ Paste: { table: t().id, row: r, col: k - 1, rows: m } }); };
   const onPaste = (e: ClipboardEvent) => { if (edit() !== null) return; e.preventDefault(); pasteRows(parseTsv(e.clipboardData?.getData("text/plain") ?? "")); };
   const pasteSpecial = async (what: "all" | "values" | "formats", tr: boolean) => {
-    const txt = clip.text || (await navigator.clipboard?.readText().catch(() => "")) || "";
+    const txt = clip.text || (await call<string>("read_clipboard")) || "";
     if (!txt) return toast("Copy some cells first.");
     let m = parseTsv(txt), st = clip.text === txt ? clip.styles : [];
     if (tr) { m = transpose(m); st = st.length ? transpose(st) : st; }

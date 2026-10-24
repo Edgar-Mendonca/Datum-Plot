@@ -1,6 +1,8 @@
 name: Release
-# Builds the Windows installer, with its own Python (numpy, scipy, matplotlib), and publishes a
-# GitHub Release that the in-app updater picks up. Bump the version in src-tauri/Cargo.toml and
+# Builds the Windows installers and the Python runtime pack and publishes a GitHub Release that
+# the in-app updater picks up: DatumPlot-x.y.z-setup.exe (full, with runtime.zip inside, for first
+# installs), DatumPlot-x.y.z-update.exe (app only, a few MB, what Update now downloads) and
+# DatumPlot-runtime-N.zip (downloaded by the app only when py/runtime.txt changes). Bump the version in src-tauri/Cargo.toml and
 # crates/core/Cargo.toml, add a CHANGELOG.md section, then push a tag (git tag v0.1.0 && git push
 # origin v0.1.0) or run this workflow from the Actions tab.
 on:
@@ -34,7 +36,7 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match version $V in src-tauri/Cargo.toml"; exit 1
           fi
           echo "V=$V" >> "$GITHUB_ENV"
-      - name: Bundled Python (the newest embeddable CPython 3.13 + py/requirements.txt)
+      - name: Python runtime pack (the newest embeddable CPython 3.13 + py/requirements.txt)
         shell: bash
         run: |
           for n in $(seq 25 -1 5); do
@@ -42,25 +44,34 @@ jobs:
           done
           test -n "$PYV" || { echo "No embeddable Python 3.13 found on python.org"; exit 1; }
           echo "Embedded Python $PYV"
-          mkdir -p src-tauri/python && unzip -q py.zip -d src-tauri/python
-          echo "Lib/site-packages" >> src-tauri/python/python313._pth
-          python -m pip install --target src-tauri/python/Lib/site-packages --only-binary=:all: --no-compile -r py/requirements.txt
+          mkdir -p rt && unzip -q py.zip -d rt
+          echo "Lib/site-packages" >> rt/python313._pth
+          python -m pip install --target rt/Lib/site-packages --only-binary=:all: --no-compile -r py/requirements.txt
           # Leave out what the app never runs: test suites, pip's scripts, sample data.
-          SP=src-tauri/python/Lib/site-packages
-          find "$SP" -type d \( -name tests -o -name __pycache__ \) -prune -exec rm -rf {} +
-          rm -rf "$SP/bin" "$SP/matplotlib/mpl-data/sample_data"
-          src-tauri/python/python.exe -m compileall -q -j 0 "$SP" py
-          printf '{"cmd":"ping"}\n' | src-tauri/python/python.exe -X utf8 py/worker.py | tee ping.txt
+          find rt/Lib/site-packages -type d \( -name tests -o -name __pycache__ \) -prune -exec rm -rf {} +
+          rm -rf rt/Lib/site-packages/bin rt/Lib/site-packages/matplotlib/mpl-data/sample_data
+          rt/python.exe -m compileall -q -j 0 rt/Lib/site-packages
+          printf '{"cmd":"ping"}\n' | rt/python.exe -X utf8 py/worker.py | tee ping.txt
           grep -q '"matplotlib"' ping.txt
-          du -sh src-tauri/python
+          du -sh rt
+          RN=$(tr -d '[:space:]' < py/runtime.txt)
+          mkdir -p out
+          python -c "import shutil; shutil.make_archive('out/DatumPlot-runtime-$RN', 'zip', 'rt')"
+          cp "out/DatumPlot-runtime-$RN.zip" src-tauri/runtime.zip
+          ls -la out
       - run: cargo test -p datum-core
-      - run: npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
-      - name: Installer and checksum
+      - name: App-only installer (the in-app updater downloads this one)
         shell: bash
         run: |
-          mkdir out
+          npx tauri build --bundles nsis
+          cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-update.exe"
+          rm -rf target/release/bundle/nsis
+      - name: Full installer (with the Python runtime, for first installs)
+        shell: bash
+        run: |
+          npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
           cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-setup.exe"
-          cd out && sha256sum "DatumPlot-$V-setup.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
+          cd out && sha256sum DatumPlot-* > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -76,4 +87,6 @@ jobs:
           make_latest: true
           files: |
             out/DatumPlot-${{ env.V }}-setup.exe
+            out/DatumPlot-${{ env.V }}-update.exe
+            out/DatumPlot-runtime-*.zip
             out/SHA256SUMS.txt

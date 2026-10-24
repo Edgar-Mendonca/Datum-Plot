@@ -152,3 +152,16 @@ fn templates_make_sense() {
     assert_eq!((p.tables[0].sets[0].entry, p.tables[0].width()), (Entry::MeanSdN, 4));
     assert!(templates::build(Some("nope")).is_none());
 }
+
+#[test]
+fn import_builds_a_table_with_titles_and_sets() {
+    let (mut d, _) = doc();
+    let rows: Vec<Vec<String>> = [vec!["Strain", "Sample 1", "", "Sample 2", ""], vec!["0", "0", "0.1", "0", "0.2"], vec!["0.01", "70", "72", "68", "x"]]
+        .iter().map(|r| r.iter().map(|s| s.to_string()).collect()).collect();
+    d.apply(Op::Import { name: "Tensile".into(), entry: Entry::Replicates, reps: 2, header: true, rows, graph: Some(Box::default()) }).unwrap();
+    let t = d.p.tables.last().unwrap();
+    assert_eq!((t.name.as_str(), t.x_title.as_str(), t.rows, t.sets.len(), t.width()), ("Tensile", "Strain", 2, 2, 5));
+    assert_eq!((t.sets[0].title.as_str(), t.sets[1].title.as_str()), ("Sample 1", "Sample 2"));
+    assert_eq!((t.get(1, 0), t.get(1, 2), t.get(1, 4)), (Some(0.01), Some(72.0), None), "text that is not a number stays empty");
+    assert_eq!(d.p.graphs.last().unwrap().table, t.id);
+}

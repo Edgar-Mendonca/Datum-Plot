@@ -1,12 +1,14 @@
 // Title bar, quick access toolbar, Tell Me and the ribbon (Data, Analyze, Graph, Format, View, Help).
 import { For, Show, JSX, createSignal, createMemo, onMount } from "solid-js";
-import { call, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, item, graph, table, navOpen, setNavOpen, open as openView, toast } from "./store";
+import { call, toast, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, item, graph, table, navOpen, setNavOpen, open as openView } from "./store";
 import { C, ALL_CMDS } from "./cmds";
 import * as D from "./dialogs";
 import { Icon } from "./ui";
 import * as F from "./fmt";
 import { setG, ERRORS, SIZES, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
+import { feature } from "./features";
+import { soon, newTable, analyze, graphTypes, importFile } from "./roadmap";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
 export const FONTS = ["Arial", "Calibri", "Segoe UI", "Tahoma", "Verdana", "Times New Roman", "Cambria", "Georgia", "Consolas", "IBM Plex Sans"];
@@ -32,7 +34,7 @@ const Font = () => {
   </>;
 };
 
-const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string }) => p.big && p.run && p.dd ? (
+const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
   // MS Project split button: the picture runs the command, the label opens the menu.
   <div class="rbw big splitbig" classList={{ on: p.on }}>
     <button class="rb top" title={p.title ?? p.l} onClick={e => p.run!(e)}><Icon n={p.i} /></button>
@@ -40,12 +42,14 @@ const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boole
   </div>
 ) : (
   <div class="rbw" classList={{ big: p.big }}>
-    <button class="rb" classList={{ big: p.big, on: p.on }} disabled={p.off} title={p.title ?? p.l} onClick={e => (p.run ?? p.dd)?.(e)}><Icon n={p.i} />{p.big ? <span>{p.l}{p.dd && !p.run ? " ▾" : ""}</span> : <span>{p.l}</span>}{!p.big && p.dd && !p.run && <b class="car">▾</b>}</button>
+    <button class="rb" classList={{ big: p.big, on: p.on, soonb: p.soon }} disabled={p.off} title={p.title ?? p.l} onClick={e => (p.run ?? p.dd)?.(e)}><Icon n={p.i} />{p.big ? <span>{p.l}{p.dd && !p.run ? " ▾" : ""}</span> : <span>{p.l}</span>}{!p.big && p.dd && !p.run && <b class="car">▾</b>}</button>
     {p.run && p.dd && <button class="rb split" onClick={e => p.dd!(e)}>▾</button>}
   </div>
 );
 const G = (p: { l: string; children: JSX.Element }) => <div class="grp"><div class="items">{p.children}</div><div class="cap">{p.l}</div></div>;
 const S = (p: { children: JSX.Element }) => <div class="stack">{p.children}</div>;
+/** A planned command: it has its place now and says when it arrives (feature catalogue id). */
+const N = (p: { i: string; l: string; id: string; big?: boolean }) => { const f = feature(p.id); return <B i={p.i} l={p.l} big={p.big} soon title={`${p.l}: arrives in ${f?.[2]} (${p.id})`} run={() => soon(p.id)} />; };
 
 /** Tell Me / command search (Ctrl+K, Alt+Q). */
 export const palette = () => openDialog(() => {
@@ -82,7 +86,7 @@ export const TitleBar = (p: { update: string | null }) => (
     </div>
     <nav class="tabs">
       <button class="file" onClick={() => setBackstage("home")}>File</button>
-      <For each={[["data", "Data"], ["analyze", "Analyze"], ["graph", "Graph"], ["view", "View"], ["help", "Help"]]}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For>
+      <For each={[["data", "Data"], ["analyze", "Analyze"], ["graph", "Graph"], ["layout", "Layout"], ["tools", "Tools"], ["view", "View"], ["help", "Help"]]}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For>
       <Show when={item().s === "graphs"}><div class="ctxgrp"><small>Graph Tools</small><button classList={{ on: tab() === "format" }} onClick={() => setTab("format")}>Format</button></div></Show>
     </nav>
   </header>
@@ -107,29 +111,34 @@ const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) re
 const errorMenu = (): Item[] => ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && gs()?.points !== "each", run: () => setGS(s => { s.error = k; s.points = "mean"; }) }));
 const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
 const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
-const AN: [string, string, string][] = [["sigma", "Column Statistics", "0.1.1"], ["check", "Normality Tests", "0.1.1"], ["err", "t-tests", "0.2.0"], ["table", "One-way ANOVA", "0.2.0"], ["line", "Linear Regression", "0.2.0"], ["curve", "Nonlinear Fit", "0.2.0"]];
-
 export const Ribbon = () => (
   <section class="ribbon" ref={fitRibbon}>
     <Show when={tab() === "data"}>
       <G l="Clipboard"><B big i="paste" l="Paste" run={() => document.execCommand("paste")} dd={e => openMenu(e, [{ label: "Paste", icon: "paste", run: () => document.execCommand("paste"), keys: "Ctrl+V" }, { label: "Paste Special…", icon: "paste", run: () => D.pasteSpecial(), keys: "Ctrl+Alt+V" }, "-", { label: "Paste Values", run: () => F.target()?.paste?.("values", false) }, { label: "Paste Formatting", icon: "paint", run: () => F.target()?.paste?.("formats", false) }, { label: "Transpose", run: () => F.target()?.paste?.("all", true) }])} />
         <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
       <Font />
-      <G l="Insert"><B big i="sheet" l="New Table" title="A new XY data table, with its graph" run={C.newTable} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
+      <G l="Insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="CSV, TXT or Excel file" run={importFile} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
+      <G l="Transform"><S><N i="fx" l="Transform" id="A15" /><N i="fx" l="Column Formula" id="A11" /><N i="sort" l="Sort" id="A17" /></S><S><N i="exclude" l="Find Outliers" id="A16" /><N i="check" l="Check Data" id="A18" /></S></G>
       <G l="Values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
       <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Show Graph" run={() => openView("graphs")} /></G>
       <G l="Item"><S><B i="rename" l="Rename" run={C.rename} /><B i="copy" l="Duplicate" run={C.duplicate} /><B i="del" l="Delete" run={C.del} /></S></G>
     </Show>
     <Show when={tab() === "analyze"}>
-      <G l="Analyze"><B big i="sigma" l="Analyze…" run={() => C.analyze("Analyze")} /></G>
-      <G l="Coming next"><For each={AN}>{([i, l, v]) => <B big i={i} l={l} title={`Arrives in ${v}`} run={() => C.analyze(l)} />}</For></G>
+      <G l="Analyze"><B big i="sigma" l="Analyze…" title="Choose an analysis" run={() => analyze()} /></G>
+      <G l="Statistics"><S><N i="sigma" l="Descriptive" id="B1" /><N i="check" l="Normality" id="B2" /><N i="exclude" l="Outliers" id="B3" /></S></G>
+      <G l="Regression"><N big i="line" l="Linear Regression" id="B9" /><N big i="curve" l="Curve Fit" id="B10" /><S><N i="curve" l="Global Fit" id="B12" /><N i="xy" l="Interpolate" id="B13" /><N i="graph" l="Area, Smooth" id="B14" /></S></G>
+      <G l="Compare"><S><N i="err" l="t-tests" id="B4" /><N i="err" l="Nonparametric" id="B5" /><N i="table" l="One-way ANOVA" id="B6" /></S><S><N i="table" l="Two-way ANOVA" id="B15" /><N i="sigma" l="Effect Sizes" id="B8" /></S></G>
+      <G l="More"><S><N i="xy" l="Correlation" id="B16" /><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /></S><S><N i="group" l="PCA, Clusters" id="B22" /><N i="curve" l="Peaks" id="B24" /><N i="sigma" l="Power" id="B23" /></S></G>
+      <G l="Help me choose"><N big i="search" l="Test Chooser" id="C4" /></G>
     </Show>
     <Show when={tab() === "graph"}>
-      <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="sheet" l="Data Table" run={() => openView("data", graph()?.table ?? table()?.id ?? 0)} /></G>
+      <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Graph Type" run={graphTypes} /><B big i="sheet" l="Data Table" run={() => openView("data", graph()?.table ?? table()?.id ?? 0)} /></G>
       <G l="Data"><B big i="err" l="Error Bars" dd={e => openMenu(e, errorMenu())} /><S><B i="symbol" l="Each Replicate" on={gs()?.points === "each"} run={() => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; })} /><B i="line" l="Connect Points" on={!!gs()?.line} run={() => setGS(s => { s.line = !s.line; })} /><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /></S></G>
       <G l="Axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
       <G l="Size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
+      <G l="Add"><S><N i="curve" l="Fitted Curve" id="D5" /><N i="err" l="Significance" id="D3" /><N i="note" l="Annotation" id="D15" /></S></G>
+      <G l="Style"><S><N i="style" l="Styles" id="D13" /><N i="paint" l="Copy Look" id="D14" /><N i="bucket" l="Colour Schemes" id="D16" /></S></G>
       <G l="Share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
@@ -138,7 +147,20 @@ export const Ribbon = () => (
         <select class="fsize" title="Font size (pt)" value={String(gs()?.fontSize ?? 10)} onChange={e => { const v = +e.currentTarget.value; setGS(s => { s.fontSize = v; }); }}><For each={[6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24]}>{z => <option value={z}>{z}</option>}</For></select></div>
         <div><button class="rb fb" classList={{ on: !!gs()?.boldTitles }} title="Bold axis titles" onClick={() => setGS(s => { s.boldTitles = !s.boldTitles; })}><span style={{ "font-weight": 700 }}>B</span></button>
           <button class="rb fb" title="Increase font size" onClick={() => setGS(s => { s.fontSize = Math.min(36, s.fontSize + 1); })}><span>A<sup>+</sup></span></button><button class="rb fb" title="Decrease font size" onClick={() => setGS(s => { s.fontSize = Math.max(5, s.fontSize - 1); })}><span>A<sup>−</sup></span></button></div></div></G>
+      <G l="Annotate"><S><N i="note" l="Text" id="D15" /><N i="line" l="Arrow, Line" id="D15" /><N i="frame" l="Box" id="D15" /></S></G>
+      <G l="Axes"><S><N i="axis" l="Axis Break" id="D8" /><N i="axis" l="Second Y Axis" id="D8" /><N i="zin" l="Zoom and Pan" id="E4" /></S></G>
       <G l="Layout"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /><S><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /><B i="opts" l="Graph Options" run={() => C.format("graph")} /></S></G>
+    </Show>
+    <Show when={tab() === "layout"}>
+      <G l="Layout"><N big i="layout" l="New Layout" id="F1" /><S><N i="list" l="Panel Letters" id="F1" /><N i="cols" l="Align" id="F1" /><N i="size" l="Journal Figure" id="F2" /></S></G>
+      <G l="Templates"><N big i="layout" l="Poster" id="F3" /><N big i="layout" l="Slide" id="F3" /></G>
+      <G l="Export"><N big i="export" l="Export Layout" id="F2" /><N big i="image" l="TIFF for Journals" id="G3" /></G>
+    </Show>
+    <Show when={tab() === "tools"}>
+      <G l="Python"><N big i="fx" l="Python Console" id="H1" /><S><N i="fx" l="My Analyses" id="H2" /><N i="report" l="Notebook" id="H5" /></S></G>
+      <G l="Automate"><N big i="repeat" l="Analysis Template" id="H3" /><N big i="folder" l="Batch Process" id="H4" /></G>
+      <G l="Export"><S><N i="export" l="Export All Graphs" id="G4" /><N i="table" l="Excel Workbook" id="G6" /></S><S><N i="report" l="PowerPoint" id="G5" /><N i="report" l="Word Report" id="G5" /></S></G>
+      <G l="Engine"><B big i="update" l="Restart Engine" title="Restart the Python engine" run={() => call("restart_engine").then(() => toast("The Python engine restarted.", true))} /></G>
     </Show>
     <Show when={tab() === "view"}>
       <G l="Show"><B big i="infosheet" l="Info" run={() => openView("info")} /><B big i="sheet" l="Data" run={() => openView("data")} /><B big i="graph" l="Graphs" run={() => openView("graphs")} /><S><B i="list" l="Navigator" on={navOpen()} run={() => setNavOpen(!navOpen())} /></S></G>
@@ -146,7 +168,7 @@ export const Ribbon = () => (
       <G l="Theme"><S><For each={[["auto", "Auto (Windows)"], ["light", "Light"], ["dark", "Dark"]]}>{([k, l]) => <B i="style" l={l} on={theme() === k} run={() => setTheme(k)} />}</For></S></G>
     </Show>
     <Show when={tab() === "help"}>
-      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="info" l="Glossary" title="SD, SEM, CI, replicate and other terms" run={() => D.glossary()} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
+      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Plot will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="SD, SEM, CI, replicate and other terms" run={() => D.glossary()} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
       <G l="Datum Plot on GitHub"><B big i="github" l="GitHub" title="The project and its code" run={() => call("open_url", { url: GH })} /><B big i="tag" l="Releases" title="Every version and its change log" run={() => call("open_url", { url: `${GH}/releases` })} /><B big i="bug" l="Report an Issue" run={() => call("open_url", { url: `${GH}/issues/new` })} /></G>
       <G l="Updates"><B big i="upd" l="Check for Updates" run={() => setBackstage("about")} /></G>
     </Show>

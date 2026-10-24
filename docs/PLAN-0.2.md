@@ -1,6 +1,6 @@
 # Datum Plot after 0.1.0: the full feature catalogue, Python, fast updates
 
-Status: **brainstorm for discussion, nothing built yet.** Build after your answers in §9.
+Status: **answered (session 3) — 0.1.1 built.** The answers and the new release order are in §10; they replace §7. The catalogue in §4 is mirrored in the app (`ui/src/features.ts`, Help › Roadmap) with the release numbers of §10.
 
 This follows the family pattern: feedback → diagnosis → proposal → size → questions. §4 is the full catalogue of what Datum Plot will do: every feature gets an ID (A1, B12…) and a release, so we can tick them off one by one.
 
@@ -280,3 +280,35 @@ Each big release can go out in betas (0.2.0-beta.1, …) through the opt-in beta
 8. **Interactive graph editing (E2–E4: click, drag, edit in place):** keep in 0.4, or earlier?
 9. **Prism import (`.pzfx`):** do you have Prism files to move over? Then it can come earlier.
 10. Anything missing from the catalogue that you use in Prism or Origin every day?
+
+---
+
+## 10. Answers (session 3, 24 Oct 2026) and the new order
+
+The user answered in one message: no Prism files; nothing missing from the catalogue; their background is **materials science R&D (now project management)**, with a lot of **linear regression and statistical analysis of many data points**. "Build the app first: lay out the whole UI with every feature in place, then build feature by feature, so it is easier to see and understand." The other questions were left to us; decided as follows.
+
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Order | **Statistics and regression first (0.2)**, comparing groups second (0.3) — the user's own work is regression-heavy. |
+| 2 | Field | Materials science and engineering first: samples for tensile tests, Arrhenius plots, calibration lines, XRD/spectra (J2, B24). |
+| 3 | 0.1.1 scope | As proposed, **plus the full UI laid out**: every catalogue feature reachable now, planned ones dimmed and explaining when they come. |
+| 4 | Libraries | Yes; each one is added in the release that first needs it (openpyxl in 0.1.1; statsmodels and lmfit in 0.2; …). |
+| 5 | Results | Prism-style results sheets with tabs plus the Explain panel. |
+| 6 | P values | **Exact P values with APA stars** by default (engineering and materials journals); Prism GP and others as options. |
+| 7 | Python console | 0.7. |
+| 8 | Graph editing | 0.4. |
+| 9 | `.pzfx` | No Prism files: moved to 0.6. |
+| 10 | Missing | Nothing. |
+
+### Release order (replaces §7)
+
+| Version | Theme | Catalogue IDs |
+| --- | --- | --- |
+| **0.1.1** ✅ | Fixes, fast updates, import, full layout | A12, G2, I1, I2; galleries, Roadmap, planned commands |
+| **0.2.0** | Statistics and regression | A15–A18, B1–B3, B9–B14, C1–C9, D4, D5, D13, D14, D16, G4, G6, I3, J2, J3 |
+| 0.3.0 | Compare groups | A2, B4–B8, D2, D3, E7 |
+| 0.4.0 | Two factors, interactive graphs, layouts | A3, A4, A6, B15–B18, D6–D8, D10, D15, E2–E4, E6, F1, F2, G3 |
+| 0.5.0 | Survival, nested, many variables | A5, A7, A8, B19–B23, D9 |
+| 0.6.0 | Origin power | A9–A11, A13, A14, B24–B26, D11, D12, D17, E5, F3, I6 |
+| 0.7.0 | Python scripting and automation | H1–H5, G5 |
+| 1.0.0 | Stable | J4 |

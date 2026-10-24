@@ -59,7 +59,7 @@ export const loadOut = async (cmd: string, args?: object) => {
 };
 
 /** The Python engine: its versions once it answers, or why it could not start. */
-export const [engine, setEngine] = createSignal<{ versions: Record<string, string> | null; error: string | null } | null>(null);
+export const [engine, setEngine] = createSignal<{ versions: Record<string, string> | null; error: string | null; status?: string } | null>(null);
 
 // ---------- messages, menus, dialogs ----------
 export const [msg, setMsg] = createSignal<{ text: string; ok: boolean } | null>(null);

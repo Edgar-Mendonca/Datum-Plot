@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.1 — 2026-10-24
+
+Copy Picture works, updates are small, data import, and the whole app laid out: every planned feature has its place and says when it arrives.
+
+**Small, fast updates**
+- Python and its libraries are now a separate "runtime pack". Update now downloads only Datum Plot itself (a few MB); the runtime is downloaded again only when its libraries change.
+- The first start after installing unpacks the Python engine once (a short wait, shown in the status bar). Later starts are as fast as before.
+- The copy of Python that 0.1.0 kept in the program folder is removed.
+
+**Copy Picture works**
+- Copy Picture (and Ctrl+C on a graph) now puts the graph on the Windows clipboard as a picture, so it pastes into Word, PowerPoint and email. Paste Special and the Print page's codes use the Windows clipboard too.
+
+**Import data**
+- File › Import, Data › Import or Home › Import data: CSV, TSV, TXT and Excel (.xlsx) files.
+- A preview shows the file. Choose the sheet, whether the first row holds titles, the X column, and how many replicates make one data set (guessed from the titles, such as "Sample 1, , Sample 2, ,").
+- Semicolon files with decimal commas (1,5) are read correctly.
+
+**Everything laid out**
+- **Help › Roadmap** (also on the File page and Home): all 99 features (ready and planned), what each does, the Python library behind it and the release it arrives in. Search it or filter by release.
+- Planned commands already sit in the ribbon, dimmed with an amber dot. Clicking one tells you what it will do and when.
+- New ribbon tabs: **Layout** (layouts, journal figures, posters) and **Tools** (Python console, your own analyses, batch processing, PowerPoint and Word export, Restart Engine).
+- **Analyze…** opens a gallery of every analysis by family: statistics, regression and fitting, comparing groups, relationships, survival, signals and spectra, planning.
+- **New Table** opens a gallery of every kind of data table; **Graph Type** a gallery of every kind of graph.
+
+**Reliability**
+- If the Python engine ever takes longer than a minute, it is restarted instead of freezing the app. Tools › Restart Engine does it by hand.
+
+**What comes next**
+- 0.2: statistics and regression: descriptive statistics, normality, outliers, linear and polynomial regression, nonlinear curve fitting with a model library, interpolation, results sheets with explanations.
+
 ## 0.1.0 — 2026-10-24
 
 The first version of Datum Plot: the application, automatic updates, an XY data table and publication-quality graphs drawn by a built-in Python engine.

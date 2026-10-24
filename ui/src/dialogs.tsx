@@ -1,8 +1,7 @@
-// Help and small dialogs: Paste Special, Getting Started, Glossary, Shortcuts, save before closing,
-// and what the Analyze tab will hold.
+// Help and small dialogs: Paste Special, Getting Started, Glossary, Shortcuts, save before closing.
 import { For, Show, createSignal } from "solid-js";
 import { Out } from "./api";
-import { openDialog, closeDialog, toast, call, P, engine } from "./store";
+import { openDialog, closeDialog, toast, call, P } from "./store";
 import * as F from "./fmt";
 import { Dialog, Row, Check } from "./ui";
 
@@ -39,7 +38,7 @@ export const gettingStarted = () => openDialog(() => (
         <li>Type or paste your data. Titles and units above the grid become the axis titles.</li>
         <li>Open the graph in the sidebar (Graphs). Use the Graph and Format tabs, or double-click parts of the graph.</li>
         <li>Export the graph, copy it into Word or PowerPoint (Ctrl+C on the graph), or print it (Ctrl+P).</li></ol>
-      <p class="muted">Analyses (column statistics, t-tests, ANOVA, curve fitting) arrive in the next releases: see Analyze.</p>
+      <p class="muted">Analyses arrive release by release: statistics and regression in 0.2, comparing groups in 0.3. Help › Roadmap lists every feature and when it comes; planned commands are already in the ribbon (shown dimmed).</p>
     </div>
   </Dialog>
 ));
@@ -90,16 +89,5 @@ export const confirmClose = (then: () => void) => openDialog(() => (
   <Dialog title="Save changes?" okText="Save" cancel="Cancel" ok={async () => { const o = await call<Out | null>("save", { asNew: false }); if (o) then(); return !!o; }}
     extra={<button class="btn" onClick={() => { closeDialog(); then(); }}>Don't save</button>}>
     <p>Do you want to save the changes to “{P().name}”?</p>
-  </Dialog>
-));
-
-/** The Analyze tab before analyses exist: what comes and when. */
-export const comingSoon = (what: string) => openDialog(() => (
-  <Dialog title={what}>
-    <p><b>{what}</b> is not in Datum Plot 0.1 yet. The engine underneath (Python with numpy and SciPy) is already installed, so analyses arrive in small steps:</p>
-    <ul><li><b>0.1.1</b>: column tables and graphs, column statistics, normality tests, histograms, CSV and Excel import.</li>
-      <li><b>0.2.0</b>: t-tests, nonparametric tests, one-way ANOVA with multiple comparisons, significance brackets on graphs, linear regression and nonlinear curve fitting.</li>
-      <li><b>0.2.1</b>: global fitting, comparing models, interpolating unknowns from a standard curve.</li></ul>
-    <p class="muted">Engine: {engine()?.versions ? Object.entries(engine()!.versions!).map(([k, v]) => `${k} ${v}`).join(" · ") : engine()?.error ?? "starting…"}</p>
   </Dialog>
 ));

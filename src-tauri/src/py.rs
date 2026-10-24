@@ -1,18 +1,24 @@
-//! The Python engine (numpy, scipy, matplotlib): one worker process, started at launch and kept
+//! The Python engine (numpy, SciPy, matplotlib): one worker process, started at launch and kept
 //! running. Requests and answers are single JSON lines (see py/worker.py). The installed app
-//! ships its own Python in `resources/python`; a development build uses DATUM_PYTHON or the
-//! Python on the PATH.
+//! uses the runtime pack (runtime.rs); a development build uses DATUM_PYTHON or the Python on
+//! the PATH. A request that takes too long kills and restarts the worker.
 use serde_json::Value;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::sync::Mutex;
+use std::process::{Child, ChildStdin, Command, Stdio};
+use std::sync::{mpsc, Mutex};
+use std::time::Duration;
 use tauri::{AppHandle, Manager};
+
+/// How long a request may take (start-up may scan the fonts once).
+const START: Duration = Duration::from_secs(180);
+const REQUEST: Duration = Duration::from_secs(60);
 
 pub struct Worker {
     child: Child,
     stdin: ChildStdin,
-    stdout: BufReader<ChildStdout>,
+    /// Lines from the worker's stdout, read by a thread so waiting can time out.
+    lines: mpsc::Receiver<String>,
 }
 
 #[derive(Default)]
@@ -27,17 +33,19 @@ pub struct Py {
 
 pub struct Engine(pub Mutex<Py>);
 
-fn paths(app: &AppHandle) -> (PathBuf, PathBuf) {
+fn paths(app: &AppHandle) -> Result<(PathBuf, PathBuf), String> {
     let res = app.path().resource_dir().ok();
-    let bundled = res.as_ref().map(|r| r.join("python").join(if cfg!(windows) { "python.exe" } else { "bin/python3" })).filter(|p| p.exists());
-    let python = std::env::var_os("DATUM_PYTHON").map(PathBuf::from).or(bundled).unwrap_or_else(|| (if cfg!(windows) { "python" } else { "python3" }).into());
+    let python = match std::env::var_os("DATUM_PYTHON") {
+        Some(p) => p.into(),
+        None => crate::runtime::python(app)?.unwrap_or_else(|| (if cfg!(windows) { "python" } else { "python3" }).into()),
+    };
     let script = res.map(|r| r.join("py").join("worker.py")).filter(|p| p.exists()).unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../py/worker.py"));
-    (python, script)
+    Ok((python, script))
 }
 
 impl Py {
     fn start(&mut self, app: &AppHandle) -> Result<(), String> {
-        let (python, script) = paths(app);
+        let (python, script) = paths(app)?;
         let mut cmd = Command::new(&python);
         cmd.arg("-X").arg("utf8").arg(&script).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null());
         // matplotlib keeps its font list here, so only the first start scans the fonts.
@@ -51,8 +59,17 @@ impl Py {
         }
         let mut child = cmd.spawn().map_err(|e| format!("The graph engine (Python) could not start: {e}. Looked for {}.", python.display()))?;
         let (stdin, stdout) = (child.stdin.take().unwrap(), BufReader::new(child.stdout.take().unwrap()));
-        self.worker = Some(Worker { child, stdin, stdout });
-        let ready = self.read().map_err(|e| format!("The graph engine (Python) stopped while starting: {e}"))?;
+        let (tx, lines) = mpsc::channel();
+        std::thread::spawn(move || {
+            for l in stdout.lines() {
+                let Ok(l) = l else { break };
+                if tx.send(l).is_err() {
+                    break;
+                }
+            }
+        });
+        self.worker = Some(Worker { child, stdin, lines });
+        let ready = self.read(START).map_err(|e| format!("The graph engine (Python) stopped while starting: {e}"))?;
         if ready["ready"] != true {
             return Err("The graph engine (Python) did not start properly.".into());
         }
@@ -60,15 +77,18 @@ impl Py {
         self.error = None;
         Ok(())
     }
-    fn read(&mut self) -> Result<Value, String> {
+    fn read(&mut self, wait: Duration) -> Result<Value, String> {
         let w = self.worker.as_mut().ok_or("not running")?;
-        let mut line = String::new();
-        match w.stdout.read_line(&mut line) {
-            Ok(0) | Err(_) => {
+        match w.lines.recv_timeout(wait) {
+            Ok(line) => serde_json::from_str(&line).map_err(|e| e.to_string()),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                self.stop();
+                Err(format!("it took longer than {} s and was restarted", wait.as_secs()))
+            }
+            Err(_) => {
                 self.stop();
                 Err("the engine closed".into())
             }
-            Ok(_) => serde_json::from_str(&line).map_err(|e| e.to_string()),
         }
     }
     fn ask_once(&mut self, q: &Value) -> Result<Value, String> {
@@ -77,7 +97,7 @@ impl Py {
             self.stop();
             return Err("the engine closed".into());
         }
-        let r = self.read()?;
+        let r = self.read(REQUEST)?;
         if r["ok"] == true { Ok(r) } else { Err(r["error"].as_str().unwrap_or("The graph engine failed.").to_string()) }
     }
     fn stop(&mut self) {
@@ -96,11 +116,18 @@ impl Py {
                 }
             }
             match self.ask_once(q) {
+                Err(e) if e.contains("longer than") => return Err(format!("The graph engine stopped: {e}.")),
                 Err(e) if self.worker.is_none() => self.error = Some(e),
                 r => return r,
             }
         }
         Err(format!("The graph engine stopped: {}", self.error.clone().unwrap_or_default()))
+    }
+    /// Stops the worker and starts a fresh one (Tools › Restart Engine).
+    pub fn restart(&mut self, app: &AppHandle) -> Result<Value, String> {
+        self.stop();
+        self.cache.clear();
+        self.ask(app, &serde_json::json!({ "cmd": "ping" }))
     }
     /// A graph render, from the cache when nothing changed.
     pub fn render(&mut self, app: &AppHandle, q: Value) -> Result<Value, String> {

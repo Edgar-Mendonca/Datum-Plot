@@ -22,7 +22,7 @@ import * as D from "./dialogs";
 
 const Status = () => (
   <footer class="status">
-    <span classList={{ late: !!engine()?.error }}>{engine()?.error ? "Graph engine not available" : engine()?.versions ? "Ready" : "Starting the graph engine…"}</span>
+    <span classList={{ late: !!engine()?.error }}>{engine()?.error ? "Graph engine not available" : engine()?.versions ? "Ready" : engine()?.status ?? "Starting the graph engine…"}</span>
     <span class="muted">{out() ? `${P().tables.length} ${P().tables.length === 1 ? "table" : "tables"} · ${P().graphs.length} ${P().graphs.length === 1 ? "graph" : "graphs"}` : ""}</span>
     <Show when={table()}>{t => <span class="muted">{t().name}: {t().rows} rows × {t().sets.length} data {t().sets.length === 1 ? "set" : "sets"}</span>}</Show>
     <Show when={graph()}>{g => <span class="muted">{g().name}: {g().settings.width} × {g().settings.height} mm</span>}</Show>
@@ -40,6 +40,7 @@ const App = () => {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
       setOut(await invoke<Out>("state"));
       listen("engine", e => setEngine(e));
+      listen("runtime-progress", (p: number) => setEngine({ versions: null, error: null, status: `Downloading the Python engine (once)… ${p}%` }));
       invoke("engine").then(e => setEngine(e)).catch(() => {});
       const start = await invoke<string | null>("startup_file");
       if (start) await loadOut("open", { path: start });
