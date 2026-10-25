@@ -8,7 +8,7 @@ import * as F from "./fmt";
 import { setG, ERRORS, SIZES, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
 import { feature } from "./features";
-import { soon, newTable, analyze, graphTypes, importFile } from "./roadmap";
+import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
 export const FONTS = ["Arial", "Calibri", "Segoe UI", "Tahoma", "Verdana", "Times New Roman", "Cambria", "Georgia", "Consolas", "IBM Plex Sans"];
@@ -118,15 +118,16 @@ export const Ribbon = () => (
         <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
       <Font />
       <G l="Insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="CSV, TXT or Excel file" run={importFile} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
-      <G l="Transform"><S><N i="fx" l="Transform" id="A15" /><N i="fx" l="Column Formula" id="A11" /><N i="sort" l="Sort" id="A17" /></S><S><N i="exclude" l="Find Outliers" id="A16" /><N i="check" l="Check Data" id="A18" /></S></G>
+      <G l="Transform"><S><N i="fx" l="Transform" id="A15" /><N i="fx" l="Column Formula" id="A11" /><N i="sort" l="Sort" id="A17" /></S><S><B i="exclude" l="Find Outliers" run={() => runAnalysis("A16")} /><N i="check" l="Check Data" id="A18" /></S></G>
       <G l="Values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
       <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Show Graph" run={() => openView("graphs")} /></G>
       <G l="Item"><S><B i="rename" l="Rename" run={C.rename} /><B i="copy" l="Duplicate" run={C.duplicate} /><B i="del" l="Delete" run={C.del} /></S></G>
     </Show>
     <Show when={tab() === "analyze"}>
       <G l="Analyze"><B big i="sigma" l="Analyze…" title="Choose an analysis" run={() => analyze()} /></G>
-      <G l="Statistics"><S><N i="sigma" l="Descriptive" id="B1" /><N i="check" l="Normality" id="B2" /><N i="exclude" l="Outliers" id="B3" /></S></G>
-      <G l="Regression"><N big i="line" l="Linear Regression" id="B9" /><N big i="curve" l="Curve Fit" id="B10" /><S><N i="curve" l="Global Fit" id="B12" /><N i="xy" l="Interpolate" id="B13" /><N i="graph" l="Area, Smooth" id="B14" /></S></G>
+      <G l="Statistics"><S><B i="sigma" l="Descriptive" run={() => runAnalysis("B1")} /><B i="check" l="Normality" run={() => runAnalysis("B2")} /><B i="exclude" l="Outliers" run={() => runAnalysis("B3")} /></S></G>
+      <G l="Regression"><B big i="line" l="Linear Regression" run={() => runAnalysis("B9")} /><B big i="curve" l="Curve Fit" run={() => runAnalysis("B10")} /><B big i="log" l="Arrhenius" title="Activation energy from rates at several temperatures" run={() => runAnalysis("B28")} />
+        <S><B i="xy" l="Interpolate" run={() => runAnalysis("B13")} /><N i="curve" l="Global Fit" id="B12" /><N i="graph" l="Area, Smooth" id="B14" /></S></G>
       <G l="Compare"><S><N i="err" l="t-tests" id="B4" /><N i="err" l="Nonparametric" id="B5" /><N i="table" l="One-way ANOVA" id="B6" /></S><S><N i="table" l="Two-way ANOVA" id="B15" /><N i="sigma" l="Effect Sizes" id="B8" /></S></G>
       <G l="More"><S><N i="xy" l="Correlation" id="B16" /><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /></S><S><N i="group" l="PCA, Clusters" id="B22" /><N i="curve" l="Peaks" id="B24" /><N i="sigma" l="Power" id="B23" /></S></G>
       <G l="Help me choose"><N big i="search" l="Test Chooser" id="C4" /></G>
@@ -137,7 +138,7 @@ export const Ribbon = () => (
       <G l="Axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
       <G l="Size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
-      <G l="Add"><S><N i="curve" l="Fitted Curve" id="D5" /><N i="err" l="Significance" id="D3" /><N i="note" l="Annotation" id="D15" /></S></G>
+      <G l="Add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><N i="err" l="Significance" id="D3" /><N i="note" l="Annotation" id="D15" /></S></G>
       <G l="Style"><S><N i="style" l="Styles" id="D13" /><N i="paint" l="Copy Look" id="D14" /><N i="bucket" l="Colour Schemes" id="D16" /></S></G>
       <G l="Share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>

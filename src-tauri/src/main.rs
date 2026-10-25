@@ -152,7 +152,7 @@ fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
     if template.is_some() {
         let s = a.opts.graph();
         for g in &mut p.graphs {
-            g.settings = GraphSettings { x: g.settings.x.clone(), line: g.settings.line, error: g.settings.error.clone(), ..s.clone() };
+            g.settings = GraphSettings { x: g.settings.x.clone(), y: g.settings.y.clone(), line: g.settings.line, error: g.settings.error.clone(), overlays: g.settings.overlays.clone(), ..s.clone() };
         }
     }
     a.doc = Doc::new(p);
@@ -240,7 +240,8 @@ fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
     let a = st.0.lock().unwrap();
     let g = a.doc.p.graph(id).ok_or("That graph no longer exists.")?;
     let t = a.doc.p.table(g.table).ok_or("The graph's data table no longer exists.")?;
-    Ok(json!({ "cmd": cmd, "table": t, "graph": g.settings }))
+    let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| a.doc.p.analysis(*o)).map(|x| json!({ "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
+    Ok(json!({ "cmd": cmd, "table": t, "graph": g.settings, "overlays": overlays }))
 }
 
 #[tauri::command]
@@ -248,6 +249,24 @@ async fn render(app: AppHandle, st: State<'_, St>, eng: State<'_, Engine>, id: u
     let q = graph_req(&st, id, "render")?;
     let _ = &eng;
     tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+}
+
+/// An analysis's results, computed by Python (cached while nothing changes).
+#[tauri::command]
+async fn result(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
+    let q = {
+        let a = st.0.lock().unwrap();
+        let x = a.doc.p.analysis(id).ok_or("That analysis no longer exists.")?;
+        let t = a.doc.p.table(x.table).ok_or("The analysis's data table no longer exists.")?;
+        json!({ "cmd": "analyze", "kind": x.kind, "table": t, "sets": x.sets, "options": x.options })
+    };
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+}
+
+/// The curve-fitting model library: [id, name, equation, description].
+#[tauri::command]
+async fn models(app: AppHandle) -> R<Value> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, json!({ "cmd": "models" }))).await.map_err(|e| e.to_string())?
 }
 
 /// Saves a graph as a picture or vector file chosen in a Save dialog.
@@ -510,7 +529,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, result, models, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

@@ -1,5 +1,5 @@
 // Commands shared by the ribbon, menus, shortcuts and Tell Me.
-import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, graph, curTable, open, P, openDialog } from "./store";
+import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, graph, analysis, curTable, open, P, openDialog } from "./store";
 import { Out } from "./api";
 import { FEATURES, ready } from "./features";
 import { soon } from "./roadmap";
@@ -7,7 +7,7 @@ import { addSet, setDialog } from "./datatable";
 import { copyGraph, exportGraph, newGraph, setZoomG } from "./graph";
 import { formatGraph } from "./format";
 import * as D from "./dialogs";
-import { analyze, importFile, newTable, graphTypes } from "./roadmap";
+import { analyze, importFile, newTable, graphTypes, runAnalysis } from "./roadmap";
 
 const need = <T,>(v: T | undefined, what: string) => { if (!v) toast(`Open ${what} first.`); return v; };
 export const C = {
@@ -26,18 +26,18 @@ export const C = {
   copyG: () => { const g = need(graph(), "a graph"); if (g) copyGraph(g.id); },
   zoom: (f: number) => setZoomG(z => Math.min(4, Math.max(0.5, f ? z * f : 1.5))),
   rename: () => {
-    const it = item(), cur = it.s === "data" ? table() : graph();
+    const it = item(), cur = it.s === "data" ? table() : it.s === "results" ? analysis() : graph();
     if (!cur) return;
     const n = prompt("Name", cur.name);
     if (n?.trim()) act({ Rename: { id: cur.id, name: n.trim() } });
   },
-  duplicate: () => { const cur = table() ?? graph(); if (cur) act({ Duplicate: { id: cur.id } }); },
+  duplicate: () => { const cur = table() ?? graph() ?? analysis(); if (cur) act({ Duplicate: { id: cur.id } }); },
   del: () => {
-    const cur = table() ?? graph();
+    const cur = table() ?? graph() ?? analysis();
     if (!cur) return;
     const t = table(), gs = t ? P().graphs.filter(g => g.table === t.id).length : 0;
     if (t && P().tables.length === 1) return toast("A project keeps at least one data table.");
-    if (confirm(t ? `Delete the data table “${t.name}”${gs ? ` and its ${gs} ${gs === 1 ? "graph" : "graphs"}` : ""}?` : `Delete the graph “${cur.name}”?`)) act({ Delete: { id: cur.id } });
+    if (confirm(t ? `Delete the data table “${t.name}”${gs ? ` and its ${gs} ${gs === 1 ? "graph" : "graphs"}` : ""} and its results?` : `Delete “${cur.name}”?`)) act({ Delete: { id: cur.id } });
   },
   analyze: () => analyze(),
 };
@@ -52,7 +52,8 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Info sheet", () => open("info")], ["Show data table", () => open("data")], ["Show graph", () => open("graphs")],
   ["Rename", C.rename], ["Duplicate", C.duplicate], ["Delete table or graph", C.del],
   ["Options", () => setBackstage("options")], ["Check for updates", () => setBackstage("about")], ["Keyboard shortcuts", D.shortcuts, "F1"], ["Getting started", D.gettingStarted], ["Glossary", D.glossary],
-  ["Import CSV, TXT or Excel", importFile], ["New data table (choose a kind)", newTable], ["Graph type", graphTypes], ["Analyze data", analyze], ["Roadmap: what comes when", () => setBackstage("roadmap")],
+  ["Import CSV, TXT or Excel", importFile], ["Linear regression", () => runAnalysis("B9")], ["Curve fit (nonlinear regression)", () => runAnalysis("B10")], ["Descriptive statistics", () => runAnalysis("B1")],
+  ["Normality tests", () => runAnalysis("B2")], ["Outliers (Grubbs)", () => runAnalysis("B3")], ["Arrhenius / activation energy", () => runAnalysis("B28")], ["Interpolate unknowns from a standard curve", () => runAnalysis("B13")], ["New data table (choose a kind)", newTable], ["Graph type", graphTypes], ["Analyze data", analyze], ["Roadmap: what comes when", () => setBackstage("roadmap")],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),
 ];
 export { out, openDialog };

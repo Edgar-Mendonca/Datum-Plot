@@ -9,6 +9,7 @@ import io
 import math
 
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
@@ -58,7 +59,48 @@ def rc_for(graph):
     return rc
 
 
-def figure(table, graph):
+def draw_overlays(ax, table, graph, overlays, size):
+    """Fitted lines and curves from analyses: the curve, its 95 % bands and the equation."""
+    from . import analysis
+    labels = []
+    for ov in overlays:
+        try:
+            res = analysis.run(ov["kind"], table, ov.get("sets", []), ov.get("options", {}))
+        except Exception:
+            continue
+        o = ov.get("options", {})
+        for c in res.get("curves", []):
+            st = style_of(graph, c["set"])
+            if not st["show"]:
+                continue
+            col = st["color"]
+            ax.plot(c["x"], c["y"], color=col, linewidth=1.4, zorder=2.5)
+            bands = o.get("bands", "ci")
+            if c.get("lo") and bands in ("ci", "both"):
+                ax.fill_between(c["x"], c["lo"], c["hi"], color=col, alpha=0.14, linewidth=0, zorder=1)
+            if c.get("plo") and bands in ("pi", "both"):
+                ax.plot(c["x"], c["plo"], color=col, linewidth=0.8, linestyle="--", zorder=2)
+                ax.plot(c["x"], c["phi"], color=col, linewidth=0.8, linestyle="--", zorder=2)
+            if o.get("label", True) and c.get("label"):
+                labels.append((c["label"], col))
+    if not labels:
+        return
+    # The corner with the fewest data points gets the equations.
+    ax.autoscale_view()
+    pts = np.concatenate([np.column_stack([ln.get_xdata(), ln.get_ydata()]) for ln in ax.get_lines() if len(ln.get_xdata())] or [np.zeros((0, 2))])
+    fr = ax.transAxes.inverted().transform(ax.transData.transform(pts)) if len(pts) else np.zeros((0, 2))
+    h = 0.08 * len(labels) + 0.04
+    corners = [(0.03, 0.97, "left", "top"), (0.97, 0.03 + h, "right", "top"), (0.97, 0.97, "right", "top"), (0.03, 0.03 + h, "left", "top")]
+    def busy(c):
+        x0 = c[0] if c[2] == "left" else c[0] - 0.55
+        return int(np.sum((fr[:, 0] >= x0) & (fr[:, 0] <= x0 + 0.55) & (fr[:, 1] <= c[1]) & (fr[:, 1] >= c[1] - h)))
+    x, y, ha, va = min(corners, key=busy)
+    for i, (text, col) in enumerate(labels):
+        ax.text(x, y - i * 0.08, text, transform=ax.transAxes, ha=ha, va=va, color=col, fontsize=size * 0.8, zorder=5,
+                bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "none", "pad": 0.6})
+
+
+def figure(table, graph, overlays=()):
     """Builds the matplotlib figure (call inside `rc_context(rc_for(graph))`); returns (fig, ax, legend, points)."""
     size = float(graph.get("fontSize") or 10)
     frame = graph.get("style") == "frame"
@@ -127,6 +169,8 @@ def figure(table, graph):
             leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
         else:
             leg = ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+    if overlays and points:
+        draw_overlays(ax, table, graph, overlays, size)
     if not points:
         ax.text(0.5, 0.5, "Enter X and Y values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
     return fig, ax, leg, points
@@ -144,20 +188,20 @@ def geometry(fig, ax, leg):
             "xlim": list(ax.get_xlim()), "ylim": list(ax.get_ylim()), "xlog": ax.get_xscale() == "log", "ylog": ax.get_yscale() == "log"}
 
 
-def render(table, graph):
+def render(table, graph, overlays=()):
     """SVG text and geometry for the window."""
     with matplotlib.rc_context(rc_for(graph)):
-        fig, ax, leg, points = figure(table, graph)
+        fig, ax, leg, points = figure(table, graph, overlays)
         g = geometry(fig, ax, leg)
         buf = io.StringIO()
         fig.savefig(buf, format="svg", metadata={"Date": None, "Creator": "Datum Plot"})
     return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], **g}
 
 
-def export(table, graph, fmt, path=None, dpi=300, transparent=False):
+def export(table, graph, fmt, path=None, dpi=300, transparent=False, overlays=()):
     """Writes the graph as png, svg, pdf, eps or tiff; without a path returns base64 (for the clipboard)."""
     with matplotlib.rc_context(rc_for(graph)):
-        fig, *_ = figure(table, graph)
+        fig, *_ = figure(table, graph, overlays)
         if not transparent:
             fig.patch.set_alpha(1)
             fig.patch.set_facecolor("white")

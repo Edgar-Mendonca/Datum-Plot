@@ -32,7 +32,7 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 - **Data tables** that work like Excel: an X column and data sets with replicates, or a mean with SD or SEM and N. Paste from Excel, fill series, exclude a value without deleting it.
 - **Publication-quality graphs** drawn with matplotlib: means with SD, SEM, 95% CI or range, linear or log axes, colour-blind-safe colours, sizes in millimetres for journal columns.
 - **Export** as PNG or TIFF at any dpi, or as SVG, PDF and EPS with editable text. Copy into Word or PowerPoint. Print with headers, footers and captions.
-- **Statistics and curve fitting** arrive release by release on the built-in Python engine (numpy, SciPy): column statistics in 0.1.1, t-tests, ANOVA and nonlinear regression in 0.2.0. See the [roadmap](docs/MEMORY.md#3-roadmap).
+- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, Arrhenius activation energies. Results stay linked to the data, explain themselves and give methods text. More arrives in small releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
 
 Everything stays on your computer. The only network call is the update check to GitHub.
 

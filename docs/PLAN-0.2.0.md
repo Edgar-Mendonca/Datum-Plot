@@ -1,6 +1,6 @@
 # Datum Plot 0.2: statistics and regression — what we build next
 
-Status: **answered (session 5).** The release order in §9 replaces §5.
+Status: **answered (session 5); 0.2.0 built.** The release order in §9 replaces §5.
 
 The full catalogue is [PLAN-0.2.md](PLAN-0.2.md) §4 (order in §10). This file takes the **0.2 part** and says exactly what you will see, how it works, and how to split it into releases.
 
@@ -131,7 +131,7 @@ One installer per release (`DatumPlot-x.y.z-setup.exe`), used for new installs a
 
 | Version | Contents | IDs |
 | --- | --- | --- |
-| **0.2.0** | Results sheets with Explain, methods text, P values, copy, Python code, checklist; descriptive statistics; normality; outliers with one-click exclude; linear regression (fit range, through origin, polynomial, Deming, compare lines, interpolation); nonlinear curve fitting with the model library and your own equation; Arrhenius / activation energy; fitted curves with bands and equation on the graph; residual plots | C1–C3, C5–C9, B1–B3, A16, B9–B11, B13, B28, D5 |
+| **0.2.0** ✅ | Results sheets with Explain, methods text, P values, copy, Python code, checklist; descriptive statistics; normality; outliers with one-click exclude; linear regression (fit range, through origin, polynomial, Deming, compare lines, interpolation); nonlinear curve fitting with the model library and your own equation; Arrhenius / activation energy; fitted curves with bands and equation on the graph; residual plots | C1–C3, C5–C9, B1–B3, A16, B9–B11, B13, B28, D5 |
 | 0.2.1 | Data tools: transforms (log, 1/T, normalise, baseline, unit conversions), sort/find/filter, data checks, histograms and QQ graphs | A15, A17, A18, D4 |
 | 0.2.2 | Global fits and model comparison, area under curve and smoothing, a second Python worker | B12, B14, I3 |
 | 0.2.3 | Tensile test analysis, Weibull analysis | B27, B29 |

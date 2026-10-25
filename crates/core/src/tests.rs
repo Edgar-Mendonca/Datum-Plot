@@ -125,7 +125,7 @@ fn graph_settings_are_checked() {
 
 #[test]
 fn files_round_trip_and_newer_files_are_refused() {
-    for id in [None, Some("growth"), Some("standard"), Some("dose")] {
+    for id in [None, Some("growth"), Some("standard"), Some("dose"), Some("modulus"), Some("arrhenius")] {
         let p = templates::build(id).unwrap();
         let text = serde_json::to_string(&p).unwrap();
         assert_eq!(Project::from_json(&text).unwrap(), p, "{id:?}");
@@ -146,8 +146,13 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 3);
-    assert!(l.iter().all(|t| t.dots.len() >= 7 && t.dots.iter().all(|(x, y)| (0.0..=1.0).contains(x) && (0.0..=1.0).contains(y))));
+    assert_eq!(l.len(), 5);
+    for id in ["modulus", "arrhenius"] {
+        let p = templates::build(Some(id)).unwrap();
+        assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (1, vec![p.analyses[0].id]), "{id}");
+        assert!(p.next_id > p.analyses[0].id);
+    }
+    assert!(l.iter().all(|t| t.dots.len() >= 6 && t.dots.iter().all(|(x, y)| (0.0..=1.0).contains(x) && (0.0..=1.0).contains(y))));
     let p = templates::build(Some("standard")).unwrap();
     assert_eq!((p.tables[0].sets[0].entry, p.tables[0].width()), (Entry::MeanSdN, 4));
     assert!(templates::build(Some("nope")).is_none());
@@ -164,4 +169,31 @@ fn import_builds_a_table_with_titles_and_sets() {
     assert_eq!((t.sets[0].title.as_str(), t.sets[1].title.as_str()), ("Sample 1", "Sample 2"));
     assert_eq!((t.get(1, 0), t.get(1, 2), t.get(1, 4)), (Some(0.01), Some(72.0), None), "text that is not a number stays empty");
     assert_eq!(d.p.graphs.last().unwrap().table, t.id);
+}
+
+#[test]
+fn analyses_are_linked_to_their_table_and_drawn_on_its_graphs() {
+    let (mut d, id) = doc();
+    let a = Analysis { table: id, kind: "linear".into(), options: serde_json::json!({ "model": "line" }), ..Default::default() };
+    d.apply(Op::AddAnalysis { analysis: Box::new(a), overlay: true }).unwrap();
+    let aid = d.p.analyses[0].id;
+    assert_eq!(d.p.analyses[0].name, "linear · Data 1");
+    assert_eq!(d.p.graphs[0].settings.overlays, vec![aid]);
+    assert!(!d.p.graphs[0].settings.line, "a fit replaces the joining lines");
+    let mut b = d.p.analyses[0].clone();
+    b.options = serde_json::json!({ "model": "origin" });
+    b.table = 999;
+    d.apply(Op::SetAnalysis { analysis: Box::new(b) }).unwrap();
+    assert_eq!((d.p.analyses[0].options["model"].as_str(), d.p.analyses[0].table), (Some("origin"), id), "the table cannot change");
+    d.apply(Op::Overlay { graph: d.p.graphs[0].id, analysis: aid, on: false }).unwrap();
+    assert!(d.p.graphs[0].settings.overlays.is_empty());
+    d.apply(Op::Overlay { graph: d.p.graphs[0].id, analysis: aid, on: true }).unwrap();
+    d.apply(Op::Delete { id: aid }).unwrap();
+    assert!(d.p.analyses.is_empty() && d.p.graphs[0].settings.overlays.is_empty(), "deleting removes the curves too");
+    d.apply(Op::AddAnalysis { analysis: Box::new(Analysis { table: id, kind: "describe".into(), ..Default::default() }), overlay: false }).unwrap();
+    d.apply(Op::Duplicate { id }).unwrap();
+    let t2 = d.p.tables[1].id;
+    d.apply(Op::Delete { id }).unwrap();
+    assert!(d.p.analyses.is_empty(), "a table's analyses go with it");
+    assert!(d.p.table(t2).is_some());
 }

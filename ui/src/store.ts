@@ -1,6 +1,6 @@
 // Window state: the open project, the item shown (Info, a table or a graph), menus, dialogs, toasts.
 import { createSignal, batch, JSX } from "solid-js";
-import { invoke, Out, Options, Table, Graph } from "./api";
+import { invoke, Out, Options, Table, Graph, Analysis } from "./api";
 
 export const [out, setOutRaw] = createSignal<Out | null>(null);
 export const [tick, setTick] = createSignal(0);
@@ -27,13 +27,15 @@ export const [tab, setTab] = createSignal("data");
 export const [navOpen, setNavOpen] = createSignal(true);
 export const table = (): Table | undefined => item().s === "data" ? out()?.project.tables.find(t => t.id === item().id) : undefined;
 export const graph = (): Graph | undefined => item().s === "graphs" ? out()?.project.graphs.find(g => g.id === item().id) : undefined;
-/** The table behind what is shown: the table itself, or the graph's data. */
-export const curTable = (): Table | undefined => table() ?? out()?.project.tables.find(t => t.id === graph()?.table);
+export const analysis = (): Analysis | undefined => item().s === "results" ? out()?.project.analyses?.find(a => a.id === item().id) : undefined;
+/** The table behind what is shown: the table itself, or the graph's or the result's data. */
+export const curTable = (): Table | undefined => table() ?? out()?.project.tables.find(t => t.id === (graph()?.table ?? analysis()?.table));
 export const open = (s: Section, id = 0) => {
   if (!id && s === "data") id = out()?.project.tables[0]?.id ?? 0;
   if (!id && s === "graphs") id = out()?.project.graphs.find(g => g.table === curTable()?.id)?.id ?? out()?.project.graphs[0]?.id ?? 0;
+  if (!id && s === "results") id = out()?.project.analyses?.find(a => a.table === curTable()?.id)?.id ?? out()?.project.analyses?.[0]?.id ?? 0;
   setItem({ s, id });
-  setTab(s === "graphs" ? "graph" : s === "data" ? "data" : tab());
+  setTab(s === "graphs" ? "graph" : s === "data" ? "data" : s === "results" ? "analyze" : tab());
 };
 /** After a change, keep the open item valid (it may have been deleted or undone). */
 const fixItem = () => {
@@ -41,6 +43,7 @@ const fixItem = () => {
   if (!p) return;
   if (it.s === "data" && !p.tables.some(t => t.id === it.id)) setItem({ s: "data", id: p.tables[0]?.id ?? 0 });
   if (it.s === "graphs" && !p.graphs.some(g => g.id === it.id)) setItem(p.graphs[0] ? { s: "graphs", id: p.graphs[0].id } : { s: "data", id: p.tables[0]?.id ?? 0 });
+  if (it.s === "results" && it.id && !p.analyses?.some(a => a.id === it.id)) setItem({ s: "results", id: p.analyses?.[0]?.id ?? 0 });
 };
 
 // ---------- editing ----------

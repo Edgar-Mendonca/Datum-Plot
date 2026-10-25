@@ -12,6 +12,8 @@ pub struct Project {
     pub info: Info,
     pub tables: Vec<Table>,
     pub graphs: Vec<Graph>,
+    /// Analyses (results): settings only; Python computes the results when they are shown.
+    pub analyses: Vec<Analysis>,
     pub next_id: u32,
     /// Window settings saved with the file (page setup, open item…).
     pub ui: serde_json::Value,
@@ -19,7 +21,7 @@ pub struct Project {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Project1".into(), info: Info::default(), tables: vec![], graphs: vec![], next_id: 1, ui: serde_json::json!({}) }
+        Self { format: FORMAT, name: "Project1".into(), info: Info::default(), tables: vec![], graphs: vec![], analyses: vec![], next_id: 1, ui: serde_json::json!({}) }
     }
 }
 
@@ -135,6 +137,19 @@ impl Table {
     }
 }
 
+/// An analysis of one data table: describe, normality, outliers, linear, fit or arrhenius.
+/// `sets` are the data sets it uses (empty = all); `options` are read by py/datum/analysis.py.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Analysis {
+    pub id: u32,
+    pub table: u32,
+    pub name: String,
+    pub kind: String,
+    pub sets: Vec<usize>,
+    pub options: serde_json::Value,
+}
+
 /// A graph of one data table. Its settings are what the Python graph engine reads.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -177,13 +192,15 @@ pub struct GraphSettings {
     pub x: Axis,
     pub y: Axis,
     pub sets: Vec<SetStyle>,
+    /// Analyses whose fitted curves are drawn on this graph.
+    pub overlays: Vec<u32>,
 }
 
 impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![],
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
         }
     }
 }
@@ -253,6 +270,9 @@ impl Project {
     pub fn table_mut(&mut self, id: u32) -> Result<&mut Table, String> {
         self.tables.iter_mut().find(|t| t.id == id).ok_or_else(|| "That data table no longer exists.".into())
     }
+    pub fn analysis(&self, id: u32) -> Option<&Analysis> {
+        self.analyses.iter().find(|a| a.id == id)
+    }
     pub fn graph(&self, id: u32) -> Option<&Graph> {
         self.graphs.iter().find(|g| g.id == id)
     }
@@ -280,7 +300,17 @@ impl Project {
         self.tables.iter_mut().for_each(Table::normalize);
         let ids: Vec<u32> = self.tables.iter().map(|t| t.id).collect();
         self.graphs.retain(|g| ids.contains(&g.table));
-        let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).max().unwrap_or(0);
+        self.analyses.retain(|a| ids.contains(&a.table));
+        for a in &mut self.analyses {
+            if !a.options.is_object() {
+                a.options = serde_json::json!({});
+            }
+        }
+        let an: Vec<(u32, u32)> = self.analyses.iter().map(|a| (a.id, a.table)).collect();
+        for g in &mut self.graphs {
+            g.settings.overlays.retain(|o| an.contains(&(*o, g.table)));
+        }
+        let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).max().unwrap_or(0);
         self.next_id = self.next_id.max(top + 1);
     }
     pub fn from_json(text: &str) -> Result<Self, String> {

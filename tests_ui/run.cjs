@@ -9,6 +9,9 @@ const P = fix.state.project;
 // The graph as the Python engine draws it (numpy, scipy, matplotlib must be installed).
 const py = `import json,sys; sys.path.insert(0, sys.argv[1]); from datum import graph; p = json.load(open(sys.argv[2]))["state"]["project"]; print(json.dumps(graph.render(p["tables"][0], p["graphs"][0]["settings"])))`;
 const render = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["-c", py, path.join(__dirname, "../py"), path.join(__dirname, "fixture.json")], { maxBuffer: 1 << 26 }).toString());
+// A real linear regression of the sample's first data set, for the results sheet.
+const pyr = `import json,sys; sys.path.insert(0, sys.argv[1]); from datum import analysis; p = json.load(open(sys.argv[2]))["state"]["project"]; print(json.dumps({"result": analysis.run("linear", p["tables"][0], [], {"xmax": 10}), "models": analysis.model_list()}))`;
+const lin = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["-c", pyr, path.join(__dirname, "../py"), path.join(__dirname, "fixture.json")], { maxBuffer: 1 << 26 }).toString());
 const types = { ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff", ".html": "text/html" };
 const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
@@ -24,13 +27,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
-  await p.addInitScript(([f, rd]) => {
+  await p.addInitScript(([f, rd, ln]) => {
+    f.state.project.analyses = [{ id: 99, table: f.state.project.tables[0].id, name: "Growth fit", kind: "linear", sets: [], options: { xmax: 10 } }];
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "" };
-    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
+    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history") return f.state; return null; } }, event: { listen: async () => () => {} } };
-  }, [fix, render]);
+  }, [fix, render, lin]);
   const calls = (c) => p.evaluate(c => window.__calls.filter(x => x[0] === c).map(x => x[1]), c);
   const ops = async () => (await calls("apply")).map(a => a.op);
   const reset = () => p.evaluate(() => { window.__calls = []; });
@@ -38,7 +42,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, three samples, open, import and roadmap", (await p.$$(".home .tile")).length === 7, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, five samples, open, import and roadmap", (await p.$$(".home .tile")).length === 9, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -117,11 +121,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("Linear Regression")');
+  await p.click('.ribbon .rb:has-text("t-tests")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B9") && (await p.textContent(".dlg")).includes("0.2"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B4") && (await p.textContent(".dlg")).includes("0.3"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 15);
+  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 10);
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
   check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
@@ -129,6 +133,23 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("the gallery shows regression analyses with their release", ((await p.textContent(".galitems")) || "").includes("Linear regression"));
   await p.keyboard.press("Escape");
   await p.waitForTimeout(100);
+
+  // 5a. Analyses: the gallery leads to the options; OK adds a linked analysis drawn on the graph.
+  await p.click('.tabs button:text-is("Analyze")');
+  await reset();
+  await p.click('.ribbon .rb.big:has-text("Linear Regression")');
+  await p.waitForTimeout(200);
+  check("Linear Regression opens its options", ((await p.textContent(".dlg header")) || "").includes("Linear regression"));
+  await p.fill('.dlg input[placeholder="end"]', "10");
+  await p.press('.dlg input[placeholder="end"]', "Tab");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const add = (await ops()).find(o => o.AddAnalysis);
+  check("OK adds the analysis with its fit range, drawn on the graph", add && add.AddAnalysis.analysis.kind === "linear" && add.AddAnalysis.analysis.options.xmax === 10 && add.AddAnalysis.overlay === true, JSON.stringify(add));
+  await p.click('.ribbon .rb.big:has-text("Curve Fit")');
+  await p.waitForTimeout(200);
+  check("Curve Fit lists the model library", (await p.$$eval(".dlg select option", os => os.map(o => o.textContent))).some(t => t.includes("Exponential decay")));
+  await p.keyboard.press("Escape");
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
@@ -178,6 +199,16 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("Options: every row has a name and a control", optRows.length > 10 && optRows.every(n => n === 2), JSON.stringify(optRows));
   await p.click(".bs aside .back");
 
+  // 7. A results sheet: tables, the answer, checks and methods; outliers would offer to exclude.
+  await p.click('.nav .nitem:has-text("Growth fit")');
+  await p.waitForTimeout(300);
+  check("the results sheet shows the summary tables", (await p.$$(".rview .rtable")).length >= 2);
+  check("the Explain panel gives the answer and the checks", ((await p.textContent(".explain .ans")) || "").includes("slope") && (await p.$$(".explain .checks li")).length >= 1);
+  check("residual plots are shown", (await p.$$(".rplots img")).length >= 1);
+  await reset();
+  await p.click('.explain .btn:has-text("Copy methods text")');
+  await p.waitForTimeout(100);
+  check("Copy methods text uses the Windows clipboard", ((await calls("copy_text"))[0]?.text || "").includes("least squares"));
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();
   console.log(failed ? `\n${failed} failed` : "\nall passed");

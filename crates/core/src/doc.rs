@@ -33,6 +33,13 @@ pub enum Op {
     /// Text formatting of cells ("row:col" → style; empty clears).
     Style { table: u32, cells: Vec<(String, String)> },
     AddGraph { table: u32, settings: Option<Box<GraphSettings>> },
+    /// Adds an analysis (its id is assigned here); with `overlay`, its fitted curves are drawn on
+    /// the table's graphs (whose joining lines are switched off).
+    AddAnalysis { analysis: Box<Analysis>, overlay: bool },
+    /// Changes an analysis's data sets, options or name.
+    SetAnalysis { analysis: Box<Analysis> },
+    /// Shows or hides an analysis's curves on a graph.
+    Overlay { graph: u32, analysis: u32, on: bool },
     GraphSet { graph: u32, settings: Box<GraphSettings> },
     Info { info: Info },
     ProjectName { name: String },
@@ -176,10 +183,11 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             p.add_table(*table, graph.map(|g| *g));
         }
         Op::Delete { id } => {
-            let n = p.tables.len() + p.graphs.len();
+            let n = p.tables.len() + p.graphs.len() + p.analyses.len();
             p.tables.retain(|t| t.id != id);
             p.graphs.retain(|g| g.id != id && g.table != id);
-            if n == p.tables.len() + p.graphs.len() {
+            p.analyses.retain(|a| a.id != id && a.table != id);
+            if n == p.tables.len() + p.graphs.len() + p.analyses.len() {
                 return Err("Nothing to delete.".into());
             }
         }
@@ -192,6 +200,8 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 t.name = name;
             } else if let Some(g) = p.graphs.iter_mut().find(|g| g.id == id) {
                 g.name = name;
+            } else if let Some(a) = p.analyses.iter_mut().find(|a| a.id == id) {
+                a.name = name;
             }
         }
         Op::Duplicate { id } => {
@@ -206,6 +216,9 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             } else if let Some(g) = p.graph(id).cloned() {
                 let gid = p.take_id();
                 p.graphs.push(Graph { id: gid, name: format!("{} copy", g.name), ..g });
+            } else if let Some(a) = p.analysis(id).cloned() {
+                let aid = p.take_id();
+                p.analyses.push(Analysis { id: aid, name: format!("{} copy", a.name), ..a });
             }
         }
         Op::Cells { table, cells } => {
@@ -328,6 +341,33 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             let n = p.graphs.iter().filter(|g| g.table == table).count();
             let id = p.take_id();
             p.graphs.push(Graph { id, table, name: if n == 0 { name } else { format!("{name} ({})", n + 1) }, settings: settings.map(|s| *s).unwrap_or_default() });
+        }
+        Op::AddAnalysis { mut analysis, overlay } => {
+            if p.table(analysis.table).is_none() {
+                return Err("That data table no longer exists.".into());
+            }
+            analysis.id = p.take_id();
+            if analysis.name.trim().is_empty() {
+                analysis.name = format!("{} · {}", analysis.kind, p.table(analysis.table).map(|t| t.name.clone()).unwrap_or_default());
+            }
+            if overlay {
+                for g in p.graphs.iter_mut().filter(|g| g.table == analysis.table) {
+                    g.settings.overlays.push(analysis.id);
+                    g.settings.line = false;
+                }
+            }
+            p.analyses.push(*analysis);
+        }
+        Op::SetAnalysis { analysis } => {
+            let a = p.analyses.iter_mut().find(|a| a.id == analysis.id).ok_or("That analysis no longer exists.")?;
+            *a = Analysis { table: a.table, ..*analysis };
+        }
+        Op::Overlay { graph, analysis, on } => {
+            let g = p.graphs.iter_mut().find(|g| g.id == graph).ok_or("That graph no longer exists.")?;
+            g.settings.overlays.retain(|o| *o != analysis);
+            if on {
+                g.settings.overlays.push(analysis);
+            }
         }
         Op::GraphSet { graph, settings } => {
             let g = p.graphs.iter_mut().find(|g| g.id == graph).ok_or("That graph no longer exists.")?;

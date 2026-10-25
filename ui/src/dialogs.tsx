@@ -38,7 +38,11 @@ export const gettingStarted = () => openDialog(() => (
         <li>Type or paste your data. Titles and units above the grid become the axis titles.</li>
         <li>Open the graph in the sidebar (Graphs). Use the Graph and Format tabs, or double-click parts of the graph.</li>
         <li>Export the graph, copy it into Word or PowerPoint (Ctrl+C on the graph), or print it (Ctrl+P).</li></ol>
-      <p class="muted">Analyses arrive release by release: statistics and regression in 0.2, comparing groups in 0.3. Help › Roadmap lists every feature and when it comes; planned commands are already in the ribbon (shown dimmed).</p>
+      <h4>Analyses (0.2)</h4>
+      <ul><li>Analyze… (or the Analyze tab): descriptive statistics, normality tests, outliers, linear regression, curve fitting and Arrhenius. Each result is linked to its table and updates when the data change.</li>
+        <li>Fits are drawn on the graph with their 95% band and equation. Fit only part of the data with “Fit X from … to …” (e.g. the elastic region of a stress–strain curve).</li>
+        <li>The results sheet explains the answer, checks the assumptions and gives methods text to paste into a report.</li></ul>
+      <p class="muted">More arrives in small releases; Help › Roadmap lists every feature and when it comes. Planned commands are already in the ribbon (shown dimmed).</p>
     </div>
   </Dialog>
 ));

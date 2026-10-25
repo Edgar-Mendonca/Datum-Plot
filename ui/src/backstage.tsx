@@ -90,7 +90,7 @@ const UpdateCard = () => {
     </div>
   );
 };
-const EngineLine = () => <p class="muted small engine">{engine()?.versions ? `Engine: ${Object.entries(engine()!.versions!).map(([k, v]) => `${k} ${v}`).join(" · ")}` : engine()?.error ? `Engine: ${engine()!.error}` : "Engine: starting…"}</p>;
+const EngineLine = () => <p class="muted small engine">{engine()?.versions ? `Engine: ${Object.entries(engine()!.versions!).filter(([k]) => k !== "ok").map(([k, v]) => `${k} ${v}`).join(" · ")}` : engine()?.error ? `Engine: ${engine()!.error}` : "Engine: starting…"}</p>;
 
 const Export = () => (
   <div><h1>Export</h1>

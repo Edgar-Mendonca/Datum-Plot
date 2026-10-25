@@ -54,6 +54,8 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "growth", name: "Growth curve", desc: "Optical density over time, two strains in triplicate.", dots: dots("growth") },
         Tpl { id: "standard", name: "Standard curve", desc: "Absorbance of standards entered as mean, SD and N.", dots: dots("standard") },
         Tpl { id: "dose", name: "Dose-response", desc: "Response to two compounds on a log concentration axis.", dots: dots("dose") },
+        Tpl { id: "modulus", name: "Tensile test", desc: "Stress–strain of two alloys; the modulus is a linear fit of the elastic region.", dots: dots("modulus") },
+        Tpl { id: "arrhenius", name: "Arrhenius", desc: "Rate constants at six temperatures; the analysis gives the activation energy.", dots: dots("arrhenius") },
     ]
 }
 
@@ -94,6 +96,33 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.name = "Dose-response".into();
             p.info = Info { title: "Dose-response".into(), experiment: "Response of cells to compounds A and B, nine concentrations in triplicate. Curve fitting arrives in Datum Plot 0.2.".into(), ..Default::default() };
             p.add_table(t, Some(GraphSettings { line: true, x: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
+        }
+        Some("modulus") => {
+            let xs: Vec<f64> = (0..=14).map(|i| i as f64 / 1000.0).collect();
+            // Elastic up to ~0.4 % strain, then work hardening (stress in MPa).
+            let curve = |e_mod: f64, ys: f64| move |e: f64| if e <= ys / e_mod { e_mod * e } else { ys + 0.25 * e_mod * (e - ys / e_mod).powf(0.6) * 0.08 };
+            let (a, b) = (curve(205_000.0, 760.0), curve(70_000.0, 270.0));
+            let t = table(["Tensile", "Strain", "", "Stress", "MPa"], &xs, &[("Steel", &a), ("Aluminium", &b)], 2, 0.012, 1);
+            p.name = "Tensile test".into();
+            p.info = Info { title: "Tensile test".into(), experiment: "Engineering stress against strain for a steel and an aluminium alloy, two specimens each. The elastic modulus is the slope of a straight line fitted from 0 to 0.003 strain (here in MPa; divide by 1000 for GPa).".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: false, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Elastic modulus".into(), kind: "linear".into(), sets: vec![],
+                options: serde_json::json!({ "model": "line", "xmin": 0, "xmax": 0.003, "points": "each", "compare": true, "bands": "ci", "label": true }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("arrhenius") => {
+            let xs = [300.0, 325.0, 350.0, 375.0, 400.0, 425.0];
+            let k = |ea: f64, a: f64| move |c: f64| a * (-ea / (8.314462618 * (c + 273.15))).exp();
+            let (x, y) = (k(62_000.0, 4.0e7), k(85_000.0, 6.0e9));
+            let t = table(["Rates", "Temperature", "°C", "Rate constant k", "1/s"], &xs, &[("Catalyst A", &x), ("Catalyst B", &y)], 3, 0.05, 6);
+            p.name = "Arrhenius".into();
+            p.info = Info { title: "Activation energy".into(), experiment: "Rate constants of a reaction on two catalysts at six temperatures, three runs each. The Arrhenius analysis fits ln(k) against 1/T.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: false, y: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Activation energy".into(), kind: "arrhenius".into(), sets: vec![],
+                options: serde_json::json!({ "tunit": "C", "eunit": "kJ/mol", "points": "each", "label": true }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         _ => return None,
     }

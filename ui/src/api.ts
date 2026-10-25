@@ -17,11 +17,18 @@ export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min:
 export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number }
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
-  style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[];
+  style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
 }
 export interface Graph { id: number; table: number; name: string; settings: GraphSettings }
+export interface Analysis { id: number; table: number; name: string; kind: string; sets: number[]; options: Record<string, any> }
+/** An analysis's results from Python (py/datum/analysis.py). */
+export interface ResultTable { title: string; columns: string[]; rows: string[][] }
+export interface Result {
+  title: string; answer: string; tabs: { name: string; tables: ResultTable[] }[]; checks: [boolean | null, string][]; methods: string; legend: string; code: string;
+  plots: { title: string; svg: string }[]; curves: unknown[]; cells: [number, number][];
+}
 export interface Info { title: string; experiment: string; researcher: string; organisation: string; date: string; notes: string }
-export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; nextId: number; ui: any }
+export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; analyses: Analysis[]; nextId: number; ui: any }
 export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number }
 /** A graph drawn by the Python engine: SVG and where things are, in points from the top-left. */
 export interface Render {

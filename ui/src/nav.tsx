@@ -27,7 +27,7 @@ export const Navigator = () => {
         <Head l="Data tables" add={C.newTable} title="New XY data table" />
         <For each={P().tables}>{t => <button class="nitem" classList={{ on: item().s === "data" && item().id === t.id }} onClick={() => open("data", t.id)} onContextMenu={e => ctx(e, t.id, "data")} onDblClick={C.rename}><Icon n="sheet" /><span>{t.name}</span></button>}</For>
         <Head l="Results" add={() => analyze()} title="Analyze data" />
-        <p class="nnone">Statistics and regression arrive in 0.2</p>
+        <For each={P().analyses ?? []} fallback={<p class="nnone">Analyze… adds results here</p>}>{a => <button class="nitem" classList={{ on: item().s === "results" && item().id === a.id }} onClick={() => open("results", a.id)} onContextMenu={e => ctx(e, a.id, "results")} onDblClick={C.rename}><Icon n="results" /><span>{a.name}</span></button>}</For>
         <Head l="Graphs" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
         <Head l="Layouts" add={() => soon("F1")} title="New layout (0.4)" />
@@ -60,13 +60,6 @@ export const InfoPage = () => {
 
 export const Empty = (p: { icon: string; title: string; children: JSX.Element }) => (
   <div class="page emptypage"><div class="emptybox"><Icon n={p.icon} size={42} /><h1>{p.title}</h1>{p.children}</div></div>
-);
-export const ResultsPage = () => (
-  <Empty icon="results" title="Results">
-    <p>Results are the output of analyses: column statistics, t-tests, ANOVA, curve fits. Each one stays linked to its data table and updates when the data change.</p>
-    <p class="muted">Descriptive statistics, linear regression and curve fitting arrive in 0.2; comparing groups (t-tests, ANOVA) in 0.3. The engine (numpy and SciPy) is already in place.</p>
-    <p><button class="btn" onClick={() => analyze()}>See the analyses</button> <button class="btn" onClick={() => setBackstage("roadmap")}>Roadmap</button> <button class="btn pri" onClick={() => open("graphs")}>Open the graph</button></p>
-  </Empty>
 );
 export const LayoutsPage = () => (
   <Empty icon="layout" title="Layouts">

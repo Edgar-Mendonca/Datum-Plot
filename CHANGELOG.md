@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.2.0 — 2026-10-25
+
+Statistics, linear regression and curve fitting, with results that stay linked to your data and explain themselves.
+
+**Results**
+- Analyze… (or the Analyze tab) adds an analysis to the project. It appears under **Results** in the navigator, linked to its table: change a value and the result updates.
+- Each results sheet has tabs (Summary, Details, Interpolated) with tables you can copy straight into Excel or Word, and small plots (residuals, QQ plots, Arrhenius plots).
+- The panel on the right gives **the answer in one sentence**, **checks** of the assumptions (✓, ⚠), **methods text** and a figure legend to paste into a report, and **Python code** that reproduces the calculation.
+- P values are exact (or < 0.0001) with APA stars.
+
+**Statistics**
+- **Descriptive statistics**: n, mean, SD, SEM, 95% CI, quartiles, median, range, CV, geometric mean and SD, skewness, kurtosis.
+- **Normality tests**: Shapiro-Wilk, D'Agostino-Pearson, Anderson-Darling and Kolmogorov-Smirnov (Lilliefors), with QQ plots.
+- **Outliers**: Grubbs' test; one click excludes the outliers (they stay in the table in blue).
+
+**Linear regression**
+- Slope, intercept, X-intercept, R², adjusted R², Sy.x, ANOVA table, runs test, with standard errors and 95% confidence intervals.
+- **Fit only part of the data** (Fit X from … to …), for example the elastic region of a stress–strain curve.
+- Through the origin, polynomials (order 2–6), **Deming regression** (errors in X and Y), weighting by 1/Y², every replicate or only the means.
+- **Compare lines**: are the slopes (then the intercepts) of the data sets different?
+- **Interpolate**: read X for unknown Y values off the line.
+
+**Curve fitting**
+- A model library: exponential decay and growth, two-phase decay, power law, logarithmic, logistic, Gompertz, dose-response, Gaussian, Lorentzian, Michaelis-Menten, Langmuir, Freundlich, Arrhenius and Avrami.
+- **Your own equation**, such as `Y = A*exp(-k*X) + C`, with starting values and fixed parameters.
+- Best-fit values with standard errors and 95% CIs, R², AICc, parameter correlations, residuals, convergence checks.
+
+**Arrhenius**
+- Rates at several temperatures (°C or K) give the **activation energy** (kJ/mol, eV, kcal/mol) and the pre-exponential factor, with confidence intervals and the Arrhenius plot.
+
+**On the graph**
+- Fits are drawn on the table's graphs with their 95% confidence band (or prediction band) and the **equation and R²**, placed where they do not cover the data. Each result can be shown or hidden per graph.
+
+**Samples**
+- **Tensile test** (elastic modulus of two alloys from the elastic region) and **Arrhenius** (activation energies of two catalysts), each with its analysis ready.
+
+**Releases**
+- One installer per release, used both to install and to update. Python is unpacked once more on the first start of this version (new libraries: statsmodels and lmfit).
+
 ## 0.1.1 — 2026-10-24
 
 Copy Picture works, updates are small, data import, and the whole app laid out: every planned feature has its place and says when it arrives.

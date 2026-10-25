@@ -2,7 +2,8 @@
 // feature that is not built yet, the Roadmap page, and File › Import.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { FEATURES, AREAS, RELEASES, feature, ready, VERSION_NOW } from "./features";
-import { openDialog, closeDialog, call, act, out, open, toast, setBackstage } from "./store";
+import { openDialog, closeDialog, call, act, out, open, toast, setBackstage, curTable } from "./store";
+import { analysisDialog, BY_ID } from "./results";
 import { Dialog, Pick, Check, Icon } from "./ui";
 import { C } from "./cmds";
 import { num } from "./api";
@@ -84,6 +85,7 @@ const ANALYSES: Choice[] = [
   { id: "B10", name: "Nonlinear curve fit", icon: "curve", group: "Regression and fitting", desc: "Fit an equation from the model library or your own." },
   { id: "B12", name: "Global fit and model comparison", icon: "curve", group: "Regression and fitting", desc: "Share parameters between data sets; choose between two models." },
   { id: "B13", name: "Interpolate a standard curve", icon: "xy", group: "Regression and fitting", desc: "Read unknown samples off a calibration curve." },
+  { id: "B28", name: "Arrhenius / activation energy", icon: "log", group: "Regression and fitting", desc: "Rates at several temperatures give the activation energy and the pre-factor." },
   { id: "B14", name: "Area under curve, smoothing", icon: "graph", group: "Regression and fitting", desc: "Integrate, differentiate or smooth a curve." },
   { id: "B4", name: "t-tests", icon: "err", group: "Compare groups", desc: "Compare two groups' means." },
   { id: "B5", name: "Nonparametric tests", icon: "err", group: "Compare groups", desc: "Compare groups without assuming a normal distribution." },
@@ -100,8 +102,10 @@ const ANALYSES: Choice[] = [
   { id: "B26", name: "Surface fitting", icon: "grid", group: "Signals and spectra", desc: "Fit Z = f(X, Y)." },
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];
-/** Analyze: every analysis; none is built yet in 0.1.1. */
-export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" items={ANALYSES} ok="Analyze" first={first} run={() => {}} />);
+/** Analyze: every analysis; the ready ones open their options. */
+export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.id)); }} />);
+/** Opens the options of the analysis behind a catalogue id, for the open table. */
+export const runAnalysis = (id: string) => { const [kind, preset] = BY_ID[id] ?? []; if (kind) analysisDialog(kind, curTable(), undefined, preset); else soon(id); };
 
 const GRAPHS: Choice[] = [
   { id: "D1", name: "XY: points and lines", icon: "xy", group: "XY", desc: "Means with error bars or every replicate, joined or not." },

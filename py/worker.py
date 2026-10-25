@@ -23,9 +23,15 @@ def main():
         if cmd == "ping":
             return {"python": sys.version.split()[0], "numpy": numpy.__version__, "scipy": scipy.__version__, "matplotlib": matplotlib.__version__}
         if cmd == "render":
-            return graph.render(q["table"], q["graph"])
+            return graph.render(q["table"], q["graph"], q.get("overlays", []))
         if cmd == "export":
-            return graph.export(q["table"], q["graph"], q.get("fmt", "png"), q.get("path"), q.get("dpi", 300), q.get("transparent", False))
+            return graph.export(q["table"], q["graph"], q.get("fmt", "png"), q.get("path"), q.get("dpi", 300), q.get("transparent", False), q.get("overlays", []))
+        if cmd == "analyze":
+            from datum import analysis
+            return analysis.run(q["kind"], q["table"], q.get("sets", []), q.get("options", {}))
+        if cmd == "models":
+            from datum import analysis
+            return {"models": analysis.model_list()}
         if cmd == "read":
             from datum import io as dio
             return dio.read_file(q["path"])
