@@ -64,9 +64,9 @@ flowchart LR
 | `crates/core/examples/dump.rs` | Fixture for the UI tests. |
 | `src-tauri/src/main.rs` | Commands in the diagram plus `copy_graph` (PNG → Windows clipboard via `tauri-plugin-clipboard-manager`), `copy_text`, `read_clipboard`, `import_file`, `restart_engine`; `Options` (theme, autosave, beta, openLast, decimals, reps, entry, error, width, height, font, fontSize, style, dpi, paper, landscape, company, logo); new tables/graphs follow the options; recovery; recent files; `open_url` only for this repo. |
 | `src-tauri/src/py.rs` | Finds Python (`DATUM_PYTHON`, the runtime pack, else `python`/`python3`); a reader thread lets requests time out (start 180 s, request 60 s → kill and report); `restart()`; and `py/worker.py` (bundled or the source tree), `MPLCONFIGDIR` in the app cache, `CREATE_NO_WINDOW`, restart once on failure, cache of the last 8 renders. Started in a thread at launch; emits `engine` with versions or the error. |
-| `src-tauri/src/update.rs` | Datum Plan's updater with `REPO = Edgar-Mendonca/Datum-Plot`; prefers the `-update.exe` asset; `download()` (progress + SHA-256) and `asset_url()` shared with the runtime pack. |
-| `src-tauri/src/runtime.rs` | The Python runtime pack: `%LOCALAPPDATA%/com.edgarmendonca.datumplot/runtime/N` (N = `py/runtime.txt`); from `resources/runtime.zip` (full installer) or downloaded from this version's release; unzips with progress (`engine` status event), removes older runtimes, the zip and 0.1.0's `resources/python`. Release Windows builds only; dev builds use the PATH Python. 1 test. |
-| `src-tauri/tauri.conf.json`, `tauri.release.conf.json` | Bundles `py/worker.py` and `py/datum/*.py`; the release config adds `runtime.zip` for the full installer. |
+| `src-tauri/src/update.rs` | Datum Plan's updater with `REPO = Edgar-Mendonca/Datum-Plot`; downloads the release's `-setup.exe`; `download()` (progress + SHA-256). |
+| `src-tauri/src/runtime.rs` | The Python runtime pack: `%LOCALAPPDATA%/com.edgarmendonca.datumplot/runtime/N` (N = `py/runtime.txt`); unpacked from `resources/runtime.zip` (in every installer); unzips with progress (`engine` status event), removes older runtimes, the zip and 0.1.0's `resources/python`. Release Windows builds only; dev builds use the PATH Python. 1 test. |
+| `src-tauri/tauri.conf.json`, `tauri.release.conf.json` | Bundles `py/worker.py` and `py/datum/*.py`; the release config adds `runtime.zip`. |
 | `py/runtime.txt` | The runtime pack number: **bump it whenever `py/requirements.txt` changes**, so installed apps download the new pack. |
 | `py/datum/io.py` | File › Import readers: CSV/TSV/TXT (delimiter sniffing, decimal commas with `;`, encodings) and XLSX (openpyxl, every sheet); all cells as text. |
 | `py/worker.py` | The protocol loop: warm-up render, `{"ready": true}`, then one answer line per request; stdout reserved for the protocol. |
@@ -90,7 +90,7 @@ flowchart LR
 | `ui/src/selection.ts`, `cells.ts`, `fmt.ts`, `ui.tsx` | Copied from Datum Plan (grid engine, TSV and series, formatting, building blocks; `Dialog` has a docked `side` mode). |
 | `tests_ui/run.cjs` | Playwright: 31 checks (since 0.1.1 also: planned commands and their cards, Analyze gallery, Import dialog → `Import` op, Copy Picture → `copy_graph`, Roadmap list and search, every tab fits at 1280/1600 px) against `ui/dist` with the dump fixture and a **real Python render** of the sample graph (Home, opening a sample, Format Graph from a double-click, log scale op, docked dialog, hover values, heading alignment, typing, ranges, Count, Ctrl+E, paste, ribbon fit at 1280/1600, Analyze, Info, Print, Options, no script errors). |
 | `.github/workflows/ci.yml` | ubuntu: Python deps + `unittest`, `check:ui`, build, clippy `-D warnings`, `cargo test`, UI tests. |
-| `.github/workflows/release.yml` | windows: runtime pack in `rt/` (newest embeddable CPython 3.13 + requirements, pruned, compiled, ping smoke test) zipped as `DatumPlot-runtime-N.zip`; app-only build → `-update.exe`; build with `tauri.release.conf.json` (+ `runtime.zip`) → `-setup.exe`; SHA256SUMS over all; notes from CHANGELOG. |
+| `.github/workflows/release.yml` | windows: runtime pack in `rt/` (newest embeddable CPython 3.13 + requirements, pruned, compiled, ping smoke test) zipped to `src-tauri/runtime.zip`; one build with `tauri.release.conf.json` → `DatumPlot-x.y.z-setup.exe` + SHA256SUMS; notes from CHANGELOG. |
 
 ### Update flow (same as Plan)
 On start and on "Check again": GET `/repos/Edgar-Mendonca/Datum-Plot/releases/latest` (or `/releases` with beta) → badge + Home card with the CHANGELOG section → Update now downloads `DatumPlot-x.y.z-setup.exe`, checks `SHA256SUMS.txt`, runs it with `/S`, restarts. Install only from this repo's release URLs.
@@ -129,7 +129,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-24 | Format Graph is docked on the right and applies each change immediately (each is an undo step) | The graph stays visible, as in Prism's live formatting. |
 | 2026-10-24 | Excluded values: blue italic, struck through; stored as [row, col] in the table | Prism's convention, plus a strike so it reads in greyscale. |
 | Session 2 | Brainstorm the full feature set first (catalogue A–J with IDs and releases in PLAN-0.2), then build release by release | The user wants to see what Datum Plot will do before evaluating more. |
-| 0.1.1 | Python runtime as a separate, numbered pack in the user's data folder (`runtime/N`); three release files (full setup with `runtime.zip`, app-only update, runtime zip); bump `py/runtime.txt` when requirements change | Updates were slow because the 50 MB runtime came with every update. |
+| 0.1.1 | Python runtime as a numbered pack unpacked to the user's data folder (`runtime/N`); bump `py/runtime.txt` when requirements change | Starts stay fast; Python is unpacked only when its libraries change. |
+| Session 4 | **One installer per release** (`-setup.exe` with `runtime.zip` inside) for installs and updates; no update-only installer, no separate runtime download | The user: separate files confuse people; the 87 MB in-app update was quick and fine. |
+| Session 4 (proposed) | 0.2 in three releases: 0.2.0 results + statistics + linear regression, 0.2.1 curve fitting, 0.2.2 data tools and styles; materials ideas B27–B31 added to the catalogue | Waiting for the user's answers (PLAN-0.2.0 §8). |
 | 0.1.1 | Clipboard writes and reads go through Rust (`tauri-plugin-clipboard-manager`), never `navigator.clipboard` | WebView2 blocks the browser clipboard on `http://tauri.localhost` (Copy Picture failed on Windows). |
 | Session 3 | Libraries are added in the release that first needs them (openpyxl 0.1.1; statsmodels, lmfit 0.2; scikit-posthocs 0.3; lifelines 0.5; pybaselines 0.6; python-pptx/docx 0.7); no pingouin (GPL), no scikit-learn, no seaborn | The user agreed to the libraries; keep the pack small until needed; licences fit an MIT app. |
 | Session 3 | **Lay out the whole UI first**: every catalogue feature has its place now (ribbon, galleries, navigator, Roadmap); planned ones are dimmed and explain what and when; then build feature by feature | The user: "build the app first… then feature by feature; much easier to see and understand the issues." |
@@ -149,7 +151,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.1.0** | Shell + XY + Python | Installer with Python, updater, Home with samples, File page, Options, Help, Info sheet, navigator, XY table, XY graph (matplotlib), docked Format Graph, hover values, export PNG/TIFF/SVG/PDF/EPS, Print, `.dplot`, undo, recovery | ✅ |
 | — | Feature brainstorm | Catalogue A–J (99 features), Python libraries, fast updates, release plan ([PLAN-0.2.md](PLAN-0.2.md); answers and order in §10) | ✅ |
 | **0.1.1** | Fixes, fast updates, import, full layout | Copy Picture through Rust (G2), runtime pack (I1), engine timeout/restart (I2), CSV/TXT/XLSX import (A12); **every catalogue feature laid out**: Roadmap page, galleries (New Table, Analyze, Graph Type), planned commands in every tab incl. new Layout and Tools tabs | ✅ |
-| **0.2.0** | Statistics and regression | Transforms, outliers, sort/filter, data checks, descriptive, normality, linear/polynomial/Deming regression, lmfit curve fitting + model library, global fits, model comparison, interpolation, AUC/smoothing, results sheets + Explain + test chooser + methods text + "show as Python code", histogram/QQ, fitted curves with bands and residuals, styles, copy look, colour schemes, batch export, Excel export, second worker, materials-science samples, statistics guide | 🔜 |
+| **0.2.0–0.2.2** | Statistics and regression ([PLAN-0.2.0.md](PLAN-0.2.0.md), proposed split: 0.2.0 results + statistics + linear regression, 0.2.1 curve fitting + B27/B29, 0.2.2 data tools and styles) | Transforms, outliers, sort/filter, data checks, descriptive, normality, linear/polynomial/Deming regression, lmfit curve fitting + model library, global fits, model comparison, interpolation, AUC/smoothing, results sheets + Explain + test chooser + methods text + "show as Python code", histogram/QQ, fitted curves with bands and residuals, styles, copy look, colour schemes, batch export, Excel export, second worker, materials-science samples, statistics guide | 🔜 |
 | 0.3.0 | Compare groups | Column table, t-tests, nonparametric, one-way ANOVA + post hoc, effect sizes, column graphs (dot, bar, box, violin, swarm, estimation), significance brackets, graph thumbnails | ⬜ |
 | 0.4.0 | Two factors, interactive graphs, layouts | Grouped + two-way ANOVA, contingency, correlation, ROC, Bland-Altman, grouped bars, heat map, pie, axis breaks, double Y, annotations, click/drag/edit on the graph, layouts, CMYK TIFF | ⬜ |
 | 0.5.0 | Survival, nested, many variables | Kaplan-Meier, log-rank, Cox (lifelines), nested, multiple/logistic regression, PCA, clustering, power, survival/volcano/forest graphs | ⬜ |
@@ -187,24 +189,29 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - Release: runtime zip + update installer + full installer. Released 0.1.1 (CI green): setup 89 MB, update 2.3 MB, runtime-1.zip 87 MB.
 - Checked in the real app (Xvfb): Analyze tab and gallery; Import through the real file dialog of a tensile-test CSV (2 replicates guessed from the headings) → table and graph; Copy Picture put a 944 × 708 PNG (80 × 60 mm at 300 dpi) on the clipboard (`xclip`); ribbon folds the Item group at 1440 px. 31 UI checks, 14 Python tests, 12 + 1 Rust tests pass.
 
+### 2026-10-25: Session 4 (one installer, 0.2 plan)
+- Feedback on 0.1.1: updated from the app (~87 MB), installed quickly, opened fast; **wants one file per release** (no separate update installer or runtime pack, it confuses people); import "kind of works"; Copy Picture works now; the app misses many features: list what comes next, brainstorm, then start.
+- Changed the release to a single installer: `release.yml` builds one `-setup.exe` with `runtime.zip`; `update.rs` downloads `-setup.exe`; `runtime.rs` no longer downloads a runtime (always in the installer); catalogue I1 reworded. Not released yet (goes out with 0.2.0).
+- Wrote [PLAN-0.2.0.md](PLAN-0.2.0.md): what 0.2 adds (results sheets with Explain, descriptive, normality, outliers, linear regression with fit range/Deming/compare lines/bands/equation, curve fitting with a model library and own equations, data tools, styles), materials ideas **B27 tensile, B28 Arrhenius, B29 Weibull, B30 S–N, B31 DSC/TGA** (added to `features.ts` and PLAN-0.2), build notes (Analysis items, `py/datum/analyses/`, second worker, statsmodels + lmfit, runtime 2), split 0.2.0/0.2.1/0.2.2, 6 questions. **Waiting for the answers.**
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** the user reviews 0.1.1 (Copy Picture in Word, the first-start unpacking time, an update to 0.1.2+ downloading only the small installer, Import with their own files, the laid-out UI). Then 0.2.0 statistics and regression (plan file first: `docs/PLAN-0.2.0.md` or a section in PLAN-0.2).
+**Next:** the user's answers to [PLAN-0.2.0.md](PLAN-0.2.0.md) §8, then build 0.2.0 (results + statistics + linear regression) and release it with the single-installer change.
 
 **Checked by the user on Windows (0.1.0):** first start 3–6 s; install under a minute; graph text in Arial. Copy Picture failed (fixed in 0.1.1, checked on Linux only).
 
-**To check on Windows in 0.1.1:** the runtime unpacking on first start (time, Defender), that 0.1.0 → 0.1.1 removes the old `resources/python`, that the next update downloads only `-update.exe`, Copy Picture into Word/PowerPoint.
+**Checked by the user on Windows (0.1.1):** in-app update (~87 MB) quick, app opens fast, Copy Picture works, import works in a first try.
 
 **Not yet checked on a real Windows PC:**
 - The bundled Python: first start time (matplotlib builds its font cache in `%LOCALAPPDATA%`), Arial/Calibri found by matplotlib, `CREATE_NO_WINDOW`, antivirus scanning many files.
 - Print/Save as PDF of graph pages; export files opened in Word, Illustrator and a journal's checker.
 
 **Known limits:**
-- The update from 0.1.0 to 0.1.1 is still the full installer (0.1.0's updater only knows `-setup.exe`); small updates start from 0.1.1.
+- Every update downloads the whole installer (~90 MB, more with statsmodels/lmfit); the user prefers this to separate files.
 - A worker request is cut off after 60 s; long analyses (fits, bootstraps) will need the second worker (I3, 0.2) or a longer limit.
-- The full installer's `runtime.zip` is deleted after unpacking; a damaged runtime is fixed by deleting the `runtime` folder (the app then downloads it). A repair command could come later.
+- The installer's `runtime.zip` is deleted after unpacking; a damaged runtime is fixed by deleting the `runtime` folder and running the installer again. A repair command could come later.
 - On Linux (development) graph text shows in a fallback font when Arial is missing.
 - No analyses yet, one table type (XY), no layouts: they are laid out in the UI and come in the order of the roadmap.
 - Windows SmartScreen warns on the first install (unsigned).

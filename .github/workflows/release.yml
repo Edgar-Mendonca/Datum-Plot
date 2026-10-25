@@ -1,8 +1,7 @@
 name: Release
-# Builds the Windows installers and the Python runtime pack and publishes a GitHub Release that
-# the in-app updater picks up: DatumPlot-x.y.z-setup.exe (full, with runtime.zip inside, for first
-# installs), DatumPlot-x.y.z-update.exe (app only, a few MB, what Update now downloads) and
-# DatumPlot-runtime-N.zip (downloaded by the app only when py/runtime.txt changes). Bump the version in src-tauri/Cargo.toml and
+# Builds one Windows installer, DatumPlot-x.y.z-setup.exe, with the Python runtime pack inside
+# (runtime.zip), and publishes it with SHA256SUMS.txt as a GitHub Release. The same file is used
+# for first installs and by the in-app updater (the user's choice: one file, no extra downloads). Bump the version in src-tauri/Cargo.toml and
 # crates/core/Cargo.toml, add a CHANGELOG.md section, then push a tag (git tag v0.1.0 && git push
 # origin v0.1.0) or run this workflow from the Actions tab.
 on:
@@ -54,24 +53,16 @@ jobs:
           printf '{"cmd":"ping"}\n' | rt/python.exe -X utf8 py/worker.py | tee ping.txt
           grep -q '"matplotlib"' ping.txt
           du -sh rt
-          RN=$(tr -d '[:space:]' < py/runtime.txt)
           mkdir -p out
-          python -c "import shutil; shutil.make_archive('out/DatumPlot-runtime-$RN', 'zip', 'rt')"
-          cp "out/DatumPlot-runtime-$RN.zip" src-tauri/runtime.zip
-          ls -la out
+          python -c "import shutil; shutil.make_archive('src-tauri/runtime', 'zip', 'rt')"
+          ls -la src-tauri/runtime.zip
       - run: cargo test -p datum-core
-      - name: App-only installer (the in-app updater downloads this one)
-        shell: bash
-        run: |
-          npx tauri build --bundles nsis
-          cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-update.exe"
-          rm -rf target/release/bundle/nsis
-      - name: Full installer (with the Python runtime, for first installs)
+      - name: Installer (the app with the Python runtime inside; first installs and updates)
         shell: bash
         run: |
           npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
           cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-setup.exe"
-          cd out && sha256sum DatumPlot-* > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
+          cd out && sha256sum "DatumPlot-$V-setup.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -87,6 +78,4 @@ jobs:
           make_latest: true
           files: |
             out/DatumPlot-${{ env.V }}-setup.exe
-            out/DatumPlot-${{ env.V }}-update.exe
-            out/DatumPlot-runtime-*.zip
             out/SHA256SUMS.txt

@@ -65,8 +65,7 @@ pub fn check(beta: bool) -> Result<Info, String> {
     let latest = rel["tag_name"].as_str().unwrap_or("").trim_start_matches('v').to_string();
     let assets = rel["assets"].as_array().cloned().unwrap_or_default();
     let find = |suffix: &str| assets.iter().find(|a| a["name"].as_str().is_some_and(|n| n.to_lowercase().ends_with(suffix)));
-    // The small app-only installer when the release has one (the Python runtime is separate).
-    let exe = find("-update.exe").or_else(|| find("-setup.exe"));
+    let exe = find("-setup.exe");
     Ok(Info {
         current,
         available: !latest.is_empty() && parts(&latest) > parts(current),
@@ -119,11 +118,6 @@ pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path
     }
     let _ = app.emit(event, 100u64);
     Ok(())
-}
-
-/// The release page's download address of one of this version's files.
-pub fn asset_url(file: &str) -> String {
-    format!("https://github.com/{REPO}/releases/download/v{}/{file}", env!("CARGO_PKG_VERSION"))
 }
 
 pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), String> {

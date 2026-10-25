@@ -1,6 +1,6 @@
 # Datum Plot after 0.1.0: the full feature catalogue, Python, fast updates
 
-Status: **answered (session 3) — 0.1.1 built.** The answers and the new release order are in §10; they replace §7. The catalogue in §4 is mirrored in the app (`ui/src/features.ts`, Help › Roadmap) with the release numbers of §10.
+Status: **answered (session 3) — 0.1.1 built; the detailed 0.2 plan is [PLAN-0.2.0.md](PLAN-0.2.0.md) (session 4).** The answers and the new release order are in §10; they replace §7. The catalogue in §4 is mirrored in the app (`ui/src/features.ts`, Help › Roadmap) with the release numbers of §10.
 
 This follows the family pattern: feedback → diagnosis → proposal → size → questions. §4 is the full catalogue of what Datum Plot will do: every feature gets an ID (A1, B12…) and a release, so we can tick them off one by one.
 
@@ -121,6 +121,11 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B24 | Peak analysis: baseline, find peaks, areas, multi-peak fit | scipy.signal, lmfit, pybaselines | 0.6 |
 | B25 | Signal processing: FFT, filters, convolution, resampling, interpolation | numpy.fft, scipy.signal, scipy.interpolate | 0.6 |
 | B26 | Surface fitting (Z = f(X, Y)), implicit fits | lmfit | 0.6 |
+| B27 | Tensile test analysis: modulus, 0.2 % offset yield, UTS, elongation, toughness (added session 4) | numpy, scipy | 0.2 |
+| B28 | Arrhenius / activation energy (added session 4) | scipy | 0.2 |
+| B29 | Weibull analysis of strength (added session 4) | scipy | 0.2 |
+| B30 | Fatigue S–N curves, Basquin fit (added session 4) | scipy | 0.6 |
+| B31 | DSC/TGA peak areas and onsets (added session 4) | scipy | 0.6 |
 
 ### C. Results: how answers are shown
 

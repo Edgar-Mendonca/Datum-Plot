@@ -1,7 +1,6 @@
 //! The Python runtime pack: embeddable CPython with numpy, SciPy, matplotlib and the other
-//! libraries, kept in the user's data folder (`runtime/N`, N from py/runtime.txt) so app updates
-//! stay small. It comes from `runtime.zip` inside the full installer, or is downloaded once from
-//! this version's GitHub release when N changes.
+//! libraries, unpacked from `runtime.zip` (inside every installer) into the user's data folder
+//! (`runtime/N`, N from py/runtime.txt). It is unpacked again only when N changes.
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Emitter, Manager};
@@ -62,20 +61,11 @@ pub fn python(app: &AppHandle) -> Result<Option<PathBuf>, String> {
         return Ok(Some(exe));
     }
     std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-    let zip = match bundled {
-        Some(z) => z,
-        None => {
-            status(app, "Downloading the Python engine (once)…");
-            let file = format!("DatumPlot-runtime-{n}.zip");
-            let dest = std::env::temp_dir().join(&file);
-            crate::update::download(app, &crate::update::asset_url(&file), Some(&crate::update::asset_url("SHA256SUMS.txt")), &dest, "runtime-progress")?;
-            dest
-        }
-    };
+    let zip = bundled.ok_or("The Python engine is missing. Download the installer again from the Datum Plot releases page and run it.")?;
     let tmp = root.join(format!("{n}.part"));
     let _ = std::fs::remove_dir_all(&tmp);
     unzip(&zip, &tmp, &|p| status(app, &format!("Preparing the Python engine (first start only)… {p}%")))?;
-    // The zip is not needed once unpacked (a damaged runtime is downloaded again).
+    // The zip is not needed once unpacked (the next installer brings it again).
     let _ = std::fs::remove_file(&zip);
     // 0.1.0 kept Python in the program folder; that copy is no longer used.
     if let Some(old) = app.path().resource_dir().ok().map(|r| r.join("python")).filter(|p| p.join("python.exe").exists()) {

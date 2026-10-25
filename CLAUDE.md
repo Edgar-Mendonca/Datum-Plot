@@ -32,4 +32,4 @@ Checks before pushing:
 Releasing:
 1. Bump the version in `src-tauri/Cargo.toml` and `crates/core/Cargo.toml`.
 2. Add a CHANGELOG section (`## x.y.z — date`, a one-line summary, bold sections in plain language).
-3. Push the tag `vX.Y.Z`, or run `release.yml` with workflow_dispatch when tag pushes are blocked. The workflow creates the tag and publishes the installer and `SHA256SUMS.txt`.
+3. Push the tag `vX.Y.Z`, or run `release.yml` with workflow_dispatch when tag pushes are blocked. The workflow creates the tag and publishes **one** installer (`DatumPlot-x.y.z-setup.exe`, Python inside) and `SHA256SUMS.txt`. No extra update or runtime files (the user's rule).

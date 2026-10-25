@@ -40,7 +40,6 @@ const App = () => {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
       setOut(await invoke<Out>("state"));
       listen("engine", e => setEngine(e));
-      listen("runtime-progress", (p: number) => setEngine({ versions: null, error: null, status: `Downloading the Python engine (once)… ${p}%` }));
       invoke("engine").then(e => setEngine(e)).catch(() => {});
       const start = await invoke<string | null>("startup_file");
       if (start) await loadOut("open", { path: start });
