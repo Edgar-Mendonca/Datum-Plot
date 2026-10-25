@@ -6,6 +6,7 @@ import { P, item, open, Section, navOpen, act, openMenu, setBackstage } from "./
 import { C } from "./cmds";
 import { newGraph } from "./graph";
 import { Icon } from "./ui";
+import { Help } from "./help";
 import { analyze, soon } from "./roadmap";
 
 export const SIDE: [Section, string, string][] = [["info", "infosheet", "Info"], ["data", "sheet", "Data"], ["results", "results", "Results"], ["graphs", "graph", "Graphs"], ["layouts", "layout", "Layouts"]];
@@ -14,7 +15,7 @@ export const Side = () => (
   <nav class="side"><For each={SIDE}>{([s, i, l], k) => <>{k() === 1 && <hr />}<button classList={{ on: item().s === s }} onClick={() => open(s)} title={l}><Icon n={i} /><span>{l}</span></button></>}</For></nav>
 );
 
-const Head = (p: { l: string; add?: () => void; title?: string }) => <div class="nhead"><span>{p.l}</span>{p.add && <button title={p.title} onClick={p.add}>＋</button>}</div>;
+const Head = (p: { l: string; h?: string; add?: () => void; title?: string }) => <div class="nhead"><span>{p.l}{p.h && <Help k={p.h} />}</span>{p.add && <button title={p.title} onClick={p.add}>＋</button>}</div>;
 export const Navigator = () => {
   const ctx = (e: MouseEvent, id: number, s: Section) => { open(s, id); openMenu(e, [
     ...(s === "data" ? [{ label: "New Graph of This Table", icon: "graph", run: () => newGraph(id) }, "-" as const] : []),
@@ -24,11 +25,11 @@ export const Navigator = () => {
     <Show when={navOpen()}>
       <aside class="nav">
         <button class="nitem" classList={{ on: item().s === "info" }} onClick={() => open("info")}><Icon n="infosheet" /><span>{P().info.title || "Project info"}</span></button>
-        <Head l="Data tables" add={C.newTable} title="New XY data table" />
+        <Head l="Data tables" h="navigator" add={C.newTable} title="New XY data table" />
         <For each={P().tables}>{t => <button class="nitem" classList={{ on: item().s === "data" && item().id === t.id }} onClick={() => open("data", t.id)} onContextMenu={e => ctx(e, t.id, "data")} onDblClick={C.rename}><Icon n="sheet" /><span>{t.name}</span></button>}</For>
-        <Head l="Results" add={() => analyze()} title="Analyze data" />
+        <Head l="Results" h="results" add={() => analyze()} title="Analyze data" />
         <For each={P().analyses ?? []} fallback={<p class="nnone">Analyze… adds results here</p>}>{a => <button class="nitem" classList={{ on: item().s === "results" && item().id === a.id }} onClick={() => open("results", a.id)} onContextMenu={e => ctx(e, a.id, "results")} onDblClick={C.rename}><Icon n="results" /><span>{a.name}</span></button>}</For>
-        <Head l="Graphs" add={C.newGraph} title="New graph of the open table" />
+        <Head l="Graphs" h="graphview" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
         <Head l="Layouts" add={() => soon("F1")} title="New layout (0.4)" />
         <p class="nnone">Page layouts arrive in 0.4</p>
@@ -44,7 +45,7 @@ export const InfoPage = () => {
     ? <textarea rows="8" value={P().info[p.k]} onChange={e => put(p.k, e.currentTarget.value)} /> : <input value={P().info[p.k]} onChange={e => put(p.k, e.currentTarget.value)} />}</div></div>;
   return (
     <div class="page infopage"><div class="options">
-      <h1>Info</h1>
+      <h1>Info <Help k="info" /></h1>
       <p class="muted">What this project is about. It is saved with the project, and the fields can go into printed headers and footers (File › Print).</p>
       <section class="osec">
         <F k="title" l="Title" hint="Printed with &[Title]." />

@@ -209,6 +209,20 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.explain .btn:has-text("Copy methods text")');
   await p.waitForTimeout(100);
   check("Copy methods text uses the Windows clipboard", ((await calls("copy_text"))[0]?.text || "").includes("least squares"));
+  // 8. 0.2.1: a "?" beside a tool opens its card; Help › What Is This Tool? lists every card.
+  await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(80);
+  await p.click(".ribbon .grp .cap:text-is('Regression') .help"); await p.waitForTimeout(150);
+  check("? beside Regression opens its card", ((await p.textContent(".dlg header")) || "").includes("Regression") && ((await p.textContent(".dlg .helpcard")) || "").includes("How to use it"));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(80);
+  check("the card closes with Escape", !(await p.$(".dlg .helpcard")));
+  await p.click('.tabs button:text-is("Help")'); await p.waitForTimeout(80);
+  await p.click(".ribbon button[title*='Every tool explained']"); await p.waitForTimeout(150);
+  await p.getByText("Navigator", { exact: true }).click(); await p.waitForTimeout(150);
+  check("What Is This Tool? opens a card from the list", ((await p.textContent(".dlg .helpcard")) || "").includes("data tables → results → graphs"));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(80);
+  await p.click(".nhead .help"); await p.waitForTimeout(150);
+  check("? in the navigator opens its card", ((await p.textContent(".dlg header")) || "").includes("Navigator"));
+  await p.keyboard.press("Escape");
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();
   console.log(failed ? `\n${failed} failed` : "\nall passed");

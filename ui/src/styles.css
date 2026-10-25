@@ -555,3 +555,12 @@ body:has(.ov.dock) .gpage { padding-right: min(680px, 48vw); }
 pre.code { background: var(--panel); border: 1px solid var(--line); padding: 10px; font: 11.5px var(--mono); white-space: pre-wrap; max-height: 50vh; overflow: auto; user-select: text; }
 .eq { margin: 0; line-height: 1.5; }
 input.mono { font-family: var(--mono) !important; }
+
+/* 0.2.1: ? help beside the tools (same as every Datum app) */
+.help { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--sel2); background: var(--pale); color: var(--blue); font: 600 10.5px var(--sans); padding: 0; margin-left: 4px; vertical-align: middle; flex: none; line-height: 1; letter-spacing: 0; text-transform: none; }
+.help:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.ribbon .grp .cap .help, .nhead .help { width: 13px; height: 13px; font-size: 9px; margin-left: 3px; padding: 0; }
+.dlg header .help { align-self: center; }
+.helpcard p { margin: 0 0 8px; line-height: 1.5; max-width: 560px; }
+.helpcard ul { margin: 0 0 8px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; max-width: 560px; }
+.helpcard h4 { margin: 10px 0 4px; }

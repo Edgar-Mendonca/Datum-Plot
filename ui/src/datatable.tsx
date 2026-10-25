@@ -9,6 +9,7 @@ import { parseTsv, toTsv, transpose, series, clip } from "./cells";
 import { createSel, aggregate } from "./selection";
 import { Dialog, Pick, Text, Icon } from "./ui";
 import { pasteSpecial as pasteDialog } from "./dialogs";
+import { Help } from "./help";
 
 const RH = 22, HW = 40, TW = 96, XW = 86, CW = 76, HEAD = 2 * RH;
 const SUB: Record<string, string[]> = { msn: ["Mean", "SD", "N"], mesn: ["Mean", "SEM", "N"] };
@@ -207,7 +208,7 @@ const TableHead = (p: { t: Table }) => {
   const set = (field: string, value: string) => act({ TableSet: { table: p.t.id, field, value } });
   return (
     <div class="thead">
-      <Icon n="sheet" /><b class="tname" title="Double-click to rename" onDblClick={() => rename(p.t, "name", "Table name")}>{p.t.name}</b>
+      <Icon n="sheet" /><b class="tname" title="Double-click to rename" onDblClick={() => rename(p.t, "name", "Table name")}>{p.t.name}</b><Help k="table" />
       <label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label>
       <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
@@ -232,7 +233,7 @@ export const setDialog = (t: Table, k: number) => openDialog(() => {
   const s = t.sets[k];
   const [v, setV] = createSignal<DataSet>({ ...s });
   return (
-    <Dialog title={`Data set ${letter(k)}`} ok={() => act({ SetDef: { table: t.id, k, set: { ...v(), reps: Math.max(1, Math.min(50, Math.round(v().reps))) } } })}
+    <Dialog title={`Data set ${letter(k)}`} help="dataset" ok={() => act({ SetDef: { table: t.id, k, set: { ...v(), reps: Math.max(1, Math.min(50, Math.round(v().reps))) } } })}
       extra={<button class="btn" disabled={t.sets.length < 2} onClick={() => { if (confirm(`Delete data set ${letter(k)} and its values?`)) act({ SetDef: { table: t.id, k, set: null } }).then(ok => { if (ok) closeDialog(); }); }}>Delete data set</button>}>
       <div class="form">
         <label>Title</label><Text value={v().title} set={x => setV({ ...v(), title: x })} />

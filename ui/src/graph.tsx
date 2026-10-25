@@ -6,6 +6,7 @@ import { Graph, Render, num, invoke } from "./api";
 import { act, call, engine, openMenu, out, toast, open, openDialog, opts } from "./store";
 import { formatGraph } from "./format";
 import { Dialog, Pick, Check, Icon } from "./ui";
+import { Help } from "./help";
 
 export const [zoomG, setZoomG] = createSignal(1.5);
 /** The last render of each graph, by id (also used by File › Print). */
@@ -82,7 +83,7 @@ export const GraphView = (p: { g: Graph }) => {
         )}</Show>
         <Show when={err() && r()}><div class="gerr">{err()}</div></Show>
       </div>
-      <div class="gfoot muted"><Icon n="graph" /><b>{p.g.name}</b><span>{p.g.settings.width} × {p.g.settings.height} mm · {p.g.settings.font} {p.g.settings.fontSize} pt</span><span class="grow" />
+      <div class="gfoot muted"><Icon n="graph" /><b>{p.g.name}</b><Help k="graphview" /><span>{p.g.settings.width} × {p.g.settings.height} mm · {p.g.settings.font} {p.g.settings.fontSize} pt</span><span class="grow" />
         <span>Double-click an axis, the legend or the data to format it · right-click for more</span></div>
       <Show when={tip()}>{t => <div class="gtip" style={{ left: `${t().x + 14}px`, top: `${t().y + 12}px` }}><For each={t().text}>{(l, i) => i() ? <span>{l}</span> : <b>{l}</b>}</For></div>}</Show>
     </section>
@@ -102,7 +103,7 @@ export const exportGraph = (g: Graph, fmt0 = "png") => openDialog(() => {
   const [fmt, setFmt] = createSignal(fmt0), [dpi, setDpi] = createSignal(String(opts().dpi)), [tr, setTr] = createSignal(false);
   const raster = () => fmt() === "png" || fmt() === "tiff";
   return (
-    <Dialog title={`Export · ${g.name}`} okText="Export…" ok={async () => { const p = await call<string | null>("export_graph", { id: g.id, fmt: fmt(), dpi: +dpi(), transparent: tr() }); if (p) toast(`Saved ${p}`, true); }}>
+    <Dialog title={`Export · ${g.name}`} help="export" okText="Export…" ok={async () => { const p = await call<string | null>("export_graph", { id: g.id, fmt: fmt(), dpi: +dpi(), transparent: tr() }); if (p) toast(`Saved ${p}`, true); }}>
       <div class="form">
         <label>Format</label><Pick value={fmt()} set={setFmt} options={FORMATS} />
         <Show when={raster()}><label>Resolution</label><Pick value={dpi()} set={setDpi} options={[["150", "150 dpi (screen)"], ["300", "300 dpi (print, most journals)"], ["600", "600 dpi (line art)"], ["1200", "1200 dpi"]]} /></Show>

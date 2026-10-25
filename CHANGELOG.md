@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1 — 2026-10-25
+
+A small "?" beside the tools: click it to see what the tool is for and how to use it.
+
+**Help beside every tool**
+- Every ribbon group with working tools has a small **?** next to its name. A click opens a short card: what the tool does, how to use it, and a tip where one helps.
+- The navigator (Data tables, Results, Graphs), the Info sheet, the data table, the graph, the results sheet, Format Graph, Export, Import, the analysis options and the New Data Table, Analyze Data and Graph Type galleries have one too.
+- Help › **What Is This Tool?** lists every card, so you can read about a tool before you look for it.
+
+**Roadmap**
+- The data tools and the releases after them each move up one number: data tools are now 0.2.2 (Help › Roadmap).
+
 ## 0.2.0 — 2026-10-25
 
 Statistics, linear regression and curve fitting, with results that stay linked to your data and explain themselves.

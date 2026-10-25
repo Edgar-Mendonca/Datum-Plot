@@ -45,12 +45,12 @@ export const RoadmapPage = () => {
 
 /** A gallery: categories on the left, choices in the middle, details on the right. */
 type Choice = { id: string; name: string; icon: string; desc: string; group: string };
-const Gallery = (p: { title: string; items: Choice[]; ok: string; run: (c: Choice) => void | Promise<unknown>; first?: string }) => {
+const Gallery = (p: { title: string; help?: string; items: Choice[]; ok: string; run: (c: Choice) => void | Promise<unknown>; first?: string }) => {
   const groups = [...new Set(p.items.map(i => i.group))];
   const [g, setG] = createSignal(p.items.find(i => i.id === p.first)?.group ?? groups[0]), [sel, setSel] = createSignal(p.items.find(i => i.id === p.first) ?? p.items[0]);
   const ok = () => { const f = feature(sel().id); if (f && !ready(f[0])) { soon(f[0]); return false; } p.run(sel()); };
   return (
-    <Dialog title={p.title} wide okText={ready(sel().id) ? p.ok : `In ${rel(feature(sel().id)?.[2] ?? "")}`} ok={ok}>
+    <Dialog title={p.title} help={p.help} wide okText={ready(sel().id) ? p.ok : `In ${rel(feature(sel().id)?.[2] ?? "")}`} ok={ok}>
       <div class="gal">
         <nav><For each={groups}>{x => <button classList={{ on: g() === x }} onClick={() => { setG(x); setSel(p.items.find(i => i.group === x)!); }}>{x}</button>}</For></nav>
         <div class="galitems"><For each={p.items.filter(i => i.group === g())}>{c => <button class="galitem" classList={{ on: sel() === c, soon: !ready(c.id) }} onClick={() => setSel(c)} onDblClick={ok}>
@@ -74,7 +74,7 @@ const TABLES: Choice[] = [
   { id: "A10", name: "Matrix", icon: "grid", group: "Origin-style", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" items={TABLES} ok="Create" run={() => C.newTable()} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={() => C.newTable()} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
@@ -103,7 +103,7 @@ const ANALYSES: Choice[] = [
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];
 /** Analyze: every analysis; the ready ones open their options. */
-export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.id)); }} />);
+export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" help="analyze" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.id)); }} />);
 /** Opens the options of the analysis behind a catalogue id, for the open table. */
 export const runAnalysis = (id: string) => { const [kind, preset] = BY_ID[id] ?? []; if (kind) analysisDialog(kind, curTable(), undefined, preset); else soon(id); };
 
@@ -120,7 +120,7 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" items={GRAPHS} ok="Use" run={() => toast("This graph is already an XY graph.", true)} />);
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" run={() => toast("This graph is already an XY graph.", true)} />);
 
 /** File › Import: a CSV, TXT or Excel file into a new XY table. */
 export const importFile = async () => {
@@ -143,7 +143,7 @@ export const importFile = async () => {
       return ok;
     };
     return (
-      <Dialog title={`Import · ${r.name}`} wide okText="Import" ok={go}>
+      <Dialog title={`Import · ${r.name}`} help="import" wide okText="Import" ok={go}>
         <div class="form">
           <Show when={r.sheets.length > 1}><label>Sheet</label><Pick value={String(k())} set={v => { setK(+v); setHead(words(rows()[0])); setX(0); setReps(words(rows()[0]) ? guess() : 1); }} options={r.sheets.map((s, i) => [String(i), `${s.name} (${s.rows.length} rows)`] as [string, string])} /></Show>
           <label>Table name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />

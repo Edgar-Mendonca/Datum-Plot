@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.0** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.0; installer 113 MB). Earlier: 0.1.0, 0.1.1 |
+| **Current version** | **0.2.1** (2026-10-25, ? help beside the tools). Earlier: 0.1.0, 0.1.1, 0.2.0 (https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.0; installer 113 MB) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -91,6 +91,7 @@ flowchart LR
 | `ui/src/features.ts` | **The feature catalogue in the app** (99 entries: id, name, release, description, library), `VERSION_NOW`, `RELEASES`, `AREAS`, `ready()`. Mirrors PLAN-0.2 §4 with the §10 order; update it when a feature ships. |
 | `ui/src/results.tsx` | `KINDS`, `BY_ID` (catalogue id → analysis), `analysisDialog` (data sets + options per kind; models from Python), `ResultsView` (tabs, tables with Copy, plots, Explain panel: answer, checks, methods, legend, Python code; Exclude outliers; show/hide on each graph), `ResultsPage`. |
 | `ui/src/roadmap.tsx` | `soon(id)` card for planned commands, `RoadmapPage` (File › Roadmap, Help › Roadmap), galleries `newTable`, `analyze`, `graphTypes` (categories · items · details), `importFile` dialog (sheet, headings, X column, replicates guessed from gaps in the titles, preview) → `Import` op. |
+| `ui/src/help.tsx` | "?" help: the `HELP` table (`{ t, what, how?, tip? }` per topic), `<Help k>` (the small ? button, `.help`), `helpCard(k)` (the card dialog, `.helpcard`). Ribbon groups take `h=` on `G`, navigator heads `h=` on `Head`, dialogs and galleries `help=`. Help › What Is This Tool? lists every topic. |
 | `ui/src/selection.ts`, `cells.ts`, `fmt.ts`, `ui.tsx` | Copied from Datum Plan (grid engine, TSV and series, formatting, building blocks; `Dialog` has a docked `side` mode). |
 | `tests_ui/run.cjs` | Playwright: 31 checks (since 0.1.1 also: planned commands and their cards, Analyze gallery, Import dialog → `Import` op, Copy Picture → `copy_graph`, Roadmap list and search, every tab fits at 1280/1600 px) against `ui/dist` with the dump fixture and a **real Python render** of the sample graph (Home, opening a sample, Format Graph from a double-click, log scale op, docked dialog, hover values, heading alignment, typing, ranges, Count, Ctrl+E, paste, ribbon fit at 1280/1600, Analyze, Info, Print, Options, no script errors). |
 | `.github/workflows/ci.yml` | ubuntu: Python deps + `unittest`, `check:ui`, build, clippy `-D warnings`, `cargo test`, UI tests. |
@@ -143,6 +144,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | Session 3 | **Lay out the whole UI first**: every catalogue feature has its place now (ribbon, galleries, navigator, Roadmap); planned ones are dimmed and explain what and when; then build feature by feature | The user: "build the app first… then feature by feature; much easier to see and understand the issues." |
 | Session 3 | Release order: 0.2 statistics and regression, then 0.3 compare groups | The user's work (materials science R&D) is regression-heavy. |
 | Session 3 | Exact P values with APA stars by default; Prism-style results sheets + Explain panel; Python console in 0.7; graph editing in 0.4; `.pzfx` in 0.6 | The user left these to us; no Prism files. |
+| 0.2.1 | **? help beside the tools in every Datum app**: a small ? beside each ribbon group, panel and main dialog opens a card (what it is for, how to use it) from one `HELP` table in `ui/src/help.tsx`; Help › What Is This Tool? lists them all; no separate teaching mode. Help shipped as its own release (0.2.1) and the planned 0.2.1–0.2.5 moved up one number, so releases stay consecutive | The user's words: "at some of the tools, we can add a small question mark icon… we should do it in all of our applications." Built first in Datum Atlas 0.1.1; same code and styles in every app. |
 | Session 3 | Samples and wording lean to materials science and engineering (tensile tests, Arrhenius plots, calibration lines, spectra) | The user's background. |
 
 ---
@@ -158,11 +160,12 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Feature brainstorm | Catalogue A–J (99 features), Python libraries, fast updates, release plan ([PLAN-0.2.md](PLAN-0.2.md); answers and order in §10) | ✅ |
 | **0.1.1** | Fixes, fast updates, import, full layout | Copy Picture through Rust (G2), runtime pack (I1), engine timeout/restart (I2), CSV/TXT/XLSX import (A12); **every catalogue feature laid out**: Roadmap page, galleries (New Table, Analyze, Graph Type), planned commands in every tab incl. new Layout and Tools tabs | ✅ |
 | **0.2.0** | Results, statistics, regression, curve fitting ([PLAN-0.2.0.md](PLAN-0.2.0.md) §9) | Results sheets (Summary/Details/Residuals tabs, Explain, methods text, APA P values, copy, Python code, checklist), descriptive statistics, normality, outliers + exclude, linear regression (fit range, origin, polynomial, Deming, compare lines, interpolation), nonlinear fit (lmfit, model library, own equation), Arrhenius, curves + bands + equation on graphs, residual plots; Tensile and Arrhenius samples | ✅ |
-| 0.2.1 | Data tools | Transforms (log, 1/T, normalise, baseline, units), sort/find/filter, data checks, histogram and QQ graphs | 🔜 |
-| 0.2.2 | Fitting power | Global fits, model comparison, area under curve, smoothing, second worker | ⬜ |
-| 0.2.3 | Materials | Tensile test analysis, Weibull analysis | ⬜ |
-| 0.2.4 | Graph style | Styles, copy look, colour schemes | ⬜ |
-| 0.2.5 | Sharing and help | Batch export, Excel export, test chooser, statistics guide, samples | ⬜ |
+| 0.2.1 | Help | A ? beside the tools, panels and dialogs; Help › What Is This Tool? (J5) | ✅ |
+| 0.2.2 | Data tools | Transforms (log, 1/T, normalise, baseline, units), sort/find/filter, data checks, histogram and QQ graphs | 🔜 |
+| 0.2.3 | Fitting power | Global fits, model comparison, area under curve, smoothing, second worker | ⬜ |
+| 0.2.4 | Materials | Tensile test analysis, Weibull analysis | ⬜ |
+| 0.2.5 | Graph style | Styles, copy look, colour schemes | ⬜ |
+| 0.2.6 | Sharing and help | Batch export, Excel export, test chooser, statistics guide, samples | ⬜ |
 | 0.3.0 | Compare groups | Column table, t-tests, nonparametric, one-way ANOVA + post hoc, effect sizes, column graphs (dot, bar, box, violin, swarm, estimation), significance brackets, graph thumbnails | ⬜ |
 | 0.4.0 | Two factors, interactive graphs, layouts | Grouped + two-way ANOVA, contingency, correlation, ROC, Bland-Altman, grouped bars, heat map, pie, axis breaks, double Y, annotations, click/drag/edit on the graph, layouts, CMYK TIFF | ⬜ |
 | 0.5.0 | Survival, nested, many variables | Kaplan-Meier, log-rank, Cox (lifelines), nested, multiple/logistic regression, PCA, clustering, power, survival/volcano/forest graphs | ⬜ |
@@ -211,13 +214,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Checked in the real app (Xvfb): Tensile sample graph with both modulus lines over 0–0.003 and equations; the results sheet (summary per alloy, comparing the lines, residual plots, answer, checks, methods). Fixed: samples lost their fit overlays when opened (the shell rebuilt graph settings from Options); `2.034e+05` → `203400` in labels; equation labels placed in the emptiest corner with a light background; "DFn = 1.0".
 - 26 Python tests, 13 + 1 Rust tests, 38 UI checks pass. Released 0.2.0 (CI green): one installer, 113 MB (statsmodels, lmfit and pandas added to the Python pack).
 
+### 2026-10-25: Session 6 (0.2.1, ? help)
+- User: every Datum app gets a small ? beside its tools that says what the tool is for and how to use it (built first in Datum Atlas 0.1.1); no separate teaching mode.
+- Built: `ui/src/help.tsx` copied from Atlas with 35 Plot topics; `G` (ribbon group) takes `h`, the navigator `Head` takes `h`, `Dialog` and `Gallery` take `help`; ? on the table head, graph footer, results head and Info sheet; Help › What Is This Tool?; `i-help` icon; `.help`/`.helpcard` styles. Planned-only groups (Compare, More, Layout and Tools tabs) have no ? (their buttons already open their planned cards). Catalogue J5 added (PLAN-0.2, `features.ts`); 0.2.1–0.2.5 renumbered 0.2.2–0.2.6 in `features.ts`, PLAN-0.2.0 §9 and the roadmap above.
+- Checks: 26 Python tests, 13 + 1 Rust tests, clippy, check:ui, 42 UI checks (4 new: ? beside Regression opens its card and closes with Escape, What Is This Tool? opens a card, ? in the navigator).
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** the user reviews 0.2.0; then 0.2.1 data tools (transforms incl. 1/T and unit conversions, sort/find, data checks, histogram and QQ graphs).
+**Next:** the user reviews 0.2.1; then 0.2.2 data tools (transforms incl. 1/T and unit conversions, sort/find, data checks, histogram and QQ graphs).
 
-**0.2.0 limits:** analyses run on XY tables only; residual and QQ plots are pictures in the results sheet, not graphs of their own (0.2.1); equations sit in a corner (not draggable until 0.4); the first start of 0.2.0 unpacks Python again (runtime 2).
+**0.2.0 limits:** analyses run on XY tables only; residual and QQ plots are pictures in the results sheet, not graphs of their own (0.2.2); equations sit in a corner (not draggable until 0.4); the first start of 0.2.0 unpacks Python again (runtime 2).
 
 **Checked by the user on Windows (0.1.0):** first start 3–6 s; install under a minute; graph text in Arial. Copy Picture failed (fixed in 0.1.1, checked on Linux only).
 

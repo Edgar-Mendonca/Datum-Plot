@@ -132,9 +132,10 @@ One installer per release (`DatumPlot-x.y.z-setup.exe`), used for new installs a
 | Version | Contents | IDs |
 | --- | --- | --- |
 | **0.2.0** ✅ | Results sheets with Explain, methods text, P values, copy, Python code, checklist; descriptive statistics; normality; outliers with one-click exclude; linear regression (fit range, through origin, polynomial, Deming, compare lines, interpolation); nonlinear curve fitting with the model library and your own equation; Arrhenius / activation energy; fitted curves with bands and equation on the graph; residual plots | C1–C3, C5–C9, B1–B3, A16, B9–B11, B13, B28, D5 |
-| 0.2.1 | Data tools: transforms (log, 1/T, normalise, baseline, unit conversions), sort/find/filter, data checks, histograms and QQ graphs | A15, A17, A18, D4 |
-| 0.2.2 | Global fits and model comparison, area under curve and smoothing, a second Python worker | B12, B14, I3 |
-| 0.2.3 | Tensile test analysis, Weibull analysis | B27, B29 |
-| 0.2.4 | Graph styles, copy look, colour schemes | D13, D14, D16 |
-| 0.2.5 | Batch export, Excel export, test chooser, statistics guide, samples | G4, G6, C4, J3, J2 |
+| 0.2.1 | ? help beside every tool (the family decision of 2026-10-25, built first in Datum Atlas 0.1.1); the releases below each moved up one number | J5 |
+| 0.2.2 | Data tools: transforms (log, 1/T, normalise, baseline, unit conversions), sort/find/filter, data checks, histograms and QQ graphs | A15, A17, A18, D4 |
+| 0.2.3 | Global fits and model comparison, area under curve and smoothing, a second Python worker | B12, B14, I3 |
+| 0.2.4 | Tensile test analysis, Weibull analysis | B27, B29 |
+| 0.2.5 | Graph styles, copy look, colour schemes | D13, D14, D16 |
+| 0.2.6 | Batch export, Excel export, test chooser, statistics guide, samples | G4, G6, C4, J3, J2 |
 | 0.3.x | Compare groups (split into small steps when planned) | A2, B4–B8, D2, D3, E7 |

@@ -5,6 +5,7 @@ import { Analysis, Result, Table, invoke, letter } from "./api";
 import { act, call, out, P, open, openDialog, toast, item } from "./store";
 import { Dialog, Pick, Check, Tabs, Icon } from "./ui";
 import { Empty } from "./nav";
+import { Help } from "./help";
 
 /** The analyses that exist, by kind: [name, catalogue id, draws a curve on the graph]. */
 export const KINDS: Record<string, [string, string, boolean]> = {
@@ -54,7 +55,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const Unknowns = () => <><label>Unknowns (Y values)</label><input placeholder="e.g. 0.35, 0.82 — read X off the fit" value={o().unknowns ?? ""} onChange={e => put("unknowns", e.currentTarget.value)} /></>;
     const model = () => models()?.find(m => m[0] === o().model);
     return (
-      <Dialog title={existing ? `Change · ${existing.name}` : KINDS[kind][0]} wide okText={existing ? "OK" : "Analyze"} ok={ok}>
+      <Dialog title={existing ? `Change · ${existing.name}` : KINDS[kind][0]} wide help="options" okText={existing ? "OK" : "Analyze"} ok={ok}>
         <div class="form">
           <label>Name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}`} value={on(k())} set={() => toggle(k())} />}</For></span>
@@ -106,7 +107,7 @@ export const ResultsView = (p: { a: Analysis }) => {
     <p><button class="btn sm" onClick={() => copy(r()!.code, "Code")}>Copy</button></p></Dialog>);
   return (
     <section class="rview">
-      <div class="rhead"><Icon n="results" /><b>{p.a.name}</b><span class="muted">of <a onClick={() => open("data", p.a.table)}>{t()?.name}</a></span><span class="grow" />
+      <div class="rhead"><Icon n="results" /><b>{p.a.name}</b><Help k="results" /><span class="muted">of <a onClick={() => open("data", p.a.table)}>{t()?.name}</a></span><span class="grow" />
         <Show when={r()?.cells.length}><button class="btn sm pri" onClick={() => act({ Exclude: { table: p.a.table, cells: r()!.cells, on: true } }).then(ok => ok && toast("Outliers excluded. They stay in the table in blue.", true))}>Exclude {r()!.cells.length} outlier{r()!.cells.length > 1 ? "s" : ""}</button></Show>
         <Show when={KINDS[p.a.kind]?.[2]}><For each={graphs()}>{g => <Check label={`Show on ${g.name}`} value={g.settings.overlays.includes(p.a.id)} set={v => act({ Overlay: { graph: g.id, analysis: p.a.id, on: v } })} />}</For></Show>
         <button class="btn sm" onClick={() => analysisDialog(p.a.kind, t(), p.a)}>Change…</button><button class="btn sm" onClick={code}>Python code</button>
