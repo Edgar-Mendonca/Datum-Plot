@@ -1,6 +1,6 @@
 # Datum Plot 0.2: statistics and regression — what we build next
 
-Status: **for discussion, nothing built yet.** Build after your answers in §8.
+Status: **answered (session 5).** The release order in §9 replaces §5.
 
 The full catalogue is [PLAN-0.2.md](PLAN-0.2.md) §4 (order in §10). This file takes the **0.2 part** and says exactly what you will see, how it works, and how to split it into releases.
 
@@ -120,3 +120,21 @@ One installer per release (`DatumPlot-x.y.z-setup.exe`), used for new installs a
 4. **On the graph:** show the equation and R² next to a fitted line by default, or only when asked?
 5. **Replicates in regression:** fit every replicate point (Prism's default, better statistics) or only the means? (Proposal: every point, with a switch.)
 6. Anything from your materials work you used often that is not in this list (hardness, creep, XRD peak fitting, particle size distributions…)?
+
+---
+
+## 9. Answers (session 5) and the release order
+
+- **Combine** the first two parts into one **0.2.0**. Then go on in **small consecutive releases, 0.2.1, 0.2.2, 0.2.3 …** up to 0.3, without jumping numbers. Small updates are quicker to build, to check and to fix (and cheaper).
+- **Materials:** Arrhenius yes (in 0.2.0); tensile and Weibull as suggested (0.2.3).
+- **Questions 3–6:** as proposed — short Summary tab + full Details; equation and R² shown on the graph by default (can be switched off); regression uses every replicate point by default (switch to means); further materials ideas stay in the catalogue (B30, B31) for later.
+
+| Version | Contents | IDs |
+| --- | --- | --- |
+| **0.2.0** | Results sheets with Explain, methods text, P values, copy, Python code, checklist; descriptive statistics; normality; outliers with one-click exclude; linear regression (fit range, through origin, polynomial, Deming, compare lines, interpolation); nonlinear curve fitting with the model library and your own equation; Arrhenius / activation energy; fitted curves with bands and equation on the graph; residual plots | C1–C3, C5–C9, B1–B3, A16, B9–B11, B13, B28, D5 |
+| 0.2.1 | Data tools: transforms (log, 1/T, normalise, baseline, unit conversions), sort/find/filter, data checks, histograms and QQ graphs | A15, A17, A18, D4 |
+| 0.2.2 | Global fits and model comparison, area under curve and smoothing, a second Python worker | B12, B14, I3 |
+| 0.2.3 | Tensile test analysis, Weibull analysis | B27, B29 |
+| 0.2.4 | Graph styles, copy look, colour schemes | D13, D14, D16 |
+| 0.2.5 | Batch export, Excel export, test chooser, statistics guide, samples | G4, G6, C4, J3, J2 |
+| 0.3.x | Compare groups (split into small steps when planned) | A2, B4–B8, D2, D3, E7 |

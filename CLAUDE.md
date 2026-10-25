@@ -11,7 +11,7 @@ At the end of every session that changes anything, update `docs/MEMORY.md`:
 
 User preferences:
 - Rust and Tauri 2 for the shell and the project engine, SolidJS for the window, **Python (numpy, SciPy, matplotlib) inside the app** for every calculation and graph (the user's decision; it overrides FAMILY §2 for Datum Plot). Small, efficient, robust code. Windows first; the installer bundles embeddable CPython 3.13.
-- Ship in small numbered releases (0.1.0, 0.1.1, …), always three numbers. Every release appears in the in-app updater.
+- Ship in **small consecutive releases** (0.2.0, 0.2.1, 0.2.2 … no jumped numbers), always three numbers; each one small enough to build, check and fix quickly (saves tokens). Every release appears in the in-app updater. The current order is in `docs/PLAN-0.2.0.md` §9 and the MEMORY roadmap.
 - The family look with the **Teal** accent (FAMILY §3): MS Office ribbon, Cairn-style sidebar, IBM Plex, square controls, light/dark/auto themes.
 - Prism's linked chain (data table → analysis → results → graph → layout) with OriginPro's power.
 - Keep code compact and match the surrounding style. The project model, edit ops, undo and files belong in `crates/core` (Rust, unit-tested). Statistics, fitting and drawing belong in `py/datum` (Python, unit-tested against NIST/R values). Never in the UI.
