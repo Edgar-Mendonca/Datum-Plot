@@ -223,6 +223,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J2 | A sample project for every analysis (Home › Samples), with the reason the analysis was chosen | 0.2 onwards |
 | J3 | Statistics guide: which test when, what P values and CIs mean, common mistakes | 0.2 |
 | J4 | Validation page: every statistic checked against R and NIST reference data, with the numbers | 1.0 |
+| J5 | ? help: a small ? beside each tool opens a card saying what it is for and how to use it; Help › What Is This Tool? lists every card (all Datum apps; ✅ 0.2.1) | 0.2.1 |
 
 ---
 

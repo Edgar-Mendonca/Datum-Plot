@@ -1,0 +1,90 @@
+// "?" help: a small button beside a tool; a click opens a short card saying what the tool is for
+// and how to use it. One place for every explanation, so the whole app teaches itself.
+import { For, Show } from "solid-js";
+import { openDialog } from "./store";
+import { Dialog } from "./ui";
+
+type Topic = { t: string; what: string; how?: string[]; tip?: string };
+export const HELP: Record<string, Topic> = {
+  // Data tab
+  clipboard: { t: "Clipboard", what: "Cut, copy and paste cells, also to and from Excel.",
+    how: ["Select cells, Ctrl+C, then click where they go and Ctrl+V.", "Paste ▾ › Paste Special (Ctrl+Alt+V) pastes only values, only formats, or turned sideways (Transpose).", "Format Painter: click it, then click the cells that should look the same."] },
+  font: { t: "Font", what: "The typeface, size, colour, fill and bold/italic/underline of the selected cells in the table. Graph text is set on the Format tab." },
+  alignment: { t: "Alignment", what: "Left, centre or right alignment of the selected cells, and Clear Formatting to put them back as they were." },
+  insert: { t: "Insert", what: "New tables and more room in the open one.",
+    how: ["New Table picks the kind of data table: XY (X against Y) or Column (one group per column, for t-tests and ANOVA).", "Import reads a CSV, TXT or Excel file into a new XY table.", "Add Data Set adds a column group; Add 10 Rows and Remove Last Row change the length."] },
+  transform: { t: "Transform", what: "Work on the values themselves.",
+    how: ["Transform makes a new table of log, 1/X, °C → K, baseline-subtracted or normalised values (or replicates as mean, SD and N).", "Sort orders the rows by a column; Find (Ctrl+F) jumps to a value; Exclude Rows leaves out rows by a rule, such as X above 0.003.", "Check Data looks for missing X values, missing N, typing mistakes and values a log axis cannot show.", "Find Outliers runs Grubbs' test on each data set."] },
+  values: { t: "Values", what: "Commands for the selected cells and their data set.",
+    how: ["Exclude / Include (Ctrl+E): the value stays in the table in blue italic, but graphs and analyses leave it out.", "Format Data Set: its title, how values are entered (replicates, or mean with SD or SEM and N) and how many replicates.", "Fill Down (Ctrl+D) copies the top cell into the cells below."] },
+  graph: { t: "Graphs", what: "A graph draws a data table. It stays linked: change a value and the graph redraws.",
+    how: ["New Graph makes a graph of the open table.", "Show Graph (or Graphs in the navigator) opens it."] },
+  item: { t: "Item", what: "Rename, duplicate or delete the table, result or graph that is open. Right-click it in the navigator for the same commands." },
+  // Analyze tab
+  analyze: { t: "Analyze", what: "Adds an analysis of a data table. Its result appears under Results in the navigator and updates when the data change.",
+    how: ["Analyze… lists every analysis with a short description; dimmed ones say when they arrive.", "Test Chooser asks a few questions and opens the right analysis.", "Pick the data sets and the options, then Analyze. Change… on the results sheet reopens them."] },
+  statistics: { t: "Statistics", what: "Describe each data set and check it before testing.",
+    how: ["Descriptive: n, mean, SD, SEM, 95% CI, median, quartiles, CV and more.", "Normality: Shapiro-Wilk and other tests, with QQ plots.", "Outliers: Grubbs' test; one click excludes what it finds.", "Frequency: a histogram and cumulative distribution (Make a table from it to graph it).", "Correlation: Pearson, Spearman and Kendall. Power: how many samples you need."] },
+  regression: { t: "Regression and curve fitting", what: "Fit a line or a curve to XY data, with standard errors, 95% intervals and checks. The fit is drawn on the graph with its band and equation.",
+    how: ["Linear Regression: slope, intercept, R²; fit only part of the data with “Fit X from … to …”; compare the lines of several data sets.", "Curve Fit: a model from the library or your own equation. Global fit shares a parameter between data sets and tests whether it differs; Compare with tests a second model (F test and AICc).", "Interpolate reads unknowns off a standard curve.", "Area: area under the curve and the peaks above a baseline. Smooth: Savitzky-Golay, LOWESS or moving average, or the derivative or integral."],
+    tip: "Regression uses every replicate by default, not only the means." },
+  compare: { t: "Compare groups", what: "Are the groups different? Put each group in a column of a column table.",
+    how: ["t-test: two groups (unpaired with Welch's correction, paired, ratio or one sample); gives the difference with its 95% CI and Cohen's d.", "One-way ANOVA: three or more groups, then Tukey, Dunnett, Holm-Šidák… to see which pairs differ; η² and ω².", "Nonparametric: Mann-Whitney, Wilcoxon, Kruskal-Wallis with Dunn's test, Friedman, for skewed or ranked values.", "On a column graph the result draws significance stars over the groups."] },
+  materials: { t: "Materials", what: "Analyses for materials testing.",
+    how: ["Tensile Test: X is strain, each replicate column one specimen's stress; gives Young's modulus, 0.2% offset yield, UTS, elongation and toughness, per specimen and as mean ± SD.", "Weibull: strengths of brittle specimens (one group per column); gives the Weibull modulus m and characteristic strength σ0 with the Weibull plot.", "Arrhenius: rate constants at several temperatures give the activation energy."] },
+  // Graph and Format tabs
+  graphtab: { t: "Graph", what: "Make a graph, choose its type, or go back to its data table." },
+  gdata: { t: "What the graph shows", what: "How each data set is drawn.",
+    how: ["Error Bars: SD, SEM, 95% CI or the range, or none.", "Each Replicate draws every value instead of the mean.", "Connect Points joins the points; Legend shows or hides the key."] },
+  axes: { t: "Axes", what: "Log or linear axes and the look of the frame.",
+    how: ["Log X / Log Y switch an axis to a log scale (for dose-response or spectra).", "Framed Axes draws a box around the plot instead of two open axes.", "Format Axes sets ranges, ticks, titles and numbers."] },
+  columns: { t: "Column graph", what: "How a column table is drawn: scatter dots with the mean, bars, box and whiskers, violins, mean ± error only, or before–after lines joining each row. Show Each Value adds the dots to bars, boxes and violins." },
+  style: { t: "Style", what: "The look of the graph in one click.",
+    how: ["Styles: Prism, Origin, Nature, Science, ACS, IEEE, presentation or greyscale; Save This Graph's Style keeps your own.", "Copy Look gives other graphs this graph's fonts, sizes, colours and symbols (they keep their titles and ranges).", "Colour Schemes: Okabe-Ito, Tol, Tableau, viridis, greyscale or your own colours, each shown as people with colour-blindness see it."] },
+  size: { t: "Size", what: "The size of the graph in millimetres, as it will be printed or exported. Journal column widths are in the list." },
+  add: { t: "Add to the graph", what: "Fit a Curve runs linear regression or a curve fit and draws it on this graph. Significance runs a t-test (two groups) or a one-way ANOVA and puts stars over the columns of a column graph. Annotations arrive later (Help › Roadmap)." },
+  share: { t: "Share", what: "Get the graph out of Datum Plot at publication quality.",
+    how: ["Export: PNG or TIFF at any dpi, or SVG, PDF and EPS with editable text.", "Copy Picture puts the graph on the clipboard for Word or PowerPoint (Ctrl+C on the graph).", "Print (Ctrl+P) with page setup and headers."] },
+  format: { t: "Format Graph", what: "Every setting of the graph, in a panel on the right. Each change shows at once and can be undone.",
+    how: ["Data Sets: symbols, colours, lines and error bars.", "X Axis / Y Axis: range, scale, ticks, title and numbers.", "Graph: title, size, font, legend and frame.", "Double-click a part of the graph to open its page."] },
+  text: { t: "Graph text", what: "The font and size of all the text in the graph, and bold axis titles. A+ and A− step the size." },
+  glayout: { t: "Graph layout", what: "The graph's size, the legend, framed or open axes, and Graph Options (the Graph page of Format Graph)." },
+  // Tools and View tabs
+  exportall: { t: "Export", what: "Everything at once: Export All Graphs saves every graph of the project into a folder (PNG, TIFF, SVG, PDF or EPS); Excel Workbook saves the data tables and every result as sheets of one .xlsx file. PowerPoint and Word arrive later." },
+  engine: { t: "Engine", what: "Datum Plot calculates and draws with two Python engines (numpy, SciPy, matplotlib) that run beside the window: one draws the graphs, the other calculates results, so a long fit never holds up drawing. If something stops, Restart Engine starts both again; your project is not touched." },
+  show: { t: "Show", what: "Opens the project's Info sheet, its data tables or its graphs; Navigator shows or hides the list on the left." },
+  zoom: { t: "Zoom", what: "How big the graph looks on screen. It does not change the graph's size in exports (Ctrl+wheel zooms too)." },
+  theme: { t: "Theme", what: "Light, dark, or Auto to follow Windows. Graphs keep their own colours so exports look the same." },
+  // Panels and dialogs
+  navigator: { t: "Navigator", what: "The project as a chain: data tables → results → graphs → layouts. Everything stays linked.",
+    how: ["Click an item to open it; ＋ adds one to its section.", "Right-click for rename, duplicate and delete; double-click to rename."] },
+  info: { t: "Info sheet", what: "What the project is about: title, experiment, researcher, organisation, date and notes. Saved with the project; some fields can be printed in headers and footers." },
+  table: { t: "Data table", what: "An XY table has one X column, then data sets A, B, C… each with its replicate columns (Y1, Y2…) or entered as mean with SD or SEM and N. A column table has one group per column with the values down the rows, for t-tests and ANOVA.",
+    how: ["Type or paste from Excel; headings in the first row become the titles.", "The titles and units above the grid become the axis titles.", "Double-click a data set heading to format it; right-click for sort, find and exclude rows."] },
+  graphview: { t: "Graph", what: "The graph as it will be exported, drawn by the engine.",
+    how: ["Hover a point for its values.", "Double-click an axis, the legend or the data to format it; right-click for more.", "Ctrl+wheel zooms the view."] },
+  results: { t: "Results sheet", what: "The result of one analysis, linked to its table: tables you can copy, small plots, and on the right the answer in one sentence, checks of the assumptions, methods text and a figure legend.",
+    how: ["The tabs (Summary, Details…) hold the tables; Copy puts one on the clipboard for Excel or Word.", "“Show on” draws the fit on a graph.", "Change… reopens the options; Python code shows the same calculation in Python."] },
+  options: { t: "Analysis options", what: "Which data sets to analyse and how.",
+    how: ["Tick the data sets.", "For fits: the range of X to fit, every replicate or only the means, the band (confidence or prediction) and whether to show the equation."] },
+  newtable: { t: "New data table", what: "The kinds of data table. XY for a measurement against a variable (time, dose, strain, temperature); Column for groups to compare (control, treated…; alloy A, B, C). Dimmed kinds say when they arrive." },
+  graphtype: { t: "Graph type", what: "The kinds of graph. An XY table draws as an XY graph, a column table as a column graph (dots, bars, box plots, violins); the other types arrive with their tables (Help › Roadmap)." },
+  import: { t: "Import", what: "Reads a CSV, TXT or Excel file into a new XY table.",
+    how: ["Pick the sheet, whether the first row holds titles, and the X column.", "Say what the other columns are: replicates (and how many per data set), or mean, SD (or SEM) and N.", "The preview shows the table as it will be imported."] },
+  dataset: { t: "Format data set", what: "The data set's title, how its values are entered (replicates, or mean with SD or SEM and N) and how many replicates it has." },
+  export: { t: "Export", what: "Saves the graph as a file: PNG or TIFF pictures at the dpi you choose, or SVG, PDF and EPS vectors with editable text. Transparent background is optional." },
+};
+
+/** The small "?" beside a tool. */
+export const Help = (p: { k: string }) => <button class="help" title={`What is ${HELP[p.k]?.t ?? "this"}?`} onClick={e => { e.stopPropagation(); helpCard(p.k); }}>?</button>;
+
+export const helpCard = (k: string) => openDialog(() => {
+  const h = HELP[k];
+  return (
+    <Dialog title={h?.t ?? "Help"}>
+      <div class="helpcard"><p>{h?.what}</p>
+        <Show when={h?.how}><h4>How to use it</h4><ul><For each={h!.how}>{x => <li>{x}</li>}</For></ul></Show>
+        <Show when={h?.tip}><p class="muted">{h!.tip}</p></Show></div>
+    </Dialog>
+  );
+});

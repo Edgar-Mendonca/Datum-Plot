@@ -41,7 +41,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
     </div>;
   };
   return (
-    <Dialog title={`Format Graph · ${g().name}`} side cancel="Close">
+    <Dialog title={`Format Graph · ${g().name}`} side help="format" cancel="Close">
       <Tabs tabs={[["sets", "Data Sets"], ["x", "X Axis"], ["y", "Y Axis"], ["graph", "Graph"]]} on={tab()} set={setTab} />
       <div class="fmtpage">
         <Show when={tab() === "sets"}>
