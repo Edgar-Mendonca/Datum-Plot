@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.0** (2026-10-25). Earlier: 0.1.0, 0.1.1 |
+| **Current version** | **0.2.0** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.0; installer 113 MB). Earlier: 0.1.0, 0.1.1 |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -209,7 +209,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The user: combine the first two parts into one 0.2.0, then small consecutive releases 0.2.1, 0.2.2 … up to 0.3 (no jumped numbers); Arrhenius yes; the rest as proposed; keep updates small and quick to save tokens; keep memory and CLAUDE.md complete. Recorded in PLAN-0.2.0 §9, the roadmap above, `features.ts` (releases per feature) and CLAUDE.md.
 - Built 0.2.0: `Analysis` items and overlays in the core (+ test), `py/datum/analysis.py` + `models.py` (+ 12 tests against R/NIST), curves on graphs with bands and equations, `result`/`models` commands, `results.tsx` (options dialogs, results sheet with Explain), Analyze gallery and ribbon buttons made real, Tensile and Arrhenius samples, statsmodels + lmfit (runtime 2), single-installer release.
 - Checked in the real app (Xvfb): Tensile sample graph with both modulus lines over 0–0.003 and equations; the results sheet (summary per alloy, comparing the lines, residual plots, answer, checks, methods). Fixed: samples lost their fit overlays when opened (the shell rebuilt graph settings from Options); `2.034e+05` → `203400` in labels; equation labels placed in the emptiest corner with a light background; "DFn = 1.0".
-- 26 Python tests, 13 + 1 Rust tests, 38 UI checks pass.
+- 26 Python tests, 13 + 1 Rust tests, 38 UI checks pass. Released 0.2.0 (CI green): one installer, 113 MB (statsmodels, lmfit and pandas added to the Python pack).
 
 ---
 
