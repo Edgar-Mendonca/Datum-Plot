@@ -31,10 +31,30 @@ def axis_title(a, title, units):
     return f"{title} ({units})" if title and units else title or ""
 
 
-def style_of(graph, k):
+PALETTES = {"okabe": OKABE_ITO, "tableau": ["#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC"],
+            "bright": ["#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE", "#AA3377", "#BBBBBB"], "muted": ["#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255", "#AA4499"],
+            "dark": ["#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666"], "pastel": ["#A6CEE3", "#B2DF8A", "#FB9A99", "#FDBF6F", "#CAB2D6", "#FFFF99", "#1F78B4", "#33A02C"]}
+
+
+def palette(graph, n):
+    """The colours of a graph's data sets: a named scheme, a colour map spread over the data sets, or a list of #hex."""
+    name = (graph.get("palette") or "okabe").strip()
+    if "#" in name:
+        cols = [c.strip() for c in name.split(",") if c.strip().startswith("#")]
+        return cols or OKABE_ITO
+    if name in ("viridis", "cividis", "magma", "plasma", "grey"):
+        import matplotlib.colors as mc
+        from matplotlib import colormaps
+        n = max(n, 1)
+        ts = np.linspace(0.0, 0.62, n) if name == "grey" else np.linspace(0.05, 0.85, n) if n > 1 else [0.3]
+        return [mc.to_hex(colormaps["Greys_r" if name == "grey" else name](t)) for t in ts]
+    return PALETTES.get(name, OKABE_ITO)
+
+
+def style_of(graph, k, colors=OKABE_ITO):
     """A data set's look: saved settings over the defaults for its position."""
     s = (graph.get("sets") or [])[k] if k < len(graph.get("sets") or []) else {}
-    return {"show": s.get("show", True), "color": s.get("color") or OKABE_ITO[k % 8], "symbol": s.get("symbol") or SYMBOL_ORDER[k % 8],
+    return {"show": s.get("show", True), "color": s.get("color") or colors[k % len(colors)], "symbol": s.get("symbol") or SYMBOL_ORDER[k % 8],
             "size": s.get("size") or 6, "filled": s.get("filled", True), "line": s.get("line"), "width": s.get("width") or 1.0}
 
 
@@ -59,8 +79,33 @@ def rc_for(graph):
     return rc
 
 
-def draw_overlays(ax, table, graph, overlays, size):
-    """Fitted lines and curves from analyses: the curve, its 95 % bands and the equation."""
+def draw_brackets(ax, brackets, pos, tops, size, o):
+    """Significance brackets over a column graph: stars (or P values), stacked so they never overlap."""
+    from .analysis import pv, stars
+    show = o.get("brackets", "sig")
+    br = [(pos[a], pos[b], p) for a, b, p in brackets if a in pos and b in pos and show != "none" and (show == "all" or p < 0.05)]
+    if not br:
+        return
+    lo, hi = ax.get_ylim()
+    h = hi - lo
+    placed, top = [], hi
+    for x1, x2, p in sorted(br, key=lambda t: (abs(t[1] - t[0]), min(t[:2]))):
+        x1, x2 = sorted((x1, x2))
+        y = max(tops[i] for i in range(x1, x2 + 1)) + 0.06 * h
+        for a, b, yy in placed:
+            if a <= x2 and x1 <= b:
+                y = max(y, yy + 0.09 * h)
+        ax.plot([x1, x1, x2, x2], [y - 0.025 * h, y, y, y - 0.025 * h], color="#222222", linewidth=0.9, zorder=4)
+        text = stars(p) if o.get("ptext") != "p" else (f"P {pv(p)}" if pv(p).startswith("<") else f"P = {pv(p)}")
+        ax.text((x1 + x2) / 2, y + 0.005 * h, text, ha="center", va="bottom", fontsize=size * 0.85, zorder=4)
+        placed.append((x1, x2, y))
+        top = max(top, y + 0.09 * h)
+    ax.set_ylim(lo, top)
+
+
+def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, tops=None):
+    """What analyses add to a graph: fitted curves with their 95 % bands and equation, shaded
+    areas, and (column graphs) significance brackets."""
     from . import analysis
     labels = []
     for ov in overlays:
@@ -69,12 +114,19 @@ def draw_overlays(ax, table, graph, overlays, size):
         except Exception:
             continue
         o = ov.get("options", {})
+        if pos is not None:
+            draw_brackets(ax, res.get("brackets", []), pos, tops, size, o)
+            continue
         for c in res.get("curves", []):
-            st = style_of(graph, c["set"])
+            st = style_of(graph, c["set"], colors)
             if not st["show"]:
                 continue
             col = st["color"]
-            ax.plot(c["x"], c["y"], color=col, linewidth=1.4, zorder=2.5)
+            if c.get("fill"):
+                ax.fill_between(c["x"], c["fill"], c["y"], color=col, alpha=0.18, linewidth=0, zorder=1)
+                ax.plot(c["x"], c["fill"], color=col, linewidth=0.7, linestyle=":", zorder=2)
+            else:
+                ax.plot(c["x"], c["y"], color=col, linewidth=1.1 if c.get("dash") else 1.4, linestyle="--" if c.get("dash") else "-", zorder=2.5)
             bands = o.get("bands", "ci")
             if c.get("lo") and bands in ("ci", "both"):
                 ax.fill_between(c["x"], c["lo"], c["hi"], color=col, alpha=0.14, linewidth=0, zorder=1)
@@ -112,12 +164,15 @@ def figure(table, graph, overlays=()):
     if not frame:
         for side in ("top", "right"):
             ax.spines[side].set_visible(False)
+    colors = palette(graph, len(table["sets"]))
+    if table.get("kind") == "column":
+        return column_figure(fig, ax, table, graph, overlays, colors, size)
     summary = stats.summarize(table)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
     direction = graph.get("errorDir", "both")
     points = []
     for k, (s, pts) in enumerate(zip(table["sets"], summary)):
-        st = style_of(graph, k)
+        st = style_of(graph, k, colors)
         if not st["show"] or not pts:
             continue
         xs, ys = [p["x"] for p in pts], [p["mean"] for p in pts]
@@ -139,7 +194,29 @@ def figure(table, graph, overlays=()):
             ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
                         markerfacecolor=face, markeredgecolor=col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
         points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in pts]
+    axes(ax, table, graph, points)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    leg = None
+    lg = graph.get("legend") or {}
+    if lg.get("show", True) and len([1 for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"] and summary[k]]) > 1:
+        if lg.get("loc") == "outside":
+            leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
+        else:
+            leg = ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+    if overlays and points:
+        draw_overlays(ax, table, graph, overlays, size, colors)
+    if not points:
+        ax.text(0.5, 0.5, "Enter X and Y values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+    return fig, ax, leg, points
+
+
+def axes(ax, table, graph, points, only_y=False):
+    """Axis titles, scales, ranges, ticks and grids from the graph settings."""
     for which, a, title, units in (("x", graph.get("x") or {}, table.get("xTitle", ""), table.get("xUnits", "")), ("y", graph.get("y") or {}, table.get("yTitle", ""), table.get("yUnits", ""))):
+        if only_y and which == "x":
+            ax.set_xlabel((graph.get("x") or {}).get("title", ""), fontweight="bold" if graph.get("boldTitles", True) else "normal")
+            continue
         setlabel, scale, lim, axis = (ax.set_xlabel, ax.set_xscale, ax.set_xlim, ax.xaxis) if which == "x" else (ax.set_ylabel, ax.set_yscale, ax.set_ylim, ax.yaxis)
         setlabel(axis_title(a, title, units), fontweight="bold" if graph.get("boldTitles", True) else "normal")
         log = a.get("scale") == "log"
@@ -160,20 +237,95 @@ def figure(table, graph, overlays=()):
         if a.get("grid"):
             ax.grid(True, axis=which, color="#D9DDE1", linewidth=0.6)
             ax.set_axisbelow(True)
+
+
+def swarm(v, h):
+    """Sideways offsets that keep dots of similar value apart (a simple bee swarm)."""
+    order = np.argsort(v)
+    off = np.zeros(len(v))
+    placed = []
+    for i in order:
+        y = v[i]
+        near = [o for (yy, o) in placed if abs(yy - y) < h]
+        for step in [0] + [s * j for j in range(1, 40) for s in (1, -1)]:
+            x = step * 0.055
+            if all(abs(x - o) > 0.05 for o in near) or abs(x) > 0.38:
+                break
+        off[i] = max(-0.38, min(0.38, x))
+        placed.append((y, off[i]))
+    return off
+
+
+def column_figure(fig, ax, table, graph, overlays, colors, size):
+    """A column graph: one column per data set as dots, bars, box plots, violins or before–after lines."""
+    from .groups import column, summary
+    from scipy import stats as sst
+    kind, err = graph.get("column") or "scatter", graph.get("error", "sd")
+    each = graph.get("points", "each") == "each"
+    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    data = [(k, *summary(table, k)) for k in shown]
+    data = [d for d in data if d[2] > 0]
+    allv = np.concatenate([d[1] if d[1] is not None else np.array([d[3]]) for d in data]) if data else np.zeros(0)
+    h = (np.ptp(allv) or 1.0) / 16
+    points, pos, tops = [], {}, []
+    if kind == "paired":
+        cols = [column(table, k) for k, *_ in data]
+        for r in range(table["rows"]):
+            pts = [(i, c[r]) for i, c in enumerate(cols) if c[r] is not None]
+            if len(pts) > 1:
+                ax.plot(*zip(*pts), color="#9AA5B1", linewidth=0.8, zorder=1)
+    for i, (k, v, n, m, sd) in enumerate(data):
+        st = style_of(graph, k, colors)
+        col, mk = st["color"], SYMBOLS.get(st["symbol"], "o") or "o"
+        sem = sd / math.sqrt(n) if n > 1 else 0.0
+        e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, n - 1)) * sem if n > 1 else 0.0, "none": 0.0}.get(err, sd)
+        e = 0.0 if not math.isfinite(e) else e
+        yerr = [[m - v.min()], [v.max() - m]] if err == "range" and v is not None else [[0 if graph.get("errorDir") == "up" else e], [0 if graph.get("errorDir") == "down" else e]]
+        top = max(m + yerr[1][0], float(v.max()) if v is not None else m)
+        if kind == "bars":
+            ax.bar(i, m, width=0.62, color=col if st["filled"] else "none", alpha=0.35 if st["filled"] else 1, edgecolor=col, linewidth=1.2, zorder=1)
+            ax.bar(i, m, width=0.62, color="none", edgecolor=col, linewidth=1.2, zorder=1.1)
+        elif kind == "box" and v is not None and len(v) > 1:
+            b = ax.boxplot(v, positions=[i], widths=0.5, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+                           boxprops={"facecolor": col, "alpha": 0.3, "edgecolor": col}, medianprops={"color": col, "linewidth": 1.6}, whiskerprops={"color": col}, capprops={"color": col}, flierprops={"markeredgecolor": col})
+            del b
+        elif kind == "violin" and v is not None and len(v) > 2 and np.ptp(v) > 0:
+            vp = ax.violinplot(v, [i], widths=0.75, showextrema=False)
+            for body in vp["bodies"]:
+                body.set_facecolor(col); body.set_edgecolor(col); body.set_alpha(0.3)
+            q1, med, q3 = np.percentile(v, [25, 50, 75])
+            ax.vlines(i, q1, q3, color=col, linewidth=3, zorder=2)
+            ax.plot(i, med, "o", color="white", markeredgecolor=col, markersize=4, zorder=3)
+        dots = v is not None and (kind in ("scatter", "paired") or (each and kind in ("bars", "box", "violin")))
+        if dots:
+            xs = i + (swarm(v, h) if kind != "paired" else np.zeros(len(v)))
+            ax.plot(xs, v, linestyle="none", marker=mk, markersize=st["size"] * (0.75 if kind != "scatter" else 1), markerfacecolor=col if st["filled"] else "white", markeredgecolor=col, alpha=0.9, zorder=3)
+        if kind in ("scatter", "bars", "mean") or (kind == "paired" and err != "none"):
+            if kind in ("scatter", "paired"):
+                ax.hlines(m, i - 0.26, i + 0.26, color="#222222" if kind == "scatter" else col, linewidth=1.6, zorder=4)
+            if err != "none":
+                ax.errorbar(i, m, yerr=yerr, fmt="none" if kind != "mean" else mk, markersize=st["size"], color="#222222" if kind == "scatter" else col, ecolor="#222222" if kind == "scatter" else col,
+                            elinewidth=1.0, capsize=graph.get("cap", 3) * (1.6 if kind != "mean" else 1), capthick=1.0, zorder=4)
+            elif kind == "mean":
+                ax.plot(i, m, mk, color=col, markersize=st["size"], zorder=4)
+        pos[k] = i
+        tops.append(top)
+        points.append([k, float(i), m, n, sd, sem])
+    names = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k, *_ in data]
+    ax.set_xticks(range(len(data)), names)
+    ax.set_xlim(-0.6, len(data) - 0.4)
+    ax.tick_params(axis="x", length=0)
+    axes(ax, table, graph, [[0, 0, float(allv.min()) if len(allv) else 0]], only_y=True)
+    if sum(len(n) for n in names) * size * 0.55 > (graph.get("width") or 80) * 2.4:
+        for lab in ax.get_xticklabels():
+            lab.set_rotation(30); lab.set_ha("right")
     if graph.get("title") and graph.get("showTitle", True):
         ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
-    leg = None
-    lg = graph.get("legend") or {}
-    if lg.get("show", True) and len([1 for k in range(len(table["sets"])) if style_of(graph, k)["show"] and summary[k]]) > 1:
-        if lg.get("loc") == "outside":
-            leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
-        else:
-            leg = ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
     if overlays and points:
-        draw_overlays(ax, table, graph, overlays, size)
+        draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
     if not points:
-        ax.text(0.5, 0.5, "Enter X and Y values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
-    return fig, ax, leg, points
+        ax.text(0.5, 0.5, "Enter values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+    return fig, ax, None, points
 
 
 def geometry(fig, ax, leg):

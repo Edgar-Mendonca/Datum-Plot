@@ -43,12 +43,18 @@ pub fn list() -> Vec<Tpl> {
     let dots = |id: &str| {
         let p = build(Some(id)).unwrap();
         let t = &p.tables[0];
+        if t.kind == "column" {
+            let means: Vec<f64> = t.spans().iter().map(|&(c, _)| { let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, c)).collect(); v.iter().sum::<f64>() / v.len().max(1) as f64 }).collect();
+            let top = means.iter().fold(0f64, |a, b| a.max(*b));
+            return means.iter().enumerate().map(|(i, m)| (i as f64 / (means.len() - 1).max(1) as f64, m / top.max(1e-9))).collect();
+        }
         let pts: Vec<(f64, f64)> = (0..t.rows).filter_map(|r| { let x = t.get(r, 0)?; let ys: Vec<f64> = (1..1 + t.sets[0].width()).filter_map(|c| t.get(r, c)).collect(); (!ys.is_empty()).then(|| (x, ys[0])) }).collect();
         let log = p.graphs[0].settings.x.scale == "log";
         let fx = |x: f64| if log { x.log10() } else { x };
         let (x0, x1) = pts.iter().fold((f64::MAX, f64::MIN), |a, p| (a.0.min(fx(p.0)), a.1.max(fx(p.0))));
-        let y1 = pts.iter().fold(0f64, |a, p| a.max(p.1));
-        pts.iter().map(|p| ((fx(p.0) - x0) / (x1 - x0).max(1e-9), p.1 / y1.max(1e-9))).collect()
+        let (y0, y1) = pts.iter().fold((f64::MAX, f64::MIN), |a, p| (a.0.min(p.1), a.1.max(p.1)));
+        let y0 = if y1 > 0.0 { y0.min(0.0) } else { y0 };
+        pts.iter().map(|p| ((fx(p.0) - x0) / (x1 - x0).max(1e-9), (p.1 - y0) / (y1 - y0).max(1e-9))).collect()
     };
     vec![
         Tpl { id: "growth", name: "Growth curve", desc: "Optical density over time, two strains in triplicate.", dots: dots("growth") },
@@ -56,6 +62,9 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "dose", name: "Dose-response", desc: "Response to two compounds on a log concentration axis.", dots: dots("dose") },
         Tpl { id: "modulus", name: "Tensile test", desc: "Stress–strain of two alloys; the modulus is a linear fit of the elastic region.", dots: dots("modulus") },
         Tpl { id: "arrhenius", name: "Arrhenius", desc: "Rate constants at six temperatures; the analysis gives the activation energy.", dots: dots("arrhenius") },
+        Tpl { id: "groups", name: "Compare groups", desc: "Yield strength after three heat treatments: one-way ANOVA with Tukey's test.", dots: dots("groups") },
+        Tpl { id: "weibull", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
+        Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
 
@@ -109,6 +118,59 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Elastic modulus".into(), kind: "linear".into(), sets: vec![],
                 options: serde_json::json!({ "model": "line", "xmin": 0, "xmax": 0.003, "points": "each", "compare": true, "bands": "ci", "label": true }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+            let tid = p.take_id();
+            p.analyses.push(Analysis { id: tid, table: id, name: "Tensile properties".into(), kind: "tensile".into(), sets: vec![], options: serde_json::json!({ "strain": "abs", "offset": 0.2 }) });
+        }
+        Some("groups") => {
+            let mut seed = 5u64;
+            let groups = [("As cast", 212.0, 14.0), ("T4 (solution treated)", 236.0, 12.0), ("T6 (aged)", 268.0, 15.0)];
+            let mut t = Table::column(3);
+            t.name = "Heat treatment".into();
+            t.y_title = "Yield strength".into();
+            t.y_units = "MPa".into();
+            for (k, (name, mean, sd)) in groups.iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                t.cols[k + 1] = (0..t.rows).map(|r| (r < 8).then(|| round(mean + jitter(&mut seed, sd * 1.7), 1))).collect();
+            }
+            p.name = "Compare groups".into();
+            p.info = Info { title: "Heat treatment".into(), experiment: "Yield strength of an aluminium alloy as cast, after solution treatment (T4) and after ageing (T6), eight tensile specimens each. One-way ANOVA with Tukey's multiple comparisons; the stars on the graph come from the analysis.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "scatter".into(), points: "each".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "One-way ANOVA".into(), kind: "anova".into(), sets: vec![], options: serde_json::json!({ "anova": "ordinary", "posthoc": "tukey", "brackets": "sig" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("weibull") => {
+            let mut seed = 3u64;
+            let mut t = Table::column(2);
+            t.name = "Fracture strength".into();
+            t.y_title = "Flexural strength".into();
+            t.y_units = "MPa".into();
+            t.rows = 20;
+            t.normalize();
+            for (k, (name, s0, m)) in [("Alumina", 380.0, 11.0), ("Zirconia", 910.0, 16.0)].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                t.cols[k + 1] = (0..20).map(|_| { let u: f64 = 0.5 + jitter(&mut seed, 0.49); Some(round(s0 * (-(1.0 - u).ln()).powf(1.0 / m), 0)) }).collect();
+            }
+            p.name = "Weibull strength".into();
+            p.info = Info { title: "Weibull analysis".into(), experiment: "Four-point bending strength of alumina and zirconia bars, 20 each. The Weibull analysis gives the Weibull modulus m (scatter: higher is more reliable) and the characteristic strength σ0 (63.2 % fail below it).".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "box".into(), points: "each".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Weibull analysis".into(), kind: "weibull".into(), sets: vec![], options: serde_json::json!({ "method": "mle" }) });
+        }
+        Some("dsc") => {
+            let xs: Vec<f64> = (0..=60).map(|i| 140.0 + i as f64).collect();
+            let peak = |t: f64| -0.35 - 0.004 * (t - 140.0) - 2.4 * (-((t - 167.0) / 3.2).powi(2)).exp();
+            let mut seed = 9u64;
+            let mut t = Table { name: "DSC".into(), x_title: "Temperature".into(), x_units: "°C".into(), y_title: "Heat flow".into(), y_units: "W/g".into(), rows: xs.len(),
+                sets: vec![DataSet { title: "Polymer melt".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+            t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(peak(v) + jitter(&mut seed, 0.012), 4))).collect()];
+            t.normalize();
+            p.name = "DSC peak".into();
+            p.info = Info { title: "DSC melting peak".into(), experiment: "Heat flow of a semicrystalline polymer heated at 10 K/min (endotherm down). The area between the curve and a straight baseline from the first to the last point is the melting enthalpy (W/g × °C ÷ heating rate in K/s gives J/g).".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: true, points: "mean".into(), error: "none".into(), sets: vec![SetStyle { symbol: "none".into(), width: 1.4, ..Default::default() }], ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Peak area".into(), kind: "auc".into(), sets: vec![], options: serde_json::json!({ "baseline": "line", "label": true }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("arrhenius") => {

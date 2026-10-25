@@ -8,6 +8,7 @@ import { copyGraph, exportGraph, newGraph, setZoomG } from "./graph";
 import { formatGraph } from "./format";
 import * as D from "./dialogs";
 import { analyze, importFile, newTable, graphTypes, runAnalysis } from "./roadmap";
+import * as T from "./tools";
 
 const need = <T,>(v: T | undefined, what: string) => { if (!v) toast(`Open ${what} first.`); return v; };
 export const C = {
@@ -16,7 +17,7 @@ export const C = {
   undo: async () => setOut(await call<Out>("history", { redo: false })),
   redo: async () => setOut(await call<Out>("history", { redo: true })),
   print: () => setBackstage("print"),
-  newTable: async () => { const o = await call<Out>("new_table"); if (o) { setOut(o); const t = o.project.tables[o.project.tables.length - 1]; open("data", t.id); } },
+  newTable: async (kind?: string) => { const o = await call<Out>("new_table", { kind: kind ?? null }); if (o) { setOut(o); const t = o.project.tables[o.project.tables.length - 1]; open("data", t.id); } },
   newGraph: () => { const t = need(curTable(), "a data table"); if (t) newGraph(t.id); },
   addSet: () => { const t = need(curTable(), "a data table"); if (t) addSet(t); },
   formatSet: (k = 0) => { const t = need(curTable(), "a data table"); if (t) setDialog(t, k); },
@@ -46,7 +47,7 @@ export const C = {
 export const ALL_CMDS: [string, () => void, string?][] = [
   ["Save", () => C.save(), "Ctrl+S"], ["Save As", () => C.save(true), "Ctrl+Shift+S"], ["Open", C.open, "Ctrl+O"], ["New project (File › Home)", () => setBackstage("home"), "Ctrl+N"],
   ["Print or save as PDF", C.print, "Ctrl+P"], ["Undo", C.undo, "Ctrl+Z"], ["Redo", C.redo, "Ctrl+Y"],
-  ["New XY data table", C.newTable], ["New graph of this table", C.newGraph], ["Add data set", C.addSet], ["Format data set", () => C.formatSet()], ["Add 10 rows", () => C.rows(10)],
+  ["New XY data table", () => C.newTable()], ["New graph of this table", C.newGraph], ["Add data set", C.addSet], ["Format data set", () => C.formatSet()], ["Add 10 rows", () => C.rows(10)],
   ["Format graph", () => C.format("sets")], ["Format X axis", () => C.format("x")], ["Format Y axis", () => C.format("y")], ["Graph size and font", () => C.format("graph")],
   ["Export graph as PNG", () => C.exportG("png")], ["Export graph as TIFF", () => C.exportG("tiff")], ["Export graph as SVG", () => C.exportG("svg")], ["Export graph as PDF", () => C.exportG("pdf")], ["Copy graph as picture", C.copyG],
   ["Info sheet", () => open("info")], ["Show data table", () => open("data")], ["Show graph", () => open("graphs")],
@@ -54,6 +55,13 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Options", () => setBackstage("options")], ["Check for updates", () => setBackstage("about")], ["Keyboard shortcuts", D.shortcuts, "F1"], ["Getting started", D.gettingStarted], ["Glossary", D.glossary],
   ["Import CSV, TXT or Excel", importFile], ["Linear regression", () => runAnalysis("B9")], ["Curve fit (nonlinear regression)", () => runAnalysis("B10")], ["Descriptive statistics", () => runAnalysis("B1")],
   ["Normality tests", () => runAnalysis("B2")], ["Outliers (Grubbs)", () => runAnalysis("B3")], ["Arrhenius / activation energy", () => runAnalysis("B28")], ["Interpolate unknowns from a standard curve", () => runAnalysis("B13")], ["New data table (choose a kind)", newTable], ["Graph type", graphTypes], ["Analyze data", analyze], ["Roadmap: what comes when", () => setBackstage("roadmap")],
+  ["New column table (groups)", () => C.newTable("column")], ["t-test", () => runAnalysis("B4")], ["One-way ANOVA", () => runAnalysis("B6")], ["Multiple comparisons (Tukey, Dunnett)", () => runAnalysis("B7")],
+  ["Nonparametric tests (Mann-Whitney, Kruskal-Wallis)", () => runAnalysis("B5")], ["Effect sizes", () => runAnalysis("B8")], ["Correlation", () => runAnalysis("B16")], ["Power and sample size", () => runAnalysis("B23")],
+  ["Transform (log, normalise, baseline)", () => runAnalysis("A15")], ["Check data", () => runAnalysis("A18")], ["Frequency distribution (histogram)", () => runAnalysis("D4")], ["Area under the curve", () => runAnalysis("B14")],
+  ["Smooth, derivative or integral", () => runAnalysis("B14s")], ["Global fit and model comparison", () => runAnalysis("B12")], ["Tensile test analysis", () => runAnalysis("B27")], ["Weibull analysis", () => runAnalysis("B29")],
+  ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
+  ["Graph styles (Nature, IEEE, presentation…)", () => import("./store").then(m => m.openMenu({ x: 300, y: 120 }, T.styleMenu()))], ["Copy look to other graphs", T.copyLook], ["Colour schemes", T.paletteDialog],
+  ["Export all graphs", T.exportAll], ["Export to Excel workbook", T.exportExcel],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),
 ];
 export { out, openDialog };

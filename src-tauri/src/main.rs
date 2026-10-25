@@ -6,7 +6,7 @@ mod runtime;
 mod update;
 
 use datum_core::{doc::{Doc, Op}, templates, DataSet, Entry, GraphSettings, Project, Table};
-use py::{Engine, Py};
+use py::{Calc, Engine, Py};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -44,13 +44,15 @@ struct Options {
     landscape: bool,
     company: String,
     logo: String,
+    /// Graph styles the user saved (name → settings), for Graph › Styles.
+    styles: Value,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
             theme: "auto".into(), autosave: 5, beta: false, open_last: false, decimals: -1, reps: 3, entry: "rep".into(), error: "sd".into(), width: 80.0, height: 60.0,
-            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(),
+            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}),
         }
     }
 }
@@ -116,11 +118,13 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
     Ok(out(&a))
 }
 
-/// A new, empty data table set up from the options, with its graph.
+/// A new, empty data table (XY from the options, or a column table) with its graph.
 #[tauri::command]
-fn new_table(st: State<St>) -> R<Value> {
+fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
-    let (table, graph) = (Box::new(Table { name: String::new(), ..a.opts.table() }), Some(Box::new(a.opts.graph())));
+    let t = if kind.as_deref() == Some("column") { Table::column(3) } else { a.opts.table() };
+    let g = if t.kind == "column" { GraphSettings { points: "each".into(), ..a.opts.graph() } } else { a.opts.graph() };
+    let (table, graph) = (Box::new(Table { name: String::new(), ..t }), Some(Box::new(g)));
     a.doc.apply(Op::NewTable { table, graph })?;
     a.rev += 1;
     Ok(out(&a))
@@ -152,7 +156,8 @@ fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
     if template.is_some() {
         let s = a.opts.graph();
         for g in &mut p.graphs {
-            g.settings = GraphSettings { x: g.settings.x.clone(), y: g.settings.y.clone(), line: g.settings.line, error: g.settings.error.clone(), overlays: g.settings.overlays.clone(), ..s.clone() };
+            let t = g.settings.clone();
+            g.settings = GraphSettings { x: t.x, y: t.y, line: t.line, error: t.error, overlays: t.overlays, points: t.points, column: t.column, sets: t.sets, palette: t.palette, ..s.clone() };
         }
     }
     a.doc = Doc::new(p);
@@ -260,13 +265,58 @@ async fn result(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
         let t = a.doc.p.table(x.table).ok_or("The analysis's data table no longer exists.")?;
         json!({ "cmd": "analyze", "kind": x.kind, "table": t, "sets": x.sets, "options": x.options })
     };
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
 }
 
 /// The curve-fitting model library: [id, name, equation, description].
 #[tauri::command]
 async fn models(app: AppHandle) -> R<Value> {
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, json!({ "cmd": "models" }))).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().render(&app, json!({ "cmd": "models" }))).await.map_err(|e| e.to_string())?
+}
+
+/// Tools › Export All Graphs: every graph of the project into a chosen folder (G4).
+#[tauri::command]
+async fn export_all(app: AppHandle, st: State<'_, St>, fmt: String, dpi: u32) -> R<Option<String>> {
+    if !["png", "svg", "pdf", "tiff", "eps"].contains(&fmt.as_str()) {
+        return Err("Unknown picture format.".into());
+    }
+    let Some(dir) = app.dialog().file().blocking_pick_folder().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let ids: Vec<(u32, String)> = st.0.lock().unwrap().doc.p.graphs.iter().map(|g| (g.id, g.name.clone())).collect();
+    let mut used = std::collections::HashSet::new();
+    let mut qs = vec![];
+    for (id, name) in ids {
+        let clean: String = name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
+        let mut file = format!("{clean}.{fmt}");
+        let mut k = 2;
+        while !used.insert(file.to_lowercase()) {
+            file = format!("{clean} ({k}).{fmt}");
+            k += 1;
+        }
+        let mut q = graph_req(&st, id, "export")?;
+        q["fmt"] = json!(fmt);
+        q["dpi"] = json!(dpi.clamp(72, 2400));
+        q["path"] = json!(dir.join(file).display().to_string());
+        qs.push(q);
+    }
+    let n = qs.len();
+    let h = app.clone();
+    tauri::async_runtime::spawn_blocking(move || qs.iter().try_for_each(|q| h.state::<Engine>().0.lock().unwrap().ask(&h, q).map(|_| ()))).await.map_err(|e| e.to_string())??;
+    Ok(Some(format!("{n} graph{} saved in {}", if n == 1 { "" } else { "s" }, dir.display())))
+}
+
+/// Tools › Excel Workbook: the data tables and every result as sheets of one .xlsx (G6).
+#[tauri::command]
+async fn export_excel(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
+    let (name, q) = {
+        let a = st.0.lock().unwrap();
+        (a.doc.p.name.clone(), json!({ "cmd": "excel", "project": a.doc.p, "analyses": a.doc.p.analyses }))
+    };
+    let Some(path) = app.dialog().file().add_filter("Excel workbook", &["xlsx"]).set_file_name(format!("{name}.xlsx")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let mut q = q;
+    q["path"] = json!(path.display().to_string());
+    let h = app.clone();
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    Ok(Some(path.display().to_string()))
 }
 
 /// Saves a graph as a picture or vector file chosen in a Save dialog.
@@ -337,7 +387,12 @@ fn base64_decode(s: &str) -> R<Vec<u8>> {
 
 #[tauri::command]
 async fn restart_engine(app: AppHandle) -> R<()> {
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().restart(&app).map(|_| ())).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || {
+        app.state::<Calc>().0.lock().unwrap().restart(&app)?;
+        app.state::<Engine>().0.lock().unwrap().restart(&app).map(|_| ())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// The engine's versions, or why it could not start.
@@ -508,6 +563,7 @@ fn main() {
             p.add_table(opts.table(), Some(opts.graph()));
             app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
             app.manage(Engine(Mutex::new(Py::default())));
+            app.manage(Calc(Mutex::new(Py::default())));
             // Start Python now so the first graph appears quickly.
             let h = app.handle().clone();
             std::thread::spawn(move || {
@@ -515,6 +571,9 @@ fn main() {
                 let mut p = e.0.lock().unwrap();
                 let _ = p.ask(&h, &json!({ "cmd": "ping" }));
                 let _ = h.emit("engine", json!({ "versions": p.versions, "error": p.error }));
+                drop(p);
+                // The second engine (results, Excel) starts once the graphs' engine is ready.
+                let _ = h.state::<Calc>().0.lock().unwrap().ask(&h, &json!({ "cmd": "ping" }));
             });
             Ok(())
         })
@@ -529,7 +588,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, result, models, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, result, models, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

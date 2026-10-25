@@ -29,7 +29,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   p.on("pageerror", e => errors.push(e.message));
   await p.addInitScript(([f, rd, ln]) => {
     f.state.project.analyses = [{ id: 99, table: f.state.project.tables[0].id, name: "Growth fit", kind: "linear", sets: [], options: { xmax: 10 } }];
-    const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "" };
+    const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
@@ -42,12 +42,12 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, five samples, open, import and roadmap", (await p.$$(".home .tile")).length === 9, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, eight samples, open, import and roadmap", (await p.$$(".home .tile")).length === 12, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
   check("a sample opens on its graph", !!(await p.$(".gpaper img.gimg")) && !(await p.$(".bs")));
-  check("the graph image is the engine's SVG at its size", await p.evaluate(() => { const i = document.querySelector(".gimg"); return i.src.startsWith("data:image/svg+xml") && i.width > 200; }));
+  check("the graph image is the engine's SVG at its size", await p.evaluate(() => { const i = document.querySelector(".gpaper .gimg"); return i.src.startsWith("data:image/svg+xml") && i.width > 200; }));
 
   // 2. Double-click on the X axis opens Format Graph on the X Axis page; changes apply at once.
   const plot = await p.evaluate(() => { const r = document.querySelector(".gpaper").getBoundingClientRect(); return [r.left, r.top]; });
@@ -121,11 +121,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("t-tests")');
+  await p.click('.ribbon .rb:has-text("Two-way ANOVA")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B4") && (await p.textContent(".dlg")).includes("0.3"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B15") && (await p.textContent(".dlg")).includes("0.2.2"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 10);
+  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
   check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
@@ -149,10 +149,48 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.ribbon .rb.big:has-text("Curve Fit")');
   await p.waitForTimeout(200);
   check("Curve Fit lists the model library", (await p.$$eval(".dlg select option", os => os.map(o => o.textContent))).some(t => t.includes("Exponential decay")));
+  check("Curve Fit offers a global fit and a second model", ((await p.textContent(".dlg")) || "").includes("Global fit") && ((await p.textContent(".dlg")) || "").includes("Compare with"));
   await p.keyboard.press("Escape");
+  await reset();
+  await p.click('.ribbon .rb.big:has-text("Tensile Test")');
+  await p.waitForTimeout(200);
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const ten = (await ops()).find(o => o.AddAnalysis);
+  check("Tensile Test adds a tensile analysis drawn on the graph", ten && ten.AddAnalysis.analysis.kind === "tensile" && ten.AddAnalysis.overlay === true, JSON.stringify(ten));
+  await p.click('.ribbon .rb.big:has-text("Test Chooser")');
+  await p.waitForTimeout(150);
+  await p.click('.chooser label:has-text("Whether groups differ")');
+  await p.click('.chooser label:has-text("Three or more")');
+  await p.click('.chooser label:has-text("No: different items")');
+  await p.click('.chooser label:has-text("Yes, or n")');
+  check("the Test Chooser recommends one-way ANOVA with Tukey", ((await p.textContent(".cans")) || "").includes("One-way ANOVA with Tukey"));
+  await reset();
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(250);
+  check("…and opens its options", ((await p.textContent(".dlg header")) || "").includes("One-way ANOVA"));
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const an = (await ops()).find(o => o.AddAnalysis);
+  check("ANOVA on an XY table draws no brackets", an && an.AddAnalysis.analysis.kind === "anova" && an.AddAnalysis.overlay === false && an.AddAnalysis.analysis.options.posthoc === "tukey", JSON.stringify(an));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
+  await reset();
+  await p.click('.ribbon .rb:has-text("Sort")');
+  await p.waitForTimeout(150);
+  await p.selectOption(".dlg select >> nth=1", "1");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  const so = (await ops()).find(o => o.Sort);
+  check("Sort sends the column and the order", so && so.Sort.col === 0 && so.Sort.desc === true, JSON.stringify(so));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Column")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Column asks the shell for a column table", (await calls("new_table"))[0]?.kind === "column", JSON.stringify(await calls("new_table")));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);
@@ -171,6 +209,21 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.ribbon .rb:has-text("Copy Picture")');
   await p.waitForTimeout(150);
   check("Copy Picture asks the shell to copy the graph", (await calls("copy_graph")).length === 1);
+  await reset();
+  await p.click('.ribbon .rb:has-text("Styles")');
+  await p.click('.menu button:has-text("Nature")');
+  await p.waitForTimeout(150);
+  const sty = (await ops()).find(o => o.GraphSet);
+  check("Styles › Nature sets 7 pt Arial at 89 mm", sty && sty.GraphSet.settings.fontSize === 7 && sty.GraphSet.settings.width === 89, JSON.stringify(sty?.GraphSet?.settings));
+  await p.click('.ribbon .rb:has-text("Colour Schemes")');
+  await p.waitForTimeout(150);
+  check("Colour Schemes shows each scheme as colour-blind people see it", (await p.$$(".paltbl tbody tr")).length >= 10 && (await p.$$(".paltbl .pal i")).length > 100);
+  await reset();
+  await p.click('.paltbl tr:has-text("Viridis")');
+  await p.waitForTimeout(150);
+  check("choosing a scheme sets the graph's palette", (await ops()).find(o => o.GraphSet)?.GraphSet.settings.palette === "viridis");
+  await p.click('.dlg .btn:has-text("Close")');
+  check("the navigator shows graph thumbnails", !!(await p.$(".nthumbs .nthumb img")));
 
   // 6. Info sheet edits go to the engine; File › Print previews the graph page; Options line up.
   await p.click(".side button:nth-of-type(1)");
@@ -189,7 +242,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("the printed caption says what the points show", ((await p.textContent(".pprev .pcap").catch(() => "")) || "").includes("mean ± SD"));
   await p.click('.bs aside button:has-text("Roadmap")');
   await p.waitForTimeout(200);
-  check("the Roadmap lists every feature with its status", (await p.$$(".rmtbl tr")).length >= 90 && (await p.$$(".rmtbl .chip.ok")).length >= 8);
+  check("the Roadmap lists every feature with its status", (await p.$$(".rmtbl tr")).length >= 90 && (await p.$$(".rmtbl .chip.ok")).length >= 50, String((await p.$$(".rmtbl .chip.ok")).length));
   await p.fill(".roadmap .find", "regression");
   await p.waitForTimeout(100);
   check("the Roadmap can be searched", (await p.$$(".rmtbl tr")).length >= 2 && (await p.$$(".rmtbl tr")).length < 10);

@@ -18,6 +18,7 @@ export interface SetStyle { show: boolean; color: string; symbol: string; size: 
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
   style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
+  /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string;
 }
 export interface Graph { id: number; table: number; name: string; settings: GraphSettings }
 export interface Analysis { id: number; table: number; name: string; kind: string; sets: number[]; options: Record<string, any> }
@@ -26,6 +27,8 @@ export interface ResultTable { title: string; columns: string[]; rows: string[][
 export interface Result {
   title: string; answer: string; tabs: { name: string; tables: ResultTable[] }[]; checks: [boolean | null, string][]; methods: string; legend: string; code: string;
   plots: { title: string; svg: string }[]; curves: unknown[]; cells: [number, number][];
+  /** [set, set, P] over column graphs. */ brackets?: [number, number, number][];
+  /** A new data table the result can become (transforms, histograms, smoothing). */ table?: Partial<Table>;
 }
 export interface Info { title: string; experiment: string; researcher: string; organisation: string; date: string; notes: string }
 export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; analyses: Analysis[]; nextId: number; ui: any }
@@ -38,6 +41,7 @@ export interface Render {
 export interface Options {
   theme: string; autosave: number; beta: boolean; openLast: boolean; decimals: number; reps: number; entry: string; error: string; width: number; height: number;
   font: string; fontSize: number; style: string; dpi: number; paper: string; landscape: boolean; company: string; logo: string;
+  /** Graph styles the user saved: name → settings. */ styles: Record<string, Partial<GraphSettings>>;
 }
 
 /** Spreadsheet-style column letters: A, B, … Z, AA. */

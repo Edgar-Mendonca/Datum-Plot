@@ -77,3 +77,76 @@ def read_file(path):
     else:
         raise ValueError(f"Datum Plot cannot read {ext or 'this kind of'} files yet. Use CSV, TXT or Excel (.xlsx).")
     return {"sheets": sheets}
+
+
+def write_excel(path, project, analyses):
+    """File › Export › Excel workbook: a sheet per data table and one per result (G6)."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    from . import analysis, stats
+    wb = Workbook()
+    wb.remove(wb.active)
+    bold, head = Font(bold=True), PatternFill("solid", fgColor="E3F5F2")
+    used = set()
+
+    def sheet(name):
+        base = re.sub(r"[\[\]:*?/\\]", " ", name).strip()[:28] or "Sheet"
+        n, k = base, 2
+        while n.lower() in used:
+            n, k = f"{base[:25]} ({k})", k + 1
+        used.add(n.lower())
+        return wb.create_sheet(n)
+
+    for t in project.get("tables", []):
+        ws = sheet(t["name"])
+        xy = t.get("kind", "xy") == "xy"
+        heads = ([f"{t.get('xTitle') or 'X'}{' (' + t['xUnits'] + ')' if t.get('xUnits') else ''}"] if xy else [])
+        sub = {"msn": ["Mean", "SD", "N"], "mesn": ["Mean", "SEM", "N"]}
+        for s, (c0, w) in zip(t["sets"], stats.set_columns(t)):
+            heads += [f"{s['title']}" + (f" {sub[s['entry']][j]}" if s["entry"] != "rep" else f" Y{j + 1}" if w > 1 else "") for j in range(w)]
+        ws.append(heads)
+        for c in ws[1]:
+            c.font, c.fill = bold, head
+        ex = {tuple(e) for e in t.get("excluded", [])}
+        first = 0 if xy else 1
+        for r in range(t["rows"]):
+            row = [t["cols"][c][r] if c < len(t["cols"]) and r < len(t["cols"][c]) else None for c in range(first, len(t["cols"]))]
+            if any(v is not None for v in row):
+                ws.append(row)
+                for j, c in enumerate(ws[ws.max_row]):
+                    if (r, j + first) in ex:
+                        c.font = Font(italic=True, color="1F6FD0")
+        ws.freeze_panes = "A2"
+    for a in analyses:
+        t = next((x for x in project.get("tables", []) if x["id"] == a["table"]), None)
+        if t is None:
+            continue
+        ws = sheet(a["name"])
+        try:
+            res = analysis.run(a["kind"], t, a.get("sets", []), a.get("options", {}))
+        except Exception as e:
+            ws.append([a["name"]]); ws.append([f"Could not calculate: {e}"]); continue
+        ws.append([res["title"]]); ws["A1"].font = Font(bold=True, size=13)
+        ws.append([res["answer"]]); ws.append([])
+        for tab in res["tabs"]:
+            for tb in tab["tables"]:
+                ws.append([f"{tab['name']} · {tb['title']}" if tb["title"] else tab["name"]]); ws.cell(ws.max_row, 1).font = bold
+                ws.append(tb["columns"])
+                for c in ws[ws.max_row]:
+                    c.font, c.fill = bold, head
+                for row in tb["rows"]:
+                    ws.append([num(v) for v in row])
+                ws.append([])
+        ws.append(["Methods"]); ws.cell(ws.max_row, 1).font = bold
+        ws.append([res["methods"]])
+        ws.column_dimensions["A"].width = 34
+    wb.save(path)
+    return {"path": path, "sheets": len(wb.sheetnames)}
+
+
+def num(v):
+    """Result cells are text; plain numbers go to Excel as numbers."""
+    try:
+        return float(v) if re.fullmatch(r"-?\d+(\.\d+)?(e[-+]?\d+)?", v.strip()) else v
+    except (AttributeError, ValueError):
+        return v

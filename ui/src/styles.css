@@ -555,3 +555,21 @@ body:has(.ov.dock) .gpage { padding-right: min(680px, 48vw); }
 pre.code { background: var(--panel); border: 1px solid var(--line); padding: 10px; font: 11.5px var(--mono); white-space: pre-wrap; max-height: 50vh; overflow: auto; user-select: text; }
 .eq { margin: 0; line-height: 1.5; }
 input.mono { font-family: var(--mono) !important; }
+
+/* 0.2.1: find, test chooser, colour schemes, thumbnails */
+.findlist { max-height: 300px; overflow: auto; margin-top: 8px; display: flex; flex-direction: column; }
+.findlist button { display: grid; grid-template-columns: 70px 1fr 90px; gap: 8px; padding: 3px 6px; text-align: left; border-bottom: 1px solid var(--line); }
+.findlist button:hover { background: var(--pale); }
+.findlist .r { text-align: right; font-variant-numeric: tabular-nums; }
+.chooser { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+.cq b { display: block; margin-bottom: 4px; }
+.cans { margin-top: 14px; padding: 10px 12px; background: var(--pale); border-left: 3px solid var(--blue); }
+.pal { display: inline-flex; gap: 2px; }
+.pal i { width: 16px; height: 14px; display: inline-block; border: 1px solid rgba(0, 0, 0, 0.08); }
+.paltbl tr { cursor: pointer; }
+.paltbl tr.on { background: var(--sel); }
+.paltbl input { width: 210px; }
+.nthumbs { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
+.nthumb { width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--line); }
+.nthumb.on { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.nthumb .gimg { pointer-events: none; }

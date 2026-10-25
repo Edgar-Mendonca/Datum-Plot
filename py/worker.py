@@ -35,6 +35,9 @@ def main():
         if cmd == "read":
             from datum import io as dio
             return dio.read_file(q["path"])
+        if cmd == "excel":
+            from datum import io as dio
+            return dio.write_excel(q["path"], q["project"], q.get("analyses", []))
         if cmd == "summary":
             return {"sets": stats.summarize(q["table"])}
         raise ValueError(f"Unknown request {cmd!r}")

@@ -44,7 +44,7 @@ export const RoadmapPage = () => {
 };
 
 /** A gallery: categories on the left, choices in the middle, details on the right. */
-type Choice = { id: string; name: string; icon: string; desc: string; group: string };
+type Choice = { id: string; name: string; icon: string; desc: string; group: string; key?: string };
 const Gallery = (p: { title: string; items: Choice[]; ok: string; run: (c: Choice) => void | Promise<unknown>; first?: string }) => {
   const groups = [...new Set(p.items.map(i => i.group))];
   const [g, setG] = createSignal(p.items.find(i => i.id === p.first)?.group ?? groups[0]), [sel, setSel] = createSignal(p.items.find(i => i.id === p.first) ?? p.items[0]);
@@ -74,22 +74,29 @@ const TABLES: Choice[] = [
   { id: "A10", name: "Matrix", icon: "grid", group: "Origin-style", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" items={TABLES} ok="Create" run={() => C.newTable()} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
   { id: "B2", name: "Normality tests", icon: "check", group: "Statistics", desc: "Is the data consistent with a normal distribution?" },
   { id: "B3", name: "Outliers", icon: "exclude", group: "Statistics", desc: "Find values that do not belong." },
   { id: "D4", name: "Frequency distribution", icon: "table", group: "Statistics", desc: "Histogram and cumulative distribution of the values." },
+  { id: "A18", name: "Data checks", icon: "check", group: "Statistics", desc: "Look for missing X values, missing N, typing mistakes and values a log axis cannot show." },
+  { id: "A15", name: "Transform", icon: "fx", group: "Statistics", desc: "A new table of transformed values: log, 1/X, °C → K, baseline subtracted, normalised." },
   { id: "B9", name: "Linear regression", icon: "line", group: "Regression and fitting", desc: "Fit a straight line (or a polynomial) and get slope, intercept, R² with confidence intervals; compare lines." },
   { id: "B10", name: "Nonlinear curve fit", icon: "curve", group: "Regression and fitting", desc: "Fit an equation from the model library or your own." },
   { id: "B12", name: "Global fit and model comparison", icon: "curve", group: "Regression and fitting", desc: "Share parameters between data sets; choose between two models." },
   { id: "B13", name: "Interpolate a standard curve", icon: "xy", group: "Regression and fitting", desc: "Read unknown samples off a calibration curve." },
   { id: "B28", name: "Arrhenius / activation energy", icon: "log", group: "Regression and fitting", desc: "Rates at several temperatures give the activation energy and the pre-factor." },
-  { id: "B14", name: "Area under curve, smoothing", icon: "graph", group: "Regression and fitting", desc: "Integrate, differentiate or smooth a curve." },
-  { id: "B4", name: "t-tests", icon: "err", group: "Compare groups", desc: "Compare two groups' means." },
+  { id: "B14", name: "Area under the curve", icon: "graph", group: "Regression and fitting", desc: "Total area, positive and negative areas and peaks above a baseline (DSC enthalpy, AUC)." },
+  { id: "B14", key: "B14s", name: "Smooth, derivative, integral", icon: "curve", group: "Regression and fitting", desc: "Savitzky-Golay, LOWESS or moving-average smoothing; first and second derivatives; cumulative integral." },
+  { id: "B27", name: "Tensile test", icon: "line", group: "Materials", desc: "Young's modulus, 0.2 % offset yield, UTS, elongation at break and toughness of each specimen, with mean ± SD." },
+  { id: "B29", name: "Weibull analysis", icon: "sigma", group: "Materials", desc: "Weibull modulus and characteristic strength (maximum likelihood or regression) with the Weibull plot." },
+  { id: "B4", name: "t-tests", icon: "err", group: "Compare groups", desc: "Compare two groups' means: unpaired, paired, ratio or one-sample." },
   { id: "B5", name: "Nonparametric tests", icon: "err", group: "Compare groups", desc: "Compare groups without assuming a normal distribution." },
   { id: "B6", name: "One-way ANOVA", icon: "table", group: "Compare groups", desc: "Compare three or more groups." },
+  { id: "B7", name: "Multiple comparisons", icon: "list", group: "Compare groups", desc: "Which groups differ after ANOVA: Tukey, Dunnett, Holm-Šidák…" },
+  { id: "B8", name: "Effect sizes", icon: "sigma", group: "Compare groups", desc: "Cohen's d and Hedges' g with the t-test; η² and ω² with ANOVA." },
   { id: "B15", name: "Two-way ANOVA", icon: "table", group: "Compare groups", desc: "Two factors at once, such as alloy and temperature." },
   { id: "B16", name: "Correlation", icon: "xy", group: "Relationships", desc: "How strongly two variables move together." },
   { id: "B17", name: "Contingency", icon: "grid", group: "Relationships", desc: "Tests on counts." },
@@ -103,7 +110,7 @@ const ANALYSES: Choice[] = [
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];
 /** Analyze: every analysis; the ready ones open their options. */
-export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.id)); }} />);
+export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.key ?? c.id)); }} />);
 /** Opens the options of the analysis behind a catalogue id, for the open table. */
 export const runAnalysis = (id: string) => { const [kind, preset] = BY_ID[id] ?? []; if (kind) analysisDialog(kind, curTable(), undefined, preset); else soon(id); };
 
@@ -120,7 +127,12 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" items={GRAPHS} ok="Use" run={() => toast("This graph is already an XY graph.", true)} />);
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" items={GRAPHS} ok="Use" run={c => {
+  const t = curTable();
+  if (c.id === "D4") { setTimeout(() => runAnalysis("D4")); return; }
+  if (c.id === "D2") return t?.kind === "column" ? toast("This is a column graph: Graph › Column Graph picks dots, bars, box plots or violins.", true) : toast("Column graphs show column tables: File › New Table › Column.");
+  toast(t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);
+}} />);
 
 /** File › Import: a CSV, TXT or Excel file into a new XY table. */
 export const importFile = async () => {

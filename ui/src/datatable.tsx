@@ -1,9 +1,10 @@
-// The XY data table: X, then each data set's replicate (or mean/SD/N) columns, on the family
+// The data table: X (hidden in column tables), then each data set's replicate (or mean/SD/N) columns, on the family
 // grid engine (selection.ts, cells.ts, fmt.ts): ranges, clipboard with Excel, fill handle,
 // formatting, and excluded values in blue italics.
-import { For, Show, createSignal, createMemo, onMount, onCleanup } from "solid-js";
+import { For, Show, createSignal, createMemo, createEffect, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter } from "./api";
-import { act, call, opts, openMenu, toast, Item, openDialog, closeDialog } from "./store";
+import { act, call, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
+import { sortDialog, findDialog, excludeRows } from "./tools";
 import * as F from "./fmt";
 import { parseTsv, toTsv, transpose, series, clip } from "./cells";
 import { createSel, aggregate } from "./selection";
@@ -17,7 +18,9 @@ const SUB: Record<string, string[]> = { msn: ["Mean", "SD", "N"], mesn: ["Mean",
 export const DataTable = (p: { t: Table }) => {
   const t = () => p.t, W = () => width(t());
   const ncols = () => W() + 1, nrows = () => t().rows + 10;
-  const colW = (k: number) => (k === 0 ? TW : k === 1 ? XW : CW);
+  /** Column tables have no X: its grid column is kept but hidden. */
+  const hideX = () => t().kind === "column";
+  const colW = (k: number) => (k === 0 ? TW : k === 1 ? (hideX() ? 0 : XW) : CW);
   const lefts = createMemo(() => { let x = HW; return Array.from({ length: ncols() }, (_, k) => { const l = x; x += colW(k); return l; }); });
   const total = () => lefts()[ncols() - 1] + colW(ncols() - 1);
   const ex = createMemo(() => new Set(t().excluded.map(([r, c]) => `${r}:${c}`)));
@@ -44,7 +47,8 @@ export const DataTable = (p: { t: Table }) => {
   onMount(() => { ro.observe(box); F.setTarget(fmtTarget); box.focus(); });
   onCleanup(() => { ro.disconnect(); if (F.target() === fmtTarget) F.setTarget(null); });
   const put = (cells: [number, number, string][]) => act({ Cells: { table: t().id, cells: cells.map(([r, k, v]) => [r, k - 1, v]) } });
-  const go = (r: number, c: number, ext = false, add = false) => S.pick(r, c, ext, add);
+  const go = (r: number, c: number, ext = false, add = false) => S.pick(r, hideX() && c === 1 ? (c < cur()[1] ? 0 : 2) : c, ext, add);
+  createEffect(() => { const g = goto(); if (g) { setGoto(null); go(g[0], g[1] + 1); box?.focus(); } });
   const commit = async (move: [number, number]) => {
     const v = edit();
     setEdit(null);
@@ -125,6 +129,7 @@ export const DataTable = (p: { t: Table }) => {
     if (ctrl && k === "r") { e.preventDefault(); const [a, b, c2, d] = range(); if (d > b) { S.setCur({ row: a, col: b }); S.setRanges([{ r0: a, c0: b, r1: c2, c1: b }]); fillRange(c2, d, true); } return; }
     if (ctrl && ["b", "i", "u"].includes(k)) { e.preventDefault(); return F.toggle(k as "b"); }
     if (ctrl && k === "a") { e.preventDefault(); return S.all(); }
+    if (ctrl && k === "f") { e.preventDefault(); return findDialog(); }
     if (!ctrl && !e.altKey && e.key.length === 1) { e.preventDefault(); setEdit(e.key); }
   };
   const down = (e: MouseEvent) => {
@@ -149,7 +154,8 @@ export const DataTable = (p: { t: Table }) => {
       { label: `Insert ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"} Above`, icon: "addrow", run: () => act({ Rows: { table: t().id, at: a, count: b - a + 1 } }) },
       { label: `Delete ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"}`, icon: "delrow", run: () => act({ Rows: { table: t().id, at: a, count: -(b - a + 1) } }) }, "-",
       ...(k >= 0 ? [{ label: `Format Data Set ${letter(k)}…`, icon: "opts", run: () => setDialog(t(), k) } as Item] : []),
-      { label: "Add Data Set", icon: "addset", run: () => addSet(t()) },
+      { label: "Add Data Set", icon: "addset", run: () => addSet(t()) }, "-",
+      { label: "Sort…", icon: "sort", run: sortDialog }, { label: "Find…", icon: "search", keys: "Ctrl+F", run: findDialog }, { label: "Exclude Rows by a Rule…", icon: "exclude", run: excludeRows },
     ];
     openMenu(e, items);
   };
@@ -168,7 +174,7 @@ export const DataTable = (p: { t: Table }) => {
           <div class="ghead dhead" style={{ height: `${HEAD}px` }}>
             <div class="hc idc" style={{ width: `${HW}px`, left: "0" }} />
             <div class="hc two" style={{ width: `${TW}px` }}>Row title</div>
-            <div class="hc two xh" style={{ width: `${XW}px` }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span></div>
+            <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span></div>
             <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${spans(t())[k()][1] * CW}px` }}>
               <div class="hc st" style={{ "--c": SETC[k() % 8] }} title="Double-click to change the data set" onMouseDown={e => { e.stopPropagation(); const [c0, w] = spans(t())[k()]; S.cols(c0 + 1, c0 + w, e.shiftKey, e.ctrlKey); box.focus(); }} onDblClick={e => { e.stopPropagation(); setDialog(t(), k()); }}>
                 <b>{letter(k())}</b><span>{s.title || `Data set ${letter(k())}`}</span></div>
@@ -182,7 +188,7 @@ export const DataTable = (p: { t: Table }) => {
                 <div class="c idc" style={{ width: `${HW}px` }}>{r + 1}</div>
                 <For each={Array.from({ length: ncols() }, (_, k) => k)}>{k => (
                   <div class="c" classList={{ r: k > 0, rt: k === 0, xc: k === 1, in: S.inRange(r, k), at: cur()[0] === r && cur()[1] === k, ex: k > 0 && ex().has(`${r}:${k - 1}`), sep: k > 1 && spans(t()).some(([c0]) => c0 === k - 1) }}
-                    style={{ width: `${colW(k)}px`, ...F.css(t().style[key(r, k)]) }}>{text(r, k)}</div>
+                    style={{ width: `${colW(k)}px`, ...(k === 1 && hideX() ? { display: "none" } : {}), ...F.css(t().style[key(r, k)]) }}>{text(r, k)}</div>
                 )}</For>
               </div>
             )}</For>
@@ -208,11 +214,11 @@ const TableHead = (p: { t: Table }) => {
   return (
     <div class="thead">
       <Icon n="sheet" /><b class="tname" title="Double-click to rename" onDblClick={() => rename(p.t, "name", "Table name")}>{p.t.name}</b>
-      <label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
-      <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label>
+      <Show when={p.t.kind !== "column"}><label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
+        <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label></Show>
       <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.yUnits} onChange={e => set("yUnits", e.currentTarget.value)} /></label>
-      <span class="grow" /><span class="muted">{p.t.rows} rows · {p.t.sets.length} data {p.t.sets.length === 1 ? "set" : "sets"}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
+      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
     </div>
   );
 };

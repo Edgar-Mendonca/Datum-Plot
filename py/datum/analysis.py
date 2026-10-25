@@ -116,9 +116,10 @@ def residual_plot(title, x, res, color):
 COLORS = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"]
 
 
-def result(title, answer, tabs, checks=(), methods="", legend="", code="", plots=(), curves=(), cells=()):
+def result(title, answer, tabs, checks=(), methods="", legend="", code="", plots=(), curves=(), cells=(), **extra):
+    """`extra`: `brackets` ([set, set, P] drawn over column graphs) and `table` (a new data table the result can become)."""
     return {"title": title, "answer": answer, "tabs": tabs, "checks": [list(c) for c in checks], "methods": methods, "legend": legend, "code": code,
-            "plots": list(plots), "curves": list(curves), "cells": list(cells)}
+            "plots": list(plots), "curves": list(curves), "cells": list(cells), **extra}
 
 
 def by_set(table, ks, rows):
@@ -418,36 +419,53 @@ def expression(o):
     return eq, guess, name
 
 
-def nonlinear(table, ks, o):
-    from lmfit.models import ExpressionModel
-    eq, guess, mname = expression(o)
+def make_model(eq):
     import re
+    from lmfit.models import ExpressionModel
     py = re.sub(r"\bX\b", "x", eq.replace("^", "**"))
-    model = ExpressionModel(py, independent_vars=["x"])
-    tabs_rows, checks, plots, curves, answers, fits, details = [], [], [], [], [], [], []
+    return ExpressionModel(py, independent_vars=["x"]), py
+
+
+def start(model, guess, x, y, o):
+    """Starting values: 1, then the model's guess, then the user's values and fixed parameters."""
+    p = model.make_params(**{n: 1.0 for n in model.param_names})
+    if guess:
+        try:
+            for n, v in guess(x, y).items():
+                if n in p and math.isfinite(v):
+                    p[n].set(value=float(v))
+        except Exception:
+            pass
+    for n, v in (o.get("init") or {}).items():
+        if n in p and v not in (None, ""):
+            p[n].set(value=float(v))
+    for n, v in (o.get("fixed") or {}).items():
+        if n in p and v not in (None, ""):
+            p[n].set(value=float(v), vary=False)
+    return p
+
+
+def fit_one(model, guess, x, y, o):
+    w = None if o.get("weight") != "1/y2" else 1 / np.maximum(np.abs(y), 1e-300)
+    return model.fit(y, start(model, guess, x, y, o), x=x, weights=w, nan_policy="omit")
+
+
+def aicc_of(ss, n, k):
+    return n * math.log(ss / n) + 2 * k + (2 * k * (k + 1) / (n - k - 1) if n - k - 1 > 0 else float("inf")) if ss > 0 else float("nan")
+
+
+def nonlinear(table, ks, o):
+    eq, guess, mname = expression(o)
+    model, py = make_model(eq)
+    tabs_rows, checks, plots, curves, answers, fits, details, done = [], [], [], [], [], [], [], []
     for k in ks:
         x, y, _ = points(table, k, o)
         name, c = name_of(table, k), COLORS[k % 8]
         npar = len(model.param_names)
         if len(x) <= npar:
             checks.append((False, f"{name}: {len(x)} points cannot fit {npar} parameters.")); continue
-        p = model.make_params(**{n: 1.0 for n in model.param_names})
-        if guess:
-            try:
-                for n, v in guess(x, y).items():
-                    if n in p and math.isfinite(v):
-                        p[n].set(value=float(v))
-            except Exception:
-                pass
-        for n, v in (o.get("init") or {}).items():
-            if n in p and v not in (None, ""):
-                p[n].set(value=float(v))
-        for n, v in (o.get("fixed") or {}).items():
-            if n in p and v not in (None, ""):
-                p[n].set(value=float(v), vary=False)
-        w = None if o.get("weight") != "1/y2" else 1 / np.maximum(np.abs(y), 1e-300)
         try:
-            r = model.fit(y, p, x=x, weights=w, nan_policy="omit")
+            r = fit_one(model, guess, x, y, o)
         except Exception as e:
             checks.append((False, f"{name}: the fit failed ({e}).")); continue
         n, nv = len(x), r.nvarys
@@ -462,7 +480,8 @@ def nonlinear(table, ks, o):
         res = y - r.best_fit
         ss = float(np.sum(res ** 2))
         r2 = 1 - ss / float(np.sum((y - y.mean()) ** 2)) if np.ptp(y) else float("nan")
-        aicc = n * math.log(ss / n) + 2 * nv + (2 * nv * (nv + 1) / (n - nv - 1) if n - nv - 1 > 0 else float("inf")) if ss > 0 else float("nan")
+        aicc = aicc_of(ss, n, nv)
+        done.append((k, x, y, ss, nv))
         rows += [["R squared", g(r2, 4), "", ""], ["Sy.x", g(math.sqrt(ss / df)), "", ""], ["Sum of squares", g(ss), "", ""], ["Degrees of freedom", g(df), "", ""], ["AICc", g(aicc), "", ""],
                  ["Number of points", g(n), "", ""], ["Converged", "Yes" if r.success else "No", "", ""]]
         if not r.success:
@@ -488,12 +507,93 @@ def nonlinear(table, ks, o):
         details.append({"title": f"Correlation of parameters · {name}", "columns": ["", *[pn for pn in model.param_names if r.params[pn].vary]],
                         "rows": [[a] + [g((r.params[a].correl or {}).get(b, 1.0 if a == b else float("nan")), 3) for b in model.param_names if r.params[b].vary] for a in model.param_names if r.params[a].vary]})
     tabs = [{"name": "Summary", "tables": tabs_rows}, {"name": "Details", "tables": details}]
+    shared = [n.strip() for n in str(o.get("shared", "")).replace(";", ",").split(",") if n.strip() in model.param_names]
+    if shared and len(done) > 1:
+        gt, gc, ga = global_fit(table, model, guess, done, o, shared)
+        tabs.insert(1, {"name": "Global fit", "tables": gt})
+        curves, answers = gc, [ga]
+    if o.get("model2") and done:
+        ct, ca = compare_models(table, model, done, o)
+        tabs.insert(1, {"name": "Model comparison", "tables": [ct]})
+        answers.append(ca)
     if o.get("unknowns") and fits:
         tabs.append({"name": "Interpolated", "tables": [interpolate(table, fits, o["unknowns"])]})
     return result("Nonlinear regression", " ".join(answers) or "No fit.", tabs, checks, plots=plots, curves=curves,
                   methods=f"Data were fitted by nonlinear least squares ({mname}: Y = {eq}) with Datum Plot (Python, lmfit/SciPy, Levenberg-Marquardt); 95% confidence intervals are asymptotic.",
                   legend="Curves show the best fit; shaded bands the 95% confidence band.",
                   code=f"import numpy as np\nfrom lmfit.models import ExpressionModel\nm = ExpressionModel('{py}')\nr = m.fit(y, m.make_params(...), x=x)\nprint(r.fit_report())")
+
+
+def global_fit(table, model, guess, done, o, shared):
+    """One fit of every data set with `shared` parameters in common (B12), and the F test of
+    whether those parameters differ between the data sets (global against separate fits)."""
+    from lmfit import Parameters, minimize
+    starts = [start(model, guess, x, y, o) for _, x, y, _, _ in done]
+    P = Parameters()
+    for n in model.param_names:
+        if n in shared:
+            P.add(n, value=float(np.mean([s_[n].value for s_ in starts])), vary=starts[0][n].vary)
+        else:
+            for i, s_ in enumerate(starts):
+                P.add(f"{n}_{i}", value=s_[n].value, vary=s_[n].vary)
+    vals = lambda P, i: {n: P[n].value if n in shared else P[f"{n}_{i}"].value for n in model.param_names}
+    r = minimize(lambda P: np.concatenate([model.eval(x=x, **vals(P, i)) - y for i, (_, x, y, _, _) in enumerate(done)]), P)
+    ssg, N = float(np.sum(r.residual ** 2)), sum(len(d[1]) for d in done)
+    dfg = N - r.nvarys
+    sss, dfs = sum(d[3] for d in done), sum(len(d[1]) - d[4] for d in done)
+    rows = []
+    for n in model.param_names:
+        for key, where in [(n, "All data sets")] if n in shared else [(f"{n}_{i}", name_of(table, d[0])) for i, d in enumerate(done)]:
+            par = r.params[key]
+            rows.append([f"{n}{' (shared)' if n in shared else ''}", where, g(par.value), g(par.stderr) if par.stderr is not None and par.vary else "fixed" if not par.vary else "—"])
+    out = [{"title": "Global fit: shared parameters in common", "columns": ["Parameter", "Data set", "Best-fit value", "Std. error"], "rows": rows}]
+    ans = f"Global fit: {', '.join(f'{n} = {g(r.params[n].value, 4)}' for n in shared)} (shared)."
+    if dfg > dfs and dfs > 0 and sss > 0:
+        F = ((ssg - sss) / (dfg - dfs)) / (sss / dfs)
+        p = float(st.f.sf(F, dfg - dfs, dfs))
+        out.append({"title": f"Does {', '.join(shared)} differ between the data sets?", "columns": ["", "Value"], "rows": [["Separate fits: SS, DF", f"{g(sss)}, {dfs}"], ["Global fit: SS, DF", f"{g(ssg)}, {dfg}"],
+                    ["F (DFn, DFd)", f"{g(F, 4)} ({dfg - dfs}, {dfs})"], ["P value", pv(p)], ["Answer", f"{'Yes, it differs' if p < ALPHA else 'No evidence it differs'} (P {'<' if p < 1e-4 else '='} {pv(p).lstrip('< ')})"]]})
+        ans += f" {'The shared parameter differs' if p < ALPHA else 'No evidence the shared parameter differs'} between data sets (extra sum-of-squares F test, P {'<' if p < 1e-4 else '='} {pv(p).lstrip('< ')})."
+    curves = []
+    for i, (k, x, y, _, _) in enumerate(done):
+        xs = grid(x)
+        curves.append({"set": k, "x": xs.tolist(), "y": np.asarray(model.eval(x=xs, **vals(r.params, i)), float).tolist(), "label": f"{name_of(table, k)} (global)"})
+    return out, curves, ans
+
+
+def compare_models(table, model, done, o):
+    """Fits a second model to each data set and compares the two (extra sum-of-squares F test and AICc)."""
+    if o["model2"] == "custom":
+        eq2, guess2, name2 = str(o.get("equation2", "")).split("=", 1)[-1].strip(), None, "your second equation"
+        if not eq2:
+            raise ValueError("Type the second equation.")
+    else:
+        name2, eq2, guess2, _ = MODELS[o["model2"]]
+    m2, _ = make_model(eq2)
+    name1 = expression(o)[2]
+    rows, prefer = [], []
+    for k, x, y, ss1, k1 in done:
+        try:
+            r2 = fit_one(m2, guess2, x, y, {**o, "init": {}, "fixed": {}})
+        except Exception:
+            rows.append([name_of(table, k), "the second model did not fit", "", "", "", ""]); continue
+        n, k2 = len(x), r2.nvarys
+        ss2 = float(np.sum((y - r2.best_fit) ** 2))
+        a1, a2 = aicc_of(ss1, n, k1), aicc_of(ss2, n, k2)
+        d = a2 - a1
+        p1 = 1 / (1 + math.exp(-0.5 * d)) if math.isfinite(d) and abs(d) < 700 else (1.0 if d > 0 else 0.0)
+        Ftxt = "—"
+        if k1 != k2:
+            (sa, ka), (sb, kb) = sorted([(ss1, k1), (ss2, k2)], key=lambda t: t[1])
+            if n - kb > 0 and sb > 0:
+                F = ((sa - sb) / (kb - ka)) / (sb / (n - kb))
+                pf = float(st.f.sf(F, kb - ka, n - kb))
+                Ftxt = f"F = {g(F, 4)}, P = {pv(pf)}"
+        best = name1 if p1 >= 0.5 else name2
+        prefer.append(f"{name_of(table, k)}: {best}")
+        rows.append([name_of(table, k), f"{g(ss1)} / {g(ss2)}", f"{g(a1, 4)} / {g(a2, 4)}", f"{g(100 * p1, 3)}% / {g(100 * (1 - p1), 3)}%", Ftxt, best])
+    tab = {"title": f"{name1} (1) against {name2} (2)", "columns": ["Data set", "Sum of squares 1 / 2", "AICc 1 / 2", "Probability correct 1 / 2", "F test (nested models)", "Preferred"], "rows": rows}
+    return tab, "Preferred model: " + "; ".join(prefer) + "."
 
 
 # ---------- Arrhenius (B28) ----------
@@ -535,11 +635,19 @@ def arrhenius(table, ks, o):
 KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "linear": linear, "fit": nonlinear, "arrhenius": arrhenius}
 
 
+def more_kinds():
+    """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
+    from . import groups, tools
+    KINDS.update({"ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power,
+                  "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
+    return KINDS
+
+
 def run(kind, table, sets, options):
     ks = chosen(table, sets)
     if not ks:
         raise ValueError("Choose at least one data set.")
-    return KINDS[kind](table, ks, options or {})
+    return (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
 
 
 def model_list():

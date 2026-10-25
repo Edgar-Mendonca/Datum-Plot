@@ -70,8 +70,9 @@ impl DataSet {
     }
 }
 
-/// An XY data table: an X column, then each data set's sub-columns. `cols` is that flat list
-/// (column 0 is X); every column has `rows` cells.
+/// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
+/// (column 0 is X); every column has `rows` cells. `kind` is "xy", or "column" (one group per
+/// data set, values down the rows; the X column is kept but not used).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Table {
@@ -103,6 +104,13 @@ impl Default for Table {
 }
 
 impl Table {
+    /// An empty column table (groups A, B, C, one value per row).
+    pub fn column(groups: usize) -> Self {
+        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
+        let mut t = Table { kind: "column".into(), x_title: String::new(), y_title: "Value".into(), sets, ..Default::default() };
+        t.normalize();
+        t
+    }
     /// (first grid column, width) of each data set.
     pub fn spans(&self) -> Vec<(usize, usize)> {
         let mut c = 1;
@@ -192,8 +200,12 @@ pub struct GraphSettings {
     pub x: Axis,
     pub y: Axis,
     pub sets: Vec<SetStyle>,
-    /// Analyses whose fitted curves are drawn on this graph.
+    /// Analyses whose fitted curves (or significance brackets) are drawn on this graph.
     pub overlays: Vec<u32>,
+    /// Column tables: scatter, bars, box, violin, paired or mean.
+    pub column: String,
+    /// Colour scheme: okabe, tableau, bright, muted, dark, pastel, viridis, cividis, magma, grey, or "#hex, #hex…".
+    pub palette: String,
 }
 
 impl Default for GraphSettings {
@@ -201,6 +213,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
+            column: "scatter".into(), palette: String::new(),
         }
     }
 }

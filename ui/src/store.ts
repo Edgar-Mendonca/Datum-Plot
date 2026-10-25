@@ -15,7 +15,7 @@ darkMq?.addEventListener("change", () => theme() === "auto" && applyTheme());
 export const setTheme = (t: string) => { setThemeRaw(t); applyTheme(); setOpts({ ...opts(), theme: t }); invoke("set_options", { opts: opts() }).catch(() => {}); };
 export const [opts, setOpts] = createSignal<Options>({
   theme: "auto", autosave: 5, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism",
-  dpi: 300, paper: "A4", landscape: false, company: "", logo: "",
+  dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {},
 });
 
 // ---------- what is shown: the navigator's sections and items ----------
@@ -25,6 +25,12 @@ export const [item, setItem] = createSignal<{ s: Section; id: number }>({ s: "da
 export const [backstage, setBackstage] = createSignal<string | null>("home");
 export const [tab, setTab] = createSignal("data");
 export const [navOpen, setNavOpen] = createSignal(true);
+/** A cell for the open data table to select (row, grid column; -1 = row title): Find. */
+export const [goto, setGoto] = createSignal<[number, number] | null>(null);
+/** Small pictures of the graphs in the navigator (View › Thumbnails), remembered on this computer. */
+const saved = (k: string, d: string) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+export const [thumbs, setThumbsRaw] = createSignal(saved("thumbs", "1") === "1");
+export const setThumbs = (v: boolean) => { setThumbsRaw(v); try { localStorage.setItem("thumbs", v ? "1" : "0"); } catch { /* private window */ } };
 export const table = (): Table | undefined => item().s === "data" ? out()?.project.tables.find(t => t.id === item().id) : undefined;
 export const graph = (): Graph | undefined => item().s === "graphs" ? out()?.project.graphs.find(g => g.id === item().id) : undefined;
 export const analysis = (): Analysis | undefined => item().s === "results" ? out()?.project.analyses?.find(a => a.id === item().id) : undefined;

@@ -4,6 +4,7 @@ import { For, Show, createSignal } from "solid-js";
 import { Graph, GraphSettings, Axis, SetStyle, letter } from "./api";
 import { act, out, openDialog } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
+import { PALETTES } from "./tools";
 
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
@@ -45,13 +46,18 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
       <div class="fmtpage">
         <Show when={tab() === "sets"}>
           <div class="form">
-            <label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} />
-            <Show when={s().points === "mean"}>
+            <Show when={t()?.kind === "column"}><label>Graph</label><span class="inline"><Pick value={s().column || "scatter"} set={v => set(x => { x.column = v; })} options={[["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
+              <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
+              <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
+            <Show when={t()?.kind !== "column"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
+            <label>Colours</label><span class="inline"><Pick value={s().palette.includes("#") ? "own" : s().palette || "okabe"} set={v => v !== "own" && set(x => { x.palette = v; x.sets = x.sets.map(q => ({ ...q, color: "" })); })} options={[...PALETTES.map(p => [p[0], p[1]] as [string, string]), ...(s().palette.includes("#") ? [["own", "Your colours"] as [string, string]] : [])]} />
+              <button class="btn sm" onClick={() => import("./tools").then(m => m.paletteDialog())}>Colour schemes…</button></span>
+            <Show when={s().points === "mean" && t()?.kind !== "column"}>
               <label>Error bars</label><span class="inline"><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} />
                 <Pick value={s().errorDir} set={v => set(x => { x.errorDir = v; })} options={[["both", "Both directions"], ["up", "Above only"], ["down", "Below only"]]} />
                 <span class="muted">caps</span><input type="number" min="0" max="12" step="0.5" style={{ width: "60px" }} value={s().cap} onChange={e => set(x => { x.cap = Math.max(0, +e.currentTarget.value); })} /></span>
             </Show>
-            <label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} />
+            <Show when={t()?.kind !== "column"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
           </div>
           <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th><th>Line</th><th>Width</th></tr></thead><tbody>
             <For each={t()?.sets ?? []}>{(d, k) => <tr>
@@ -66,7 +72,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
               <td><input type="number" min="0.25" max="6" step="0.25" style={{ width: "58px" }} value={st(k()).width} onChange={e => setStyle(k(), { width: +e.currentTarget.value })} /></td>
             </tr>}</For>
           </tbody></table></div>
-          <p class="muted">Colours are the Okabe-Ito set, readable by people with colour-blindness. Empty settings follow the data set's position.</p>
+          <p class="muted">Empty colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
         </Show>
         <Show when={tab() === "x"}><AxisPage k="x" /></Show>
         <Show when={tab() === "y"}><AxisPage k="y" /></Show>

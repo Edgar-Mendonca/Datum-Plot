@@ -1,5 +1,5 @@
-//! The Python engine (numpy, SciPy, matplotlib): one worker process, started at launch and kept
-//! running. Requests and answers are single JSON lines (see py/worker.py). The installed app
+//! The Python engines (numpy, SciPy, matplotlib): two worker processes, one drawing graphs and
+//! one calculating results, started at launch and kept running. Requests and answers are single JSON lines (see py/worker.py). The installed app
 //! uses the runtime pack (runtime.rs); a development build uses DATUM_PYTHON or the Python on
 //! the PATH. A request that takes too long kills and restarts the worker.
 use serde_json::Value;
@@ -31,7 +31,10 @@ pub struct Py {
     cache: Vec<(String, Value)>,
 }
 
+/// The engine that draws graphs.
 pub struct Engine(pub Mutex<Py>);
+/// A second engine for results and exports, so a long fit never holds up drawing (I3).
+pub struct Calc(pub Mutex<Py>);
 
 fn paths(app: &AppHandle) -> Result<(PathBuf, PathBuf), String> {
     let res = app.path().resource_dir().ok();
@@ -137,7 +140,7 @@ impl Py {
         }
         let v = self.ask(app, &q)?;
         self.cache.insert(0, (key, v.clone()));
-        self.cache.truncate(8);
+        self.cache.truncate(24);
         Ok(v)
     }
 }

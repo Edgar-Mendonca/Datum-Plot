@@ -146,13 +146,17 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 5);
-    for id in ["modulus", "arrhenius"] {
+    assert_eq!(l.len(), 8);
+    for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1)] {
         let p = templates::build(Some(id)).unwrap();
-        assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (1, vec![p.analyses[0].id]), "{id}");
-        assert!(p.next_id > p.analyses[0].id);
+        assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
+        assert!(p.next_id > p.analyses[n - 1].id);
     }
-    assert!(l.iter().all(|t| t.dots.len() >= 6 && t.dots.iter().all(|(x, y)| (0.0..=1.0).contains(x) && (0.0..=1.0).contains(y))));
+    for id in ["groups", "weibull"] {
+        let p = templates::build(Some(id)).unwrap();
+        assert!(p.tables[0].kind == "column" && p.tables[0].sets.iter().all(|s| s.reps == 1), "{id}");
+    }
+    assert!(l.iter().all(|t| t.dots.len() >= 2 && t.dots.iter().all(|(x, y)| (0.0..=1.0).contains(x) && (0.0..=1.0).contains(y))));
     let p = templates::build(Some("standard")).unwrap();
     assert_eq!((p.tables[0].sets[0].entry, p.tables[0].width()), (Entry::MeanSdN, 4));
     assert!(templates::build(Some("nope")).is_none());
@@ -196,4 +200,36 @@ fn analyses_are_linked_to_their_table_and_drawn_on_its_graphs() {
     d.apply(Op::Delete { id }).unwrap();
     assert!(d.p.analyses.is_empty(), "a table's analyses go with it");
     assert!(d.p.table(t2).is_some());
+}
+
+#[test]
+fn sort_moves_whole_rows_and_keeps_empty_rows_last() {
+    let (mut d, id) = doc();
+    d.apply(cells(id, &[(0, -1, "a"), (0, 0, "3"), (0, 1, "30"), (1, -1, "b"), (1, 0, "1"), (1, 1, "10"), (2, 0, "2"), (2, 1, "20"), (3, 1, "99")])).unwrap();
+    d.apply(Op::Exclude { table: id, cells: vec![(0, 1)], on: true }).unwrap();
+    d.apply(Op::Sort { table: id, col: 0, desc: false }).unwrap();
+    let t = &d.p.tables[0];
+    assert_eq!((0..4).map(|r| (t.get(r, 0), t.get(r, 1))).collect::<Vec<_>>(), vec![(Some(1.0), Some(10.0)), (Some(2.0), Some(20.0)), (Some(3.0), Some(30.0)), (None, Some(99.0))]);
+    assert_eq!((t.row_titles[0].as_str(), t.row_titles[2].as_str(), t.excluded.clone()), ("b", "a", vec![[2, 1]]));
+    d.apply(Op::Sort { table: id, col: 1, desc: true }).unwrap();
+    assert_eq!(d.p.tables[0].get(0, 1), Some(99.0));
+    assert!(d.apply(Op::Sort { table: id, col: 99, desc: false }).is_err());
+}
+
+#[test]
+fn copy_look_keeps_titles_ranges_and_curves() {
+    let (mut d, id) = doc();
+    d.apply(Op::AddGraph { table: id, settings: None }).unwrap();
+    let (a, b) = (d.p.graphs[0].id, d.p.graphs[1].id);
+    let mut s = d.p.graphs[0].settings.clone();
+    (s.font, s.font_size, s.palette, s.title, s.y.title, s.y.scale) = ("Times New Roman".into(), 7.0, "viridis".into(), "Mine".into(), "Force".into(), "log".into());
+    d.apply(Op::GraphSet { graph: a, settings: Box::new(s) }).unwrap();
+    let mut s = d.p.graphs[1].settings.clone();
+    (s.title, s.overlays) = ("Other".into(), vec![]);
+    s.y.title = "Stress".into();
+    d.apply(Op::GraphSet { graph: b, settings: Box::new(s) }).unwrap();
+    d.apply(Op::CopyLook { from: a, to: vec![b] }).unwrap();
+    let g = &d.p.graphs[1].settings;
+    assert_eq!((g.font.as_str(), g.font_size, g.palette.as_str(), g.y.scale.as_str()), ("Times New Roman", 7.0, "viridis", "log"));
+    assert_eq!((g.title.as_str(), g.y.title.as_str()), ("Other", "Stress"));
 }

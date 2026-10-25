@@ -28,6 +28,11 @@ pub enum Op {
     TableSet { table: u32, field: String, value: String },
     /// Adds (k = None), replaces or (set = None) removes a data set.
     SetDef { table: u32, k: Option<usize>, set: Option<DataSet> },
+    /// Sorts the rows by a grid column (empty cells last); row titles, exclusions and formats move with them.
+    Sort { table: u32, col: usize, desc: bool },
+    /// Gives graphs `to` the look of graph `from` (style, sizes, fonts, colours, error bars),
+    /// keeping their own titles, axis titles and ranges and fitted curves.
+    CopyLook { from: u32, to: Vec<u32> },
     /// Inserts `count` rows at `at`, or deletes them when `count` is negative.
     Rows { table: u32, at: usize, count: i64 },
     /// Text formatting of cells ("row:col" → style; empty clears).
@@ -329,6 +334,30 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 return Err("A table needs at least one row.".into());
             }
             remap_rows(t, &map);
+        }
+        Op::Sort { table, col, desc } => {
+            let t = p.table_mut(table)?;
+            if col >= t.width() {
+                return Err("That column does not exist.".into());
+            }
+            let used = (0..t.rows).rev().find(|&r| (0..t.width()).any(|c| t.get(r, c).is_some()) || !t.row_titles[r].is_empty()).map_or(0, |r| r + 1);
+            let mut order: Vec<usize> = (0..used).collect();
+            order.sort_by(|&a, &b| match (t.get(a, col), t.get(b, col)) {
+                (Some(x), Some(y)) => if desc { y.total_cmp(&x) } else { x.total_cmp(&y) },
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                _ => std::cmp::Ordering::Equal,
+            });
+            let map: Vec<Option<usize>> = order.into_iter().chain(used..t.rows).map(Some).collect();
+            remap_rows(t, &map);
+        }
+        Op::CopyLook { from, to } => {
+            let src = p.graph(from).ok_or("That graph no longer exists.")?.settings.clone();
+            for g in p.graphs.iter_mut().filter(|g| to.contains(&g.id) && g.id != from) {
+                let s = &g.settings;
+                let axis = |a: &Axis, b: &Axis| Axis { title: b.title.clone(), auto: b.auto, min: b.min, max: b.max, step: b.step, ..a.clone() };
+                g.settings = GraphSettings { title: s.title.clone(), show_title: s.show_title, x: axis(&src.x, &s.x), y: axis(&src.y, &s.y), overlays: s.overlays.clone(), line: s.line, ..src.clone() };
+            }
         }
         Op::Style { table, cells } => {
             let t = p.table_mut(table)?;

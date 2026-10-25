@@ -2,11 +2,11 @@
 // the Info sheet and empty pages.
 import { For, Show, JSX } from "solid-js";
 import { Info } from "./api";
-import { P, item, open, Section, navOpen, act, openMenu, setBackstage } from "./store";
+import { P, item, open, Section, navOpen, act, openMenu, setBackstage, thumbs } from "./store";
 import { C } from "./cmds";
-import { newGraph } from "./graph";
+import { newGraph, useRender, GraphImg } from "./graph";
 import { Icon } from "./ui";
-import { analyze, soon } from "./roadmap";
+import { analyze, soon, newTable } from "./roadmap";
 
 export const SIDE: [Section, string, string][] = [["info", "infosheet", "Info"], ["data", "sheet", "Data"], ["results", "results", "Results"], ["graphs", "graph", "Graphs"], ["layouts", "layout", "Layouts"]];
 
@@ -24,17 +24,25 @@ export const Navigator = () => {
     <Show when={navOpen()}>
       <aside class="nav">
         <button class="nitem" classList={{ on: item().s === "info" }} onClick={() => open("info")}><Icon n="infosheet" /><span>{P().info.title || "Project info"}</span></button>
-        <Head l="Data tables" add={C.newTable} title="New XY data table" />
-        <For each={P().tables}>{t => <button class="nitem" classList={{ on: item().s === "data" && item().id === t.id }} onClick={() => open("data", t.id)} onContextMenu={e => ctx(e, t.id, "data")} onDblClick={C.rename}><Icon n="sheet" /><span>{t.name}</span></button>}</For>
+        <Head l="Data tables" add={newTable} title="New data table" />
+        <For each={P().tables}>{t => <button class="nitem" classList={{ on: item().s === "data" && item().id === t.id }} onClick={() => open("data", t.id)} onContextMenu={e => ctx(e, t.id, "data")} onDblClick={C.rename}><Icon n={t.kind === "column" ? "table" : "sheet"} /><span>{t.name}</span></button>}</For>
         <Head l="Results" add={() => analyze()} title="Analyze data" />
         <For each={P().analyses ?? []} fallback={<p class="nnone">Analyze… adds results here</p>}>{a => <button class="nitem" classList={{ on: item().s === "results" && item().id === a.id }} onClick={() => open("results", a.id)} onContextMenu={e => ctx(e, a.id, "results")} onDblClick={C.rename}><Icon n="results" /><span>{a.name}</span></button>}</For>
         <Head l="Graphs" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
-        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.4)" />
-        <p class="nnone">Page layouts arrive in 0.4</p>
+        <Show when={thumbs() && P().graphs.length}><div class="nthumbs"><For each={P().graphs}>{g => <Thumb id={g.id} on={item().s === "graphs" && item().id === g.id} />}</For></div></Show>
+        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.2.3)" />
+        <p class="nnone">Page layouts arrive in 0.2.3</p>
       </aside>
     </Show>
   );
+};
+
+/** A small picture of a graph (E7); the shell keeps recent renders, so unchanged graphs cost nothing. */
+const Thumb = (p: { id: number; on: boolean }) => {
+  const [r] = useRender(() => p.id);
+  return <button class="nthumb" classList={{ on: p.on }} title={P().graphs.find(g => g.id === p.id)?.name} onClick={() => open("graphs", p.id)}>
+    <Show when={r()} fallback={<span class="muted">…</span>}>{x => <GraphImg r={x()} scale={Math.min(150 / x().w, 100 / x().h)} />}</Show></button>;
 };
 
 /** Prism's Info sheet: what the experiment is. Fields can go into page headers. */
@@ -64,7 +72,7 @@ export const Empty = (p: { icon: string; title: string; children: JSX.Element })
 export const LayoutsPage = () => (
   <Empty icon="layout" title="Layouts">
     <p>A layout is a page that arranges several graphs, tables and text, with panel letters A, B, C, ready for a paper or a poster.</p>
-    <p class="muted">Layouts arrive in 0.4. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
+    <p class="muted">Layouts arrive in 0.2.3. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
     <p><button class="btn" onClick={() => setBackstage("print")}>Print a graph</button></p>
   </Empty>
 );

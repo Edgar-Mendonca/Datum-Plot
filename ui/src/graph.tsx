@@ -51,8 +51,8 @@ export const GraphView = (p: { g: Graph }) => {
     const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
     if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;
-      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
-    } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [`X ${num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }
+      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "column" ? `mean ${num(+y.toPrecision(6))}` : `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
+    } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [tb?.kind === "column" ? `Y ${num(+y.toPrecision(4))}` : `X ${num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }
   };
   /** Double-click opens the page of Format Graph for what is under the mouse. */
   const dbl = (e: MouseEvent) => {

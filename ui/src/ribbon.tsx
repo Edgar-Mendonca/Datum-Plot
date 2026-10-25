@@ -1,6 +1,6 @@
 // Title bar, quick access toolbar, Tell Me and the ribbon (Data, Analyze, Graph, Format, View, Help).
 import { For, Show, JSX, createSignal, createMemo, onMount } from "solid-js";
-import { call, toast, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, item, graph, table, navOpen, setNavOpen, open as openView } from "./store";
+import { call, toast, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, item, graph, table, navOpen, setNavOpen, open as openView, curTable, thumbs, setThumbs } from "./store";
 import { C, ALL_CMDS } from "./cmds";
 import * as D from "./dialogs";
 import { Icon } from "./ui";
@@ -9,6 +9,7 @@ import { setG, ERRORS, SIZES, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
 import { feature } from "./features";
 import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
+import * as T from "./tools";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
 export const FONTS = ["Arial", "Calibri", "Segoe UI", "Tahoma", "Verdana", "Times New Roman", "Cambria", "Georgia", "Consolas", "IBM Plex Sans"];
@@ -110,6 +111,9 @@ const gs = (): GraphSettings | undefined => graph()?.settings;
 const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) return toast("Open a graph first."); setG(g, s => { f(s); return s; }); };
 const errorMenu = (): Item[] => ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && gs()?.points !== "each", run: () => setGS(s => { s.error = k; s.points = "mean"; }) }));
 const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
+const COLUMNS: [string, string][] = [["scatter", "Scatter dot plot (mean ± error)"], ["bars", "Bars (mean ± error)"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after (rows joined)"]];
+const columnMenu = (): Item[] => [...COLUMNS.map(([k, l]) => ({ label: l, on: (gs()?.column || "scatter") === k, run: () => setGS(s => { s.column = k; }) })), "-",
+  { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }];
 const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
 export const Ribbon = () => (
   <section class="ribbon" ref={fitRibbon}>
@@ -118,19 +122,23 @@ export const Ribbon = () => (
         <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
       <Font />
       <G l="Insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="CSV, TXT or Excel file" run={importFile} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
-      <G l="Transform"><S><N i="fx" l="Transform" id="A15" /><N i="fx" l="Column Formula" id="A11" /><N i="sort" l="Sort" id="A17" /></S><S><B i="exclude" l="Find Outliers" run={() => runAnalysis("A16")} /><N i="check" l="Check Data" id="A18" /></S></G>
+      <G l="Transform"><S><B i="fx" l="Transform" title="A new table of log, 1/X, normalised… values" run={() => runAnalysis("A15")} /><N i="fx" l="Column Formula" id="A11" /><B i="sort" l="Sort" run={T.sortDialog} /></S>
+        <S><B i="find" l="Find" title="Ctrl+F" run={T.findDialog} /><B i="filter" l="Exclude Rows" title="Exclude rows by a rule" run={T.excludeRows} /><B i="check" l="Check Data" run={() => runAnalysis("A18")} /></S><S><B i="exclude" l="Find Outliers" run={() => runAnalysis("A16")} /></S></G>
       <G l="Values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
       <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Show Graph" run={() => openView("graphs")} /></G>
       <G l="Item"><S><B i="rename" l="Rename" run={C.rename} /><B i="copy" l="Duplicate" run={C.duplicate} /><B i="del" l="Delete" run={C.del} /></S></G>
     </Show>
     <Show when={tab() === "analyze"}>
-      <G l="Analyze"><B big i="sigma" l="Analyze…" title="Choose an analysis" run={() => analyze()} /></G>
-      <G l="Statistics"><S><B i="sigma" l="Descriptive" run={() => runAnalysis("B1")} /><B i="check" l="Normality" run={() => runAnalysis("B2")} /><B i="exclude" l="Outliers" run={() => runAnalysis("B3")} /></S></G>
-      <G l="Regression"><B big i="line" l="Linear Regression" run={() => runAnalysis("B9")} /><B big i="curve" l="Curve Fit" run={() => runAnalysis("B10")} /><B big i="log" l="Arrhenius" title="Activation energy from rates at several temperatures" run={() => runAnalysis("B28")} />
-        <S><B i="xy" l="Interpolate" run={() => runAnalysis("B13")} /><N i="curve" l="Global Fit" id="B12" /><N i="graph" l="Area, Smooth" id="B14" /></S></G>
-      <G l="Compare"><S><N i="err" l="t-tests" id="B4" /><N i="err" l="Nonparametric" id="B5" /><N i="table" l="One-way ANOVA" id="B6" /></S><S><N i="table" l="Two-way ANOVA" id="B15" /><N i="sigma" l="Effect Sizes" id="B8" /></S></G>
-      <G l="More"><S><N i="xy" l="Correlation" id="B16" /><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /></S><S><N i="group" l="PCA, Clusters" id="B22" /><N i="curve" l="Peaks" id="B24" /><N i="sigma" l="Power" id="B23" /></S></G>
-      <G l="Help me choose"><N big i="search" l="Test Chooser" id="C4" /></G>
+      <G l="Analyze"><B big i="sigma" l="Analyze…" title="Choose an analysis" run={() => analyze()} /><B big i="search" l="Test Chooser" title="A few questions open the right analysis" run={T.testChooser} /></G>
+      <G l="Statistics"><S><B i="sigma" l="Descriptive" run={() => runAnalysis("B1")} /><B i="check" l="Normality" run={() => runAnalysis("B2")} /><B i="exclude" l="Outliers" run={() => runAnalysis("B3")} /></S>
+        <S><B i="table" l="Frequency" title="Histogram and cumulative distribution" run={() => runAnalysis("D4")} /><B i="xy" l="Correlation" run={() => runAnalysis("B16")} /><B i="sigma" l="Power" title="Power and sample size" run={() => runAnalysis("B23")} /></S></G>
+      <G l="Compare Groups"><B big i="err" l="t-test" run={() => runAnalysis("B4")} /><B big i="table" l="One-way ANOVA" run={() => runAnalysis("B6")} />
+        <S><B i="err" l="Nonparametric" run={() => runAnalysis("B5")} /><B i="list" l="Multiple Comparisons" run={() => runAnalysis("B7")} /><B i="sigma" l="Effect Sizes" run={() => runAnalysis("B8")} /></S><S><N i="table" l="Two-way ANOVA" id="B15" /></S></G>
+      <G l="Regression"><B big i="line" l="Linear Regression" run={() => runAnalysis("B9")} /><B big i="curve" l="Curve Fit" run={() => runAnalysis("B10")} />
+        <S><B i="xy" l="Interpolate" run={() => runAnalysis("B13")} /><B i="curve" l="Global Fit" title="Shared parameters; compare models" run={() => runAnalysis("B12")} /><B i="graph" l="Area" title="Area under the curve and peaks" run={() => runAnalysis("B14")} /></S><S><B i="curve" l="Smooth" title="Smooth, differentiate or integrate" run={() => runAnalysis("B14s")} /></S></G>
+      <G l="Materials"><B big i="line" l="Tensile Test" title="Modulus, yield, UTS, elongation and toughness" run={() => runAnalysis("B27")} /><B big i="sigma" l="Weibull" title="Weibull modulus and characteristic strength" run={() => runAnalysis("B29")} /><B big i="log" l="Arrhenius" title="Activation energy from rates at several temperatures" run={() => runAnalysis("B28")} />
+        <S><N i="line" l="S–N Curves" id="B30" /><N i="curve" l="DSC / TGA" id="B31" /></S></G>
+      <G l="More"><S><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /><N i="group" l="PCA, Clusters" id="B22" /></S><S><N i="curve" l="Peaks" id="B24" /></S></G>
     </Show>
     <Show when={tab() === "graph"}>
       <G l="Graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Graph Type" run={graphTypes} /><B big i="sheet" l="Data Table" run={() => openView("data", graph()?.table ?? table()?.id ?? 0)} /></G>
@@ -138,8 +146,9 @@ export const Ribbon = () => (
       <G l="Axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
       <G l="Size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
-      <G l="Add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><N i="err" l="Significance" id="D3" /><N i="note" l="Annotation" id="D15" /></S></G>
-      <G l="Style"><S><N i="style" l="Styles" id="D13" /><N i="paint" l="Copy Look" id="D14" /><N i="bucket" l="Colour Schemes" id="D16" /></S></G>
+      <Show when={curTable()?.kind === "column"}><G l="Columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
+      <G l="Add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={T.significance} /><N i="note" l="Annotation" id="D15" /></S></G>
+      <G l="Style"><B big i="style" l="Styles" dd={e => openMenu(e, T.styleMenu())} /><S><B i="paint" l="Copy Look" title="Give other graphs this graph's look" run={T.copyLook} /><B i="bucket" l="Colour Schemes" run={T.paletteDialog} /></S></G>
       <G l="Share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
@@ -160,16 +169,16 @@ export const Ribbon = () => (
     <Show when={tab() === "tools"}>
       <G l="Python"><N big i="fx" l="Python Console" id="H1" /><S><N i="fx" l="My Analyses" id="H2" /><N i="report" l="Notebook" id="H5" /></S></G>
       <G l="Automate"><N big i="repeat" l="Analysis Template" id="H3" /><N big i="folder" l="Batch Process" id="H4" /></G>
-      <G l="Export"><S><N i="export" l="Export All Graphs" id="G4" /><N i="table" l="Excel Workbook" id="G6" /></S><S><N i="report" l="PowerPoint" id="G5" /><N i="report" l="Word Report" id="G5" /></S></G>
+      <G l="Export"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Excel Workbook" title="Data tables and results as an Excel workbook" run={T.exportExcel} /><S><N i="report" l="PowerPoint" id="G5" /><N i="report" l="Word Report" id="G5" /></S></G>
       <G l="Engine"><B big i="update" l="Restart Engine" title="Restart the Python engine" run={() => call("restart_engine").then(() => toast("The Python engine restarted.", true))} /></G>
     </Show>
     <Show when={tab() === "view"}>
-      <G l="Show"><B big i="infosheet" l="Info" run={() => openView("info")} /><B big i="sheet" l="Data" run={() => openView("data")} /><B big i="graph" l="Graphs" run={() => openView("graphs")} /><S><B i="list" l="Navigator" on={navOpen()} run={() => setNavOpen(!navOpen())} /></S></G>
+      <G l="Show"><B big i="infosheet" l="Info" run={() => openView("info")} /><B big i="sheet" l="Data" run={() => openView("data")} /><B big i="graph" l="Graphs" run={() => openView("graphs")} /><S><B i="list" l="Navigator" on={navOpen()} run={() => setNavOpen(!navOpen())} /><B i="image" l="Thumbnails" title="Small pictures of the graphs in the navigator" on={thumbs()} run={() => setThumbs(!thumbs())} /></S></G>
       <G l="Zoom"><S><B i="zin" l="Zoom In" run={() => C.zoom(1.15)} /><B i="zout" l="Zoom Out" run={() => C.zoom(1 / 1.15)} /><B i="fit" l="Normal Size" run={() => C.zoom(0)} /></S></G>
       <G l="Theme"><S><For each={[["auto", "Auto (Windows)"], ["light", "Light"], ["dark", "Dark"]]}>{([k, l]) => <B i="style" l={l} on={theme() === k} run={() => setTheme(k)} />}</For></S></G>
     </Show>
     <Show when={tab() === "help"}>
-      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Plot will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="SD, SEM, CI, replicate and other terms" run={() => D.glossary()} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
+      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Plot will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="SD, SEM, CI, replicate and other terms" run={() => D.glossary()} /><B big i="report" l="Statistics Guide" title="Which test when, P values, confidence intervals, common mistakes" run={T.statsGuide} /><B big i="search" l="Test Chooser" run={T.testChooser} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
       <G l="Datum Plot on GitHub"><B big i="github" l="GitHub" title="The project and its code" run={() => call("open_url", { url: GH })} /><B big i="tag" l="Releases" title="Every version and its change log" run={() => call("open_url", { url: `${GH}/releases` })} /><B big i="bug" l="Report an Issue" run={() => call("open_url", { url: `${GH}/issues/new` })} /></G>
       <G l="Updates"><B big i="upd" l="Check for Updates" run={() => setBackstage("about")} /></G>
     </Show>
