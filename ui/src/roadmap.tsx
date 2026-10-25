@@ -127,7 +127,7 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" run={c => {
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "column" ? "D2" : "D1"} run={c => {
   const t = curTable();
   if (c.id === "D4") { setTimeout(() => runAnalysis("D4")); return; }
   if (c.id === "D2") return t?.kind === "column" ? toast("This is a column graph: Graph › Column Graph picks dots, bars, box plots or violins.", true) : toast("Column graphs show column tables: File › New Table › Column.");

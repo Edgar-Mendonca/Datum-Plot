@@ -29,10 +29,12 @@
 
 Datum Plot keeps a project as a chain: **data tables → analyses → results → graphs → layouts**. Everything stays linked, so changing a value redraws its graphs.
 
-- **Data tables** that work like Excel: an X column and data sets with replicates, or a mean with SD or SEM and N. Paste from Excel, fill series, exclude a value without deleting it.
+- **Data tables** that work like Excel: XY tables (an X column and data sets with replicates, or a mean with SD or SEM and N) and column tables (one group per column). Paste from Excel, fill series, exclude a value without deleting it.
 - **Publication-quality graphs** drawn with matplotlib: means with SD, SEM, 95% CI or range, linear or log axes, colour-blind-safe colours, sizes in millimetres for journal columns.
 - **Export** as PNG or TIFF at any dpi, or as SVG, PDF and EPS with editable text. Copy into Word or PowerPoint. Print with headers, footers and captions.
-- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, Arrhenius activation energies. Results stay linked to the data, explain themselves and give methods text. More arrives in small releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
+- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, t-tests, one-way ANOVA with multiple comparisons, nonparametric tests, effect sizes, correlation, power; linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, global fits and model comparison, area under the curve and smoothing. Results stay linked to the data, explain themselves and give methods text.
+- **Materials testing**: tensile tests (modulus, yield, UTS, elongation, toughness), Weibull strength, Arrhenius activation energies.
+- **Column graphs** (dots, bars, box plots, violins) with significance stars, journal styles and colour-blind-safe schemes. Export every graph at once, or the whole project to Excel. More arrives in releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
 
 Everything stays on your computer. The only network call is the update check to GitHub.
 

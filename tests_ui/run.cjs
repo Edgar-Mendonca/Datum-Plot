@@ -123,7 +123,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.tabs button:text-is("Analyze")');
   await p.click('.ribbon .rb:has-text("Two-way ANOVA")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B15") && (await p.textContent(".dlg")).includes("0.2.2"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B15") && (await p.textContent(".dlg")).includes("0.2.3"));
   await p.keyboard.press("Escape");
   check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
   await p.click('.ribbon .rb:has-text("Analyze…")');

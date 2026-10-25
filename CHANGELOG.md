@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.2.2 — 2026-10-25
+
+A big update: comparing groups, materials testing, data tools, graph styles and exporting everything at once (28 features).
+
+**Compare groups**
+- **Column tables** (New Table › Column): one group per column, values down the rows, or entered as mean, SD and N.
+- **Column graphs**: scatter dots (bee swarm) with mean and error bars, bars, box and whiskers, violins, mean ± error, and before–after lines (Graph › Column Graph).
+- **t-tests**: unpaired (Welch or Student), paired, ratio paired and one-sample, with the difference and its 95% CI. Works from entered means, SDs and Ns too.
+- **One-way ANOVA**: ordinary, Welch, Brown-Forsythe and repeated measures (Geisser-Greenhouse), with **multiple comparisons** (Tukey, Dunnett, Holm-Šidák, Šidák, Bonferroni, Fisher LSD) and a test for linear trend.
+- **Nonparametric tests**: Mann-Whitney, Wilcoxon, Kolmogorov-Smirnov, Kruskal-Wallis with Dunn's test, Friedman.
+- **Effect sizes**: Cohen's d and Hedges' g with 95% CIs; η² and ω² for ANOVA.
+- **Significance brackets**: stars (or P values) over the groups, kept up to date from the analysis (Graph › Significance).
+- **Correlation** (Pearson with 95% CI, Spearman, Kendall, correlation matrix) and **power and sample size** (t-tests, ANOVA, proportions).
+
+**Materials**
+- **Tensile test**: Young's modulus, 0.2% offset yield, UTS, strain at UTS, elongation at break and toughness for every specimen, with mean ± SD; the offset line is drawn on the graph.
+- **Weibull analysis**: Weibull modulus and characteristic strength by maximum likelihood (with 95% CIs) or regression, the Weibull plot, and strengths at 1% and 10% failure probability.
+
+**Fitting**
+- **Global fit**: share parameters across data sets and test whether they differ (extra sum-of-squares F test).
+- **Compare two models** for each data set (F test and AICc, with the probability each is right).
+- **Area under the curve** with peaks above a baseline (zero, a value, or a straight line from the first to the last point), shaded on the graph.
+- **Smoothing** (Savitzky-Golay, LOWESS, moving average), **derivatives** and **cumulative integrals**.
+
+**Data tools**
+- **Transform**: log, ln, 1/X, square root, powers, °C ↔ K, scale or shift, subtract a baseline, normalise to 0–100%, replicates to mean, SD and N.
+- **New table from result**: transforms, histograms and smoothed curves become data tables you can graph and analyse.
+- **Sort**, **Find** (Ctrl+F), **Exclude rows by a rule**, and **Check Data** (missing X, missing N, typing mistakes, values a log axis cannot show).
+- **Frequency distributions**: histograms with a normal curve, cumulative distributions and QQ plots.
+
+**Graphs and export**
+- **Styles**: Prism, Origin, Nature, Science, ACS, IEEE, presentation and greyscale; save your own.
+- **Colour schemes**: Okabe-Ito, Tol bright and muted, Tableau, viridis, cividis, magma, greyscale or your own colours, each previewed as people with colour-blindness see it.
+- **Copy Look** gives other graphs a graph's fonts, sizes, colours and symbols.
+- **Thumbnails** of the graphs in the navigator (View › Thumbnails).
+- **Export All Graphs** into a folder, and an **Excel workbook** with every data table and result (Tools tab).
+
+**Help and samples**
+- **Test Chooser**: a few questions open the right analysis. **Statistics Guide**: which test when, P values, confidence intervals, SD or SEM, common mistakes.
+- New samples: Compare groups (ANOVA with brackets), Weibull strength, DSC peak (area = enthalpy); the Tensile sample has a tensile analysis.
+
+**Faster**
+- A second Python engine calculates results, so a long fit never holds up the graphs.
+
+**Roadmap**
+- Two factors and counts are next (0.2.3), then interactive graphs and layouts (0.2.4) (Help › Roadmap).
+
 ## 0.2.1 — 2026-10-25
 
 A small "?" beside the tools: click it to see what the tool is for and how to use it.

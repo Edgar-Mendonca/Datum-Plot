@@ -38,6 +38,10 @@ export const gettingStarted = () => openDialog(() => (
         <li>Type or paste your data. Titles and units above the grid become the axis titles.</li>
         <li>Open the graph in the sidebar (Graphs). Use the Graph and Format tabs, or double-click parts of the graph.</li>
         <li>Export the graph, copy it into Word or PowerPoint (Ctrl+C on the graph), or print it (Ctrl+P).</li></ol>
+      <h4>Compare groups and materials (0.2.2)</h4>
+      <ul><li>File › New Table › <b>Column</b>: one group per column. Analyze › t-test or One-way ANOVA; the stars appear over the groups on the graph.</li>
+        <li>Analyze › <b>Tensile Test</b> (X = strain, one replicate column per specimen) and <b>Weibull</b> (strengths, one group per column).</li>
+        <li>Not sure which test? Analyze › <b>Test Chooser</b>, and Help › Statistics Guide.</li></ul>
       <h4>Analyses (0.2)</h4>
       <ul><li>Analyze… (or the Analyze tab): descriptive statistics, normality tests, outliers, linear regression, curve fitting and Arrhenius. Each result is linked to its table and updates when the data change.</li>
         <li>Fits are drawn on the graph with their 95% band and equation. Fit only part of the data with “Fit X from … to …” (e.g. the elastic region of a stress–strain curve).</li>

@@ -94,12 +94,12 @@ def draw_brackets(ax, brackets, pos, tops, size, o):
         y = max(tops[i] for i in range(x1, x2 + 1)) + 0.06 * h
         for a, b, yy in placed:
             if a <= x2 and x1 <= b:
-                y = max(y, yy + 0.09 * h)
+                y = max(y, yy + 0.12 * h)
         ax.plot([x1, x1, x2, x2], [y - 0.025 * h, y, y, y - 0.025 * h], color="#222222", linewidth=0.9, zorder=4)
         text = stars(p) if o.get("ptext") != "p" else (f"P {pv(p)}" if pv(p).startswith("<") else f"P = {pv(p)}")
         ax.text((x1 + x2) / 2, y + 0.005 * h, text, ha="center", va="bottom", fontsize=size * 0.85, zorder=4)
         placed.append((x1, x2, y))
-        top = max(top, y + 0.09 * h)
+        top = max(top, y + 0.1 * h)
     ax.set_ylim(lo, top)
 
 
@@ -239,20 +239,14 @@ def axes(ax, table, graph, points, only_y=False):
             ax.set_axisbelow(True)
 
 
-def swarm(v, h):
-    """Sideways offsets that keep dots of similar value apart (a simple bee swarm)."""
-    order = np.argsort(v)
-    off = np.zeros(len(v))
-    placed = []
-    for i in order:
-        y = v[i]
-        near = [o for (yy, o) in placed if abs(yy - y) < h]
-        for step in [0] + [s * j for j in range(1, 40) for s in (1, -1)]:
-            x = step * 0.055
-            if all(abs(x - o) > 0.05 for o in near) or abs(x) > 0.38:
-                break
-        off[i] = max(-0.38, min(0.38, x))
-        placed.append((y, off[i]))
+def swarm(v, h, step, lim):
+    """Sideways offsets that keep dots closer than `h` (one dot, in Y units) apart: a simple bee swarm."""
+    off, placed = np.zeros(len(v)), []
+    for i in np.argsort(v):
+        near = [o for (y, o) in placed if abs(y - v[i]) < h]
+        x = next((k * s_ * step for k in range(0, 60) for s_ in ((1, -1) if k else (1,)) if all(abs(k * s_ * step - o) >= step * 0.999 for o in near)), 0.0)
+        off[i] = max(-lim, min(lim, x))
+        placed.append((v[i], off[i]))
     return off
 
 
@@ -266,7 +260,8 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     data = [(k, *summary(table, k)) for k in shown]
     data = [d for d in data if d[2] > 0]
     allv = np.concatenate([d[1] if d[1] is not None else np.array([d[3]]) for d in data]) if data else np.zeros(0)
-    h = (np.ptp(allv) or 1.0) / 16
+    yr = (float(allv.max()) - min(0.0, float(allv.min()))) if len(allv) else 1.0
+    plot_h, plot_w = max(20, graph.get("height") or 60) * 2.835 * 0.7, max(20, graph.get("width") or 80) * 2.835 * 0.8
     points, pos, tops = [], {}, []
     if kind == "paired":
         cols = [column(table, k) for k, *_ in data]
@@ -298,8 +293,11 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
             ax.plot(i, med, "o", color="white", markeredgecolor=col, markersize=4, zorder=3)
         dots = v is not None and (kind in ("scatter", "paired") or (each and kind in ("bars", "box", "violin")))
         if dots:
-            xs = i + (swarm(v, h) if kind != "paired" else np.zeros(len(v)))
-            ax.plot(xs, v, linestyle="none", marker=mk, markersize=st["size"] * (0.75 if kind != "scatter" else 1), markerfacecolor=col if st["filled"] else "white", markeredgecolor=col, alpha=0.9, zorder=3)
+            ms = st["size"] * (1.0 if kind == "scatter" else 0.75 if kind in ("bars", "paired") else 0.55)
+            lim = 0.38 if kind == "scatter" else 0.22
+            xs = i + (swarm(v, ms / plot_h * (yr or 1.0), ms / plot_w * max(len(data), 1), lim) if kind != "paired" else np.zeros(len(v)))
+            ax.plot(xs, v, linestyle="none", marker=mk, markersize=ms, markerfacecolor=col if st["filled"] else "white", markeredgecolor=col if kind in ("scatter", "paired", "bars") else "white",
+                    markeredgewidth=0.6 if kind in ("box", "violin") else 1.0, alpha=0.9, zorder=3)
         if kind in ("scatter", "bars", "mean") or (kind == "paired" and err != "none"):
             if kind in ("scatter", "paired"):
                 ax.hlines(m, i - 0.26, i + 0.26, color="#222222" if kind == "scatter" else col, linewidth=1.6, zorder=4)

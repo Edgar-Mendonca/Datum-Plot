@@ -73,7 +73,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | ID | Feature | What it means | Release |
 | --- | --- | --- | --- |
 | A1 | XY table | X + data sets with replicates or mean/SD/SEM/N | ✅ |
-| A2 | Column table | One group per column, values down (or mean/SD/N) — for t-tests and one-way ANOVA | 0.2 |
+| A2 | Column table | One group per column, values down (or mean/SD/N) — for t-tests and one-way ANOVA | ✅ 0.2.2 |
 | A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | 0.4 |
 | A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | 0.4 |
 | A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
@@ -86,10 +86,10 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A12 | Import CSV / TXT / XLSX | With a preview: delimiter, header rows, which columns go where | 0.1.1 |
 | A13 | Import Prism `.pzfx` | Tables, titles and replicates from Prism projects | 0.4 |
 | A14 | Instrument and plate import | Plate readers (96/384 wells) with a plate map of samples, standards and blanks; Origin ASCII; spectra folders | 0.6 |
-| A15 | Transforms | New linked table: log, ln, reciprocal, normalise (0–100 %), subtract baseline, row means, transpose, remove blanks, fractions of total | 0.2 |
+| A15 | Transforms | New linked table: log, ln, reciprocal, normalise (0–100 %), subtract baseline, row means, transpose, remove blanks, fractions of total | ✅ 0.2.2 |
 | A16 | Exclude, outlier flags | Exclude by hand ✅; flag outliers found by ROUT/Grubbs and exclude them in one click | 0.2 |
-| A17 | Sort, find, filter | Sort rows by X, find values, hide rows by a rule | 0.2 |
-| A18 | Data checks | Warn about text in number cells, empty X, too few replicates, duplicated X | 0.2 |
+| A17 | Sort, find, filter | Sort rows by X, find values, hide rows by a rule | ✅ 0.2.2 |
+| A18 | Data checks | Warn about text in number cells, empty X, too few replicates, duplicated X | ✅ 0.2.2 |
 
 ### B. Analyses (Python: SciPy, statsmodels, lmfit, lifelines)
 
@@ -98,32 +98,32 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B1 | Descriptive statistics: n, mean, SD, SEM, CI, median, quartiles, min/max, CV, geometric mean, skewness, kurtosis | numpy, scipy.stats | 0.2 |
 | B2 | Normality: Shapiro-Wilk, D'Agostino-Pearson, Anderson-Darling, Kolmogorov-Smirnov; QQ plot | scipy.stats | 0.2 |
 | B3 | Outliers: Grubbs, ROUT (Q = 1 %) | own code on numpy (ROUT on the curve fit) | 0.2 |
-| B4 | t-tests: unpaired (Student, Welch), paired, one-sample, ratio paired; multiple t-tests with FDR | scipy.stats, statsmodels | 0.2 |
-| B5 | Nonparametric: Mann-Whitney, Wilcoxon, Kolmogorov-Smirnov, Kruskal-Wallis + Dunn, Friedman + Dunn | scipy.stats, scikit-posthocs | 0.2 |
-| B6 | One-way ANOVA: ordinary, Welch, Brown-Forsythe, repeated measures (+ Greenhouse-Geisser) | scipy.stats, statsmodels | 0.2 |
-| B7 | Multiple comparisons: Tukey, Dunnett, Šidák, Bonferroni, Holm-Šidák, Fisher LSD, Dunn; test for trend | scipy.stats, statsmodels, scikit-posthocs | 0.2 |
-| B8 | Effect sizes with 95 % CI: mean difference, Cohen's d, Hedges' g, η², ω² | numpy, scipy (bootstrap) | 0.2 |
+| B4 | t-tests: unpaired (Student, Welch), paired, one-sample, ratio paired; multiple t-tests with FDR | scipy.stats, statsmodels | ✅ 0.2.2 |
+| B5 | Nonparametric: Mann-Whitney, Wilcoxon, Kolmogorov-Smirnov, Kruskal-Wallis + Dunn, Friedman + Dunn | scipy.stats, scikit-posthocs | ✅ 0.2.2 |
+| B6 | One-way ANOVA: ordinary, Welch, Brown-Forsythe, repeated measures (+ Greenhouse-Geisser) | scipy.stats, statsmodels | ✅ 0.2.2 |
+| B7 | Multiple comparisons: Tukey, Dunnett, Šidák, Bonferroni, Holm-Šidák, Fisher LSD, Dunn; test for trend | scipy.stats, statsmodels, scikit-posthocs | ✅ 0.2.2 |
+| B8 | Effect sizes with 95 % CI: mean difference, Cohen's d, Hedges' g, η², ω² | numpy, scipy (bootstrap) | ✅ 0.2.2 |
 | B9 | Linear regression: slope, intercept, R², CIs, runs test, compare slopes and intercepts, through origin, Deming | scipy.stats, statsmodels | 0.3 |
 | B10 | Nonlinear curve fitting: bounds, fixed and shared parameters, weighting, CIs (asymptotic and profile), robust fit | **lmfit** (on scipy.optimize) | 0.3 |
 | B11 | Model library: dose-response 3/4/5-parameter, Hill, binding (one site, two sites, competition), enzyme kinetics (Michaelis-Menten, substrate inhibition, allosteric), exponential growth/decay 1–2 phases, Gaussian, Lorentzian, Voigt, logistic, Gompertz, polynomial 1–6, sine, power, user equations | lmfit models + ours | 0.3 |
-| B12 | Global fitting, compare models (extra sum-of-squares F test, AICc), compare a parameter between data sets | lmfit, scipy | 0.3 |
+| B12 | Global fitting, compare models (extra sum-of-squares F test, AICc), compare a parameter between data sets | lmfit, scipy | ✅ 0.2.2 |
 | B13 | Interpolate unknowns from a standard curve (ELISA, BCA, qPCR) | lmfit, numpy | 0.3 |
-| B14 | Area under the curve, derivatives, integrals, smoothing (Savitzky-Golay, LOWESS) | numpy, scipy.signal, statsmodels | 0.3 |
+| B14 | Area under the curve, derivatives, integrals, smoothing (Savitzky-Golay, LOWESS) | numpy, scipy.signal, statsmodels | ✅ 0.2.2 |
 | B15 | Two-way and three-way ANOVA (ordinary, repeated measures, mixed model) | statsmodels | 0.4 |
-| B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | 0.4 |
+| B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | ✅ 0.2.2 |
 | B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | 0.4 |
 | B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | 0.4 |
 | B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | **lifelines** | 0.5 |
 | B20 | Nested t-test, nested one-way ANOVA (mixed models) | statsmodels | 0.5 |
 | B21 | Multiple linear, logistic and Poisson regression | statsmodels | 0.5 |
 | B22 | PCA, clustering (hierarchical, k-means) | numpy SVD, scipy.cluster | 0.5 |
-| B23 | Power and sample size (t-tests, ANOVA, proportions) | statsmodels.stats.power | 0.5 |
+| B23 | Power and sample size (t-tests, ANOVA, proportions) | statsmodels.stats.power | ✅ 0.2.2 |
 | B24 | Peak analysis: baseline, find peaks, areas, multi-peak fit | scipy.signal, lmfit, pybaselines | 0.6 |
 | B25 | Signal processing: FFT, filters, convolution, resampling, interpolation | numpy.fft, scipy.signal, scipy.interpolate | 0.6 |
 | B26 | Surface fitting (Z = f(X, Y)), implicit fits | lmfit | 0.6 |
-| B27 | Tensile test analysis: modulus, 0.2 % offset yield, UTS, elongation, toughness (added session 4) | numpy, scipy | 0.2 |
+| B27 | Tensile test analysis: modulus, 0.2 % offset yield, UTS, elongation, toughness (added session 4) | numpy, scipy | ✅ 0.2.2 |
 | B28 | Arrhenius / activation energy (added session 4) | scipy | 0.2 |
-| B29 | Weibull analysis of strength (added session 4) | scipy | 0.2 |
+| B29 | Weibull analysis of strength (added session 4) | scipy | ✅ 0.2.2 |
 | B30 | Fatigue S–N curves, Basquin fit (added session 4) | scipy | 0.6 |
 | B31 | DSC/TGA peak areas and onsets (added session 4) | scipy | 0.6 |
 
@@ -134,7 +134,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | C1 | Results sheets in the navigator, linked to their table: change a value and the result updates (Prism's chain) | 0.2 |
 | C2 | Tabs per result: Summary, Details, Multiple comparisons, Descriptive, Normality, Residuals | 0.2 |
 | C3 | **Explain panel**: the question asked, the answer in one sentence, assumption checks (✓/⚠) and what to do if one fails | 0.2 |
-| C4 | **Test chooser**: 3–4 questions (groups, paired, normal, what you want to know) open the right analysis | 0.2 |
+| C4 | **Test chooser**: 3–4 questions (groups, paired, normal, what you want to know) open the right analysis | ✅ 0.2.2 |
 | C5 | **Methods and legend text** ready to paste into a paper, with the software version | 0.2 |
 | C6 | P-value styles (Prism GP, APA, NEJM, exact) and decimal places | 0.2 |
 | C7 | Copy results to Excel / Word, export as XLSX | 0.2 |
@@ -146,9 +146,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | ID | Feature | Release |
 | --- | --- | --- |
 | D1 | XY: points, lines, means ± SD/SEM/CI/range, every replicate, log axes, journal sizes | ✅ |
-| D2 | Column graphs: scatter dot plot (mean/median lines), bar ± error, box (Tukey, min–max, percentiles), violin, swarm/beeswarm, before–after, estimation plot (Gardner-Altman, Cumming) | 0.2 |
-| D3 | **Significance brackets** with stars or P values, placed automatically from the analysis and updated with it | 0.2 |
-| D4 | Histogram, cumulative distribution, KDE, QQ plot | 0.2 |
+| D2 | Column graphs: scatter dot plot (mean/median lines), bar ± error, box (Tukey, min–max, percentiles), violin, swarm/beeswarm, before–after, estimation plot (Gardner-Altman, Cumming) | ✅ 0.2.2 |
+| D3 | **Significance brackets** with stars or P values, placed automatically from the analysis and updated with it | ✅ 0.2.2 |
+| D4 | Histogram, cumulative distribution, KDE, QQ plot | ✅ 0.2.2 |
 | D5 | Fitted curves with confidence and prediction bands, residual plots | 0.3 |
 | D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | 0.4 |
 | D7 | Pie, donut, 100 % stacked bars | 0.4 |
@@ -157,10 +157,10 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | 0.4–0.5 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
 | D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | 0.6 |
-| D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | 0.2 |
-| D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | 0.2 |
+| D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
+| D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
 | D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | 0.4 |
-| D16 | Colour schemes: Okabe-Ito ✅, viridis family, greyscale, custom palettes; colour-blind preview | 0.2 |
+| D16 | Colour schemes: Okabe-Ito ✅, viridis family, greyscale, custom palettes; colour-blind preview | ✅ 0.2.2 |
 | D17 | Large data (1 million points) with fast decimation for screen | 0.6 |
 
 ### E. Working with the graph on screen
@@ -173,7 +173,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | E4 | Zoom and pan the plot (box zoom, wheel), reset | 0.4 |
 | E5 | Region of interest: drag a box to get statistics, area, a quick fit or peaks for just that region (Origin Gadgets) | 0.6 |
 | E6 | Exclude points from the graph (click a point → exclude it in the table) | 0.4 |
-| E7 | Undo every graph change ✅; graph thumbnails in the navigator | 0.2 |
+| E7 | Undo every graph change ✅; graph thumbnails in the navigator | ✅ 0.2.2 |
 
 ### F. Layouts and figures for papers
 
@@ -190,9 +190,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | G1 | PNG, TIFF, SVG, PDF, EPS export ✅ | ✅ |
 | G2 | **Copy picture that works on Windows** (PNG through Rust), copy as SVG for Office 365 | 0.1.1 |
 | G3 | TIFF in CMYK and LZW for journals; colour profile | 0.4 |
-| G4 | Batch export: every graph in the project at once | 0.2 |
+| G4 | Batch export: every graph in the project at once | ✅ 0.2.2 |
 | G5 | **Send to PowerPoint**: one slide per graph; **Word report**: graphs, results tables and methods text | 0.7 (python-pptx, python-docx) |
-| G6 | Export tables and results to Excel | 0.2 (openpyxl) |
+| G6 | Export tables and results to Excel | ✅ 0.2.2 |
 
 ### H. Python inside: scripting and extending
 
@@ -210,7 +210,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | --- | --- | --- |
 | I1 | **Separate Python runtime** so updates are about 4 MB (§3.2) | 0.1.1 |
 | I2 | Worker timeout and restart; a "Restart the engine" button | 0.1.1 |
-| I3 | Second worker for long analyses (fits, bootstraps) so drawing never waits | 0.3 |
+| I3 | Second worker for long analyses (fits, bootstraps) so drawing never waits | ✅ 0.2.2 |
 | I4 | Results and graph caches; nothing recalculated twice | ✅ graphs, 0.2 results |
 | I5 | Start-up under 3 s: load Python libraries lazily (SciPy modules only when used) | 0.1.1 |
 | I6 | Code signing (no SmartScreen warning), signed updates, crash reports | 0.6 |
@@ -220,8 +220,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | ID | Feature | Release |
 | --- | --- | --- |
 | J1 | Getting Started, Glossary, Shortcuts ✅ | ✅ |
-| J2 | A sample project for every analysis (Home › Samples), with the reason the analysis was chosen | 0.2 onwards |
-| J3 | Statistics guide: which test when, what P values and CIs mean, common mistakes | 0.2 |
+| J2 | A sample project for every analysis (Home › Samples), with the reason the analysis was chosen | ✅ 0.2.2 |
+| J3 | Statistics guide: which test when, what P values and CIs mean, common mistakes | ✅ 0.2.2 |
 | J4 | Validation page: every statistic checked against R and NIST reference data, with the numbers | 1.0 |
 | J5 | ? help: a small ? beside each tool opens a card saying what it is for and how to use it; Help › What Is This Tool? lists every card (all Datum apps; ✅ 0.2.1) | 0.2.1 |
 
@@ -318,3 +318,18 @@ The user answered in one message: no Prism files; nothing missing from the catal
 | 0.6.0 | Origin power | A9–A11, A13, A14, B24–B26, D11, D12, D17, E5, F3, I6 |
 | 0.7.0 | Python scripting and automation | H1–H5, G5 |
 | 1.0.0 | Stable | J4 |
+
+
+## 11. Big builds (session 7, 25 Oct 2026)
+
+After 0.2.0 the user asked for bigger releases: "complete the application with all the pending… build around 10 to 15 features at a time", then "complete 0.2.1 and 0.2.2 together, as one version". Meanwhile 0.2.1 shipped "? help beside the tools" (J5) from another session, so the big build is **0.2.2** and the numbers stay consecutive.
+
+| Release | Theme | Features |
+| --- | --- | --- |
+| **0.2.2** ✅ | Statistics and regression complete, compare groups, materials, styles, export | A2, A15, A17, A18, B4–B8, B12, B14, B16, B23, B27, B29, C4, D2, D3, D4, D13, D14, D16, E7, G4, G6, I3, J2, J3 (28) |
+| 0.2.3 | Two factors and counts | A3, A4, A6, B15, B17, B18, D6, D7, D8, D10 |
+| 0.2.4 | Interactive graphs and layouts | D12, D15, E2, E3, E4, E6, F1, F2, G3 |
+| 0.2.5 | Survival, nested, many variables | A5, A7, A8, B19, B20, B21, B22, D9 |
+| 0.2.6 | Origin power | A9, A10, A11, B24, B25, B26, B30, B31, D11, D17, E5 |
+| 0.2.7 | Python scripting and automation | A13, A14, F3, G5, H1–H5 |
+| 1.0 | Stable | I6, J4 |
