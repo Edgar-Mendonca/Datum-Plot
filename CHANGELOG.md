@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.8 — 2026-10-27
+
+Notes on graphs: text, arrows, lines and boxes.
+
+**Annotations**
+- Format › Annotate (or Graph › Annotation): **Text** — click where it goes and type it; **Arrow**, **Line** and **Box** — drag on the graph. An arrow can carry a label at its start, a box a title.
+- Format Graph › **Notes** lists every note: change its text, position, colour, size or boldness, or delete it.
+- Notes sit in the units of the axes, so they stay on their data when the graph is resized, zoomed or exported, and they never change the axis ranges. Copy Look leaves each graph's notes alone.
+
 ## 0.2.7 — 2026-10-27
 
 Axis breaks and a second Y axis.

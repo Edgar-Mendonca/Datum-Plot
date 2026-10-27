@@ -246,3 +246,13 @@ class AxisTools(unittest.TestCase):
         r = graph.render(t, {"y": {"breakFrom": 5, "breakTo": 95}}, [])
         self.assertEqual(r["ylim"][1], 5)
         self.assertTrue(graph.export(t, {"y": {"breakFrom": 5, "breakTo": 95}}, "png")["data"])
+
+
+class Notes(unittest.TestCase):
+    def test_notes_draw_and_never_move_the_axes(self):
+        t = xy([0, 1, 2, 3], [1, 4, 2, 5])
+        base = graph.render(t, {})
+        n = [{"kind": k, "x": 1, "y": 40, "x2": 9, "y2": -5, "text": "far"} for k in ("text", "arrow", "line", "box")]
+        r = graph.render(t, {"notes": n})
+        self.assertEqual((r["xlim"], r["ylim"]), (base["xlim"], base["ylim"]))
+        self.assertIn("far", r["svg"])

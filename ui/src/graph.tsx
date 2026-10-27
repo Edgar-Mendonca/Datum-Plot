@@ -4,11 +4,14 @@
 import { Show, For, createSignal, createEffect, on, onCleanup } from "solid-js";
 import { Graph, Render, num, invoke } from "./api";
 import { act, call, engine, openMenu, out, toast, open, openDialog, opts } from "./store";
-import { formatGraph } from "./format";
+import { formatGraph, setG } from "./format";
 import { Dialog, Pick, Check, Icon } from "./ui";
 import { Help } from "./help";
 
 export const [zoomG, setZoomG] = createSignal(1.5);
+/** Format › Annotate: the kind of note the next click (text) or drag (arrow, line, box) adds. */
+export const [tool, setTool] = createSignal<string | null>(null);
+export const annotate = (kind: string) => { setTool(kind); toast(kind === "text" ? "Click on the graph where the text goes (Esc cancels)." : `Drag on the graph to draw the ${kind} (Esc cancels).`, true); };
 /** The last render of each graph, by id (also used by File › Print). */
 const renders = new Map<number, Render>();
 export const lastRender = (id: number) => renders.get(id);
@@ -70,14 +73,37 @@ export const GraphView = (p: { g: Graph }) => {
     { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
     { label: "Go to Data Table", icon: "sheet", run: () => open("data", p.g.table) },
   ]);
-  const keys = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") { e.preventDefault(); copyGraph(p.g.id); } };
+  const keys = (e: KeyboardEvent) => { if (e.key === "Escape") { setTool(null); setDrag(null); } if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") { e.preventDefault(); copyGraph(p.g.id); } };
+  /** Annotate: a click places text, a drag draws an arrow, line or box; the note is stored in data units. */
+  const [drag, setDrag] = createSignal<[number, number, number, number] | null>(null);
+  const down = (e: MouseEvent) => {
+    const kind = tool();
+    if (!kind || e.button !== 0 || !r()) return;
+    e.preventDefault();
+    const [px, py] = at(e), b = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const place = (qx: number, qy: number) => {
+      setTool(null); setDrag(null);
+      if (kind !== "text" && Math.hypot(qx - px, qy - py) < 3) return toast("Drag to draw it.");
+      const text = kind === "text" ? prompt("Text", "") : kind === "line" ? "" : prompt(kind === "arrow" ? "Text at the start of the arrow (optional)" : "Label (optional)", "");
+      if (text === null || (kind === "text" && !text.trim())) return;
+      const [x, y] = toData(px, py), [x2, y2] = toData(qx, qy);
+      setG(p.g, s => ({ ...s, notes: [...(s.notes ?? []), { kind, x, y, x2, y2, text, color: "", size: 0, bold: false }] }));
+    };
+    if (kind === "text") return place(px, py);
+    const pt = (m: MouseEvent): [number, number] => [(m.clientX - b.left) / k(), (m.clientY - b.top) / k()];
+    const mv = (m: MouseEvent) => setDrag([px, py, ...pt(m)]);
+    const up = (u: MouseEvent) => { removeEventListener("mousemove", mv); removeEventListener("mouseup", up); place(...pt(u)); };
+    addEventListener("mousemove", mv); addEventListener("mouseup", up);
+  };
   onCleanup(() => setTip(null));
   return (
     <section class="gview" tabindex="0" onKeyDown={keys}>
       <div class="gpage" onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setZoomG(z => Math.min(4, Math.max(0.5, z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)))); } }}>
         <Show when={r()} fallback={<div class="gwait">{err() || (engine()?.error ?? engine()?.status ?? "Drawing the graph…")}</div>}>{R => (
-          <div class="gpaper" style={{ width: `${R().w * k()}px`, height: `${R().h * k()}px` }} onMouseMove={move} onMouseLeave={() => { setTip(null); setCross(null); }} onDblClick={dbl} onContextMenu={menu}>
+          <div class="gpaper" classList={{ annot: !!tool() }} style={{ width: `${R().w * k()}px`, height: `${R().h * k()}px` }} onMouseDown={down} onMouseMove={move} onMouseLeave={() => { setTip(null); setCross(null); }} onDblClick={dbl} onContextMenu={menu}>
             <GraphImg r={R()} scale={k()} />
+            <Show when={drag()}>{d => { const [a, b2, c, e] = d().map(v => v * k()); return <svg class="gdrag" width={R().w * k()} height={R().h * k()}>{tool() === "box"
+              ? <rect x={Math.min(a, c)} y={Math.min(b2, e)} width={Math.abs(c - a)} height={Math.abs(e - b2)} /> : <line x1={a} y1={b2} x2={c} y2={e} />}</svg>; }}</Show>
             <Show when={cross()}>{c => <><i class="xh" style={{ left: `${c()[0] * k()}px`, top: `${R().plot[1] * k()}px`, height: `${(R().plot[3] - R().plot[1]) * k()}px` }} /><i class="yh" style={{ top: `${c()[1] * k()}px`, left: `${R().plot[0] * k()}px`, width: `${(R().plot[2] - R().plot[0]) * k()}px` }} /></>}</Show>
           </div>
         )}</Show>

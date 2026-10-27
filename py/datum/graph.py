@@ -160,8 +160,39 @@ def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, 
                 bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "none", "pad": 0.6})
 
 
+def draw_notes(ax, graph, size):
+    """Annotations (D15): text, arrows, lines and boxes in data coordinates."""
+    from matplotlib.patches import Rectangle
+    for n in graph.get("notes") or []:
+        col, fs = n.get("color") or "#222222", float(n.get("size") or 0) or size
+        x, y, x2, y2, kind = float(n.get("x", 0)), float(n.get("y", 0)), float(n.get("x2", 0)), float(n.get("y2", 0)), n.get("kind", "text")
+        fw = "bold" if n.get("bold") else "normal"
+        if kind == "arrow":
+            ax.annotate(n.get("text", ""), xy=(x2, y2), xytext=(x, y), color=col, fontsize=fs, fontweight=fw, ha="center", va="center", zorder=6,
+                        arrowprops={"arrowstyle": "-|>", "color": col, "lw": 1.0, "shrinkA": 4 if n.get("text") else 0, "shrinkB": 1})
+        elif kind == "line":
+            ax.plot([x, x2], [y, y2], color=col, linewidth=1.0, zorder=6)
+            if n.get("text"):
+                ax.text((x + x2) / 2, (y + y2) / 2, n["text"], color=col, fontsize=fs, fontweight=fw, ha="center", va="bottom", zorder=6)
+        elif kind == "box":
+            ax.add_patch(Rectangle((min(x, x2), min(y, y2)), abs(x2 - x), abs(y2 - y), fill=False, edgecolor=col, linewidth=1.0, linestyle="--", zorder=6))
+            if n.get("text"):
+                ax.text(min(x, x2), max(y, y2), " " + n["text"], color=col, fontsize=fs, fontweight=fw, ha="left", va="bottom", zorder=6)
+        elif n.get("text"):
+            ax.text(x, y, n["text"], color=col, fontsize=fs, fontweight=fw, ha="center", va="center", zorder=6)
+
+
 def figure(table, graph, overlays=()):
     """Builds the matplotlib figure (call inside `rc_context(rc_for(graph))`); returns (fig, ax, legend, points)."""
+    fig, ax, leg, points = build(table, graph, overlays)
+    if graph.get("notes"):
+        lims = ax.get_xlim(), ax.get_ylim()
+        draw_notes(ax, graph, float(graph.get("fontSize") or 10))
+        ax.set_xlim(*lims[0]); ax.set_ylim(*lims[1])  # notes never move the axes
+    return fig, ax, leg, points
+
+
+def build(table, graph, overlays=()):
     size = float(graph.get("fontSize") or 10)
     frame = graph.get("style") == "frame"
     fig = Figure(figsize=(max(20, graph.get("width") or 80) * MM, max(20, graph.get("height") or 60) * MM), dpi=72, layout="constrained")

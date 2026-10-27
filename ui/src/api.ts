@@ -18,8 +18,10 @@ export interface SetStyle { show: boolean; color: string; symbol: string; size: 
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
   style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
-  /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis;
+  /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis; /** Annotations. */ notes: Note[];
 }
+/** An annotation in data coordinates: text at (x, y); an arrow from (x, y) to (x2, y2); a line; a box with those corners. */
+export interface Note { kind: string; x: number; y: number; x2: number; y2: number; text: string; color: string; size: number; bold: boolean }
 export interface Graph { id: number; table: number; name: string; settings: GraphSettings }
 export interface Analysis { id: number; table: number; name: string; kind: string; sets: number[]; options: Record<string, any> }
 /** An analysis's results from Python (py/datum/analysis.py). */

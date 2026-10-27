@@ -10,6 +10,7 @@ import { GraphSettings } from "./api";
 import { feature } from "./features";
 import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
 import * as T from "./tools";
+import { annotate } from "./graph";
 import { Help, helpCard, HELP } from "./help";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
@@ -118,6 +119,7 @@ const PARTS: [string, string][] = [["pie", "Pie"], ["donut", "Donut"], ["percent
 const columnMenu = (): Item[] => curTable()?.kind === "parts" ? PARTS.map(([k, l]) => ({ label: l, on: (gs()?.column || "pie") === k, run: () => setGS(s => { s.column = k; }) })) : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? [...GROUPED.map(([k, l]) => ({ label: l, on: (gs()?.column || "bars") === k, run: () => setGS(s => { s.column = k; }) })), "-",
   { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }] : [...COLUMNS.map(([k, l]) => ({ label: l, on: (gs()?.column || "scatter") === k, run: () => setGS(s => { s.column = k; }) })), "-",
   { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }];
+const ANNOT = (): Item[] => [...[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]].map(([k, l]) => ({ label: l, run: () => annotate(k) })), "-", { label: "Edit Notes…", run: () => C.format("notes") }];
 const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
 export const Ribbon = () => (
   <section class="ribbon" ref={fitRibbon}>
@@ -152,7 +154,7 @@ export const Ribbon = () => (
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
       <G l="Size" h="size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
       <Show when={curTable() && curTable()!.kind !== "xy"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
-      <G l="Add" h="add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={T.significance} /><N i="note" l="Annotation" id="D15" /></S></G>
+      <G l="Add" h="add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={T.significance} /><B i="note" l="Annotation" title="Text, arrows, lines and boxes on the graph" dd={e => openMenu(e, ANNOT())} /></S></G>
       <G l="Style" h="style"><B big i="style" l="Styles" dd={e => openMenu(e, T.styleMenu())} /><S><B i="paint" l="Copy Look" title="Give other graphs this graph's look" run={T.copyLook} /><B i="bucket" l="Colour Schemes" run={T.paletteDialog} /></S></G>
       <G l="Share" h="share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
@@ -162,7 +164,7 @@ export const Ribbon = () => (
         <select class="fsize" title="Font size (pt)" value={String(gs()?.fontSize ?? 10)} onChange={e => { const v = +e.currentTarget.value; setGS(s => { s.fontSize = v; }); }}><For each={[6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 24]}>{z => <option value={z}>{z}</option>}</For></select></div>
         <div><button class="rb fb" classList={{ on: !!gs()?.boldTitles }} title="Bold axis titles" onClick={() => setGS(s => { s.boldTitles = !s.boldTitles; })}><span style={{ "font-weight": 700 }}>B</span></button>
           <button class="rb fb" title="Increase font size" onClick={() => setGS(s => { s.fontSize = Math.min(36, s.fontSize + 1); })}><span>A<sup>+</sup></span></button><button class="rb fb" title="Decrease font size" onClick={() => setGS(s => { s.fontSize = Math.max(5, s.fontSize - 1); })}><span>A<sup>−</sup></span></button></div></div></G>
-      <G l="Annotate"><S><N i="note" l="Text" id="D15" /><N i="line" l="Arrow, Line" id="D15" /><N i="frame" l="Box" id="D15" /></S></G>
+      <G l="Annotate" h="annotate"><S><B i="note" l="Text" run={() => annotate("text")} /><B i="line" l="Arrow" run={() => annotate("arrow")} /><B i="frame" l="Box" run={() => annotate("box")} /></S><S><B i="dash" l="Line" run={() => annotate("line")} /><B i="list" l="Edit Notes" run={() => C.format("notes")} /></S></G>
       <G l="Axes" h="axes"><S><B i="axis" l="Axis Break" title="Leave out a stretch of the Y axis (Format Graph › Y Axis)" run={() => C.format("y")} /><B i="axis" l="Second Y Axis" title="Tick “Right Y” for a data set (Format Graph › Data Sets)" run={() => { C.format("sets"); toast("Tick “Right Y” for the data sets that belong on a second axis.", true); }} /><N i="zin" l="Zoom and Pan" id="E4" /></S></G>
       <G l="Layout" h="glayout"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /><S><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /><B i="opts" l="Graph Options" run={() => C.format("graph")} /></S></G>
     </Show>

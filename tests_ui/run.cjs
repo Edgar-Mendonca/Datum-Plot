@@ -236,6 +236,15 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   check("choosing a scheme sets the graph's palette", (await ops()).find(o => o.GraphSet)?.GraphSet.settings.palette === "viridis");
   await p.click('.dlg .btn:has-text("Close")');
+  await reset();
+  p.once("dialog", d => d.accept("Yield point"));
+  await p.click('.ribbon .rb:has-text("Annotation")');
+  await p.click('.menu button:has-text("Text")');
+  const gp = await p.evaluate(() => { const r = document.querySelector(".gpaper").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+  await p.mouse.click(gp[0], gp[1]);
+  await p.waitForTimeout(200);
+  const note = (await ops()).find(o => o.GraphSet)?.GraphSet.settings.notes;
+  check("Annotation › Text: a click adds a note in data units", note && note.length === 1 && note[0].text === "Yield point" && note[0].kind === "text" && Number.isFinite(note[0].x), JSON.stringify(note));
   check("the navigator shows graph thumbnails", !!(await p.$(".nthumbs .nthumb img")));
 
   // 6. Info sheet edits go to the engine; File › Print previews the graph page; Options line up.

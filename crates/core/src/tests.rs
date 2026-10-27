@@ -231,13 +231,15 @@ fn copy_look_keeps_titles_ranges_and_curves() {
     (s.font, s.font_size, s.palette, s.title, s.y.title, s.y.scale) = ("Times New Roman".into(), 7.0, "viridis".into(), "Mine".into(), "Force".into(), "log".into());
     d.apply(Op::GraphSet { graph: a, settings: Box::new(s) }).unwrap();
     let mut s = d.p.graphs[1].settings.clone();
-    (s.title, s.overlays) = ("Other".into(), vec![]);
+    (s.title, s.overlays, s.notes) = ("Other".into(), vec![], vec![Note::default()]);
     s.y.title = "Stress".into();
     d.apply(Op::GraphSet { graph: b, settings: Box::new(s) }).unwrap();
     d.apply(Op::CopyLook { from: a, to: vec![b] }).unwrap();
     let g = &d.p.graphs[1].settings;
     assert_eq!((g.font.as_str(), g.font_size, g.palette.as_str(), g.y.scale.as_str()), ("Times New Roman", 7.0, "viridis", "log"));
-    assert_eq!((g.title.as_str(), g.y.title.as_str()), ("Other", "Stress"));
+    assert_eq!((g.title.as_str(), g.y.title.as_str(), g.notes.len()), ("Other", "Stress", 1), "notes stay with their graph");
     let a: Axis = serde_json::from_str(r#"{"breakFrom": 12, "breakTo": 95}"#).unwrap();
+    let n: Note = serde_json::from_str(r#"{"kind": "arrow", "x": 1, "y2": 3, "text": "peak"}"#).unwrap();
+    assert_eq!((n.kind.as_str(), n.x, n.y2, n.size, n.text.as_str()), ("arrow", 1.0, 3.0, 0.0, "peak"));
     assert_eq!((a.break_from, a.break_to, a.scale.as_str()), (Some(12.0), Some(95.0), "lin"));
 }

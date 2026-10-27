@@ -1,7 +1,7 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
 import { For, Show, createSignal } from "solid-js";
-import { Graph, GraphSettings, Axis, SetStyle, letter } from "./api";
+import { Graph, GraphSettings, Axis, SetStyle, Note, letter } from "./api";
 import { act, out, openDialog } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES } from "./tools";
@@ -44,7 +44,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
   };
   return (
     <Dialog title={`Format Graph · ${g().name}`} side help="format" cancel="Close">
-      <Tabs tabs={[["sets", "Data Sets"], ["x", "X Axis"], ["y", "Y Axis"], ...(s().sets.some(x => x?.right) ? [["y2", "Right Y Axis"] as [string, string]] : []), ["graph", "Graph"]]} on={tab()} set={setTab} />
+      <Tabs tabs={[["sets", "Data Sets"], ["x", "X Axis"], ["y", "Y Axis"], ...(s().sets.some(x => x?.right) ? [["y2", "Right Y Axis"] as [string, string]] : []), ["graph", "Graph"], ["notes", `Notes${s().notes?.length ? ` (${s().notes.length})` : ""}`]]} on={tab()} set={setTab} />
       <div class="fmtpage">
         <Show when={tab() === "sets"}>
           <div class="form">
@@ -81,6 +81,20 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
         <Show when={tab() === "x"}><AxisPage k="x" /></Show>
         <Show when={tab() === "y"}><AxisPage k="y" /></Show>
         <Show when={tab() === "y2"}><AxisPage k="y2" /></Show>
+        <Show when={tab() === "notes"}>
+          <p class="inline"><For each={[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]]}>{([k, l]) => <button class="btn sm" onClick={() => import("./graph").then(m => m.annotate(k))}>＋ {l}</button>}</For></p>
+          <Show when={s().notes?.length} fallback={<p class="muted">No notes yet. Add one with the buttons above (then click or drag on the graph), or Format › Annotate.</p>}>
+            <table class="tbl setfmt"><thead><tr><th>Kind</th><th>Text</th><th>X</th><th>Y</th><th>To X</th><th>To Y</th><th>Colour</th><th>Size</th><th>Bold</th><th /></tr></thead><tbody>
+              <For each={s().notes}>{(n, i) => { const put = (patch: Partial<Note>) => set(x => { x.notes[i()] = { ...x.notes[i()], ...patch }; }); const N = (q: { k: "x" | "y" | "x2" | "y2" }) =>
+                <input type="number" style={{ width: "70px" }} value={+n[q.k].toPrecision(5)} onChange={e => { const v = num(e.currentTarget.value); if (v !== null) put({ [q.k]: v }); }} />;
+                return <tr><td>{n.kind}</td><td><input value={n.text} onChange={e => put({ text: e.currentTarget.value })} /></td><td><N k="x" /></td><td><N k="y" /></td>
+                  <td>{n.kind !== "text" && <N k="x2" />}</td><td>{n.kind !== "text" && <N k="y2" />}</td><td><input type="color" value={n.color || "#222222"} onChange={e => put({ color: e.currentTarget.value })} /></td>
+                  <td><input type="number" min="0" max="48" style={{ width: "54px" }} value={n.size} title="0 = the graph's size" onChange={e => put({ size: +e.currentTarget.value })} /></td>
+                  <td><input type="checkbox" checked={n.bold} onChange={e => put({ bold: e.currentTarget.checked })} /></td><td><button class="btn sm" onClick={() => set(x => { x.notes.splice(i(), 1); })}>Delete</button></td></tr>; }}</For>
+            </tbody></table>
+          </Show>
+          <p class="muted">Positions are in the units of the axes, so notes stay on their data when the graph is resized or exported.</p>
+        </Show>
         <Show when={tab() === "graph"}>
           <div class="form">
             <label>Title</label><span class="inline"><input value={s().title} placeholder="No title" onChange={e => set(x => { x.title = e.currentTarget.value; })} /><Check label="Show" value={s().showTitle} set={v => set(x => { x.showTitle = v; })} /></span>

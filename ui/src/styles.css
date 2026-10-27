@@ -582,3 +582,6 @@ input.mono { font-family: var(--mono) !important; }
 .nthumb { width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--line); }
 .nthumb.on { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
 .nthumb .gimg { pointer-events: none; }
+.gpaper.annot { cursor: crosshair; }
+.gdrag { position: absolute; left: 0; top: 0; pointer-events: none; }
+.gdrag line, .gdrag rect { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }

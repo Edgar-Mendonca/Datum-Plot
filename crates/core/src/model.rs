@@ -242,6 +242,8 @@ pub struct GraphSettings {
     pub overlays: Vec<u32>,
     /// Column tables: scatter, bars, box, violin, paired or mean.
     pub column: String,
+    /// Annotations drawn on the graph (text, arrows, lines, boxes), in data coordinates.
+    pub notes: Vec<Note>,
     /// The second Y axis (right), for data sets marked `right`.
     pub y2: Axis,
     /// Colour scheme: okabe, tableau, bright, muted, dark, pastel, viridis, cividis, magma, grey, or "#hex, #hex…".
@@ -253,7 +255,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
-            column: "scatter".into(), palette: String::new(), y2: Axis::default(),
+            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![],
         }
     }
 }
@@ -294,6 +296,30 @@ pub struct Axis {
 impl Default for Axis {
     fn default() -> Self {
         Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None }
+    }
+}
+
+/// An annotation: `kind` text, arrow, line or box; (x, y) is where it starts (the text's place),
+/// (x2, y2) where an arrow points, a line ends or the box's opposite corner is (data coordinates).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Note {
+    pub kind: String,
+    pub x: f64,
+    pub y: f64,
+    pub x2: f64,
+    pub y2: f64,
+    pub text: String,
+    /// Empty: dark grey.
+    pub color: String,
+    /// Font size in points; 0 = the graph's size.
+    pub size: f64,
+    pub bold: bool,
+}
+
+impl Default for Note {
+    fn default() -> Self {
+        Self { kind: "text".into(), x: 0.0, y: 0.0, x2: 0.0, y2: 0.0, text: String::new(), color: String::new(), size: 0.0, bold: false }
     }
 }
 

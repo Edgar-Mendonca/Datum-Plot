@@ -159,7 +159,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | 0.6 |
 | D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
 | D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
-| D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | 0.4 |
+| D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | ✅ 0.2.8 |
 | D16 | Colour schemes: Okabe-Ito ✅, viridis family, greyscale, custom palettes; colour-blind preview | ✅ 0.2.2 |
 | D17 | Large data (1 million points) with fast decimation for screen | 0.6 |
 
@@ -346,7 +346,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.5** ✅ | Parts of whole (A6), pie and donut (D7) |
 | **0.2.6** ✅ | ROC and Bland-Altman (B18), special graphs (D10: Bland-Altman, ROC, forest; volcano and bubble later) |
 | **0.2.7** ✅ | Axis breaks and a second Y axis (D8) |
-| 0.2.8 | Annotations (D15) |
+| **0.2.8** ✅ | Annotations (D15) |
 | 0.2.9 | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
 | 0.2.10 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
 | 0.2.11 | Multi-panel figures (D12) |
