@@ -256,3 +256,16 @@ class Notes(unittest.TestCase):
         r = graph.render(t, {"notes": n})
         self.assertEqual((r["xlim"], r["ylim"]), (base["xlim"], base["ylim"]))
         self.assertIn("far", r["svg"])
+
+
+class EmptySets(unittest.TestCase):
+    def test_empty_groups_are_left_out(self):
+        t = col(SLEEP1, SLEEP2, [])
+        r = A.run("anova", t, [], {})
+        self.assertIn("Left out because it is empty: G2.", r["checks"][-1][1])
+        self.assertAlmostEqual(p_of(cell(A.run("ttest", t, [], {}), "P value (two-tailed)", None)), 0.0794, places=4)
+
+    def test_x_axis_break(self):
+        t = xy([0, 1, 2, 50, 51], [1, 2, 3, 4, 5])
+        r = graph.render(t, {"x": {"breakFrom": 3, "breakTo": 49}})
+        self.assertEqual(r["xlim"][1], 3)

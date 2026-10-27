@@ -3,7 +3,7 @@ import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, grap
 import { Out } from "./api";
 import { FEATURES, ready } from "./features";
 import { soon } from "./roadmap";
-import { addSet, setDialog } from "./datatable";
+import { addSet, setDialog, removeSets } from "./datatable";
 import { copyGraph, exportGraph, newGraph, setZoomG } from "./graph";
 import { formatGraph } from "./format";
 import * as D from "./dialogs";
@@ -17,9 +17,10 @@ export const C = {
   undo: async () => setOut(await call<Out>("history", { redo: false })),
   redo: async () => setOut(await call<Out>("history", { redo: true })),
   print: () => setBackstage("print"),
-  newTable: async (kind?: string) => { const o = await call<Out>("new_table", { kind: kind ?? null }); if (o) { setOut(o); const t = o.project.tables[o.project.tables.length - 1]; open("data", t.id); } },
+  newTable: async (kind?: string) => { const o = await call<Out>("new_table", { kind: kind ?? null }); if (o) { setOut(o); setBackstage(null); const t = o.project.tables[o.project.tables.length - 1]; open("data", t.id); } },
   newGraph: () => { const t = need(curTable(), "a data table"); if (t) newGraph(t.id); },
   addSet: () => { const t = need(curTable(), "a data table"); if (t) addSet(t); },
+  removeSets: () => { const t = need(curTable(), "a data table"); if (t) removeSets(t); },
   formatSet: (k = 0) => { const t = need(curTable(), "a data table"); if (t) setDialog(t, k); },
   rows: (count: number) => { const t = need(table(), "a data table"); if (t) act({ Rows: { table: t.id, at: count > 0 ? t.rows : Math.max(0, t.rows + count), count } }); },
   format: (page = "sets") => { const g = need(graph(), "a graph"); if (g) formatGraph(g, page); },
@@ -59,7 +60,7 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Nonparametric tests (Mann-Whitney, Kruskal-Wallis)", () => runAnalysis("B5")], ["Effect sizes", () => runAnalysis("B8")], ["Correlation", () => runAnalysis("B16")], ["Power and sample size", () => runAnalysis("B23")],
   ["Transform (log, normalise, baseline)", () => runAnalysis("A15")], ["Check data", () => runAnalysis("A18")], ["Frequency distribution (histogram)", () => runAnalysis("D4")], ["Area under the curve", () => runAnalysis("B14")],
   ["Smooth, derivative or integral", () => runAnalysis("B14s")], ["Global fit and model comparison", () => runAnalysis("B12")], ["Tensile test analysis", () => runAnalysis("B27")], ["Weibull analysis", () => runAnalysis("B29")],
-  ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
+  ["Remove data sets", () => C.removeSets()], ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
   ["Graph styles (Nature, IEEE, presentation…)", () => import("./store").then(m => m.openMenu({ x: 300, y: 120 }, T.styleMenu()))], ["Copy look to other graphs", T.copyLook], ["Colour schemes", T.paletteDialog],
   ["Export all graphs", T.exportAll], ["Export to Excel workbook", T.exportExcel],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),

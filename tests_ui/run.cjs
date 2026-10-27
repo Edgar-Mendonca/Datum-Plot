@@ -33,7 +33,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
-    window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history") return f.state; return null; } }, event: { listen: async () => () => {} } };
+    window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
   }, [fix, render, lin]);
   const calls = (c) => p.evaluate(c => window.__calls.filter(x => x[0] === c).map(x => x[1]), c);
   const ops = async () => (await calls("apply")).map(a => a.op);
@@ -144,7 +144,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.tabs button:text-is("Analyze")');
   await p.click('.ribbon .rb:has-text("Survival")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B19") && (await p.textContent(".dlg")).includes("0.2.14"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B19") && (await p.textContent(".dlg")).includes("0.2.15"));
   await p.keyboard.press("Escape");
   check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
   await p.click('.ribbon .rb:has-text("Analyze…")');
@@ -313,6 +313,27 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".nhead .help"); await p.waitForTimeout(150);
   check("? in the navigator opens its card", ((await p.textContent(".dlg header")) || "").includes("Navigator"));
   await p.keyboard.press("Escape");
+  // 9. 0.2.10: users' requests.
+  await p.click(".nav .nitem:nth-of-type(2)");
+  await p.waitForTimeout(200);
+  await p.click('.tabs button:text-is("Data")');
+  await reset();
+  await p.click('.ribbon .rb:has-text("Remove Data Set")');
+  await p.waitForTimeout(150);
+  await p.click(".dlg label.chk >> nth=1");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  const rm = (await ops()).find(o => o.Batch);
+  check("Remove Data Set deletes the ticked data sets", rm && rm.Batch.length === 1 && rm.Batch[0].SetDef.k === 1 && rm.Batch[0].SetDef.set === null, JSON.stringify(rm));
+  await p.evaluate(() => { window.__newTableReturns = true; });
+  await p.click(".tabs .file");
+  await p.waitForTimeout(150);
+  await p.click('.bs aside button:has-text("New")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Column")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(300);
+  check("creating a table from the File page closes it and shows the table", !(await p.$(".bs")) && !!(await p.$(".dgrid")));
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();
   console.log(failed ? `\n${failed} failed` : "\nall passed");

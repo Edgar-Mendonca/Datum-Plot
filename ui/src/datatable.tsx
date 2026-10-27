@@ -155,7 +155,8 @@ export const DataTable = (p: { t: Table }) => {
       { label: `Insert ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"} Above`, icon: "addrow", run: () => act({ Rows: { table: t().id, at: a, count: b - a + 1 } }) },
       { label: `Delete ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"}`, icon: "delrow", run: () => act({ Rows: { table: t().id, at: a, count: -(b - a + 1) } }) }, "-",
       ...(k >= 0 ? [{ label: `Format Data Set ${letter(k)}…`, icon: "opts", run: () => setDialog(t(), k) } as Item] : []),
-      { label: "Add Data Set", icon: "addset", run: () => addSet(t()) }, "-",
+      { label: "Add Data Set", icon: "addset", run: () => addSet(t()) },
+      ...(k >= 0 && t().sets.length > 1 ? [{ label: `Delete Data Set ${letter(k)}`, icon: "del", run: () => delSet(t(), k) } as Item] : []), "-",
       { label: "Sort…", icon: "sort", run: sortDialog }, { label: "Find…", icon: "search", keys: "Ctrl+F", run: findDialog }, { label: "Exclude Rows by a Rule…", icon: "exclude", run: excludeRows },
     ];
     openMenu(e, items);
@@ -178,7 +179,8 @@ export const DataTable = (p: { t: Table }) => {
             <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span></div>
             <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${spans(t())[k()][1] * CW}px` }}>
               <div class="hc st" style={{ "--c": SETC[k() % 8] }} title="Double-click to change the data set" onMouseDown={e => { e.stopPropagation(); const [c0, w] = spans(t())[k()]; S.cols(c0 + 1, c0 + w, e.shiftKey, e.ctrlKey); box.focus(); }} onDblClick={e => { e.stopPropagation(); setDialog(t(), k()); }}>
-                <b>{letter(k())}</b><span>{s.title || `Data set ${letter(k())}`}</span></div>
+                <b>{letter(k())}</b><span>{s.title || `Data set ${letter(k())}`}</span>
+                <Show when={t().sets.length > 1}><button class="hdel" title={`Delete data set ${letter(k())}`} onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); delSet(t(), k()); }}>×</button></Show></div>
               <div class="subs"><For each={Array.from({ length: spans(t())[k()][1] }, (_, j) => j)}>{j => <div class="hc sub" style={{ width: `${CW}px` }}>{s.entry === "rep" ? `Y${j + 1}` : SUB[s.entry][j]}</div>}</For></div>
             </div>}</For>
             <button class="hc addset" title="Add a data set" onMouseDown={e => e.stopPropagation()} onClick={() => addSet(t())}>＋ Data set</button>
@@ -227,6 +229,29 @@ const TableHead = (p: { t: Table }) => {
 export const rename = (t: Table, field: string, label: string) => openDialog(() => {
   const [v, setV] = createSignal(String((t as any)[field] ?? ""));
   return <Dialog title={`Rename · ${label}`} ok={() => act({ TableSet: { table: t.id, field, value: v() } })}><div class="form"><label>{label}</label><Text value={v()} set={setV} /></div></Dialog>;
+});
+
+/** Deletes a data set and its values (asks first; undo brings it back). */
+export const delSet = (t: Table, k: number) => {
+  if (t.sets.length < 2) return toast("A table needs at least one data set.");
+  if (confirm(`Delete data set ${letter(k)} (${t.sets[k].title || "untitled"}) and its values?`)) act({ SetDef: { table: t.id, k, set: null } });
+};
+/** Data › Remove Data Set: tick the data sets to delete. */
+export const removeSets = (t: Table) => openDialog(() => {
+  const [del, setDel] = createSignal<number[]>([]);
+  const go = () => {
+    if (!del().length) return false;
+    if (del().length >= t.sets.length) { toast("Keep at least one data set."); return false; }
+    // Highest first, so the positions of the others do not move.
+    return act({ Batch: [...del()].sort((a, b) => b - a).map(k => ({ SetDef: { table: t.id, k, set: null } })) });
+  };
+  return (
+    <Dialog title="Remove Data Sets" okText="Delete" ok={go}>
+      <div class="stackr"><For each={t.sets}>{(s, k) => { const n = () => { const [c0, w] = spans(t)[k()]; return t.cols.slice(c0, c0 + w).reduce((a, c) => a + c.filter(v => v !== null).length, 0); };
+        return <label class="chk"><input type="checkbox" checked={del().includes(k())} onChange={e => setDel(e.currentTarget.checked ? [...del(), k()] : del().filter(x => x !== k()))} />{letter(k())}: {s.title || `Data set ${letter(k())}`} <span class="muted">({n()} values)</span></label>; }}</For></div>
+      <p class="muted">The data sets and their values are deleted; Undo (Ctrl+Z) brings them back. Graphs and analyses of the table update.</p>
+    </Dialog>
+  );
 });
 
 export const addSet = (t: Table) => {

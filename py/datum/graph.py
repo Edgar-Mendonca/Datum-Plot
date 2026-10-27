@@ -286,6 +286,38 @@ def build(table, graph, overlays=()):
             draw_overlays(top, table, graph, overlays, size, colors, label=False)
             draw_overlays(ax, table, graph, overlays, size, colors)
         return fig, ax, leg, points
+    xa = graph.get("x") or {}
+    xf, xt = xa.get("breakFrom"), xa.get("breakTo")
+    if xf is not None and xt is not None and xt > xf and xa.get("scale") != "log" and not right:
+        # An X axis break: a wide left panel (before the gap) and a narrow right one (after it).
+        fig.clear()
+        gs = fig.add_gridspec(1, 2, width_ratios=[2.2, 1], wspace=0.04)
+        ax = fig.add_subplot(gs[0])
+        rt = fig.add_subplot(gs[1], sharey=ax)
+        for a_ in (ax, rt):
+            a_.patch.set_alpha(0)
+            for side in ("top", "right"):
+                a_.spines[side].set_visible(frame)
+        points = plot_sets(ax)
+        plot_sets(rt)
+        axes(ax, table, graph, points)
+        axes(rt, table, graph, points)
+        lo = ax.get_xlim()[0]
+        ax.set_xlim(lo, xf)
+        rt.set_xlim(xt, max(rt.get_xlim()[1], xt + (xf - lo) * 0.2))
+        rt.set_xlabel(""); rt.set_ylabel("")
+        rt.spines["left"].set_visible(False); ax.spines["right"].set_visible(False)
+        rt.tick_params(axis="y", which="both", left=False, labelleft=False, right=False)
+        d = dict(marker=[(-0.6, -1), (0.6, 1)], markersize=7, linestyle="none", color="#222222", mec="#222222", mew=1, clip_on=False)
+        ax.plot([1], [0], transform=ax.transAxes, **d)
+        rt.plot([0], [0], transform=rt.transAxes, **d)
+        if graph.get("title") and graph.get("showTitle", True):
+            ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+        leg = legend(rt)
+        if overlays and points:
+            draw_overlays(rt, table, graph, overlays, size, colors, label=False)
+            draw_overlays(ax, table, graph, overlays, size, colors)
+        return fig, ax, leg, points
     points = plot_sets(ax, "left" if right else None)
     axes(ax, table, graph, points)
     ax2 = None

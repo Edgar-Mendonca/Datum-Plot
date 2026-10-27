@@ -643,11 +643,20 @@ def more_kinds():
     return KINDS
 
 
+# Analyses that compare data sets: empty ones are left out (a new column table starts with three).
+COMPARE = {"ttest", "nonparam", "anova", "correlation", "power", "blandaltman", "roc", "weibull", "describe", "normality", "outliers"}
+
+
 def run(kind, table, sets, options):
     ks = chosen(table, sets)
+    empty = [k for k in ks if kind in COMPARE and not values(table, k)]
+    ks = [k for k in ks if k not in empty]
     if not ks:
-        raise ValueError("Choose at least one data set.")
-    return (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
+        raise ValueError("Choose at least one data set." if not empty else "The chosen data sets have no values yet.")
+    r = (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
+    if empty:
+        r["checks"].append([None, f"Left out because {'it is' if len(empty) == 1 else 'they are'} empty: {', '.join(name_of(table, k) for k in empty)}."])
+    return r
 
 
 def model_list():

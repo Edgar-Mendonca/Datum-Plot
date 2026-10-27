@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.10 — 2026-10-27
+
+Your requests: new tables open at once, data sets are easy to remove, Significance lets you pick the test, and gaps work on the X axis too.
+
+**New tables open at once**
+- File › New Table (choose a kind, Create) now closes the File page and shows the new table, instead of staying on the Home page.
+
+**Remove data sets**
+- Data › **Remove Data Set**: tick the data sets (columns) to delete. Also on the right-click menu of the table (**Delete Data Set**) and as a small **×** on each data set's heading. Undo brings them back.
+
+**Choose the test for significance stars**
+- Graph › Significance now offers **t-test**, **one-way ANOVA** or a **nonparametric** test, with only the groups that hold values ticked. A column table with two filled groups and empty ones can now use a t-test.
+- Empty data sets are left out of t-tests, ANOVA, nonparametric tests and other comparisons (the checks say so) instead of stopping them.
+
+**Gaps in axes**
+- Axis breaks now work on the **X axis** as well as the Y axis (Format Graph › X Axis or Y Axis › Axis break), and are easier to find: **Axis Break** on the Graph tab and on the graph's right-click menu.
+
+**Roadmap**
+- Page layouts move to 0.2.11, and the releases after them one number up (Help › Roadmap).
+
 ## 0.2.9 — 2026-10-27
 
 Work directly on the graph: move notes, zoom and pan, exclude points.

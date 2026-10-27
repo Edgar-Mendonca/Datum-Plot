@@ -2,9 +2,9 @@
 // styles, colour schemes and Copy Look, and exporting every graph or the whole project to Excel.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { Graph, GraphSettings, Table, letter, num, spans, invoke } from "./api";
-import { act, call, curTable, graph, opts, setOpts, toast, openDialog, closeDialog, P, setGoto } from "./store";
+import { act, call, curTable, graph, opts, setOpts, toast, openDialog, closeDialog, P, setGoto, openMenu } from "./store";
 import { setG } from "./format";
-import { analysisDialog, BY_ID } from "./results";
+import { analysisDialog } from "./results";
 import { Dialog, Pick, Check } from "./ui";
 
 const needT = () => { const t = curTable(); if (!t) toast("Open a data table first."); return t; };
@@ -252,13 +252,19 @@ export const exportAll = () => {
 export const exportExcel = async () => { const p = await call<string | null>("export_excel"); if (p) toast(`Saved ${p}`, true); };
 
 /** Graph › Significance: brackets come from a t-test (two groups) or a one-way ANOVA. */
-export const significance = () => {
+export const significance = (e?: MouseEvent) => {
   const t = curTable();
   if (!t) return toast("Open a column graph first.");
   if (t.kind === "grouped") return analysisDialog("twoway", t, undefined, {});
   if (t.kind === "parts") return toast("Pie charts have no significance brackets; Analyze › Fractions gives each part with its 95% CI.");
   if (t.kind === "contingency") return toast("Contingency tables test counts: Analyze › Contingency.");
   if (t.kind !== "column") return toast("Significance brackets go on column and grouped graphs. Make a column table (New Table › Column) for groups.");
-  const [kind, preset] = BY_ID[t.sets.length === 2 ? "B4" : "B6"];
-  analysisDialog(kind, t, undefined, preset);
+  // Only the groups that hold values (a new column table starts with three); pick the test.
+  const full = t.sets.map((_, k) => k).filter(k => { const [c0, w] = spans(t)[k]; return t.cols.slice(c0, c0 + w).some(c => c.some(v => v !== null)); });
+  const sets = full.length === t.sets.length ? [] : full;
+  const items: [string, string, Record<string, any>][] = [["t-test (two groups)", "ttest", {}], ["One-way ANOVA (three or more groups)", "anova", { posthoc: "tukey" }],
+    [`Nonparametric (${full.length > 2 ? "Kruskal-Wallis" : "Mann-Whitney"})`, "nonparam", { test: full.length > 2 ? "kw" : "mw" }]];
+  if (full.length < 2) return toast("Enter values in at least two groups first.");
+  const order = full.length === 2 ? items : [items[1], items[0], items[2]];
+  openMenu(e ?? { x: 400, y: 160 }, order.map(([l, kind, pre]) => ({ label: l, run: () => analysisDialog(kind, t, undefined, pre, kind === "ttest" ? full.slice(0, 2) : sets) })));
 };

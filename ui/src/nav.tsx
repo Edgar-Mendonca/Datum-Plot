@@ -32,8 +32,8 @@ export const Navigator = () => {
         <Head l="Graphs" h="graphview" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
         <Show when={thumbs() && P().graphs.length}><div class="nthumbs"><For each={P().graphs}>{g => <Thumb id={g.id} on={item().s === "graphs" && item().id === g.id} />}</For></div></Show>
-        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.2.3)" />
-        <p class="nnone">Page layouts arrive in 0.2.3</p>
+        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.2.11)" />
+        <p class="nnone">Page layouts arrive in 0.2.11</p>
       </aside>
     </Show>
   );
@@ -73,7 +73,7 @@ export const Empty = (p: { icon: string; title: string; children: JSX.Element })
 export const LayoutsPage = () => (
   <Empty icon="layout" title="Layouts">
     <p>A layout is a page that arranges several graphs, tables and text, with panel letters A, B, C, ready for a paper or a poster.</p>
-    <p class="muted">Layouts arrive in 0.2.3. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
+    <p class="muted">Layouts arrive in 0.2.11. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
     <p><button class="btn" onClick={() => setBackstage("print")}>Print a graph</button></p>
   </Empty>
 );

@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.9** (released 2026-10-27: work on the graph). Earlier: **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
+| **Current version** | **0.2.10** (2026-10-27: users' requests). Earlier: **0.2.9** (released 2026-10-27: work on the graph). Earlier: **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -157,6 +157,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | Session 8 | **Parts of whole** = `kind "parts"` (`Table::parts`, built on the contingency table); `graph.parts_figure` draws a pie/donut per data set in one axes (no hover points) or 100 % bars | Reuse; one axes keeps export and geometry unchanged. |
 | Session 8 | Second Y axis = `SetStyle.right` + `GraphSettings.y2`; axis break = `Axis.breakFrom/breakTo` (Y, linear, XY graphs, not together with a right axis), drawn as two stacked axes; hover points of right-axis sets carry a 7th value (their height in left-axis units) | Settings stay plain data; the window's hover keeps one coordinate system. |
 | Session 8 | Annotations = `GraphSettings.notes` (`Note`: kind, x, y, x2, y2, text, color, size, bold) in data units; `graph.figure` = `build` + `draw_notes` with the axis limits restored | Notes follow the data and never rescale the graph. |
+| Session 8 | **Users' feedback first**: comments from users (via the owner) are discussed, judged and built as their own small release before the planned one (0.2.10 = four requests; layouts moved to 0.2.11, later releases +1) | The user: "first let us discuss… then build it in one version, and I can inform that these updates are there." |
 | Session 7 | **Column table** = `Table.kind = "column"`, same model (X column kept, hidden in the UI, unused by Python); each group a data set with `reps` 1 (or mean/SD/N) | No new table code in Rust; every op (paste, sort, exclude, sets) works unchanged. |
 | Session 7 | Significance brackets are analysis overlays: t-test, nonparametric and ANOVA results carry `brackets`; drawn only on column graphs (`draws()`); options brackets sig/all/none and stars/P | Same live chain as fitted curves; nothing stored on the graph. |
 | Session 7 | Transforms, histograms and smoothing are analyses whose result can become a table (Results › New table from result), not live linked tables | Keeps the core simple; the analysis itself stays live. |
@@ -185,10 +186,11 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.7** | Axes | Y axis breaks and a second (right) Y axis (D8) | ✅ |
 | **0.2.8** | Annotations | Text, arrows, lines and boxes on graphs, placed by click/drag, edited in Format Graph › Notes (D15) | ✅ |
 | **0.2.9** | Interactive graph | Notes: select, drag, Delete, double-click to edit (E2, E3); zoom to a box, pan, zoom out, reset axes (E4); right-click a point to exclude it (E6) | ✅ |
-| 0.2.10 | Layouts | Page layouts (F1), journal figures (F2), TIFF for journals (G3) | 🔜 |
-| 0.2.11 | Multi-panel | Multi-panel figures (D12) | ⬜ |
-| 0.2.12 – 0.2.17 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
-| 0.2.18 – 0.2.24 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
+| **0.2.10** | Users' requests | New tables open at once (File page closes); Remove Data Set (ribbon, table menu, × on headings); Significance offers t-test/ANOVA/nonparametric with the filled groups; empty data sets left out of comparisons; X axis breaks; Axis Break on the Graph tab and graph menu | ✅ |
+| 0.2.11 | Layouts | Page layouts (F1), journal figures (F2), TIFF for journals (G3) | 🔜 |
+| 0.2.12 | Multi-panel | Multi-panel figures (D12) | ⬜ |
+| 0.2.13 – 0.2.18 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
+| 0.2.19 – 0.2.25 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
 | 1.0.0 | Stable | Signed installer (I6), validation report (R/NIST, J4), user guide | ⬜ |
 
 ---
@@ -261,17 +263,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 - **0.2.9** ("go"): all in `ui/src/graph.tsx` (no engine changes): `noteAt`/`pointAt` hit-testing in graph points, note drag (moved in screen points, stored in data units, so log axes work), Delete, double-click edit, selection marker; tools `zoom` (box → fixed x/y ranges; Y only for non-XY) and `pan` (drag until Esc) via `zoomTool`, `zoomOut`, `resetAxes`; right-click menu with Exclude (XY: the point's replicates → `Exclude` op) and Format; Format › Zoom and Pan menu; help, Tell Me. 48 Python tests, 15 + 1 Rust, 61 UI checks.
 
+- **0.2.10** (user feedback: "new table stays on the Home page", "can't remove a data set", "only ANOVA in Significance with 2 filled of 3–4 columns", "gaps in axes"): `C.newTable` closes the backstage; `delSet`, `removeSets` dialog (Batch of SetDef, highest first), × on data set headings, Data › Remove Data Set, table menu item; `significance(e)` menu with t-test/ANOVA/nonparametric and the filled groups (`analysisDialog` takes initial sets); Python `run()` leaves empty data sets out of comparisons with a check; X axis break (two side-by-side panels); Axis Break on the Graph tab and the graph menu; Format X Axis has the break fields. Releases after 0.2.10 renumbered +1. 50 Python tests, 15 + 1 Rust, 63 UI checks.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.2.10 page layouts (F1), journal figures (F2) and TIFF for journals (G3), then down the list in PLAN-0.2 §12.
+**Next:** 0.2.11 page layouts (F1), journal figures (F2) and TIFF for journals (G3), then down the list in PLAN-0.2 §12.
 
 **0.2.9 limits:** the legend and titles are not draggable yet (Format Graph places them); excluding by right-click works on XY graphs (column tables: exclude in the table).
 
 **0.2.8 limits:** note text is typed in a small prompt.
 
-**0.2.7 limits:** breaks only on linear Y axes of XY graphs, one break, not together with a right axis; hover in the top panel of a broken graph is not exact.
+**0.2.7 limits:** breaks only on linear axes of XY graphs (Y, or X since 0.2.10; one at a time, Y first), not together with a right axis; hover in the top panel of a broken graph is not exact.
 
 **0.2.6 limits:** Bland-Altman and ROC plots live in the results sheet (graph them via New table from result); no volcano or bubble plots; ROC compares one test at a time.
 

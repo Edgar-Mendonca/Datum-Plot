@@ -46,11 +46,11 @@ const unpair = (o: Record<string, number> = {}) => Object.entries(o).map(([k, v]
 const optNum = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
 
 /** Analyze: choose the data sets and options, then add (or change) the analysis. */
-export const analysisDialog = (kind: string, t: Table | undefined, existing?: Analysis, preset: Record<string, any> = {}) => {
+export const analysisDialog = (kind: string, t: Table | undefined, existing?: Analysis, preset: Record<string, any> = {}, sets0: number[] = []) => {
   if (!t) return toast("Open a data table or its graph first.");
   openDialog(() => {
     const [o, setO] = createSignal<Record<string, any>>({ ...DEFAULTS[kind], ...preset, ...(existing?.options ?? {}) });
-    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? []);
+    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? sets0);
     const [name, setName] = createSignal(existing?.name ?? `${KINDS[kind][0]} · ${t.name}`);
     const put = (k: string, v: unknown) => setO({ ...o(), [k]: v });
     const on = (k: number) => !sets().length || sets().includes(k);

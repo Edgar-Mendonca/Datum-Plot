@@ -348,19 +348,20 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.7** ✅ | Axis breaks and a second Y axis (D8) |
 | **0.2.8** ✅ | Annotations (D15) |
 | **0.2.9** ✅ | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
-| 0.2.10 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
-| 0.2.11 | Multi-panel figures (D12) |
-| 0.2.12 | Multiple variables (A7), multiple and logistic regression (B21) |
-| 0.2.13 | PCA and clustering (B22) |
-| 0.2.14 | Survival table (A5), analysis (B19), curves (D9) |
-| 0.2.15 | Nested table (A8) and tests (B20) |
-| 0.2.16 | Peaks (B24), signal processing (B25) |
-| 0.2.17 | DSC/TGA (B31), S–N curves (B30) |
-| 0.2.18 | Worksheet (A9), column formulas (A11) |
-| 0.2.19 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
-| 0.2.20 | Large data (D17), region tools (E5) |
-| 0.2.21 | Prism import (A13), instrument import (A14) |
-| 0.2.22 | PowerPoint and Word (G5), posters (F3) |
-| 0.2.23 | Python console (H1), own analyses (H2) |
-| 0.2.24 | Templates (H3), batch (H4), notebooks (H5) |
+| **0.2.10** ✅ | Users' requests (session 8): new tables open at once, Remove Data Set, Significance offers t-test/ANOVA/nonparametric, empty data sets left out, X axis breaks |
+| 0.2.11 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
+| 0.2.12 | Multi-panel figures (D12) |
+| 0.2.13 | Multiple variables (A7), multiple and logistic regression (B21) |
+| 0.2.14 | PCA and clustering (B22) |
+| 0.2.15 | Survival table (A5), analysis (B19), curves (D9) |
+| 0.2.16 | Nested table (A8) and tests (B20) |
+| 0.2.17 | Peaks (B24), signal processing (B25) |
+| 0.2.18 | DSC/TGA (B31), S–N curves (B30) |
+| 0.2.19 | Worksheet (A9), column formulas (A11) |
+| 0.2.20 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
+| 0.2.21 | Large data (D17), region tools (E5) |
+| 0.2.22 | Prism import (A13), instrument import (A14) |
+| 0.2.23 | PowerPoint and Word (G5), posters (F3) |
+| 0.2.24 | Python console (H1), own analyses (H2) |
+| 0.2.25 | Templates (H3), batch (H4), notebooks (H5) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |
