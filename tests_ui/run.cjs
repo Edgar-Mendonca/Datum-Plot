@@ -42,7 +42,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, ten samples, open, import and roadmap", (await p.$$(".home .tile")).length === 14, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, eleven samples, open, import and roadmap", (await p.$$(".home .tile")).length === 15, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);

@@ -77,7 +77,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | ✅ 0.2.3 |
 | A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | ✅ 0.2.4 |
 | A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
-| A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | 0.4 |
+| A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | ✅ 0.2.5 |
 | A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | 0.5 |
 | A8 | Nested table | Sub-columns within groups (cells within animals) — nested t-test/ANOVA | 0.5 |
 | A9 | Worksheet (Origin) | Free columns with roles (X, Y, Z, error, label), long name, units, comments, sparklines | 0.6 |
@@ -151,7 +151,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D4 | Histogram, cumulative distribution, KDE, QQ plot | ✅ 0.2.2 |
 | D5 | Fitted curves with confidence and prediction bands, residual plots | 0.3 |
 | D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | ✅ 0.2.3 |
-| D7 | Pie, donut, 100 % stacked bars | 0.4 |
+| D7 | Pie, donut, 100 % stacked bars | ✅ 0.2.5 |
 | D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | 0.4 |
 | D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | 0.4–0.5 |
@@ -343,7 +343,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | --- | --- |
 | **0.2.3** ✅ | Grouped table (A3), two-way ANOVA (B15), grouped bars and heat map (D6) |
 | **0.2.4** ✅ | Contingency table (A4), chi-square and Fisher (B17) |
-| 0.2.5 | Parts of whole (A6), pie and donut (D7) |
+| **0.2.5** ✅ | Parts of whole (A6), pie and donut (D7) |
 | 0.2.6 | ROC and Bland-Altman (B18), special graphs (D10) |
 | 0.2.7 | Axis breaks and a second Y axis (D8) |
 | 0.2.8 | Annotations (D15) |

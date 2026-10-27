@@ -74,12 +74,13 @@ const TABLES: Choice[] = [
   { id: "A10", name: "Matrix", icon: "grid", group: "Origin-style", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : undefined)} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
   { id: "B2", name: "Normality tests", icon: "check", group: "Statistics", desc: "Is the data consistent with a normal distribution?" },
   { id: "B3", name: "Outliers", icon: "exclude", group: "Statistics", desc: "Find values that do not belong." },
+  { id: "A6", name: "Fractions of total", icon: "dash", group: "Statistics", desc: "Each part as a percentage of its whole, with 95% confidence intervals for counts." },
   { id: "D4", name: "Frequency distribution", icon: "table", group: "Statistics", desc: "Histogram and cumulative distribution of the values." },
   { id: "A18", name: "Data checks", icon: "check", group: "Statistics", desc: "Look for missing X values, missing N, typing mistakes and values a log axis cannot show." },
   { id: "A15", name: "Transform", icon: "fx", group: "Statistics", desc: "A new table of transformed values: log, 1/X, °C → K, baseline subtracted, normalised." },
@@ -127,9 +128,10 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? "D6" : "D1"} run={c => {
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "parts" ? "D7" : curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? "D6" : "D1"} run={c => {
   const t = curTable();
   if (c.id === "D4") { setTimeout(() => runAnalysis("D4")); return; }
+  if (c.id === "D7") return t?.kind === "parts" ? toast("This is a parts-of-whole graph: Graph › Column Graph picks pie, donut or bars stacked to 100%.", true) : toast("Pie and donut charts show parts-of-whole tables: File › New Table › Parts of whole.");
   if (c.id === "D6") return t?.kind === "grouped" || t?.kind === "contingency" ? toast("This is a grouped graph: Graph › Column Graph picks grouped bars, stacked bars, dots, lines or a heat map.", true) : toast("Grouped graphs show grouped tables: File › New Table › Grouped.");
   if (c.id === "D2") return t?.kind === "column" ? toast("This is a column graph: Graph › Column Graph picks dots, bars, box plots or violins.", true) : toast("Column graphs show column tables: File › New Table › Column.");
   toast(t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);

@@ -73,7 +73,8 @@ impl DataSet {
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
 /// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side) or "contingency" (counts: rows × outcomes, one value per cell);
+/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell) or "parts"
+/// (parts of a whole: parts in the rows, one whole per data set);
 /// only XY tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -133,6 +134,19 @@ impl Table {
             s.title = format!("Outcome {}", crate::doc::set_letter(k));
         }
         t.normalize();
+        t
+    }
+    /// An empty parts-of-whole table: the parts in the rows (row titles), one whole per data set.
+    pub fn parts(rows: usize, groups: usize) -> Self {
+        let mut t = Table::contingency(rows, groups);
+        t.kind = "parts".into();
+        t.y_title = "Value".into();
+        for (k, s) in t.sets.iter_mut().enumerate() {
+            s.title = format!("Whole {}", crate::doc::set_letter(k));
+        }
+        for (r, n) in t.row_titles.iter_mut().enumerate() {
+            *n = format!("Part {}", r + 1);
+        }
         t
     }
     /// (first grid column, width) of each data set.

@@ -683,3 +683,37 @@ def contingency(table, ks, o):
     return result("Contingency", ans, [{"name": "Summary", "tables": tabs}], checks,
                   methods=f"Counts were analysed with {'Fisher’s exact test and ' if two else ''}the chi-square test{' with Yates’ correction' if yates and two else ''} (α = {alpha:g}){', with the relative risk (Koopman CI) and odds ratio' if two else ''} in Datum Plot (SciPy).",
                   code="from scipy import stats\nprint(stats.chi2_contingency(M), stats.fisher_exact(M))")
+
+
+# ---------- parts of whole (A6) ----------
+def parts(table, ks, o):
+    """Fractions of the total: each row (a part) as a share of its data set (the whole), with 95 %
+    confidence intervals when the values are counts (Wilson)."""
+    from statsmodels.stats.proportion import proportion_confint
+    rows, cv = cells(table)
+    if not rows:
+        raise ValueError("Enter the parts in the rows and the wholes in the data sets.")
+    tabs, ans = [], []
+    for k in ks:
+        v = np.array([sum(cv.get((k, r), [0])) for r, _ in rows], float)
+        tot = v[v > 0].sum()
+        if tot <= 0:
+            continue
+        counts = bool(np.all(v == np.round(v)) and np.all(v >= 0))
+        out = []
+        for (r, lab), x in zip(rows, v):
+            row = [lab, g(x), f"{g(100 * x / tot, 4)}%"]
+            if counts:
+                lo, hi = proportion_confint(int(x), int(tot), method="wilson")
+                lo, hi = (0.0 if x == 0 else lo), (1.0 if x == tot else hi)
+                row.append(f"{g(100 * lo, 3)}% to {g(100 * hi, 3)}%")
+            out.append(row)
+        out.append(["Total", g(tot), "100%"] + ([""] if counts else []))
+        tabs.append({"title": name_of(table, k), "columns": ["Part", "Value", "Fraction of total"] + (["95% CI (counts)"] if counts else []), "rows": out})
+        i = int(np.argmax(v))
+        ans.append(f"{name_of(table, k)}: {rows[i][1]} is the largest part ({g(100 * v[i] / tot, 3)}%).")
+    if not tabs:
+        raise ValueError("The data sets have no positive values.")
+    return result("Fractions of total", " ".join(ans), [{"name": "Summary", "tables": tabs}], [(None, "Negative values are left out of the total.")],
+                  methods="Each part was expressed as a fraction of its total; for counts, 95% confidence intervals are Wilson score intervals (statsmodels), in Datum Plot.",
+                  code="import numpy as np\nfrom statsmodels.stats.proportion import proportion_confint\nprint(v / v.sum(), proportion_confint(v, v.sum(), method='wilson'))")

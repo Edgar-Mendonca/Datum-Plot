@@ -66,6 +66,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "weibull", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
         Tpl { id: "twoway", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
         Tpl { id: "counts", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
+        Tpl { id: "phases", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -179,6 +180,22 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { column: "percent".into(), points: "mean".into(), error: "none".into(), ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Fisher's exact test".into(), kind: "contingency".into(), sets: vec![], options: serde_json::json!({}) });
+        }
+        Some("phases") => {
+            let mut t = Table::parts(4, 2);
+            t.name = "Phases".into();
+            t.y_title = "Points counted".into();
+            t.row_titles = vec!["Ferrite".into(), "Pearlite".into(), "Martensite".into(), "Retained austenite".into()];
+            t.sets[0].title = "Annealed".into();
+            t.sets[1].title = "Quenched".into();
+            t.cols[1] = vec![Some(610.0), Some(390.0), Some(0.0), Some(0.0)];
+            t.cols[2] = vec![Some(35.0), Some(0.0), Some(885.0), Some(80.0)];
+            t.normalize();
+            p.name = "Phase fractions".into();
+            p.info = Info { title: "Phase fractions".into(), experiment: "Point counting (1000 grid points) on micrographs of a steel annealed and quenched. Fractions of total give each phase's share with a 95% confidence interval.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "pie".into(), points: "mean".into(), error: "none".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Fractions of total".into(), kind: "parts".into(), sets: vec![], options: serde_json::json!({}) });
         }
         Some("weibull") => {
             let mut seed = 3u64;

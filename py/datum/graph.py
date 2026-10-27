@@ -170,6 +170,8 @@ def figure(table, graph, overlays=()):
     colors = palette(graph, len(table["sets"]))
     if table.get("kind") == "column":
         return column_figure(fig, ax, table, graph, overlays, colors, size)
+    if table.get("kind") == "parts":
+        return parts_figure(fig, ax, table, graph, size)
     if table.get("kind") in ("grouped", "contingency"):
         return grouped_figure(fig, ax, table, graph, overlays, colors, size)
     summary = stats.summarize(table)
@@ -329,6 +331,55 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     if not points:
         ax.text(0.5, 0.5, "Enter values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
     return fig, ax, None, points
+
+
+def parts_figure(fig, ax, table, graph, size):
+    """Parts of a whole: a pie or donut per data set (rows are the parts), or bars stacked to 100 %."""
+    from .groups import cells
+    rows, cv = cells(table)
+    kind = graph.get("column") if graph.get("column") in ("pie", "donut", "percent") else "pie"
+    cols = palette(graph, len(rows))
+    shown = [k for k in range(len(table["sets"])) if style_of(graph, k)["show"]]
+    labels = [lab for _, lab in rows]
+    vals = {k: [sum(cv.get((k, r), [0])) for r, _ in rows] for k in shown}
+    shown = [k for k in shown if sum(v for v in vals[k] if v > 0) > 0]
+    title = lambda k: table["sets"][k].get("title") or f"Data set {chr(65 + k)}"
+    handles = None
+    if not shown:
+        ax.text(0.5, 0.5, "Enter the parts (rows) of each whole (data set)", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+        ax.axis("off")
+        return fig, ax, None, []
+    if kind == "percent":
+        bottom = np.zeros(len(shown))
+        handles = []
+        for i, lab in enumerate(labels):
+            h = [100 * max(vals[k][i], 0) / sum(v for v in vals[k] if v > 0) for k in shown]
+            handles.append(ax.bar(range(len(shown)), h, bottom=bottom, width=0.62, color=cols[i % len(cols)], edgecolor="white", linewidth=0.6, label=lab))
+            for j, v in enumerate(h):
+                if v >= 6:
+                    ax.text(j, bottom[j] + v / 2, f"{v:.0f}%", ha="center", va="center", fontsize=size * 0.8, color="white")
+            bottom += h
+        ax.set_xticks(range(len(shown)), [title(k) for k in shown]); ax.tick_params(axis="x", length=0)
+        ax.set_ylim(0, 100); ax.set_xlim(-0.6, len(shown) - 0.4)
+        ax.set_ylabel((graph.get("y") or {}).get("title") or "% of total", fontweight="bold" if graph.get("boldTitles", True) else "normal")
+        handles = [h[0] for h in handles]
+    else:
+        for i, k in enumerate(shown):
+            v = [max(x, 0) for x in vals[k]]
+            wp = {"edgecolor": "white", "linewidth": 1.0, **({"width": 0.42} if kind == "donut" else {})}
+            wedges, *_ = ax.pie(v, colors=cols, center=(i * 2.6, 0), radius=1, startangle=90, counterclock=False, wedgeprops=wp, pctdistance=0.79 if kind == "donut" else 0.62,
+                                autopct=lambda p: f"{p:.0f}%" if p >= 4 else "", textprops={"fontsize": size * 0.8, "color": "white"})
+            handles = handles or wedges
+            if len(shown) > 1 or kind == "donut":
+                ax.text(i * 2.6, -1.18 if len(shown) > 1 else 0, title(k) if len(shown) > 1 else "", ha="center", va="top" if len(shown) > 1 else "center", fontsize=size, fontweight="bold")
+        ax.set_aspect("equal"); ax.axis("off")
+        ax.set_xlim(-1.15, (len(shown) - 1) * 2.6 + 1.15); ax.set_ylim(-1.45 if len(shown) > 1 else -1.1, 1.1)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    leg = None
+    if (graph.get("legend") or {}).get("show", True):
+        leg = ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
+    return fig, ax, leg, []
 
 
 def grouped_figure(fig, ax, table, graph, overlays, colors, size):

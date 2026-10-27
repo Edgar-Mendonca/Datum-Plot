@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
+| **Current version** | **0.2.5** (2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -154,6 +154,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | Session 8 | **Small steps again**: the remaining 49 features in releases of one to four (0.2.3–0.2.24, then 1.0; PLAN-0.2 §12) | The user: "a very big gap… short of tokens… break it into very small steps… complete as much as possible this week." |
 | Session 8 | **Grouped table** = `kind "grouped"` (same model; row titles name the row factor, data sets the other, X column hidden); two-way ANOVA with statsmodels Type III (sum contrasts); brackets carry a 4th element (row) for grouped graphs | Same reuse as column tables; Type III handles unequal replicates as Prism and R `car::Anova` do. |
 | Session 8 | **Contingency table** = `kind "contingency"` (a grouped table with one count per cell, `Table::contingency`); graphs go through `grouped_figure` (new "percent" = stacked to 100 % of each row) | Reuse; nothing new in the model. |
+| Session 8 | **Parts of whole** = `kind "parts"` (`Table::parts`, built on the contingency table); `graph.parts_figure` draws a pie/donut per data set in one axes (no hover points) or 100 % bars | Reuse; one axes keeps export and geometry unchanged. |
 | Session 7 | **Column table** = `Table.kind = "column"`, same model (X column kept, hidden in the UI, unused by Python); each group a data set with `reps` 1 (or mean/SD/N) | No new table code in Rust; every op (paste, sort, exclude, sets) works unchanged. |
 | Session 7 | Significance brackets are analysis overlays: t-test, nonparametric and ANOVA results carry `brackets`; drawn only on column graphs (`draws()`); options brackets sig/all/none and stars/P | Same live chain as fitted curves; nothing stored on the graph. |
 | Session 7 | Transforms, histograms and smoothing are analyses whose result can become a table (Results › New table from result), not live linked tables | Keeps the core simple; the analysis itself stays live. |
@@ -177,8 +178,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.2** | Big build: statistics and regression complete, compare groups, materials, styles, export (PLAN-0.2 §11) | Column tables (A2) and column graphs (D2), t-tests (B4), nonparametric (B5), one-way ANOVA (B6) + multiple comparisons (B7) + effect sizes (B8), significance brackets (D3), correlation (B16), power (B23); tensile test (B27), Weibull (B29); global fit + model comparison (B12), area/smoothing/derivatives (B14); transforms (A15), sort/find/exclude rows (A17), data checks (A18), frequency distributions (D4); styles (D13), copy look (D14), colour schemes (D16), thumbnails (E7); export all graphs (G4), Excel workbook (G6); test chooser (C4), statistics guide (J3), samples (J2); second engine (I3) | ✅ |
 | **0.2.3** | Two factors | Grouped table (A3), two-way ANOVA (B15), grouped bars, stacked bars, interaction lines and heat map (D6); Two factors sample | ✅ |
 | **0.2.4** | Counts | Contingency table (A4), chi-square, Fisher, relative risk, odds ratio, diagnostic values (B17); 100 % stacked bars; Pass or fail sample | ✅ |
-| 0.2.5 | Parts of whole | Parts-of-whole table (A6), pie and donut (D7) | 🔜 |
-| 0.2.6 – 0.2.11 | One or two features each | ROC/Bland-Altman + special graphs (B18, D10) · axis breaks/double Y (D8) · annotations (D15) · interactive graph (E2, E3, E4, E6) · layouts (F1, F2, G3) · multi-panel (D12) | ⬜ |
+| **0.2.5** | Parts of whole | Parts-of-whole table (A6) with Fractions of total (Wilson CIs for counts), pie, donut and 100 % bars (D7); Phase fractions sample | ✅ |
+| 0.2.6 | Special analyses | ROC and Bland-Altman (B18), special graphs (D10) | 🔜 |
+| 0.2.7 – 0.2.11 | One or two features each | axis breaks/double Y (D8) · annotations (D15) · interactive graph (E2, E3, E4, E6) · layouts (F1, F2, G3) · multi-panel (D12) | ⬜ |
 | 0.2.12 – 0.2.17 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
 | 0.2.18 – 0.2.24 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
 | 1.0.0 | Stable | Signed installer (I6), validation report (R/NIST, J4), user guide | ⬜ |
@@ -243,11 +245,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 - **0.2.4** (same session, "go"): `groups.contingency` (chi2_contingency with optional Yates, Cramér's V, expected-count check; 2 × 2: Fisher, relative risk (Koopman CI), sample odds ratio, proportions, optional sensitivity/specificity/PPV/NPV), `Table::contingency`, `new_table("contingency")`, Pass or fail sample, "percent" graphs (legend outside), dialog, ribbon Contingency button, help, Tell Me. 43 Python tests (R chisq.test and fisher.test), 15 + 1 Rust, 55 UI checks.
 
+- **0.2.5** ("go"): `groups.parts` (fractions, Wilson CIs for counts), `graph.parts_figure`, `Table::parts`, `new_table("parts")`, Phase fractions sample, Analyze › Fractions (Statistics group now three columns), gallery entry, Column Graph menu and Format Graph options, help, Tell Me. 44 Python tests, 15 + 1 Rust, 55 UI checks.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.2.5 parts of whole (A6) with pie and donut charts (D7), then down the list in PLAN-0.2 §12.
+**Next:** 0.2.6 ROC curves and Bland-Altman (B18) with special graphs (D10), then down the list in PLAN-0.2 §12.
+
+**0.2.5 limits:** pies have no hover values; no exploded slices or labels outside the pie yet.
 
 **0.2.4 limits:** Fisher's exact test only for 2 × 2 tables (larger tables use chi-square); no chi-square for trend or McNemar yet.
 

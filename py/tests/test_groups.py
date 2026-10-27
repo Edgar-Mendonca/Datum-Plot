@@ -207,3 +207,14 @@ class Contingency(unittest.TestCase):
         self.assertIn("<svg", graph.render(self.ct([[14, 36], [5, 45]]), {"column": "percent"})["svg"])
         with self.assertRaises(ValueError):
             A.run("contingency", self.ct([[1.5, 2], [3, 4]]), [], {})
+
+
+class Parts(unittest.TestCase):
+    def test_fractions_with_wilson_intervals(self):
+        # Wilson 95% CI for 885 of 1000: 0.8641 to 0.9029 (R: prop.test(885, 1000, correct = FALSE)$conf.int)
+        t = {"kind": "parts", "rows": 3, "rowTitles": ["a", "b", "c"], "sets": [{"title": "S", "entry": "rep", "reps": 1}], "cols": [[None] * 3, [35, 885, 80]], "excluded": []}
+        r = A.run("parts", t, [], {})
+        self.assertEqual(cell(r, None, 1, 2), "88.5%")
+        self.assertEqual(cell(r, None, 1, 3), "86.4% to 90.3%")
+        for kind in ["pie", "donut", "percent"]:
+            self.assertIn("<svg", graph.render(t, {"column": kind})["svg"])

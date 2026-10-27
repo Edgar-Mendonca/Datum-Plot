@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.5 — 2026-10-27
+
+Parts of a whole: pie and donut charts, and each part as a percentage.
+
+**Parts of whole**
+- File › New Table › **Parts of whole**: the parts in the rows (such as phases or elements), one whole per data set (such as two heat treatments).
+- Graphs: **pie**, **donut**, or bars stacked to 100%, one per data set, with the percentages on them (Graph › Column Graph).
+- Analyze › **Fractions**: each part as a percentage of its whole; when the values are counts, with 95% confidence intervals (Wilson).
+
+**Also**
+- A new sample: Phase fractions (point counts of annealed and quenched steel).
+
 ## 0.2.4 — 2026-10-27
 
 Counts: contingency tables with the chi-square and Fisher's exact tests.
