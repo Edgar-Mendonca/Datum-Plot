@@ -71,8 +71,9 @@ impl DataSet {
 }
 
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
-/// (column 0 is X); every column has `rows` cells. `kind` is "xy", or "column" (one group per
-/// data set, values down the rows; the X column is kept but not used).
+/// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
+/// set, values down the rows) or "grouped" (rows are one factor, named by the row titles, data sets
+/// the other, replicates side by side); column and grouped tables keep the X column but never use it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Table {
@@ -109,6 +110,16 @@ impl Table {
         let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
         let mut t = Table { kind: "column".into(), x_title: String::new(), y_title: "Value".into(), sets, ..Default::default() };
         t.normalize();
+        t
+    }
+    /// An empty grouped table: `rows` rows (named in the row titles), `groups` data sets of 3 replicates.
+    pub fn grouped(rows: usize, groups: usize) -> Self {
+        let sets = (0..groups).map(|k| DataSet { title: format!("Data set {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 3 }).collect();
+        let mut t = Table { kind: "grouped".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
+        t.normalize();
+        for r in 0..rows {
+            t.row_titles[r] = format!("Row {}", r + 1);
+        }
         t
     }
     /// (first grid column, width) of each data set.

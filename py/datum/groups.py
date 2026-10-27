@@ -41,6 +41,23 @@ def summary(table, k):
     return None, 0, float("nan"), float("nan")
 
 
+def cells(table):
+    """A grouped table: the rows that hold data as [(row, label)], and {(set, row): [values]}."""
+    ex = {tuple(e) for e in table.get("excluded", [])}
+    cv, rows = {}, []
+    titles = table.get("rowTitles") or []
+    for k, (c0, w) in enumerate(stats.set_columns(table)):
+        w = w if table["sets"][k]["entry"] == "rep" else 1
+        for r in range(table["rows"]):
+            v = [x for x in (stats.value(table, r, c, ex) for c in range(c0, c0 + w)) if x is not None and math.isfinite(x)]
+            if v:
+                cv[(k, r)] = v
+    for r in range(table["rows"]):
+        if any((k, r) in cv for k in range(len(table["sets"]))):
+            rows.append((r, (titles[r] if r < len(titles) else "") or f"Row {r + 1}"))
+    return rows, cv
+
+
 def pairs_of(table, a, b):
     """Rows where both data sets have a value: (x, y) arrays."""
     x, y = column(table, a), column(table, b)
@@ -533,3 +550,82 @@ def power(table, ks, o):
                   [(None, "Effect sizes: about 0.2 is small, 0.5 medium and 0.8 large for d (0.1, 0.25 and 0.4 for f).")], plots=[plot],
                   methods=f"Sample size was calculated for a two-tailed {rows[0][1].lower()} (α = {g(alpha)}, effect size {ename} = {g(eff, 3)}) with statsmodels in Datum Plot.",
                   code=f"from statsmodels.stats.power import TTestIndPower\nprint(TTestIndPower().solve_power(effect_size={g(eff, 4)}, alpha={alpha}, power={want}))")
+
+
+# ---------- two-way ANOVA (B15) ----------
+def twoway(table, ks, o):
+    """Two-way ANOVA of a grouped table: rows are one factor, data sets the other, replicates in each
+    cell. Type III sums of squares (sum-to-zero contrasts), so unbalanced designs are handled as in
+    Prism and R's car::Anova; then multiple comparisons within each row (or within each data set)."""
+    import pandas as pd
+    import statsmodels.formula.api as smf
+    from statsmodels.stats.anova import anova_lm
+    alpha, post, within = float(o.get("alpha", ALPHA)), o.get("posthoc", "sidak"), o.get("compare", "rows")
+    if any(table["sets"][k]["entry"] != "rep" for k in ks):
+        raise ValueError("Two-way ANOVA needs the individual values; enter them as replicates.")
+    rows, cv = cells(table)
+    data = [(lab, name_of(table, k), v) for r, lab in rows for k in ks for v in cv.get((k, r), [])]
+    if len({d[0] for d in data}) < 2 or len({d[1] for d in data}) < 2:
+        raise ValueError("Two-way ANOVA needs at least two rows and two data sets with values.")
+    df = pd.DataFrame(data, columns=["A", "B", "y"])
+    empty = [f"{lab} × {name_of(table, k)}" for r, lab in rows for k in ks if len(cv.get((k, r), [])) == 0]
+    if empty:
+        raise ValueError(f"Every row needs values in every data set (missing: {', '.join(empty[:4])}).")
+    inter = bool(o.get("interaction", True)) and df.groupby(["A", "B"]).size().min() > 1
+    m = smf.ols("y ~ C(A, Sum) * C(B, Sum)" if inter else "y ~ C(A, Sum) + C(B, Sum)", data=df).fit()
+    a = anova_lm(m, typ=3)
+    rowname, colname = o.get("rowname") or "Row factor", o.get("colname") or "Column factor"
+    label = {"C(A, Sum)": rowname, "C(B, Sum)": colname, "C(A, Sum):C(B, Sum)": "Interaction", "Residual": "Residual"}
+    tot = float(((df.y - df.y.mean()) ** 2).sum())
+    res_ms = float(a.loc["Residual", "sum_sq"] / a.loc["Residual", "df"])
+    dfe = float(a.loc["Residual", "df"])
+    tab, ans, ps = [], [], {}
+    for key in ["C(A, Sum):C(B, Sum)", "C(A, Sum)", "C(B, Sum)", "Residual"]:
+        if key not in a.index:
+            continue
+        ss, d = float(a.loc[key, "sum_sq"]), float(a.loc[key, "df"])
+        if key == "Residual":
+            tab.append([label[key], g(ss), g(d), g(ss / d), "", "", ""]); continue
+        F, p = float(a.loc[key, "F"]), float(a.loc[key, "PR(>F)"])
+        ps[key] = p
+        tab.append([label[key], g(ss), g(d), g(ss / d), g(F, 4), pv(p), f"{g(100 * ss / tot, 3)}%"])
+        ans.append(f"{label[key]}: {'significant' if p < alpha else 'not significant'} ({p_text(p)})")
+    eta = [[label[k], g(float(a.loc[k, "sum_sq"]) / (float(a.loc[k, "sum_sq"]) + float(a.loc["Residual", "sum_sq"])), 4)] for k in ps]
+    tabs = [{"title": "Two-way ANOVA (Type III)", "columns": ["Source of variation", "SS", "DF", "MS", "F", "P value", "% of total variation"], "rows": tab},
+            {"title": "Effect sizes (partial η²)", "columns": ["", "Partial η²"], "rows": eta},
+            {"title": "Cell means", "columns": ["", *[name_of(table, k) for k in ks]], "rows": [[lab, *[f"{g(np.mean(cv[(k, r)]))} (n = {len(cv[(k, r)])})" for k in ks]] for r, lab in rows]}]
+    checks, brackets = [], []
+    if not inter and o.get("interaction", True):
+        checks.append((None, "Only one value per cell, so the interaction cannot be tested; the model has main effects only."))
+    if ps.get("C(A, Sum):C(B, Sum)", 1) < alpha:
+        checks.append((None, "The interaction is significant: the effect of one factor depends on the other, so compare within each row rather than the main effects."))
+    groups = [np.asarray(cv[(k, r)]) for r, _ in rows for k in ks if len(cv[(k, r)]) > 1]
+    if len(groups) > 1:
+        bf = st.levene(*groups, center="median")
+        checks.append((bf.pvalue > alpha, f"The SDs of the cells {'are similar' if bf.pvalue > alpha else 'differ'} (Brown-Forsythe {p_text(bf.pvalue)})."))
+    if len(m.resid) >= 3:
+        sw = st.shapiro(m.resid)
+        checks.append((sw.pvalue > alpha, f"The residuals {'look' if sw.pvalue > alpha else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)})."))
+    if post != "none":
+        comps = []
+        if within == "rows":
+            for r, lab in rows:
+                for i, j in combinations(range(len(ks)), 2):
+                    a_, b_ = cv[(ks[i], r)], cv[(ks[j], r)]
+                    comps.append((f"{lab}: {name_of(table, ks[i])} vs {name_of(table, ks[j])}", ks[i], ks[j], r, np.mean(b_) - np.mean(a_), math.sqrt(res_ms * (1 / len(a_) + 1 / len(b_)))))
+        else:
+            for k in ks:
+                for (ri, li), (rj, lj) in combinations(rows, 2):
+                    a_, b_ = cv[(k, ri)], cv[(k, rj)]
+                    comps.append((f"{name_of(table, k)}: {li} vs {lj}", None, None, None, np.mean(b_) - np.mean(a_), math.sqrt(res_ms * (1 / len(a_) + 1 / len(b_)))))
+        raw = [2 * float(st.t.sf(abs(d / se), dfe)) if se > 0 else float("nan") for *_, d, se in comps]
+        adj = adjust(raw, post)
+        q = 1 - 0.95 ** (1 / len(comps)) if post in ("sidak", "holm") else 0.05 / len(comps) if post == "bonferroni" else 0.05
+        tt = st.t.ppf(1 - q / 2, dfe)
+        tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {'within each row' if within == 'rows' else 'within each data set'}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
+                     "rows": [[c[0], g(c[4]), ci_text(c[4] - tt * c[5], c[4] + tt * c[5]), pv(p), stars(p)] for c, p in zip(comps, adj)]})
+        brackets = [[c[1], c[2], float(p), c[3]] for c, p in zip(comps, adj) if c[1] is not None]
+    return result("Two-way ANOVA", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
+                  methods=f"Data were analysed by two-way ANOVA ({rowname} × {colname}{'' if inter else ', main effects only'}; Type III sums of squares){'' if post == 'none' else ' with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (statsmodels).",
+                  legend="Bars show mean and SD; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
+                  code="import statsmodels.formula.api as smf\nfrom statsmodels.stats.anova import anova_lm\nm = smf.ols('y ~ C(A, Sum) * C(B, Sum)', data=df).fit()\nprint(anova_lm(m, typ=3))")

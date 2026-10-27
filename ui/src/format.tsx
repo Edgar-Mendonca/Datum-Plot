@@ -46,18 +46,19 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
       <div class="fmtpage">
         <Show when={tab() === "sets"}>
           <div class="form">
-            <Show when={t()?.kind === "column"}><label>Graph</label><span class="inline"><Pick value={s().column || "scatter"} set={v => set(x => { x.column = v; })} options={[["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
+            <Show when={t()?.kind !== "xy"}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "grouped" ? "bars" : "scatter")} set={v => set(x => { x.column = v; })} options={t()?.kind === "grouped"
+                ? [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
               <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
-            <Show when={t()?.kind !== "column"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
+            <Show when={t()?.kind === "xy"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
             <label>Colours</label><span class="inline"><Pick value={s().palette.includes("#") ? "own" : s().palette || "okabe"} set={v => v !== "own" && set(x => { x.palette = v; x.sets = x.sets.map(q => ({ ...q, color: "" })); })} options={[...PALETTES.map(p => [p[0], p[1]] as [string, string]), ...(s().palette.includes("#") ? [["own", "Your colours"] as [string, string]] : [])]} />
               <button class="btn sm" onClick={() => import("./tools").then(m => m.paletteDialog())}>Colour schemes…</button></span>
-            <Show when={s().points === "mean" && t()?.kind !== "column"}>
+            <Show when={s().points === "mean" && t()?.kind === "xy"}>
               <label>Error bars</label><span class="inline"><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} />
                 <Pick value={s().errorDir} set={v => set(x => { x.errorDir = v; })} options={[["both", "Both directions"], ["up", "Above only"], ["down", "Below only"]]} />
                 <span class="muted">caps</span><input type="number" min="0" max="12" step="0.5" style={{ width: "60px" }} value={s().cap} onChange={e => set(x => { x.cap = Math.max(0, +e.currentTarget.value); })} /></span>
             </Show>
-            <Show when={t()?.kind !== "column"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
+            <Show when={t()?.kind === "xy"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
           </div>
           <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th><th>Line</th><th>Width</th></tr></thead><tbody>
             <For each={t()?.sets ?? []}>{(d, k) => <tr>

@@ -168,3 +168,22 @@ class ColumnGraphs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TwoWay(unittest.TestCase):
+    def test_warpbreaks_matches_r(self):
+        # R: anova(lm(breaks ~ wool * tension, warpbreaks)) (balanced, so Type I = Type III):
+        # wool SS 450.7 F 3.765 P 0.058213; tension SS 2034.3 F 8.498 P 0.000693; interaction SS 1002.8 F 4.189 P 0.021044; residual SS 5745.1, 48 df
+        A_ = [[26, 30, 54, 25, 70, 52, 51, 26, 67], [18, 21, 29, 17, 12, 18, 35, 30, 36], [36, 21, 24, 18, 10, 43, 28, 15, 26]]
+        B_ = [[27, 14, 29, 19, 29, 31, 41, 20, 44], [42, 26, 19, 16, 39, 28, 21, 39, 29], [20, 21, 24, 17, 13, 15, 15, 16, 28]]
+        cols = [[None] * 3] + [[A_[r][j] for r in range(3)] for j in range(9)] + [[B_[r][j] for r in range(3)] for j in range(9)]
+        t = {"kind": "grouped", "rows": 3, "rowTitles": ["L", "M", "H"], "sets": [{"title": "A", "entry": "rep", "reps": 9}, {"title": "B", "entry": "rep", "reps": 9}], "cols": cols, "excluded": []}
+        r = A.run("twoway", t, [], {"rowname": "Tension", "colname": "Wool"})
+        rows = {x[0]: x for x in r["tabs"][0]["tables"][0]["rows"]}
+        self.assertEqual((rows["Wool"][1], rows["Wool"][4], rows["Wool"][5]), ("450.67", "3.765", "0.0582"))
+        self.assertEqual((rows["Tension"][1], rows["Tension"][4], rows["Tension"][5]), ("2034.3", "8.498", "0.0007"))
+        self.assertEqual((rows["Interaction"][1], rows["Interaction"][4], rows["Interaction"][5]), ("1002.8", "4.189", "0.0210"))
+        self.assertEqual((rows["Residual"][1], rows["Residual"][2]), ("5745.1", "48"))
+        self.assertEqual(len(r["brackets"]), 3)
+        for kind in ["bars", "stacked", "scatter", "lines", "heatmap"]:
+            self.assertIn("<svg", graph.render(t, {"column": kind, "points": "each"}, [{"kind": "twoway", "options": {"brackets": "all"}}])["svg"])

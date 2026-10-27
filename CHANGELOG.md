@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.3 — 2026-10-27
+
+Two factors at once: grouped tables, two-way ANOVA and grouped graphs.
+
+**Grouped tables**
+- File › New Table › **Grouped**: one factor in the rows (named by the row titles, such as alloys), the other in the data sets (such as heat treatments), with replicates side by side.
+
+**Two-way ANOVA**
+- Analyze › Two-way ANOVA: the effect of each factor and their **interaction**, with SS, DF, MS, F, P and the % of total variation (Type III sums of squares, so unequal numbers of replicates are fine). Checked against R.
+- Partial η² for each effect, the cell means, and checks of equal SDs and normal residuals.
+- Comparisons within each row (or within each data set) with Šidák, Holm-Šidák, Bonferroni or no correction, drawn as **stars over the bars**.
+
+**Grouped graphs**
+- Grouped bars, stacked bars, grouped dots, lines (an interaction plot) and a **heat map** of the means (Graph › Column Graph).
+
+**Also**
+- A new sample: Two factors (three alloys, as received and aged).
+- Results checks now always show their ✓ or ⚠ mark.
+- The roadmap is now in small steps: one or two features per release, 0.2.4 to 0.2.24, then 1.0 (Help › Roadmap).
+
 ## 0.2.2 — 2026-10-25
 
 A big update: comparing groups, materials testing, data tools, graph styles and exporting everything at once (28 features).

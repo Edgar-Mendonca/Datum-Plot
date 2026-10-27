@@ -118,7 +118,7 @@ COLORS = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0
 
 def result(title, answer, tabs, checks=(), methods="", legend="", code="", plots=(), curves=(), cells=(), **extra):
     """`extra`: `brackets` ([set, set, P] drawn over column graphs) and `table` (a new data table the result can become)."""
-    return {"title": title, "answer": answer, "tabs": tabs, "checks": [list(c) for c in checks], "methods": methods, "legend": legend, "code": code,
+    return {"title": title, "answer": answer, "tabs": tabs, "checks": [[None if c[0] is None else bool(c[0]), c[1]] for c in checks], "methods": methods, "legend": legend, "code": code,
             "plots": list(plots), "curves": list(curves), "cells": list(cells), **extra}
 
 
@@ -638,7 +638,7 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
     from . import groups, tools
-    KINDS.update({"ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power,
+    KINDS.update({"ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 

@@ -20,7 +20,7 @@ export const DataTable = (p: { t: Table }) => {
   const t = () => p.t, W = () => width(t());
   const ncols = () => W() + 1, nrows = () => t().rows + 10;
   /** Column tables have no X: its grid column is kept but hidden. */
-  const hideX = () => t().kind === "column";
+  const hideX = () => t().kind === "column" || t().kind === "grouped";
   const colW = (k: number) => (k === 0 ? TW : k === 1 ? (hideX() ? 0 : XW) : CW);
   const lefts = createMemo(() => { let x = HW; return Array.from({ length: ncols() }, (_, k) => { const l = x; x += colW(k); return l; }); });
   const total = () => lefts()[ncols() - 1] + colW(ncols() - 1);
@@ -215,11 +215,11 @@ const TableHead = (p: { t: Table }) => {
   return (
     <div class="thead">
       <Icon n="sheet" /><b class="tname" title="Double-click to rename" onDblClick={() => rename(p.t, "name", "Table name")}>{p.t.name}</b><Help k="table" />
-      <Show when={p.t.kind !== "column"}><label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
+      <Show when={p.t.kind === "xy"}><label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
         <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label></Show>
       <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.yUnits} onChange={e => set("yUnits", e.currentTarget.value)} /></label>
-      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
+      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
     </div>
   );
 };

@@ -118,12 +118,12 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
     Ok(out(&a))
 }
 
-/// A new, empty data table (XY from the options, or a column table) with its graph.
+/// A new, empty data table (XY from the options, a column or a grouped table) with its graph.
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
-    let t = if kind.as_deref() == Some("column") { Table::column(3) } else { a.opts.table() };
-    let g = if t.kind == "column" { GraphSettings { points: "each".into(), ..a.opts.graph() } } else { a.opts.graph() };
+    let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), _ => a.opts.table() };
+    let g = match t.kind.as_str() { "column" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "grouped" => GraphSettings { column: "bars".into(), ..a.opts.graph() }, _ => a.opts.graph() };
     let (table, graph) = (Box::new(Table { name: String::new(), ..t }), Some(Box::new(g)));
     a.doc.apply(Op::NewTable { table, graph })?;
     a.rev += 1;
@@ -157,7 +157,7 @@ fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
         let s = a.opts.graph();
         for g in &mut p.graphs {
             let t = g.settings.clone();
-            g.settings = GraphSettings { x: t.x, y: t.y, line: t.line, error: t.error, overlays: t.overlays, points: t.points, column: t.column, sets: t.sets, palette: t.palette, ..s.clone() };
+            g.settings = GraphSettings { x: t.x, y: t.y, line: t.line, error: t.error, overlays: t.overlays, points: t.points, column: t.column, sets: t.sets, palette: t.palette, legend: t.legend, ..s.clone() };
         }
     }
     a.doc = Doc::new(p);

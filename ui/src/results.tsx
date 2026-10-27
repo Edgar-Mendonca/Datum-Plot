@@ -11,16 +11,16 @@ import { Help } from "./help";
 export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   describe: ["Descriptive statistics", "B1", false], normality: ["Normality tests", "B2", false], outliers: ["Outliers", "B3", false],
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
-  ttest: ["t-test", "B4", "brackets"], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], power: ["Power and sample size", "B23", false],
+  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
   tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
 };
 /** Does this analysis draw on the graphs of table `t`? */
-export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? t?.kind === "column" : !!d && t?.kind !== "column"; };
+export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && t?.kind === "xy"; };
 /** Catalogue id → analysis kind (and preset options), for the Analyze gallery and ribbon. */
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
-  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B7: ["anova", { posthoc: "tukey" }],
+  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B7: ["anova", { posthoc: "tukey" }],
   B16: ["correlation", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
@@ -30,6 +30,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   fit: { model: "exp_decay", equation: "Y = A*exp(-k*X) + C", init: {}, fixed: {}, points: "each", weight: "none", bands: "ci", label: true, unknowns: "" },
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
+  twoway: { posthoc: "sidak", compare: "rows", interaction: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
@@ -68,18 +69,25 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const model = () => models()?.find(m => m[0] === o().model);
     const N = (p: { k: string; w?: number; ph?: string }) => <input type="number" style={{ width: `${p.w ?? 90}px` }} placeholder={p.ph} value={o()[p.k] ?? ""} onChange={e => put(p.k, optNum(e.currentTarget.value) ?? "")} />;
     const Alpha = () => <><label>Significance level α</label><Pick value={String(o().alpha)} set={v => put("alpha", +v)} options={[["0.01", "0.01"], ["0.05", "0.05"], ["0.1", "0.10"]]} /></>;
-    const Brackets = () => <Show when={t.kind === "column"}><label>On the graph</label><span class="inline"><Pick value={o().brackets} set={v => put("brackets", v)} options={[["sig", "Brackets for significant pairs"], ["all", "Brackets for every pair"], ["none", "No brackets"]]} />
+    const Brackets = () => <Show when={t.kind === "column" || t.kind === "grouped"}><label>On the graph</label><span class="inline"><Pick value={o().brackets} set={v => put("brackets", v)} options={[["sig", "Brackets for significant pairs"], ["all", "Brackets for every pair"], ["none", "No brackets"]]} />
       <Pick value={o().ptext} set={v => put("ptext", v)} options={[["stars", "Stars (*, **, ***)"], ["p", "P values"]]} /></span></Show>;
     return (
       <Dialog title={existing ? `Change · ${existing.name}` : KINDS[kind][0]} wide help="options" okText={existing ? "OK" : "Analyze"} ok={ok}>
         <div class="form">
           <label>Name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}`} value={on(k())} set={() => toggle(k())} />}</For></span>
-          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "power"].includes(kind)}><Alpha /></Show>
+          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "power"].includes(kind)}><Alpha /></Show>
           <Show when={kind === "ttest"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["unpaired", "Unpaired (two independent groups)"], ["paired", "Paired (the same items twice, row by row)"], ["ratio", "Ratio paired (ratios, not differences)"], ["one", "One sample against a value"]]} />
             <Show when={o().test === "unpaired"}><label /><Check label="Welch's correction (do not assume equal SDs; recommended)" value={!!o().welch} set={v => put("welch", v)} /></Show>
             <Show when={o().test === "one"}><label>Hypothetical value</label><N k="mu" /></Show>
+            <Brackets />
+          </Show>
+          <Show when={kind === "twoway"}>
+            <label>Factor names</label><span class="inline"><input placeholder="Rows, e.g. Alloy" value={o().rowname} onChange={e => put("rowname", e.currentTarget.value)} /><input placeholder="Data sets, e.g. Treatment" value={o().colname} onChange={e => put("colname", e.currentTarget.value)} /></span>
+            <label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} />
+            <label>Compare</label><Pick value={o().compare} set={v => put("compare", v)} options={[["rows", "The data sets within each row"], ["sets", "The rows within each data set"]]} />
+            <label>Correction</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["sidak", "Šidák"], ["holm", "Holm-Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]]} />
             <Brackets />
           </Show>
           <Show when={kind === "nonparam"}>

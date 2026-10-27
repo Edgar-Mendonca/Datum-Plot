@@ -80,10 +80,13 @@ def rc_for(graph):
 
 
 def draw_brackets(ax, brackets, pos, tops, size, o):
-    """Significance brackets over a column graph: stars (or P values), stacked so they never overlap."""
+    """Significance brackets over a column or grouped graph: stars (or P values), stacked so they never
+    overlap. A bracket is [set, set, P], or [set, set, P, row] within a row of a grouped graph; `pos`
+    maps set (or (set, row)) to its x position and `tops` maps x positions to the top of the data."""
     from .analysis import pv, stars
     show = o.get("brackets", "sig")
-    br = [(pos[a], pos[b], p) for a, b, p in brackets if a in pos and b in pos and show != "none" and (show == "all" or p < 0.05)]
+    keys = lambda b: ((b[0], b[3]), (b[1], b[3])) if len(b) > 3 else (b[0], b[1])
+    br = [(pos[ka], pos[kb], b[2]) for b in brackets for ka, kb in [keys(b)] if ka in pos and kb in pos and show != "none" and (show == "all" or b[2] < 0.05)]
     if not br:
         return
     lo, hi = ax.get_ylim()
@@ -91,7 +94,7 @@ def draw_brackets(ax, brackets, pos, tops, size, o):
     placed, top = [], hi
     for x1, x2, p in sorted(br, key=lambda t: (abs(t[1] - t[0]), min(t[:2]))):
         x1, x2 = sorted((x1, x2))
-        y = max(tops[i] for i in range(x1, x2 + 1)) + 0.06 * h
+        y = max(t for x, t in tops.items() if x1 - 1e-9 <= x <= x2 + 1e-9) + 0.06 * h
         for a, b, yy in placed:
             if a <= x2 and x1 <= b:
                 y = max(y, yy + 0.12 * h)
@@ -167,6 +170,8 @@ def figure(table, graph, overlays=()):
     colors = palette(graph, len(table["sets"]))
     if table.get("kind") == "column":
         return column_figure(fig, ax, table, graph, overlays, colors, size)
+    if table.get("kind") == "grouped":
+        return grouped_figure(fig, ax, table, graph, overlays, colors, size)
     summary = stats.summarize(table)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
     direction = graph.get("errorDir", "both")
@@ -262,7 +267,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     allv = np.concatenate([d[1] if d[1] is not None else np.array([d[3]]) for d in data]) if data else np.zeros(0)
     yr = (float(allv.max()) - min(0.0, float(allv.min()))) if len(allv) else 1.0
     plot_h, plot_w = max(20, graph.get("height") or 60) * 2.835 * 0.7, max(20, graph.get("width") or 80) * 2.835 * 0.8
-    points, pos, tops = [], {}, []
+    points, pos, tops = [], {}, {}
     if kind == "paired":
         cols = [column(table, k) for k, *_ in data]
         for r in range(table["rows"]):
@@ -307,7 +312,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
             elif kind == "mean":
                 ax.plot(i, m, mk, color=col, markersize=st["size"], zorder=4)
         pos[k] = i
-        tops.append(top)
+        tops[i] = top
         points.append([k, float(i), m, n, sd, sem])
     names = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k, *_ in data]
     ax.set_xticks(range(len(data)), names)
@@ -324,6 +329,94 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     if not points:
         ax.text(0.5, 0.5, "Enter values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
     return fig, ax, None, points
+
+
+def grouped_figure(fig, ax, table, graph, overlays, colors, size):
+    """A grouped table: one group of bars (or dots, stacked bars, lines) per row, one colour per data
+    set; or a heat map of the means (rows × data sets)."""
+    from .groups import cells
+    from scipy import stats as sst
+    kind, err = graph.get("column") or "bars", graph.get("error", "sd")
+    if kind not in ("bars", "stacked", "scatter", "lines", "heatmap"):
+        kind = "bars"
+    each = graph.get("points", "mean") == "each"
+    rows, cv = cells(table)
+    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    names = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in shown]
+    labels = [lab for _, lab in rows]
+    points, pos, tops, leg = [], {}, {}, None
+    if not rows or not shown:
+        ax.text(0.5, 0.5, "Enter values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+        return fig, ax, None, points
+    if kind == "heatmap":
+        M = np.array([[np.mean(cv[(k, r)]) if cv.get((k, r)) else np.nan for k in shown] for r, _ in rows])
+        cmap = graph.get("palette") if graph.get("palette") in ("viridis", "cividis", "magma", "plasma") else "viridis"
+        im = ax.imshow(M, cmap=cmap, aspect="auto")
+        for i in range(M.shape[0]):
+            for j in range(M.shape[1]):
+                if math.isfinite(M[i, j]):
+                    ax.text(j, i, f"{M[i, j]:.3g}", ha="center", va="center", fontsize=size * 0.8, color="white" if im.norm(M[i, j]) < 0.55 else "black")
+        ax.set_xticks(range(len(shown)), names); ax.set_yticks(range(len(rows)), labels)
+        for sd in ax.spines.values():
+            sd.set_visible(False)
+        cb = fig.colorbar(im, ax=ax, shrink=0.85)
+        cb.set_label(axis_title(graph.get("y") or {}, table.get("yTitle", ""), table.get("yUnits", "")), fontweight="bold" if graph.get("boldTitles", True) else "normal")
+        if graph.get("title") and graph.get("showTitle", True):
+            ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+        return fig, ax, None, points
+    n = len(shown)
+    w = 0.8 / n if kind != "stacked" else 0.62
+    base = np.zeros(len(rows))
+    allv = [0.0]
+    for j, k in enumerate(shown):
+        st = style_of(graph, k, colors)
+        col, mk = st["color"], SYMBOLS.get(st["symbol"], "o") or "o"
+        xs, ms_, es, bs = [], [], [], []
+        for i, (r, _) in enumerate(rows):
+            v = np.asarray(cv.get((k, r), []), float)
+            if not len(v):
+                continue
+            m, sd = float(v.mean()), float(v.std(ddof=1)) if len(v) > 1 else 0.0
+            sem = sd / math.sqrt(len(v)) if len(v) > 1 else 0.0
+            e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, len(v) - 1)) * sem if len(v) > 1 else 0.0, "none": 0.0}.get(err, sd)
+            x = i if kind in ("stacked", "lines") else i - 0.4 + w * (j + 0.5)
+            b0 = base[i] if kind == "stacked" else 0.0
+            xs.append(x); ms_.append(m + b0); es.append(e); bs.append(b0)
+            pos[(k, r)] = x
+            tops[x] = max(tops.get(x, -np.inf), m + b0 + e, float(v.max()) + b0 if kind != "stacked" else m + b0)
+            points.append([k, float(x), m, len(v), sd, sem])
+            allv += list(v)
+            if kind == "stacked":
+                base[i] += m
+            if each and kind in ("bars", "scatter"):
+                ax.plot(x + (np.arange(len(v)) - (len(v) - 1) / 2) * min(w / max(len(v), 1), 0.05), v, linestyle="none", marker=mk, markersize=st["size"] * 0.6,
+                        markerfacecolor="white", markeredgecolor=col, zorder=3)
+        if not xs:
+            continue
+        lab = names[j]
+        d = graph.get("errorDir", "both")
+        yerr = [[0 if d == "up" else e for e in es], [0 if d == "down" else e for e in es]] if err != "none" else None
+        if kind == "bars":
+            ax.bar(xs, ms_, width=w * 0.92, color=col if st["filled"] else "none", alpha=0.85 if st["filled"] else 1, edgecolor=col, linewidth=1.0, label=lab, zorder=1)
+            if yerr:
+                ax.errorbar(xs, ms_, yerr=yerr, fmt="none", ecolor="#222222", elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+        elif kind == "stacked":
+            ax.bar(xs, [m - b for m, b in zip(ms_, bs)], bottom=bs, width=w, color=col, edgecolor="white", linewidth=0.6, label=lab, zorder=1)
+        else:
+            ax.errorbar(xs, ms_, yerr=yerr, marker=mk, markersize=st["size"], linestyle="-" if kind == "lines" else "none", color=col, markerfacecolor=col if st["filled"] else "white",
+                        ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), linewidth=st["width"], label=lab, zorder=3)
+    ax.set_xticks(range(len(rows)), labels)
+    ax.set_xlim(-0.6, len(rows) - 0.4)
+    ax.tick_params(axis="x", length=0)
+    axes(ax, table, graph, [[0, 0, float(min(allv))]], only_y=True)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    lg = graph.get("legend") or {}
+    if lg.get("show", True) and n > 1:
+        leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" else ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+    if overlays and points and kind not in ("stacked", "lines"):
+        draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
+    return fig, ax, leg, points
 
 
 def geometry(fig, ax, leg):

@@ -113,7 +113,9 @@ const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) re
 const errorMenu = (): Item[] => ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && gs()?.points !== "each", run: () => setGS(s => { s.error = k; s.points = "mean"; }) }));
 const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
 const COLUMNS: [string, string][] = [["scatter", "Scatter dot plot (mean ± error)"], ["bars", "Bars (mean ± error)"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after (rows joined)"]];
-const columnMenu = (): Item[] => [...COLUMNS.map(([k, l]) => ({ label: l, on: (gs()?.column || "scatter") === k, run: () => setGS(s => { s.column = k; }) })), "-",
+const GROUPED: [string, string][] = [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["scatter", "Grouped dots (mean ± error)"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map of the means"]];
+const columnMenu = (): Item[] => curTable()?.kind === "grouped" ? [...GROUPED.map(([k, l]) => ({ label: l, on: (gs()?.column || "bars") === k, run: () => setGS(s => { s.column = k; }) })), "-",
+  { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }] : [...COLUMNS.map(([k, l]) => ({ label: l, on: (gs()?.column || "scatter") === k, run: () => setGS(s => { s.column = k; }) })), "-",
   { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }];
 const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
 export const Ribbon = () => (
@@ -140,7 +142,7 @@ export const Ribbon = () => (
         <S><B i="curve" l="Smooth" title="Smooth, differentiate or integrate" run={() => runAnalysis("B14s")} /></S></G>
       <G l="Materials" h="materials"><B big i="line" l="Tensile Test" title="Modulus, yield, UTS, elongation and toughness" run={() => runAnalysis("B27")} />
         <S><B i="sigma" l="Weibull" title="Weibull modulus and characteristic strength" run={() => runAnalysis("B29")} /><B i="log" l="Arrhenius" title="Activation energy from rates at several temperatures" run={() => runAnalysis("B28")} /><N i="line" l="S–N Curves" id="B30" /></S></G>
-      <G l="More"><S><N i="table" l="Two-way ANOVA" id="B15" /><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /></S><S><N i="group" l="PCA, Clusters" id="B22" /><N i="curve" l="Peaks" id="B24" /><N i="curve" l="DSC / TGA" id="B31" /></S></G>
+      <G l="More"><S><B i="table" l="Two-way ANOVA" title="Two factors: a grouped table" run={() => runAnalysis("B15")} /><N i="grid" l="Contingency" id="B17" /><N i="line" l="Survival" id="B19" /></S><S><N i="group" l="PCA, Clusters" id="B22" /><N i="curve" l="Peaks" id="B24" /><N i="curve" l="DSC / TGA" id="B31" /></S></G>
     </Show>
     <Show when={tab() === "graph"}>
       <G l="Graph" h="graphtab"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Graph Type" run={graphTypes} /><B big i="sheet" l="Data Table" run={() => openView("data", graph()?.table ?? table()?.id ?? 0)} /></G>
@@ -148,7 +150,7 @@ export const Ribbon = () => (
       <G l="Axes" h="axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /></G>
       <G l="Size" h="size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
-      <Show when={curTable()?.kind === "column"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
+      <Show when={curTable()?.kind === "column" || curTable()?.kind === "grouped"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
       <G l="Add" h="add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={T.significance} /><N i="note" l="Annotation" id="D15" /></S></G>
       <G l="Style" h="style"><B big i="style" l="Styles" dd={e => openMenu(e, T.styleMenu())} /><S><B i="paint" l="Copy Look" title="Give other graphs this graph's look" run={T.copyLook} /><B i="bucket" l="Colour Schemes" run={T.paletteDialog} /></S></G>
       <G l="Share" h="share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>

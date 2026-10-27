@@ -74,7 +74,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | --- | --- | --- | --- |
 | A1 | XY table | X + data sets with replicates or mean/SD/SEM/N | ✅ |
 | A2 | Column table | One group per column, values down (or mean/SD/N) — for t-tests and one-way ANOVA | ✅ 0.2.2 |
-| A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | 0.4 |
+| A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | ✅ 0.2.3 |
 | A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | 0.4 |
 | A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
 | A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | 0.4 |
@@ -109,7 +109,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B12 | Global fitting, compare models (extra sum-of-squares F test, AICc), compare a parameter between data sets | lmfit, scipy | ✅ 0.2.2 |
 | B13 | Interpolate unknowns from a standard curve (ELISA, BCA, qPCR) | lmfit, numpy | 0.3 |
 | B14 | Area under the curve, derivatives, integrals, smoothing (Savitzky-Golay, LOWESS) | numpy, scipy.signal, statsmodels | ✅ 0.2.2 |
-| B15 | Two-way and three-way ANOVA (ordinary, repeated measures, mixed model) | statsmodels | 0.4 |
+| B15 | Two-way and three-way ANOVA (ordinary, repeated measures, mixed model) | statsmodels | ✅ 0.2.3 |
 | B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | ✅ 0.2.2 |
 | B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | 0.4 |
 | B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | 0.4 |
@@ -150,7 +150,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D3 | **Significance brackets** with stars or P values, placed automatically from the analysis and updated with it | ✅ 0.2.2 |
 | D4 | Histogram, cumulative distribution, KDE, QQ plot | ✅ 0.2.2 |
 | D5 | Fitted curves with confidence and prediction bands, residual plots | 0.3 |
-| D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | 0.4 |
+| D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | ✅ 0.2.3 |
 | D7 | Pie, donut, 100 % stacked bars | 0.4 |
 | D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | 0.4 |
 | D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
@@ -333,3 +333,34 @@ After 0.2.0 the user asked for bigger releases: "complete the application with a
 | 0.2.6 | Origin power | A9, A10, A11, B24, B25, B26, B30, B31, D11, D17, E5 |
 | 0.2.7 | Python scripting and automation | A13, A14, F3, G5, H1–H5 |
 | 1.0 | Stable | I6, J4 |
+
+
+## 12. Small steps (session 8, 27 Oct 2026)
+
+The user: "this is a very big gap and we are short of tokens… break it into very small steps, many small versions, and complete as much as possible this week." The 49 remaining features, one to four per release (replaces the groups in §11 after 0.2.2):
+
+| Release | Features |
+| --- | --- |
+| **0.2.3** ✅ | Grouped table (A3), two-way ANOVA (B15), grouped bars and heat map (D6) |
+| 0.2.4 | Contingency table (A4), chi-square and Fisher (B17) |
+| 0.2.5 | Parts of whole (A6), pie and donut (D7) |
+| 0.2.6 | ROC and Bland-Altman (B18), special graphs (D10) |
+| 0.2.7 | Axis breaks and a second Y axis (D8) |
+| 0.2.8 | Annotations (D15) |
+| 0.2.9 | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
+| 0.2.10 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
+| 0.2.11 | Multi-panel figures (D12) |
+| 0.2.12 | Multiple variables (A7), multiple and logistic regression (B21) |
+| 0.2.13 | PCA and clustering (B22) |
+| 0.2.14 | Survival table (A5), analysis (B19), curves (D9) |
+| 0.2.15 | Nested table (A8) and tests (B20) |
+| 0.2.16 | Peaks (B24), signal processing (B25) |
+| 0.2.17 | DSC/TGA (B31), S–N curves (B30) |
+| 0.2.18 | Worksheet (A9), column formulas (A11) |
+| 0.2.19 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
+| 0.2.20 | Large data (D17), region tools (E5) |
+| 0.2.21 | Prism import (A13), instrument import (A14) |
+| 0.2.22 | PowerPoint and Word (G5), posters (F3) |
+| 0.2.23 | Python console (H1), own analyses (H2) |
+| 0.2.24 | Templates (H3), batch (H4), notebooks (H5) |
+| 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

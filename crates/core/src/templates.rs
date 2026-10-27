@@ -43,7 +43,7 @@ pub fn list() -> Vec<Tpl> {
     let dots = |id: &str| {
         let p = build(Some(id)).unwrap();
         let t = &p.tables[0];
-        if t.kind == "column" {
+        if t.kind != "xy" {
             let means: Vec<f64> = t.spans().iter().map(|&(c, _)| { let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, c)).collect(); v.iter().sum::<f64>() / v.len().max(1) as f64 }).collect();
             let top = means.iter().fold(0f64, |a, b| a.max(*b));
             return means.iter().enumerate().map(|(i, m)| (i as f64 / (means.len() - 1).max(1) as f64, m / top.max(1e-9))).collect();
@@ -64,6 +64,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "arrhenius", name: "Arrhenius", desc: "Rate constants at six temperatures; the analysis gives the activation energy.", dots: dots("arrhenius") },
         Tpl { id: "groups", name: "Compare groups", desc: "Yield strength after three heat treatments: one-way ANOVA with Tukey's test.", dots: dots("groups") },
         Tpl { id: "weibull", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
+        Tpl { id: "twoway", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -138,6 +139,28 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { column: "scatter".into(), points: "each".into(), ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "One-way ANOVA".into(), kind: "anova".into(), sets: vec![], options: serde_json::json!({ "anova": "ordinary", "posthoc": "tukey", "brackets": "sig" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("twoway") => {
+            let mut seed = 13u64;
+            let mut t = Table::grouped(3, 2);
+            t.name = "Alloys".into();
+            t.y_title = "Yield strength".into();
+            t.y_units = "MPa".into();
+            t.row_titles = vec!["6061".into(), "7075".into(), "2024".into()];
+            t.normalize();
+            let base = [[150.0, 276.0], [210.0, 503.0], [175.0, 345.0]];
+            for (k, name) in ["As received", "Aged (T6)"].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                for j in 0..3 {
+                    t.cols[1 + 3 * k + j] = (0..t.rows).map(|r| base.get(r).map(|b| round(b[k] * (1.0 + jitter(&mut seed, 0.04)), 0))).collect();
+                }
+            }
+            p.name = "Two factors".into();
+            p.info = Info { title: "Alloy and heat treatment".into(), experiment: "Yield strength of three aluminium alloys as received and after ageing, three specimens each. Two-way ANOVA: does ageing help, does the alloy matter, and does ageing help every alloy equally (interaction)? Šidák comparisons within each alloy give the stars.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "bars".into(), points: "each".into(), legend: Legend { show: true, loc: "upper left".into() }, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Two-way ANOVA".into(), kind: "twoway".into(), sets: vec![], options: serde_json::json!({ "posthoc": "sidak", "compare": "rows", "rowname": "Alloy", "colname": "Treatment", "brackets": "sig" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("weibull") => {

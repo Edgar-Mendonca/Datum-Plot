@@ -255,7 +255,8 @@ export const exportExcel = async () => { const p = await call<string | null>("ex
 export const significance = () => {
   const t = curTable();
   if (!t) return toast("Open a column graph first.");
-  if (t.kind !== "column") return toast("Significance brackets go on column graphs. Make a column table (New Table › Column) for groups.");
+  if (t.kind === "grouped") return analysisDialog("twoway", t, undefined, {});
+  if (t.kind !== "column") return toast("Significance brackets go on column and grouped graphs. Make a column table (New Table › Column) for groups.");
   const [kind, preset] = BY_ID[t.sets.length === 2 ? "B4" : "B6"];
   analysisDialog(kind, t, undefined, preset);
 };

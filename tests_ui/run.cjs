@@ -42,7 +42,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, eight samples, open, import and roadmap", (await p.$$(".home .tile")).length === 12, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, nine samples, open, import and roadmap", (await p.$$(".home .tile")).length === 13, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -121,9 +121,9 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("Two-way ANOVA")');
+  await p.click('.ribbon .rb:has-text("Contingency")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B15") && (await p.textContent(".dlg")).includes("0.2.3"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B17") && (await p.textContent(".dlg")).includes("0.2.4"));
   await p.keyboard.press("Escape");
   check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
   await p.click('.ribbon .rb:has-text("Analyze…")');
@@ -191,6 +191,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(150);
   check("New Table › Column asks the shell for a column table", (await calls("new_table"))[0]?.kind === "column", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Grouped")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Grouped asks the shell for a grouped table", (await calls("new_table"))[0]?.kind === "grouped", JSON.stringify(await calls("new_table")));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);

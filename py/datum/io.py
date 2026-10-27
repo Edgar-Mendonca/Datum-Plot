@@ -100,7 +100,8 @@ def write_excel(path, project, analyses):
     for t in project.get("tables", []):
         ws = sheet(t["name"])
         xy = t.get("kind", "xy") == "xy"
-        heads = ([f"{t.get('xTitle') or 'X'}{' (' + t['xUnits'] + ')' if t.get('xUnits') else ''}"] if xy else [])
+        grouped = t.get("kind") == "grouped"
+        heads = ([f"{t.get('xTitle') or 'X'}{' (' + t['xUnits'] + ')' if t.get('xUnits') else ''}"] if xy else ["Row"] if grouped else [])
         sub = {"msn": ["Mean", "SD", "N"], "mesn": ["Mean", "SEM", "N"]}
         for s, (c0, w) in zip(t["sets"], stats.set_columns(t)):
             heads += [f"{s['title']}" + (f" {sub[s['entry']][j]}" if s["entry"] != "rep" else f" Y{j + 1}" if w > 1 else "") for j in range(w)]
@@ -112,8 +113,9 @@ def write_excel(path, project, analyses):
         for r in range(t["rows"]):
             row = [t["cols"][c][r] if c < len(t["cols"]) and r < len(t["cols"][c]) else None for c in range(first, len(t["cols"]))]
             if any(v is not None for v in row):
-                ws.append(row)
-                for j, c in enumerate(ws[ws.max_row]):
+                lead = [(t.get("rowTitles") or [""] * t["rows"])[r] or f"Row {r + 1}"] if grouped else []
+                ws.append(lead + row)
+                for j, c in enumerate(ws[ws.max_row][len(lead):]):
                     if (r, j + first) in ex:
                         c.font = Font(italic=True, color="1F6FD0")
         ws.freeze_panes = "A2"

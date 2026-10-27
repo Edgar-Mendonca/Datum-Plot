@@ -74,7 +74,7 @@ const TABLES: Choice[] = [
   { id: "A10", name: "Matrix", icon: "grid", group: "Origin-style", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : undefined)} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
@@ -127,9 +127,10 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "column" ? "D2" : "D1"} run={c => {
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" ? "D6" : "D1"} run={c => {
   const t = curTable();
   if (c.id === "D4") { setTimeout(() => runAnalysis("D4")); return; }
+  if (c.id === "D6") return t?.kind === "grouped" ? toast("This is a grouped graph: Graph › Column Graph picks grouped bars, stacked bars, dots, lines or a heat map.", true) : toast("Grouped graphs show grouped tables: File › New Table › Grouped.");
   if (c.id === "D2") return t?.kind === "column" ? toast("This is a column graph: Graph › Column Graph picks dots, bars, box plots or violins.", true) : toast("Column graphs show column tables: File › New Table › Column.");
   toast(t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);
 }} />);
