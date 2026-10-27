@@ -72,8 +72,9 @@ impl DataSet {
 
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
-/// set, values down the rows) or "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side); column and grouped tables keep the X column but never use it.
+/// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
+/// the other, replicates side by side) or "contingency" (counts: rows × outcomes, one value per cell);
+/// only XY tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Table {
@@ -120,6 +121,18 @@ impl Table {
         for r in 0..rows {
             t.row_titles[r] = format!("Row {}", r + 1);
         }
+        t
+    }
+    /// An empty contingency table: `rows` × `groups` counts (one value per cell), rows named in the row titles.
+    pub fn contingency(rows: usize, groups: usize) -> Self {
+        let mut t = Table::grouped(rows, groups);
+        t.kind = "contingency".into();
+        t.y_title = "Count".into();
+        for (k, s) in t.sets.iter_mut().enumerate() {
+            s.reps = 1;
+            s.title = format!("Outcome {}", crate::doc::set_letter(k));
+        }
+        t.normalize();
         t
     }
     /// (first grid column, width) of each data set.

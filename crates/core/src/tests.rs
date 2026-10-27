@@ -146,7 +146,7 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 9);
+    assert_eq!(l.len(), 10);
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
@@ -154,6 +154,8 @@ fn templates_make_sense() {
     }
     let t = &templates::build(Some("twoway")).unwrap().tables[0];
     assert_eq!((t.kind.as_str(), t.sets.len(), t.width(), t.row_titles[1].as_str(), t.get(2, 6).is_some()), ("grouped", 2, 7, "7075", true));
+    let t = &templates::build(Some("counts")).unwrap().tables[0];
+    assert_eq!((t.kind.as_str(), t.width(), t.rows, t.get(1, 2)), ("contingency", 3, 2, Some(45.0)));
     for id in ["groups", "weibull"] {
         let p = templates::build(Some(id)).unwrap();
         assert!(p.tables[0].kind == "column" && p.tables[0].sets.iter().all(|s| s.reps == 1), "{id}");

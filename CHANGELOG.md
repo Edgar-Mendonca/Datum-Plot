@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.4 — 2026-10-27
+
+Counts: contingency tables with the chi-square and Fisher's exact tests.
+
+**Contingency tables**
+- File › New Table › **Contingency**: counts of outcomes (data sets, such as passed and failed) in each group (rows, such as two processes).
+- Graphs as bars, stacked bars or **stacked to 100%** (Graph › Column Graph).
+
+**Tests on counts**
+- Analyze › **Contingency**: the chi-square test (with Yates' correction if you want it), Cramér's V, observed and expected counts, and row percentages. A check warns when expected counts are too small.
+- For 2 × 2 tables: **Fisher's exact test**, the **relative risk** and **odds ratio** with 95% CIs, and the difference of the proportions; for a diagnostic test also the sensitivity, specificity and predictive values. Checked against R.
+
+**Also**
+- A new sample: Pass or fail (two coating processes).
+
 ## 0.2.3 — 2026-10-27
 
 Two factors at once: grouped tables, two-way ANOVA and grouped graphs.

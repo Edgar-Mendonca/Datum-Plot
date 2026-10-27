@@ -75,7 +75,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A1 | XY table | X + data sets with replicates or mean/SD/SEM/N | ✅ |
 | A2 | Column table | One group per column, values down (or mean/SD/N) — for t-tests and one-way ANOVA | ✅ 0.2.2 |
 | A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | ✅ 0.2.3 |
-| A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | 0.4 |
+| A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | ✅ 0.2.4 |
 | A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
 | A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | 0.4 |
 | A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | 0.5 |
@@ -111,7 +111,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B14 | Area under the curve, derivatives, integrals, smoothing (Savitzky-Golay, LOWESS) | numpy, scipy.signal, statsmodels | ✅ 0.2.2 |
 | B15 | Two-way and three-way ANOVA (ordinary, repeated measures, mixed model) | statsmodels | ✅ 0.2.3 |
 | B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | ✅ 0.2.2 |
-| B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | 0.4 |
+| B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | ✅ 0.2.4 |
 | B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | 0.4 |
 | B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | **lifelines** | 0.5 |
 | B20 | Nested t-test, nested one-way ANOVA (mixed models) | statsmodels | 0.5 |
@@ -342,7 +342,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | Release | Features |
 | --- | --- |
 | **0.2.3** ✅ | Grouped table (A3), two-way ANOVA (B15), grouped bars and heat map (D6) |
-| 0.2.4 | Contingency table (A4), chi-square and Fisher (B17) |
+| **0.2.4** ✅ | Contingency table (A4), chi-square and Fisher (B17) |
 | 0.2.5 | Parts of whole (A6), pie and donut (D7) |
 | 0.2.6 | ROC and Bland-Altman (B18), special graphs (D10) |
 | 0.2.7 | Axis breaks and a second Y axis (D8) |

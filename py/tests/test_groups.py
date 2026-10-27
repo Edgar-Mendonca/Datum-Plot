@@ -187,3 +187,23 @@ class TwoWay(unittest.TestCase):
         self.assertEqual(len(r["brackets"]), 3)
         for kind in ["bars", "stacked", "scatter", "lines", "heatmap"]:
             self.assertIn("<svg", graph.render(t, {"column": kind, "points": "each"}, [{"kind": "twoway", "options": {"brackets": "all"}}])["svg"])
+
+
+class Contingency(unittest.TestCase):
+    @staticmethod
+    def ct(M):
+        R, C = len(M), len(M[0])
+        return {"kind": "contingency", "rows": R, "rowTitles": [f"R{i}" for i in range(R)], "sets": [{"title": f"C{j}", "entry": "rep", "reps": 1} for j in range(C)],
+                "cols": [[None] * R] + [[M[i][j] for i in range(R)] for j in range(C)], "excluded": []}
+
+    def test_against_r(self):
+        # R: chisq.test(rbind(c(762, 327, 468), c(484, 239, 477))): X-squared = 30.07, df = 2, p = 2.954e-07
+        r = A.run("contingency", self.ct([[762, 327, 468], [484, 239, 477]]), [], {})
+        self.assertEqual((cell(r, "Chi-square", None), cell(r, "Degrees of freedom", None)), ("30.07", "2"))
+        # R: fisher.test(matrix(c(3, 1, 1, 3), 2)): p = 0.4857
+        r = A.run("contingency", self.ct([[3, 1], [1, 3]]), [], {})
+        self.assertEqual(cell(r, "Fisher's exact test, P value (two-tailed)", None), "0.4857")
+        self.assertEqual(cell(r, None, 1, 1, t=1), "9")
+        self.assertIn("<svg", graph.render(self.ct([[14, 36], [5, 45]]), {"column": "percent"})["svg"])
+        with self.assertRaises(ValueError):
+            A.run("contingency", self.ct([[1.5, 2], [3, 4]]), [], {})

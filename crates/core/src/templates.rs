@@ -65,6 +65,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "groups", name: "Compare groups", desc: "Yield strength after three heat treatments: one-way ANOVA with Tukey's test.", dots: dots("groups") },
         Tpl { id: "weibull", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
         Tpl { id: "twoway", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
+        Tpl { id: "counts", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -162,6 +163,22 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Two-way ANOVA".into(), kind: "twoway".into(), sets: vec![], options: serde_json::json!({ "posthoc": "sidak", "compare": "rows", "rowname": "Alloy", "colname": "Treatment", "brackets": "sig" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("counts") => {
+            let mut t = Table::contingency(2, 2);
+            t.name = "Inspection".into();
+            t.row_titles = vec!["Old coating".into(), "New coating".into()];
+            t.sets[0].title = "Failed".into();
+            t.sets[1].title = "Passed".into();
+            t.normalize();
+            t.cols[1] = vec![Some(14.0), Some(5.0), None];
+            t.cols[2] = vec![Some(36.0), Some(45.0), None];
+            t.normalize();
+            p.name = "Pass or fail".into();
+            p.info = Info { title: "Coating inspection".into(), experiment: "50 specimens coated with each process were inspected for cracks. Fisher's exact test asks whether the failure rate differs; the relative risk says by how much.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "percent".into(), points: "mean".into(), error: "none".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Fisher's exact test".into(), kind: "contingency".into(), sets: vec![], options: serde_json::json!({}) });
         }
         Some("weibull") => {
             let mut seed = 3u64;

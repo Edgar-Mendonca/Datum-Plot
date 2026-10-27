@@ -629,3 +629,57 @@ def twoway(table, ks, o):
                   methods=f"Data were analysed by two-way ANOVA ({rowname} × {colname}{'' if inter else ', main effects only'}; Type III sums of squares){'' if post == 'none' else ' with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (statsmodels).",
                   legend="Bars show mean and SD; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="import statsmodels.formula.api as smf\nfrom statsmodels.stats.anova import anova_lm\nm = smf.ols('y ~ C(A, Sum) * C(B, Sum)', data=df).fit()\nprint(anova_lm(m, typ=3))")
+
+
+# ---------- contingency tables (B17) ----------
+def contingency(table, ks, o):
+    """Counts in rows × data sets: chi-square, Fisher's exact test (2 × 2), relative risk and odds ratio."""
+    from scipy.stats import contingency as ct
+    alpha = float(o.get("alpha", ALPHA))
+    rows, cv = cells(table)
+    M = np.array([[sum(cv.get((k, r), [0])) for k in ks] for r, _ in rows], float)
+    rn, cn = [lab for _, lab in rows], [name_of(table, k) for k in ks]
+    if M.shape[0] < 2 or M.shape[1] < 2:
+        raise ValueError("A contingency table needs at least two rows and two data sets of counts.")
+    if np.any(M < 0) or np.any(M != np.round(M)):
+        raise ValueError("Enter counts: whole numbers of zero or more.")
+    keep_r, keep_c = M.sum(1) > 0, M.sum(0) > 0
+    M, rn, cn = M[keep_r][:, keep_c], [x for x, k in zip(rn, keep_r) if k], [x for x, k in zip(cn, keep_c) if k]
+    yates = bool(o.get("yates", False))
+    chi2, p, dof, E = st.chi2_contingency(M, correction=yates and M.shape == (2, 2))
+    n = M.sum()
+    V = math.sqrt(chi2 / (n * (min(M.shape) - 1))) if n > 0 else float("nan")
+    rows_out = [["Chi-square" + (" (Yates' correction)" if yates and M.shape == (2, 2) else ""), g(chi2, 4)], ["Degrees of freedom", g(int(dof))], ["P value", pv(p)],
+                ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"], ["Cramér's V", g(V, 3)], ["Total count", g(int(n))]]
+    checks, tabs = [], []
+    small = int(np.sum(E < 5))
+    checks.append((small == 0, "Every expected count is 5 or more, so the chi-square test is reliable." if not small else f"{small} expected count{'s are' if small > 1 else ' is'} below 5: {'use Fisher’s exact test.' if M.shape == (2, 2) else 'combine rows or columns, as the chi-square P value may be wrong.'}"))
+    ans = f"Chi-square = {g(chi2, 4)}, df = {int(dof)}, {p_text(p)}: the proportions {'differ' if p < alpha else 'do not differ significantly'} between the rows."
+    if M.shape == (2, 2):
+        (a, b), (c, d) = M
+        orr, pf = st.fisher_exact(M)
+        rows_out = [["Fisher's exact test, P value (two-tailed)", pv(pf)], ["Significant (Fisher)?", f"{'Yes' if pf < alpha else 'No'} ({stars(pf)})"]] + rows_out
+        tab2 = []
+        if (a + b) > 0 and (c + d) > 0 and c > 0:
+            rr = ct.relative_risk(int(a), int(a + b), int(c), int(c + d))
+            lo, hi = rr.confidence_interval(0.95)
+            tab2.append([f"Relative risk ({rn[0]} vs {rn[1]})", g(rr.relative_risk, 4), ci_text(lo, hi)])
+        if b * c > 0:
+            od = ct.odds_ratio(M.astype(int), kind="sample")
+            lo, hi = od.confidence_interval(0.95)
+            tab2.append(["Odds ratio", g(od.statistic, 4), ci_text(lo, hi)])
+        tab2 += [[f"{cn[0]} in {rn[0]}", f"{g(100 * a / (a + b), 4)}%" if a + b else "—", ""], [f"{cn[0]} in {rn[1]}", f"{g(100 * c / (c + d), 4)}%" if c + d else "—", ""],
+                 ["Difference of proportions", f"{g(100 * (a / (a + b) - c / (c + d)), 4)}%" if a + b and c + d else "—", ""]]
+        if o.get("diagnostic"):
+            tab2 += [["Sensitivity", f"{g(100 * a / (a + c), 4)}%" if a + c else "—", ""], ["Specificity", f"{g(100 * d / (b + d), 4)}%" if b + d else "—", ""],
+                     ["Positive predictive value", f"{g(100 * a / (a + b), 4)}%" if a + b else "—", ""], ["Negative predictive value", f"{g(100 * d / (c + d), 4)}%" if c + d else "—", ""]]
+        tabs.append({"title": "Effect size (95% CI)", "columns": ["", "Value", "95% CI"], "rows": tab2})
+        ans = f"Fisher's exact test {p_text(pf)}: {'the proportions differ' if pf < alpha else 'no evidence the proportions differ'}" + (f" (relative risk {tab2[0][1]}, 95% CI {tab2[0][2]})." if tab2 and tab2[0][0].startswith("Relative") else ".")
+    tabs.insert(0, {"title": "Test", "columns": ["", "Value"], "rows": rows_out})
+    tabs.append({"title": "Observed (expected) counts", "columns": ["", *cn, "Total"], "rows": [[rn[i], *[f"{g(int(M[i, j]))} ({g(E[i, j], 3)})" for j in range(len(cn))], g(int(M[i].sum()))] for i in range(len(rn))]
+                 + [["Total", *[g(int(M[:, j].sum())) for j in range(len(cn))], g(int(n))]]})
+    tabs.append({"title": "Row percentages", "columns": ["", *cn], "rows": [[rn[i], *[f"{g(100 * M[i, j] / M[i].sum(), 3)}%" if M[i].sum() else "—" for j in range(len(cn))]] for i in range(len(rn))]})
+    two = M.shape == (2, 2)
+    return result("Contingency", ans, [{"name": "Summary", "tables": tabs}], checks,
+                  methods=f"Counts were analysed with {'Fisher’s exact test and ' if two else ''}the chi-square test{' with Yates’ correction' if yates and two else ''} (α = {alpha:g}){', with the relative risk (Koopman CI) and odds ratio' if two else ''} in Datum Plot (SciPy).",
+                  code="from scipy import stats\nprint(stats.chi2_contingency(M), stats.fisher_exact(M))")

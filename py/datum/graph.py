@@ -170,7 +170,7 @@ def figure(table, graph, overlays=()):
     colors = palette(graph, len(table["sets"]))
     if table.get("kind") == "column":
         return column_figure(fig, ax, table, graph, overlays, colors, size)
-    if table.get("kind") == "grouped":
+    if table.get("kind") in ("grouped", "contingency"):
         return grouped_figure(fig, ax, table, graph, overlays, colors, size)
     summary = stats.summarize(table)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
@@ -337,10 +337,16 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
     from .groups import cells
     from scipy import stats as sst
     kind, err = graph.get("column") or "bars", graph.get("error", "sd")
-    if kind not in ("bars", "stacked", "scatter", "lines", "heatmap"):
+    if kind not in ("bars", "stacked", "percent", "scatter", "lines", "heatmap"):
         kind = "bars"
     each = graph.get("points", "mean") == "each"
     rows, cv = cells(table)
+    if kind == "percent":  # stacked to 100 % of each row
+        tot = {r: sum(sum(cv.get((k, r), [])) for k in range(len(table["sets"]))) for r, _ in rows}
+        cv = {(k, r): [100 * sum(v) / tot[r]] for (k, r), v in cv.items() if tot[r]}
+        kind, err, pct = "stacked", "none", True
+    else:
+        pct = False
     shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
     names = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in shown]
     labels = [lab for _, lab in rows]
@@ -409,11 +415,14 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
     ax.set_xlim(-0.6, len(rows) - 0.4)
     ax.tick_params(axis="x", length=0)
     axes(ax, table, graph, [[0, 0, float(min(allv))]], only_y=True)
+    if pct:
+        ax.set_ylabel((graph.get("y") or {}).get("title") or "% of row", fontweight="bold" if graph.get("boldTitles", True) else "normal")
+        ax.set_ylim(0, 100)
     if graph.get("title") and graph.get("showTitle", True):
         ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
     lg = graph.get("legend") or {}
     if lg.get("show", True) and n > 1:
-        leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" else ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+        leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" or (pct and lg.get("loc", "best") == "best") else ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
     if overlays and points and kind not in ("stacked", "lines"):
         draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
     return fig, ax, leg, points

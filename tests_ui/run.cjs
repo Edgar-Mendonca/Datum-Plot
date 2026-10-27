@@ -42,7 +42,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, nine samples, open, import and roadmap", (await p.$$(".home .tile")).length === 13, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, ten samples, open, import and roadmap", (await p.$$(".home .tile")).length === 14, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -121,9 +121,9 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("Contingency")');
+  await p.click('.ribbon .rb:has-text("Survival")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B17") && (await p.textContent(".dlg")).includes("0.2.4"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B19") && (await p.textContent(".dlg")).includes("0.2.14"));
   await p.keyboard.press("Escape");
   check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
   await p.click('.ribbon .rb:has-text("Analyze…")');
