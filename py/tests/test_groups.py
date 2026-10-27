@@ -218,3 +218,20 @@ class Parts(unittest.TestCase):
         self.assertEqual(cell(r, None, 1, 3), "86.4% to 90.3%")
         for kind in ["pie", "donut", "percent"]:
             self.assertIn("<svg", graph.render(t, {"column": kind})["svg"])
+
+
+class Agreement(unittest.TestCase):
+    def test_bland_altman_by_hand(self):
+        a, b = [10, 12, 14, 16, 18], [11, 12, 15, 18, 19]
+        r = A.run("blandaltman", col(a, b), [], {})
+        d = np.subtract(b, a)
+        self.assertEqual(cell(r, None, 0, 1), "1")
+        self.assertEqual(cell(r, None, 2, 1), A.g(d.mean() - 1.959963984540054 * d.std(ddof=1)))
+        self.assertEqual(r["table"]["cols"][1], list(map(float, d)))
+
+    def test_roc_auc_is_the_mann_whitney_probability(self):
+        # P(case > control) + ½ P(tie) for controls 1, 2, 3 and cases 2, 3, 4 = 7/9
+        r = A.run("roc", col([1, 2, 3], [2, 3, 4]), [], {})
+        self.assertEqual(cell(r, None, 0, 1), "0.7778")
+        self.assertEqual(cell(A.run("roc", col([1, 2, 3], [2, 3, 4]), [], {"direction": "lower"}), None, 0, 1), "0.2222")
+        self.assertEqual(len(A.run("anova", col(CTRL, TRT1, TRT2), [], {})["plots"]), 2)

@@ -124,6 +124,18 @@ def dot_plot(title, groups, names):
     return small_plot(title, draw)
 
 
+def forest(title, rows):
+    """A forest plot: one row per comparison, its estimate and 95 % CI, and a line at zero (D10)."""
+    def draw(ax):
+        for i, (lab, d, lo, hi) in enumerate(rows[::-1]):
+            ax.plot([lo, hi], [i, i], color=COLORS[0], lw=1.4)
+            ax.plot(d, i, "s", color=COLORS[0], ms=4.5)
+        ax.axvline(0, color="#8D9AAB", lw=0.8, ls="--")
+        ax.set_yticks(range(len(rows)), [r[0][:28] for r in rows[::-1]], fontsize=7)
+        ax.set_xlabel("Difference")
+    return small_plot(title, draw, 95, 18 + 9 * len(rows))
+
+
 # ---------- t-tests and effect sizes (B4, B8) ----------
 def ttest(table, ks, o):
     test, alpha = o.get("test", "unpaired"), float(o.get("alpha", ALPHA))
@@ -399,6 +411,7 @@ def anova(table, ks, o):
     if post != "none":
         comps, label = posthoc(table, ks, sm_, post, mse, dfe, kind)
         tabs.append({"title": label, "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"], "rows": [[f"{names[i]} vs {names[j]}", g(d), ci, pv(q), stars(q)] for i, j, d, ci, q in comps]})
+        plots.append(forest("Differences with 95% CI", [(f"{names[j]} − {names[i]}", d, *map(float, ci.split(" to "))) for i, j, d, ci, q in comps]))
         brackets = [[ks[i], ks[j], q] for i, j, _, _, q in comps]
     if o.get("trend") and kk > 2:
         w = np.arange(kk) - (kk - 1) / 2
@@ -717,3 +730,85 @@ def parts(table, ks, o):
     return result("Fractions of total", " ".join(ans), [{"name": "Summary", "tables": tabs}], [(None, "Negative values are left out of the total.")],
                   methods="Each part was expressed as a fraction of its total; for counts, 95% confidence intervals are Wilson score intervals (statsmodels), in Datum Plot.",
                   code="import numpy as np\nfrom statsmodels.stats.proportion import proportion_confint\nprint(v / v.sum(), proportion_confint(v, v.sum(), method='wilson'))")
+
+
+# ---------- Bland-Altman and ROC (B18, D10) ----------
+def blandaltman(table, ks, o):
+    """Agreement of two methods measured on the same items (paired by row): bias, limits of agreement
+    with their 95 % CIs (Bland & Altman 1999), and a test for proportional bias."""
+    if len(ks) < 2:
+        raise ValueError("Choose the two data sets (methods) to compare.")
+    na, nb = name_of(table, ks[0]), name_of(table, ks[1])
+    x, y = pairs_of(table, ks[0], ks[1])
+    if len(x) < 3:
+        raise ValueError("Bland-Altman needs at least three rows measured by both methods.")
+    mode = o.get("diff", "diff")
+    m = (x + y) / 2
+    d = (y - x) if mode == "diff" else 100 * (y - x) / m if mode == "pct" else y / x
+    n, bias, sd = len(d), float(d.mean()), float(d.std(ddof=1))
+    t = st.t.ppf(0.975, n - 1)
+    lo, hi = bias - Z95 * sd, bias + Z95 * sd
+    se_b, se_l = sd / math.sqrt(n), sd * math.sqrt(3 / n)
+    unit = {"diff": "", "pct": " %", "ratio": ""}[mode]
+    what = {"diff": f"{nb} − {na}", "pct": f"({nb} − {na}) / mean × 100", "ratio": f"{nb} / {na}"}[mode]
+    reg = st.linregress(m, d)
+    rows = [["Bias (mean difference)", g(bias), ci_text(bias - t * se_b, bias + t * se_b)], ["SD of the differences", g(sd), ""],
+            ["Lower limit of agreement (bias − 1.96 SD)", g(lo), ci_text(lo - t * se_l, lo + t * se_l)], ["Upper limit of agreement (bias + 1.96 SD)", g(hi), ci_text(hi - t * se_l, hi + t * se_l)],
+            ["Slope of difference against mean", g(reg.slope, 4), p_text(reg.pvalue)], ["Number of pairs", g(n), ""]]
+    checks = [(reg.pvalue >= ALPHA, "No proportional bias: the difference does not change with the size of the values." if reg.pvalue >= ALPHA else f"Proportional bias: the difference changes with the size of the values ({p_text(reg.pvalue)}); try differences as % of the mean.")]
+    if n >= 3:
+        sw = st.shapiro(d)
+        checks.append((sw.pvalue > ALPHA, f"The differences {'look' if sw.pvalue > ALPHA else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)}); the limits assume they are."))
+    def draw(ax):
+        ax.plot(m, d, "o", ms=3.5, color=COLORS[0])
+        for v, ls, lab in ((bias, "-", f"Bias {g(bias, 3)}"), (lo, "--", f"−1.96 SD {g(lo, 3)}"), (hi, "--", f"+1.96 SD {g(hi, 3)}")):
+            ax.axhline(v, color="#3A4655", lw=0.9, ls=ls)
+            ax.text(max(m), v, f" {lab}", va="bottom", ha="right", fontsize=7, color="#3A4655")
+        if mode == "diff":
+            ax.axhline(0, color="#B8C0CA", lw=0.6)
+        ax.set_xlabel(f"Mean of {na} and {nb}"[:40]); ax.set_ylabel("Difference" if mode == "diff" else "Difference (%)" if mode == "pct" else "Ratio")
+    plot = small_plot("Bland-Altman plot", draw, 95, 70)
+    from .tools import new_table
+    tb = new_table(table, f"{table.get('name', 'Data')} Bland-Altman", [what], m.tolist(), [d.tolist()], x_title=f"Mean of {na} and {nb}", y_title="Difference" if mode == "diff" else "Difference (%)" if mode == "pct" else "Ratio")
+    return result("Bland-Altman", f"Bias {g(bias, 4)}{unit}; 95% limits of agreement {g(lo, 4)} to {g(hi, 4)}{unit} ({what}).", [{"name": "Summary", "tables": [{"title": f"Agreement of {na} and {nb}", "columns": ["", "Value", "95% CI"], "rows": rows}]}],
+                  checks, plots=[plot], table=tb,
+                  methods=f"Agreement between {na} and {nb} was assessed by Bland-Altman analysis ({what}); limits of agreement are bias ± 1.96 SD, with 95% CIs after Bland and Altman (1999), in Datum Plot.",
+                  legend="Bland-Altman plot: the solid line is the bias, dashed lines the 95% limits of agreement.",
+                  code="import numpy as np\nd = b - a; m = (a + b) / 2\nbias, sd = d.mean(), d.std(ddof=1)\nprint(bias, bias - 1.96 * sd, bias + 1.96 * sd)")
+
+
+def roc(table, ks, o):
+    """ROC curve of a test: the first data set holds the values of the controls (negatives), the second of
+    the patients or failures (positives). AUC with its SE (Hanley & McNeil) and the best cut-off (Youden)."""
+    if len(ks) < 2:
+        raise ValueError("Choose two data sets: the controls (negatives) first, then the cases (positives).")
+    neg, pos = (np.array([a for a, _ in values(table, k)], float) for k in ks[:2])
+    if len(neg) < 2 or len(pos) < 2:
+        raise ValueError("Each group needs at least two values.")
+    higher = o.get("direction", "higher") == "higher"
+    s_neg, s_pos = (neg, pos) if higher else (-neg, -pos)
+    cuts = np.unique(np.concatenate([s_neg, s_pos]))[::-1]
+    sens = np.array([0.0] + [float(np.mean(s_pos >= c)) for c in cuts])
+    fpr = np.array([0.0] + [float(np.mean(s_neg >= c)) for c in cuts])
+    U = st.mannwhitneyu(s_pos, s_neg, alternative="two-sided")
+    auc = float(U.statistic) / (len(pos) * len(neg))
+    q1, q2 = auc / (2 - auc), 2 * auc * auc / (1 + auc)
+    se = math.sqrt((auc * (1 - auc) + (len(pos) - 1) * (q1 - auc * auc) + (len(neg) - 1) * (q2 - auc * auc)) / (len(pos) * len(neg)))
+    p = float(U.pvalue)
+    j = int(np.argmax(sens[1:] - fpr[1:])) + 1
+    best = cuts[j - 1] if higher else -cuts[j - 1]
+    rows = [["Area under the ROC curve (AUC)", g(auc, 4), ci_text(max(0.0, auc - Z95 * se), min(1.0, auc + Z95 * se))], ["Std. error (Hanley & McNeil)", g(se, 3), ""],
+            ["P value (AUC = 0.5, Mann-Whitney)", pv(p), ""], ["Best cut-off (Youden)", f"{'≥' if higher else '≤'} {g(best)}", ""],
+            ["  Sensitivity at the cut-off", f"{g(100 * sens[j], 4)}%", ""], ["  Specificity at the cut-off", f"{g(100 * (1 - fpr[j]), 4)}%", ""], ["Controls, cases", f"{len(neg)}, {len(pos)}", ""]]
+    cut_rows = [[f"{'≥' if higher else '≤'} {g(c if higher else -c)}", f"{g(100 * s_, 4)}%", f"{g(100 * (1 - f_), 4)}%", g(s_ / f_, 3) if f_ > 0 else "∞"] for c, s_, f_ in zip(cuts, sens[1:], fpr[1:])][:60]
+    plot = small_plot("ROC curve", lambda ax: (ax.plot(100 * fpr, 100 * sens, color=COLORS[0], lw=1.6, drawstyle="steps-post"), ax.plot([0, 100], [0, 100], color="#B8C0CA", lw=0.8, ls="--"),
+                                                ax.plot(100 * fpr[j], 100 * sens[j], "o", color=COLORS[3], ms=5), ax.set_xlabel("100 − specificity (%)"), ax.set_ylabel("Sensitivity (%)"),
+                                                ax.set_xlim(0, 100), ax.set_ylim(0, 102), ax.set_aspect("equal")), 80, 80)
+    from .tools import new_table
+    tb = new_table(table, f"{table.get('name', 'Data')} ROC", ["ROC curve"], (100 * fpr).tolist(), [(100 * sens).tolist()], x_title="100 − specificity (%)", y_title="Sensitivity (%)")
+    return result("ROC curve", f"AUC = {g(auc, 3)} (95% CI {rows[0][2]}), {p_text(p)}; best cut-off {rows[3][1]} (sensitivity {rows[4][1]}, specificity {rows[5][1]}).",
+                  [{"name": "Summary", "tables": [{"title": f"{name_of(table, ks[1])} (cases) against {name_of(table, ks[0])} (controls)", "columns": ["", "Value", "95% CI"], "rows": rows}]},
+                   {"name": "Cut-offs", "tables": [{"title": "Sensitivity and specificity at each cut-off", "columns": ["Positive if", "Sensitivity", "Specificity", "Likelihood ratio"], "rows": cut_rows}]}],
+                  [(None, f"Values {'above' if higher else 'below'} the cut-off count as positive; change the direction if the test works the other way.")], plots=[plot], table=tb,
+                  methods="The ROC curve was computed from the values of the controls and cases; the AUC equals the Mann-Whitney U statistic over n1·n2, with its standard error after Hanley and McNeil (1982), in Datum Plot (SciPy).",
+                  code="from scipy import stats\nU = stats.mannwhitneyu(cases, controls)\nauc = U.statistic / (len(cases) * len(controls))")

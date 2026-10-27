@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.6 — 2026-10-27
+
+Do two methods agree, and how good is a test: Bland-Altman and ROC curves.
+
+**Bland-Altman**
+- Analyze › **Bland-Altman**: two methods measured on the same items (one row each). Gives the bias and the 95% limits of agreement with their confidence intervals, a check for proportional bias, and the Bland-Altman plot. Differences can be plain, as % of the mean, or ratios.
+
+**ROC curves**
+- Analyze › **ROC Curve**: the values of a test in controls and in cases. Gives the area under the curve with its 95% CI and P value, the best cut-off (Youden) with its sensitivity and specificity, every cut-off in a table, and the ROC curve.
+
+**Special graphs**
+- Bland-Altman and ROC plots in the results; **New table from result** turns either into a data table to graph and style.
+- One-way ANOVA now shows a **forest plot** of the differences between groups with their 95% CIs.
+
 ## 0.2.5 — 2026-10-27
 
 Parts of a whole: pie and donut charts, and each part as a percentage.

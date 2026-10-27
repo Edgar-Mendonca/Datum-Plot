@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.5";
+export const VERSION_NOW = "0.2.6";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -51,7 +51,7 @@ export const FEATURES: Feature[] = [
   ["B15", "Two-way and three-way ANOVA", "0.2.3", "Ordinary, repeated measures and mixed models.", "statsmodels"],
   ["B16", "Correlation", "0.2.2", "Pearson (with 95 % CI), Spearman and Kendall; X against Y, or between data sets with a correlation matrix.", "scipy, pandas"],
   ["B17", "Contingency tests", "0.2.4", "Chi-square, Fisher's exact test, relative risk, odds ratio, sensitivity and specificity.", "scipy, statsmodels"],
-  ["B18", "ROC and Bland-Altman", "0.2.6", "ROC curves with AUC; Bland-Altman agreement between two methods.", "numpy"],
+  ["B18", "ROC and Bland-Altman", "0.2.6", "ROC curves with AUC, its CI and the best cut-off; Bland-Altman bias and limits of agreement with CIs.", "numpy"],
   ["B19", "Survival analysis", "0.2.14", "Kaplan-Meier, log-rank, median survival, hazard ratios, Cox regression.", "lifelines"],
   ["B20", "Nested t-test and ANOVA", "0.2.15", "Mixed models for data with sub-groups.", "statsmodels"],
   ["B21", "Multiple and logistic regression", "0.2.12", "Many predictors; logistic and Poisson regression.", "statsmodels"],
@@ -83,7 +83,7 @@ export const FEATURES: Feature[] = [
   ["D7", "Pie and donut", "0.2.5", "Parts of a whole, and 100 % stacked bars.", "matplotlib"],
   ["D8", "Axis breaks and double Y", "0.2.7", "Broken axes, a second Y axis, top and right axes, reversed and probability scales.", "matplotlib"],
   ["D9", "Survival curves", "0.2.14", "Staircase curves with censor ticks and the number at risk.", "matplotlib, lifelines"],
-  ["D10", "Special graphs", "0.2.6", "Volcano, forest, bubble, Bland-Altman and ROC plots.", "matplotlib"],
+  ["D10", "Special graphs", "0.2.6", "Bland-Altman and ROC plots, and forest plots of the differences after ANOVA. Volcano and bubble plots come later.", "matplotlib"],
   ["D11", "3D, contour and polar", "0.2.19", "Contours, 3D surfaces and scatter, polar, ternary, waterfall, vector and radar plots.", "matplotlib"],
   ["D12", "Multi-panel graphs and insets", "0.2.11", "Stacked and grid panels, insets, layers with linked axes.", "matplotlib"],
   ["D13", "Graph styles", "0.2.2", "Prism, Origin, Nature, Science, ACS, IEEE, presentation and greyscale styles; save your own.", "matplotlib"],

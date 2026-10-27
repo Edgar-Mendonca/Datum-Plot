@@ -112,7 +112,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B15 | Two-way and three-way ANOVA (ordinary, repeated measures, mixed model) | statsmodels | ✅ 0.2.3 |
 | B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | ✅ 0.2.2 |
 | B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | ✅ 0.2.4 |
-| B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | 0.4 |
+| B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | ✅ 0.2.6 |
 | B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | **lifelines** | 0.5 |
 | B20 | Nested t-test, nested one-way ANOVA (mixed models) | statsmodels | 0.5 |
 | B21 | Multiple linear, logistic and Poisson regression | statsmodels | 0.5 |
@@ -154,7 +154,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D7 | Pie, donut, 100 % stacked bars | ✅ 0.2.5 |
 | D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | 0.4 |
 | D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
-| D10 | Volcano, forest, bubble, Bland-Altman, ROC | 0.4–0.5 |
+| D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
 | D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | 0.6 |
 | D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
@@ -344,7 +344,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.3** ✅ | Grouped table (A3), two-way ANOVA (B15), grouped bars and heat map (D6) |
 | **0.2.4** ✅ | Contingency table (A4), chi-square and Fisher (B17) |
 | **0.2.5** ✅ | Parts of whole (A6), pie and donut (D7) |
-| 0.2.6 | ROC and Bland-Altman (B18), special graphs (D10) |
+| **0.2.6** ✅ | ROC and Bland-Altman (B18), special graphs (D10: Bland-Altman, ROC, forest; volcano and bubble later) |
 | 0.2.7 | Axis breaks and a second Y axis (D8) |
 | 0.2.8 | Annotations (D15) |
 | 0.2.9 | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
