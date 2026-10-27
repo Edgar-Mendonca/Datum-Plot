@@ -235,3 +235,14 @@ class Agreement(unittest.TestCase):
         self.assertEqual(cell(r, None, 0, 1), "0.7778")
         self.assertEqual(cell(A.run("roc", col([1, 2, 3], [2, 3, 4]), [], {"direction": "lower"}), None, 0, 1), "0.2222")
         self.assertEqual(len(A.run("anova", col(CTRL, TRT1, TRT2), [], {})["plots"]), 2)
+
+
+class AxisTools(unittest.TestCase):
+    def test_right_axis_and_axis_break(self):
+        t = xy([0, 1, 2, 3], [1, 2, 3, 4], [100, 104, 110, 113])
+        r = graph.render(t, {"sets": [{}, {"right": True}]}, [{"kind": "linear", "options": {}}])
+        right = [p for p in r["points"] if p[0] == 1]
+        self.assertTrue(all(len(p) == 7 and r["ylim"][0] <= p[6] <= r["ylim"][1] for p in right), right)
+        r = graph.render(t, {"y": {"breakFrom": 5, "breakTo": 95}}, [])
+        self.assertEqual(r["ylim"][1], 5)
+        self.assertTrue(graph.export(t, {"y": {"breakFrom": 5, "breakTo": 95}}, "png")["data"])

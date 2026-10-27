@@ -238,4 +238,6 @@ fn copy_look_keeps_titles_ranges_and_curves() {
     let g = &d.p.graphs[1].settings;
     assert_eq!((g.font.as_str(), g.font_size, g.palette.as_str(), g.y.scale.as_str()), ("Times New Roman", 7.0, "viridis", "log"));
     assert_eq!((g.title.as_str(), g.y.title.as_str()), ("Other", "Stress"));
+    let a: Axis = serde_json::from_str(r#"{"breakFrom": 12, "breakTo": 95}"#).unwrap();
+    assert_eq!((a.break_from, a.break_to, a.scale.as_str()), (Some(12.0), Some(95.0), "lin"));
 }

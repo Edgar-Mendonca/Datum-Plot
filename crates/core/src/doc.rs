@@ -355,8 +355,8 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             let src = p.graph(from).ok_or("That graph no longer exists.")?.settings.clone();
             for g in p.graphs.iter_mut().filter(|g| to.contains(&g.id) && g.id != from) {
                 let s = &g.settings;
-                let axis = |a: &Axis, b: &Axis| Axis { title: b.title.clone(), auto: b.auto, min: b.min, max: b.max, step: b.step, ..a.clone() };
-                g.settings = GraphSettings { title: s.title.clone(), show_title: s.show_title, x: axis(&src.x, &s.x), y: axis(&src.y, &s.y), overlays: s.overlays.clone(), line: s.line, ..src.clone() };
+                let axis = |a: &Axis, b: &Axis| Axis { title: b.title.clone(), auto: b.auto, min: b.min, max: b.max, step: b.step, break_from: b.break_from, break_to: b.break_to, ..a.clone() };
+                g.settings = GraphSettings { title: s.title.clone(), show_title: s.show_title, x: axis(&src.x, &s.x), y: axis(&src.y, &s.y), y2: axis(&src.y2, &s.y2), overlays: s.overlays.clone(), line: s.line, ..src.clone() };
             }
         }
         Op::Style { table, cells } => {

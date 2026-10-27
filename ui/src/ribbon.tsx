@@ -163,7 +163,7 @@ export const Ribbon = () => (
         <div><button class="rb fb" classList={{ on: !!gs()?.boldTitles }} title="Bold axis titles" onClick={() => setGS(s => { s.boldTitles = !s.boldTitles; })}><span style={{ "font-weight": 700 }}>B</span></button>
           <button class="rb fb" title="Increase font size" onClick={() => setGS(s => { s.fontSize = Math.min(36, s.fontSize + 1); })}><span>A<sup>+</sup></span></button><button class="rb fb" title="Decrease font size" onClick={() => setGS(s => { s.fontSize = Math.max(5, s.fontSize - 1); })}><span>A<sup>−</sup></span></button></div></div></G>
       <G l="Annotate"><S><N i="note" l="Text" id="D15" /><N i="line" l="Arrow, Line" id="D15" /><N i="frame" l="Box" id="D15" /></S></G>
-      <G l="Axes"><S><N i="axis" l="Axis Break" id="D8" /><N i="axis" l="Second Y Axis" id="D8" /><N i="zin" l="Zoom and Pan" id="E4" /></S></G>
+      <G l="Axes" h="axes"><S><B i="axis" l="Axis Break" title="Leave out a stretch of the Y axis (Format Graph › Y Axis)" run={() => C.format("y")} /><B i="axis" l="Second Y Axis" title="Tick “Right Y” for a data set (Format Graph › Data Sets)" run={() => { C.format("sets"); toast("Tick “Right Y” for the data sets that belong on a second axis.", true); }} /><N i="zin" l="Zoom and Pan" id="E4" /></S></G>
       <G l="Layout" h="glayout"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /><S><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /><B i="opts" l="Graph Options" run={() => C.format("graph")} /></S></G>
     </Show>
     <Show when={tab() === "layout"}>

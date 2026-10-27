@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.7 — 2026-10-27
+
+Axis breaks and a second Y axis.
+
+**Second Y axis**
+- Tick **Right Y** for a data set (Format Graph › Data Sets, or Format › Second Y Axis): it is drawn against its own axis on the right, with its own title, scale, range and ticks (Format Graph › Right Y Axis). Fitted curves follow their data set's axis; hovering shows the values.
+
+**Axis breaks**
+- Format Graph › Y Axis › **Axis break**: leave out a stretch of the Y axis (for example 12 to 95) when one data set sits far above the others. The graph splits into a short top panel and a tall bottom one, with break marks.
+
 ## 0.2.6 — 2026-10-27
 
 Do two methods agree, and how good is a test: Bland-Altman and ROC curves.

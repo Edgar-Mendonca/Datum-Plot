@@ -13,12 +13,12 @@ export interface Table {
   id: number; name: string; kind: string; xTitle: string; xUnits: string; yTitle: string; yUnits: string; rows: number; rowTitles: string[];
   sets: DataSet[]; cols: (number | null)[][]; excluded: [number, number][]; style: Record<string, string>; notes: string;
 }
-export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean }
-export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number }
+export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean; breakFrom?: number | null; breakTo?: number | null }
+export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number; right?: boolean }
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
   style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
-  /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string;
+  /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis;
 }
 export interface Graph { id: number; table: number; name: string; settings: GraphSettings }
 export interface Analysis { id: number; table: number; name: string; kind: string; sets: number[]; options: Record<string, any> }
@@ -36,7 +36,7 @@ export interface Out { project: Project; path: string | null; dirty: boolean; un
 /** A graph drawn by the Python engine: SVG and where things are, in points from the top-left. */
 export interface Render {
   svg: string; w: number; h: number; plot: [number, number, number, number]; all: [number, number, number, number]; legend: [number, number, number, number] | null;
-  xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; points: ([number, number, number, number, number, number] | null)[];
+  xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; points: ([number, number, number, number, number, number, number?] | null)[];
 }
 export interface Options {
   theme: string; autosave: number; beta: boolean; openLast: boolean; decimals: number; reps: number; entry: string; error: string; width: number; height: number;

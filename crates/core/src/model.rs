@@ -242,6 +242,8 @@ pub struct GraphSettings {
     pub overlays: Vec<u32>,
     /// Column tables: scatter, bars, box, violin, paired or mean.
     pub column: String,
+    /// The second Y axis (right), for data sets marked `right`.
+    pub y2: Axis,
     /// Colour scheme: okabe, tableau, bright, muted, dark, pastel, viridis, cividis, magma, grey, or "#hex, #hex…".
     pub palette: String,
 }
@@ -251,7 +253,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
-            column: "scatter".into(), palette: String::new(),
+            column: "scatter".into(), palette: String::new(), y2: Axis::default(),
         }
     }
 }
@@ -271,7 +273,7 @@ impl Default for Legend {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "camelCase")]
 pub struct Axis {
     /// Empty: the table's title and units.
     pub title: String,
@@ -284,11 +286,14 @@ pub struct Axis {
     pub step: Option<f64>,
     pub minor: bool,
     pub grid: bool,
+    /// Y axis break: the values from `break_from` to `break_to` are cut out (both set and from < to).
+    pub break_from: Option<f64>,
+    pub break_to: Option<f64>,
 }
 
 impl Default for Axis {
     fn default() -> Self {
-        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false }
+        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None }
     }
 }
 
@@ -303,11 +308,13 @@ pub struct SetStyle {
     pub filled: bool,
     pub line: Option<bool>,
     pub width: f64,
+    /// Drawn against the second Y axis on the right.
+    pub right: bool,
 }
 
 impl Default for SetStyle {
     fn default() -> Self {
-        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0 }
+        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false }
     }
 }
 

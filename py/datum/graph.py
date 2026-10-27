@@ -106,7 +106,7 @@ def draw_brackets(ax, brackets, pos, tops, size, o):
     ax.set_ylim(lo, top)
 
 
-def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, tops=None):
+def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, tops=None, twin=None, label=True):
     """What analyses add to a graph: fitted curves with their 95 % bands and equation, shaded
     areas, and (column graphs) significance brackets."""
     from . import analysis
@@ -125,6 +125,9 @@ def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, 
             if not st["show"]:
                 continue
             col = st["color"]
+            ax_ = ax
+            if twin and c["set"] in twin[1]:
+                ax, ax_ = twin[0], ax
             if c.get("fill"):
                 ax.fill_between(c["x"], c["fill"], c["y"], color=col, alpha=0.18, linewidth=0, zorder=1)
                 ax.plot(c["x"], c["fill"], color=col, linewidth=0.7, linestyle=":", zorder=2)
@@ -136,13 +139,15 @@ def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, 
             if c.get("plo") and bands in ("pi", "both"):
                 ax.plot(c["x"], c["plo"], color=col, linewidth=0.8, linestyle="--", zorder=2)
                 ax.plot(c["x"], c["phi"], color=col, linewidth=0.8, linestyle="--", zorder=2)
+            ax = ax_ if twin and c["set"] in twin[1] else ax
             if o.get("label", True) and c.get("label"):
                 labels.append((c["label"], col))
-    if not labels:
+    if not labels or not label:
         return
     # The corner with the fewest data points gets the equations.
     ax.autoscale_view()
-    pts = np.concatenate([np.column_stack([ln.get_xdata(), ln.get_ydata()]) for ln in ax.get_lines() if len(ln.get_xdata())] or [np.zeros((0, 2))])
+    pts = np.concatenate([np.column_stack([np.asarray(ln.get_xdata(), float), np.asarray(ln.get_ydata(), float)]) for ln in ax.get_lines() if len(ln.get_xdata())] or [np.zeros((0, 2))])
+    pts = pts[np.all(np.isfinite(pts), axis=1)]
     fr = ax.transAxes.inverted().transform(ax.transData.transform(pts)) if len(pts) else np.zeros((0, 2))
     h = 0.08 * len(labels) + 0.04
     corners = [(0.03, 0.97, "left", "top"), (0.97, 0.03 + h, "right", "top"), (0.97, 0.97, "right", "top"), (0.03, 0.03 + h, "left", "top")]
@@ -177,50 +182,122 @@ def figure(table, graph, overlays=()):
     summary = stats.summarize(table)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
     direction = graph.get("errorDir", "both")
-    points = []
-    for k, (s, pts) in enumerate(zip(table["sets"], summary)):
-        st = style_of(graph, k, colors)
-        if not st["show"] or not pts:
-            continue
-        xs, ys = [p["x"] for p in pts], [p["mean"] for p in pts]
-        mk, col = SYMBOLS.get(st["symbol"], "o"), st["color"]
-        face = col if st["filled"] else "white"
-        line = st["line"] if st["line"] is not None else conn
-        label = s.get("title") or f"Data set {chr(65 + k)}"
-        if each:
-            ex = [p["x"] for p in pts for _ in p["values"]]
-            ey = [v for p in pts for v in p["values"]]
-            ax.plot(ex, ey, linestyle="none", marker=mk or "o", markersize=st["size"], markerfacecolor=face, markeredgecolor=col, color=col, label=label, zorder=3)
-            if line:
-                ax.plot(xs, ys, color=col, linewidth=st["width"], zorder=2)
-        else:
-            yerr = None
-            if err != "none":
-                lo, hi = zip(*(error_of(p, err) for p in pts))
-                yerr = [[0 if direction == "up" else v for v in lo], [0 if direction == "down" else v for v in hi]]
-            ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
-                        markerfacecolor=face, markeredgecolor=col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
-        points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in pts]
+    right = {k for k, x in enumerate(graph.get("sets") or []) if x.get("right")}
+    ya = graph.get("y") or {}
+    bf, bt = ya.get("breakFrom"), ya.get("breakTo")
+    broken = bf is not None and bt is not None and bt > bf and ya.get("scale") != "log" and not right
+
+    def plot_sets(ax, which=None):
+        """Draws the data sets (all, or only those on the left or right Y axis) into `ax`."""
+        points = []
+        for k, (s, pts) in enumerate(zip(table["sets"], summary)):
+            st = style_of(graph, k, colors)
+            if not st["show"] or not pts or (which == "left" and k in right) or (which == "right" and k not in right):
+                continue
+            xs, ys = [p["x"] for p in pts], [p["mean"] for p in pts]
+            mk, col = SYMBOLS.get(st["symbol"], "o"), st["color"]
+            face = col if st["filled"] else "white"
+            line = st["line"] if st["line"] is not None else conn
+            label = (s.get("title") or f"Data set {chr(65 + k)}") + (" (right axis)" if which == "right" else "")
+            if each:
+                ex = [p["x"] for p in pts for _ in p["values"]]
+                ey = [v for p in pts for v in p["values"]]
+                ax.plot(ex, ey, linestyle="none", marker=mk or "o", markersize=st["size"], markerfacecolor=face, markeredgecolor=col, color=col, label=label, zorder=3)
+                if line:
+                    ax.plot(xs, ys, color=col, linewidth=st["width"], zorder=2)
+            else:
+                yerr = None
+                if err != "none":
+                    lo, hi = zip(*(error_of(p, err) for p in pts))
+                    yerr = [[0 if direction == "up" else v for v in lo], [0 if direction == "down" else v for v in hi]]
+                ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
+                            markerfacecolor=face, markeredgecolor=col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
+            points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in pts]
+        return points
+
+    lg = graph.get("legend") or {}
+    nsets = len([1 for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"] and summary[k]])
+    def legend(ax, handles=None):
+        if not (lg.get("show", True) and nsets > 1):
+            return None
+        h, l_ = handles or ax.get_legend_handles_labels()
+        if lg.get("loc") == "outside":
+            return ax.legend(h, l_, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
+        return ax.legend(h, l_, loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+
+    if broken:
+        # An axis break: the same data in a short top panel (above the gap) and a tall bottom one (below it).
+        fig.clear()
+        gs = fig.add_gridspec(2, 1, height_ratios=[1, 2.2], hspace=0.04)
+        top = fig.add_subplot(gs[0])
+        ax = fig.add_subplot(gs[1], sharex=top)
+        for a_ in (top, ax):
+            a_.patch.set_alpha(0)
+            for side in ("top", "right"):
+                a_.spines[side].set_visible(frame)
+        points = plot_sets(ax)
+        plot_sets(top)
+        axes(ax, table, graph, points)
+        axes(top, table, graph, points)
+        lo = ax.get_ylim()[0]
+        ax.set_ylim(lo, bf)
+        top.set_ylim(bt, max(top.get_ylim()[1], bt + (bf - lo) * 0.2))
+        top.set_xlabel(""); top.set_ylabel("")
+        top.spines["bottom"].set_visible(False); ax.spines["top"].set_visible(False)
+        top.tick_params(axis="x", which="both", bottom=False, labelbottom=False, top=False)
+        d = dict(marker=[(-1, -0.6), (1, 0.6)], markersize=7, linestyle="none", color="#222222", mec="#222222", mew=1, clip_on=False)
+        top.plot([0], [0], transform=top.transAxes, **d)
+        ax.plot([0], [1], transform=ax.transAxes, **d)
+        if graph.get("title") and graph.get("showTitle", True):
+            top.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+        leg = legend(top)
+        if overlays and points:
+            draw_overlays(top, table, graph, overlays, size, colors, label=False)
+            draw_overlays(ax, table, graph, overlays, size, colors)
+        return fig, ax, leg, points
+    points = plot_sets(ax, "left" if right else None)
     axes(ax, table, graph, points)
+    ax2 = None
+    if right:
+        # A second Y axis on the right for the data sets marked "Right Y".
+        ax2 = ax.twinx()
+        ax2.patch.set_alpha(0)
+        ax2.spines["top"].set_visible(frame)
+        ax2.spines["right"].set_visible(True)
+        pts2 = plot_sets(ax2, "right")
+        y2 = dict(graph.get("y2") or {})
+        if not y2.get("title"):
+            y2["title"] = ", ".join(table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in sorted(right) if k < len(table["sets"]))
+        axes(ax2, table, {**graph, "y": y2}, pts2, only_y=True, x=False)
+        if graph.get("style") == "frame":
+            ax.tick_params(axis="y", right=False)
+        (l0, l1), (r0, r1) = ax.get_ylim(), ax2.get_ylim()
+        f = (lambda v: math.log10(v)) if ax2.get_yscale() == "log" else (lambda v: v)
+        g_ = (lambda v: 10 ** v) if ax.get_yscale() == "log" else (lambda v: v)
+        fl = (lambda v: math.log10(v)) if ax.get_yscale() == "log" else (lambda v: v)
+        for p in pts2:
+            try:  # where the point sits in left-axis units, so the window's hover finds it
+                p.append(g_(fl(l0) + (f(p[2]) - f(r0)) / (f(r1) - f(r0)) * (fl(l1) - fl(l0))))
+            except (ValueError, ZeroDivisionError):
+                p.append(float("nan"))
+        points += pts2
     if graph.get("title") and graph.get("showTitle", True):
         ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
-    leg = None
-    lg = graph.get("legend") or {}
-    if lg.get("show", True) and len([1 for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"] and summary[k]]) > 1:
-        if lg.get("loc") == "outside":
-            leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
-        else:
-            leg = ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+    h1, l1_ = ax.get_legend_handles_labels()
+    h2, l2_ = ax2.get_legend_handles_labels() if ax2 else ([], [])
+    leg = legend(ax, (h1 + h2, l1_ + l2_))
     if overlays and points:
-        draw_overlays(ax, table, graph, overlays, size, colors)
+        draw_overlays(ax, table, graph, overlays, size, colors, twin=(ax2, right) if ax2 else None)
     if not points:
         ax.text(0.5, 0.5, "Enter X and Y values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
     return fig, ax, leg, points
 
 
-def axes(ax, table, graph, points, only_y=False):
-    """Axis titles, scales, ranges, ticks and grids from the graph settings."""
+def axes(ax, table, graph, points, only_y=False, x=True):
+    """Axis titles, scales, ranges, ticks and grids from the graph settings (`x` False: the Y axis only)."""
     for which, a, title, units in (("x", graph.get("x") or {}, table.get("xTitle", ""), table.get("xUnits", "")), ("y", graph.get("y") or {}, table.get("yTitle", ""), table.get("yUnits", ""))):
+        if which == "x" and not x:
+            continue
         if only_y and which == "x":
             ax.set_xlabel((graph.get("x") or {}).get("title", ""), fontweight="bold" if graph.get("boldTitles", True) else "normal")
             continue

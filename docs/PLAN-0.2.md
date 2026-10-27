@@ -152,7 +152,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D5 | Fitted curves with confidence and prediction bands, residual plots | 0.3 |
 | D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | ✅ 0.2.3 |
 | D7 | Pie, donut, 100 % stacked bars | ✅ 0.2.5 |
-| D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | 0.4 |
+| D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | ✅ 0.2.7 |
 | D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
@@ -345,7 +345,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.4** ✅ | Contingency table (A4), chi-square and Fisher (B17) |
 | **0.2.5** ✅ | Parts of whole (A6), pie and donut (D7) |
 | **0.2.6** ✅ | ROC and Bland-Altman (B18), special graphs (D10: Bland-Altman, ROC, forest; volcano and bubble later) |
-| 0.2.7 | Axis breaks and a second Y axis (D8) |
+| **0.2.7** ✅ | Axis breaks and a second Y axis (D8) |
 | 0.2.8 | Annotations (D15) |
 | 0.2.9 | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
 | 0.2.10 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |

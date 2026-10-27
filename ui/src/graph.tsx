@@ -49,7 +49,7 @@ export const GraphView = (p: { g: Graph }) => {
     if (!inside(px, py, R.plot)) { setCross(null); setTip(null); return; }
     setCross([px, py]);
     const tb = out()!.project.tables.find(x => x.id === p.g.table);
-    const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
+    const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![6] ?? q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
     if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;
       setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "column" ? `mean ${num(+y.toPrecision(6))}` : `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });

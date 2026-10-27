@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
+| **Current version** | **0.2.7** (2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -155,6 +155,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | Session 8 | **Grouped table** = `kind "grouped"` (same model; row titles name the row factor, data sets the other, X column hidden); two-way ANOVA with statsmodels Type III (sum contrasts); brackets carry a 4th element (row) for grouped graphs | Same reuse as column tables; Type III handles unequal replicates as Prism and R `car::Anova` do. |
 | Session 8 | **Contingency table** = `kind "contingency"` (a grouped table with one count per cell, `Table::contingency`); graphs go through `grouped_figure` (new "percent" = stacked to 100 % of each row) | Reuse; nothing new in the model. |
 | Session 8 | **Parts of whole** = `kind "parts"` (`Table::parts`, built on the contingency table); `graph.parts_figure` draws a pie/donut per data set in one axes (no hover points) or 100 % bars | Reuse; one axes keeps export and geometry unchanged. |
+| Session 8 | Second Y axis = `SetStyle.right` + `GraphSettings.y2`; axis break = `Axis.breakFrom/breakTo` (Y, linear, XY graphs, not together with a right axis), drawn as two stacked axes; hover points of right-axis sets carry a 7th value (their height in left-axis units) | Settings stay plain data; the window's hover keeps one coordinate system. |
 | Session 7 | **Column table** = `Table.kind = "column"`, same model (X column kept, hidden in the UI, unused by Python); each group a data set with `reps` 1 (or mean/SD/N) | No new table code in Rust; every op (paste, sort, exclude, sets) works unchanged. |
 | Session 7 | Significance brackets are analysis overlays: t-test, nonparametric and ANOVA results carry `brackets`; drawn only on column graphs (`draws()`); options brackets sig/all/none and stars/P | Same live chain as fitted curves; nothing stored on the graph. |
 | Session 7 | Transforms, histograms and smoothing are analyses whose result can become a table (Results › New table from result), not live linked tables | Keeps the core simple; the analysis itself stays live. |
@@ -180,8 +181,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.4** | Counts | Contingency table (A4), chi-square, Fisher, relative risk, odds ratio, diagnostic values (B17); 100 % stacked bars; Pass or fail sample | ✅ |
 | **0.2.5** | Parts of whole | Parts-of-whole table (A6) with Fractions of total (Wilson CIs for counts), pie, donut and 100 % bars (D7); Phase fractions sample | ✅ |
 | **0.2.6** | Special analyses | Bland-Altman and ROC (B18); Bland-Altman, ROC and forest plots (D10; volcano/bubble later) | ✅ |
-| 0.2.7 | Axes | Axis breaks and a second Y axis (D8) | 🔜 |
-| 0.2.8 – 0.2.11 | One or two features each | annotations (D15) · interactive graph (E2, E3, E4, E6) · layouts (F1, F2, G3) · multi-panel (D12) | ⬜ |
+| **0.2.7** | Axes | Y axis breaks and a second (right) Y axis (D8) | ✅ |
+| 0.2.8 | Annotations | Text, arrows, lines and boxes on graphs (D15) | 🔜 |
+| 0.2.9 – 0.2.11 | One or two features each | interactive graph (E2, E3, E4, E6) · layouts (F1, F2, G3) · multi-panel (D12) | ⬜ |
 | 0.2.12 – 0.2.17 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
 | 0.2.18 – 0.2.24 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
 | 1.0.0 | Stable | Signed installer (I6), validation report (R/NIST, J4), user guide | ⬜ |
@@ -250,11 +252,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 - **0.2.6** ("go"): `groups.blandaltman` (bias, LoA ± 1.96 SD with Bland-Altman 1999 CIs, proportional-bias regression, diff/%/ratio, table), `groups.roc` (AUC = U/(n1·n2), Hanley-McNeil SE, Youden cut-off, cut-off table, ROC table), `groups.forest` (forest plot added to one-way ANOVA results); dialogs, ribbon (Statistics: Power, Bland-Altman, ROC Curve), gallery, Tell Me, help. Special graphs are results plots plus New table from result (no new graph kind). 46 Python tests, 15 + 1 Rust, 55 UI checks.
 
+- **0.2.7** ("go"): `graph.figure` refactored into `plot_sets` + `legend`; right axis via `twinx` (overlays follow the set's axis: `draw_overlays(twin=…)`), Y break via a two-row gridspec with break marks (equation labels in the bottom panel); `axes(x=False)`; equation-corner code now reads line data as floats (non-numeric points could raise a TypeError). Rust `Axis.break_from/break_to`, `GraphSettings.y2`, `SetStyle.right`, Copy Look keeps breaks. Format Graph: Right Y column, Right Y Axis tab, Axis break fields; Format › Axes buttons real; hover uses the 7th value. 47 Python tests, 15 + 1 Rust, 57 UI checks.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.2.7 axis breaks and a second Y axis (D8), then down the list in PLAN-0.2 §12.
+**Next:** 0.2.8 annotations (D15), then down the list in PLAN-0.2 §12.
+
+**0.2.7 limits:** breaks only on linear Y axes of XY graphs, one break, not together with a right axis; hover in the top panel of a broken graph is not exact.
 
 **0.2.6 limits:** Bland-Altman and ROC plots live in the results sheet (graph them via New table from result); no volcano or bubble plots; ROC compares one test at a time.
 

@@ -60,6 +60,12 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const gs = (await ops()).find(o => o.GraphSet);
   check("choosing a log scale sends the graph's settings", gs && gs.GraphSet.settings.x.scale === "log" && gs.GraphSet.graph === P.graphs[0].id, JSON.stringify(gs));
+  await p.click('.dlg .dtabs button:has-text("Y Axis")');
+  await p.waitForTimeout(100);
+  check("Format Graph › Y Axis offers an axis break", ((await p.textContent(".dlg .fmtpage")) || "").includes("Axis break"));
+  await p.click('.dlg .dtabs button:has-text("Data Sets")');
+  await p.waitForTimeout(100);
+  check("Data Sets can go on a right Y axis", ((await p.textContent(".dlg .setfmt thead")) || "").includes("Right Y"));
   check("Format Graph is docked so the graph stays visible", await p.evaluate(() => { const d = document.querySelector(".dlg").getBoundingClientRect(), g = document.querySelector(".gpaper").getBoundingClientRect(); return g.right <= d.left + 1; }));
   await p.keyboard.press("Escape");
 
