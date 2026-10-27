@@ -251,6 +251,45 @@ fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
     Ok(json!({ "cmd": cmd, "table": t, "graph": g.settings, "overlays": overlays }))
 }
 
+/// The engine's request for a page layout: the layout and, for each of its graphs, the graph's
+/// settings, table and fitted curves.
+fn page_req(st: &State<St>, id: u32) -> R<Value> {
+    let a = st.0.lock().unwrap();
+    let p = &a.doc.p;
+    let l = p.layouts.iter().find(|l| l.id == id).ok_or("That layout no longer exists.")?;
+    let mut panels = serde_json::Map::new();
+    for i in l.items.iter().filter(|i| i.kind == "graph") {
+        let Some(g) = p.graph(i.graph) else { continue };
+        let Some(t) = p.table(g.table) else { continue };
+        let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| p.analysis(*o)).map(|x| json!({ "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
+        panels.insert(g.id.to_string(), json!({ "table": t, "graph": g.settings, "overlays": overlays }));
+    }
+    Ok(json!({ "cmd": "page", "layout": l, "panels": panels, "fmt": "svg" }))
+}
+
+/// A page layout drawn by the engine (SVG and its size), cached like graphs.
+#[tauri::command]
+async fn render_page(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
+    let q = page_req(&st, id)?;
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+}
+
+/// Saves a page layout at its real size: PDF, SVG, EPS, PNG or TIFF (CMYK if asked) (F2, G3).
+#[tauri::command]
+async fn export_page(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, dpi: u32, cmyk: bool) -> R<Option<String>> {
+    if !["png", "svg", "pdf", "tiff", "eps"].contains(&fmt.as_str()) {
+        return Err("Unknown picture format.".into());
+    }
+    let mut q = page_req(&st, id)?;
+    let name = st.0.lock().unwrap().doc.p.layouts.iter().find(|l| l.id == id).map(|l| l.name.clone()).unwrap_or_default();
+    let Some(path) = app.dialog().file().add_filter(fmt.to_uppercase(), &[&fmt]).set_file_name(format!("{name}.{fmt}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    q["fmt"] = json!(fmt);
+    q["dpi"] = json!(dpi.clamp(72, 2400));
+    q["cmyk"] = json!(cmyk && fmt == "tiff");
+    q["path"] = json!(path.display().to_string());
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 async fn render(app: AppHandle, st: State<'_, St>, eng: State<'_, Engine>, id: u32) -> R<Value> {
     let q = graph_req(&st, id, "render")?;
@@ -323,7 +362,7 @@ async fn export_excel(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
 
 /// Saves a graph as a picture or vector file chosen in a Save dialog.
 #[tauri::command]
-async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, dpi: u32, transparent: bool) -> R<Option<String>> {
+async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, dpi: u32, transparent: bool, cmyk: Option<bool>) -> R<Option<String>> {
     if !["png", "svg", "pdf", "tiff", "eps"].contains(&fmt.as_str()) {
         return Err("Unknown picture format.".into());
     }
@@ -334,6 +373,7 @@ async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, d
     q["fmt"] = json!(fmt);
     q["dpi"] = json!(dpi.clamp(72, 2400));
     q["transparent"] = json!(transparent);
+    q["cmyk"] = json!(cmyk.unwrap_or(false) && fmt == "tiff");
     q["path"] = json!(path.display().to_string());
     tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
 }
@@ -590,7 +630,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, result, models, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

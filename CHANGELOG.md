@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.11 — 2026-10-27
+
+Page layouts: several graphs on one page with panel letters, at a journal's size, exported as one file.
+
+**Layouts**
+- **New Layout** (Layout tab, or ＋ beside Layouts in the navigator) starts with up to four of the project's graphs, two per row; right-click a graph › **New Layout with This Graph** for one.
+- **Drag** a panel to move it and its corner to resize it (whole millimetres); **Delete** removes it; double-click opens the graph. **＋ Graph** and **＋ Text** add more (a caption, a label).
+- **Arrange** puts the graphs in one to four columns; **Panel Letters**: A, a, (a) or none.
+- The graphs stay linked: change the data and the layout updates.
+
+**Journal figures**
+- **Journal Figure** sets the page to a column width (85, 114, 174 or 183 mm) or a page (A4, Letter, a 16:9 slide); or type the size.
+- **Export Layout**: PDF, SVG or EPS (vector, text stays text) or PNG and TIFF at 300–1200 dpi, at the page's real size.
+
+**TIFF for journals**
+- **TIFF for Journals**: CMYK, LZW-compressed, 600 dpi. Single graphs can be exported as CMYK TIFF too (Export › TIFF › CMYK).
+
 ## 0.2.10 — 2026-10-27
 
 Your requests: new tables open at once, data sets are easy to remove, Significance lets you pick the test, and gaps work on the X axis too.

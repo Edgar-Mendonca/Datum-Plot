@@ -179,8 +179,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 
 | ID | Feature | Release |
 | --- | --- | --- |
-| F1 | Layout pages: several graphs, tables, text and pictures on a page; panel letters A, B, C; align and distribute | 0.4 |
-| F2 | Figure sizes for journals; export a whole layout as one PDF/TIFF/SVG (drawn by matplotlib at real size) | 0.4 |
+| F1 | Layout pages: several graphs, tables, text and pictures on a page; panel letters A, B, C; align and distribute | ✅ 0.2.11 |
+| F2 | Figure sizes for journals; export a whole layout as one PDF/TIFF/SVG (drawn by matplotlib at real size) | ✅ 0.2.11 |
 | F3 | Poster and slide templates | 0.6 |
 
 ### G. Export and sharing
@@ -189,7 +189,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | --- | --- | --- |
 | G1 | PNG, TIFF, SVG, PDF, EPS export ✅ | ✅ |
 | G2 | **Copy picture that works on Windows** (PNG through Rust), copy as SVG for Office 365 | 0.1.1 |
-| G3 | TIFF in CMYK and LZW for journals; colour profile | 0.4 |
+| G3 | TIFF in CMYK and LZW for journals; colour profile | ✅ 0.2.11 |
 | G4 | Batch export: every graph in the project at once | ✅ 0.2.2 |
 | G5 | **Send to PowerPoint**: one slide per graph; **Word report**: graphs, results tables and methods text | 0.7 (python-pptx, python-docx) |
 | G6 | Export tables and results to Excel | ✅ 0.2.2 |
@@ -349,7 +349,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.8** ✅ | Annotations (D15) |
 | **0.2.9** ✅ | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
 | **0.2.10** ✅ | Users' requests (session 8): new tables open at once, Remove Data Set, Significance offers t-test/ANOVA/nonparametric, empty data sets left out, X axis breaks |
-| 0.2.11 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
+| **0.2.11** ✅ | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
 | 0.2.12 | Multi-panel figures (D12) |
 | 0.2.13 | Multiple variables (A7), multiple and logistic regression (B21) |
 | 0.2.14 | PCA and clustering (B22) |

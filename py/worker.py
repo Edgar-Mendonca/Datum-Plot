@@ -25,7 +25,9 @@ def main():
         if cmd == "render":
             return graph.render(q["table"], q["graph"], q.get("overlays", []))
         if cmd == "export":
-            return graph.export(q["table"], q["graph"], q.get("fmt", "png"), q.get("path"), q.get("dpi", 300), q.get("transparent", False), q.get("overlays", []))
+            return graph.export(q["table"], q["graph"], q.get("fmt", "png"), q.get("path"), q.get("dpi", 300), q.get("transparent", False), q.get("overlays", []), q.get("cmyk", False))
+        if cmd == "page":
+            return graph.page(q["layout"], q["panels"], q.get("fmt", "svg"), q.get("path"), q.get("dpi", 300), q.get("cmyk", False))
         if cmd == "analyze":
             from datum import analysis
             return analysis.run(q["kind"], q["table"], q.get("sets", []), q.get("options", {}))

@@ -33,7 +33,10 @@ export interface Result {
   /** A new data table the result can become (transforms, histograms, smoothing). */ table?: Partial<Table>;
 }
 export interface Info { title: string; experiment: string; researcher: string; organisation: string; date: string; notes: string }
-export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; analyses: Analysis[]; nextId: number; ui: any }
+/** A page layout: items placed in millimetres from the page's top-left. */
+export interface LayoutItem { kind: string; graph: number; x: number; y: number; w: number; h: number; text: string; size: number; bold: boolean }
+export interface Layout { id: number; name: string; width: number; height: number; letters: string; letterSize: number; font: string; fontSize: number; items: LayoutItem[] }
+export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; analyses: Analysis[]; layouts: Layout[]; nextId: number; ui: any }
 export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number }
 /** A graph drawn by the Python engine: SVG and where things are, in points from the top-left. */
 export interface Render {

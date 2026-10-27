@@ -46,6 +46,10 @@ pub enum Op {
     /// Shows or hides an analysis's curves on a graph.
     Overlay { graph: u32, analysis: u32, on: bool },
     GraphSet { graph: u32, settings: Box<GraphSettings> },
+    /// Adds a page layout (its id is assigned here; an empty name becomes "Layout n").
+    AddLayout { layout: Box<Layout> },
+    /// Replaces a layout's page, items and letters (its id stays).
+    LayoutSet { layout: Box<Layout> },
     Info { info: Info },
     ProjectName { name: String },
     /// Stores window settings under a key.
@@ -188,11 +192,12 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             p.add_table(*table, graph.map(|g| *g));
         }
         Op::Delete { id } => {
-            let n = p.tables.len() + p.graphs.len() + p.analyses.len();
+            let n = p.tables.len() + p.graphs.len() + p.analyses.len() + p.layouts.len();
             p.tables.retain(|t| t.id != id);
             p.graphs.retain(|g| g.id != id && g.table != id);
             p.analyses.retain(|a| a.id != id && a.table != id);
-            if n == p.tables.len() + p.graphs.len() + p.analyses.len() {
+            p.layouts.retain(|l| l.id != id);
+            if n == p.tables.len() + p.graphs.len() + p.analyses.len() + p.layouts.len() {
                 return Err("Nothing to delete.".into());
             }
         }
@@ -207,6 +212,8 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 g.name = name;
             } else if let Some(a) = p.analyses.iter_mut().find(|a| a.id == id) {
                 a.name = name;
+            } else if let Some(l) = p.layouts.iter_mut().find(|l| l.id == id) {
+                l.name = name;
             }
         }
         Op::Duplicate { id } => {
@@ -224,6 +231,9 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             } else if let Some(a) = p.analysis(id).cloned() {
                 let aid = p.take_id();
                 p.analyses.push(Analysis { id: aid, name: format!("{} copy", a.name), ..a });
+            } else if let Some(l) = p.layouts.iter().find(|l| l.id == id).cloned() {
+                let lid = p.take_id();
+                p.layouts.push(Layout { id: lid, name: format!("{} copy", l.name), ..l });
             }
         }
         Op::Cells { table, cells } => {
@@ -404,6 +414,17 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 return Err("A graph must be between 10 and 1000 mm wide and high.".into());
             }
             g.settings = *settings;
+        }
+        Op::AddLayout { mut layout } => {
+            layout.id = p.take_id();
+            if layout.name.trim().is_empty() {
+                layout.name = (1..).map(|k| format!("Layout {k}")).find(|n| !p.layouts.iter().any(|l| &l.name == n)).unwrap();
+            }
+            p.layouts.push(*layout);
+        }
+        Op::LayoutSet { layout } => {
+            let l = p.layouts.iter_mut().find(|l| l.id == layout.id).ok_or("That layout no longer exists.")?;
+            *l = *layout;
         }
         Op::Info { info } => p.info = info,
         Op::ProjectName { name } => p.name = name,

@@ -182,9 +182,10 @@ def draw_notes(ax, graph, size):
             ax.text(x, y, n["text"], color=col, fontsize=fs, fontweight=fw, ha="center", va="center", zorder=6)
 
 
-def figure(table, graph, overlays=()):
-    """Builds the matplotlib figure (call inside `rc_context(rc_for(graph))`); returns (fig, ax, legend, points)."""
-    fig, ax, leg, points = build(table, graph, overlays)
+def figure(table, graph, overlays=(), fig=None):
+    """Builds the matplotlib figure (call inside `rc_context(rc_for(graph))`), or draws into `fig` (a
+    panel of a page layout); returns (fig, ax, legend, points)."""
+    fig, ax, leg, points = build(table, graph, overlays, fig)
     if graph.get("notes"):
         lims = ax.get_xlim(), ax.get_ylim()
         draw_notes(ax, graph, float(graph.get("fontSize") or 10))
@@ -192,11 +193,12 @@ def figure(table, graph, overlays=()):
     return fig, ax, leg, points
 
 
-def build(table, graph, overlays=()):
+def build(table, graph, overlays=(), fig=None):
     size = float(graph.get("fontSize") or 10)
     frame = graph.get("style") == "frame"
-    fig = Figure(figsize=(max(20, graph.get("width") or 80) * MM, max(20, graph.get("height") or 60) * MM), dpi=72, layout="constrained")
-    FigureCanvasAgg(fig)
+    if fig is None:
+        fig = Figure(figsize=(max(20, graph.get("width") or 80) * MM, max(20, graph.get("height") or 60) * MM), dpi=72, layout="constrained")
+        FigureCanvasAgg(fig)
     ax = fig.add_subplot()
     fig.patch.set_alpha(0)
     ax.patch.set_alpha(0)
@@ -461,7 +463,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     ax.set_xlim(-0.6, len(data) - 0.4)
     ax.tick_params(axis="x", length=0)
     axes(ax, table, graph, [[0, 0, float(allv.min()) if len(allv) else 0]], only_y=True)
-    if sum(len(n) for n in names) * size * 0.55 > (graph.get("width") or 80) * 2.4:
+    if sum(len(n) for n in names) * size * 0.7 > (graph.get("width") or 80) * 2.4:
         for lab in ax.get_xticklabels():
             lab.set_rotation(30); lab.set_ha("right")
     if graph.get("title") and graph.get("showTitle", True):
@@ -641,7 +643,72 @@ def render(table, graph, overlays=()):
     return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], **g}
 
 
-def export(table, graph, fmt, path=None, dpi=300, transparent=False, overlays=()):
+LETTERS = {"A": lambda i: chr(65 + i), "a": lambda i: chr(97 + i), "(a)": lambda i: f"({chr(97 + i)})", "none": lambda i: ""}
+
+
+def page(layout, panels, fmt="svg", path=None, dpi=300, cmyk=False):
+    """A page layout (F1, F2): graphs, text and panel letters at their places in millimetres.
+    `panels` maps a graph id (as text) to {table, graph, overlays}. Each graph is drawn twice: once on
+    its own at its panel size (constrained layout finds where its axes go), then into its place on the
+    page with those positions, so the page stays vector (SVG, PDF, EPS) with text as text."""
+    from matplotlib.gridspec import GridSpec
+    W, H = max(20.0, float(layout.get("width") or 180)), max(20.0, float(layout.get("height") or 120))
+    base = {"font": layout.get("font") or "Arial", "fontSize": layout.get("fontSize") or 8}
+    fig = Figure(figsize=(W * MM, H * MM), dpi=72)
+    FigureCanvasAgg(fig)
+    fig.patch.set_facecolor("white")
+    style, n = LETTERS.get(layout.get("letters", "A"), LETTERS["A"]), 0
+    for it in layout.get("items") or []:
+        x, y, w, h = (float(it.get(k) or 0) for k in ("x", "y", "w", "h"))
+        if it.get("kind") == "text":
+            with matplotlib.rc_context(rc_for(base)):
+                fig.text(x / W, 1 - y / H, it.get("text", ""), ha="left", va="top", fontsize=float(it.get("size") or base["fontSize"]), fontweight="bold" if it.get("bold") else "normal", wrap=True)
+            continue
+        p = panels.get(str(it.get("graph")))
+        if not p or w < 10 or h < 10:
+            continue
+        g = {**p["graph"], "width": w, "height": h}
+        with matplotlib.rc_context(rc_for(g)):
+            one, *_ = figure(p["table"], g, p.get("overlays", []))
+            one.canvas.draw()
+            pos = [a.get_position().bounds for a in one.axes]
+            sf = fig.add_subfigure(GridSpec(1, 1, figure=fig)[0])
+            sf.bbox_relative.set_points(np.array([[x / W, 1 - (y + h) / H], [(x + w) / W, 1 - y / H]]))  # its place on the page
+            sf.patch.set_alpha(0)
+            figure(p["table"], g, p.get("overlays", []), fig=sf)
+            for a, b in zip(sf.axes, pos):
+                a.set_position(b)
+            lab = style(n)
+            if lab:
+                sf.text(0.0, 1.0, lab, ha="left", va="top", fontsize=float(layout.get("letterSize") or 10), fontweight="bold")
+            n += 1
+    with matplotlib.rc_context(rc_for(base)):
+        buf = io.BytesIO() if fmt != "svg" or path else io.StringIO()
+        save_fmt = "png" if fmt == "tiff" and cmyk else fmt
+        fig.savefig(buf, format=save_fmt, dpi=dpi, metadata={"Creator": "Datum Plot"} if save_fmt in ("png", "svg", "pdf") else None,
+                    **({"pil_kwargs": {"compression": "tiff_lzw"}} if save_fmt == "tiff" else {}))
+    if fmt == "svg" and not path:
+        return {"svg": buf.getvalue(), "w": W / 25.4 * 72, "h": H / 25.4 * 72}
+    data = buf.getvalue()
+    if fmt == "tiff" and cmyk:
+        data = cmyk_tiff(data, dpi)
+    if path:
+        with open(path, "wb") as f:
+            f.write(data)
+        return {"path": path, "bytes": len(data)}
+    return {"data": base64.b64encode(data).decode()}
+
+
+def cmyk_tiff(png, dpi):
+    """A CMYK TIFF (LZW) from a PNG, as many journals ask for print (G3)."""
+    from PIL import Image
+    im = Image.open(io.BytesIO(png)).convert("RGB").convert("CMYK")
+    out = io.BytesIO()
+    im.save(out, format="TIFF", compression="tiff_lzw", dpi=(dpi, dpi))
+    return out.getvalue()
+
+
+def export(table, graph, fmt, path=None, dpi=300, transparent=False, overlays=(), cmyk=False):
     """Writes the graph as png, svg, pdf, eps or tiff; without a path returns base64 (for the clipboard)."""
     with matplotlib.rc_context(rc_for(graph)):
         fig, *_ = figure(table, graph, overlays)
@@ -650,8 +717,10 @@ def export(table, graph, fmt, path=None, dpi=300, transparent=False, overlays=()
             fig.patch.set_facecolor("white")
         meta = {"Creator": "Datum Plot"} if fmt in ("png", "svg", "pdf") else None
         buf = io.BytesIO()
-        fig.savefig(buf, format=fmt, dpi=dpi, transparent=transparent, metadata=meta, **({"pil_kwargs": {"compression": "tiff_lzw"}} if fmt == "tiff" else {}))
+        fig.savefig(buf, format="png" if fmt == "tiff" and cmyk else fmt, dpi=dpi, transparent=transparent and not cmyk, metadata=meta, **({"pil_kwargs": {"compression": "tiff_lzw"}} if fmt == "tiff" and not cmyk else {}))
     data = buf.getvalue()
+    if fmt == "tiff" and cmyk:
+        data = cmyk_tiff(data, dpi)
     if path:
         with open(path, "wb") as f:
             f.write(data)

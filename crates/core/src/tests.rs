@@ -243,3 +243,22 @@ fn copy_look_keeps_titles_ranges_and_curves() {
     assert_eq!((n.kind.as_str(), n.x, n.y2, n.size, n.text.as_str()), ("arrow", 1.0, 3.0, 0.0, "peak"));
     assert_eq!((a.break_from, a.break_to, a.scale.as_str()), (Some(12.0), Some(95.0), "lin"));
 }
+
+#[test]
+fn layouts_hold_graphs_and_lose_deleted_ones() {
+    let (mut d, _) = doc();
+    let gid = d.p.graphs[0].id;
+    let items = vec![LayoutItem { graph: gid, ..Default::default() }, LayoutItem { kind: "text".into(), text: "Figure 1".into(), ..Default::default() }];
+    d.apply(Op::AddLayout { layout: Box::new(Layout { items, ..Default::default() }) }).unwrap();
+    let l = d.p.layouts[0].clone();
+    assert_eq!((l.name.as_str(), l.items.len(), l.id > gid), ("Layout 1", 2, true));
+    d.apply(Op::LayoutSet { layout: Box::new(Layout { width: 89.0, ..l.clone() }) }).unwrap();
+    assert_eq!(d.p.layouts[0].width, 89.0);
+    d.apply(Op::Duplicate { id: l.id }).unwrap();
+    d.apply(Op::Rename { id: l.id, name: "Figure 1".into() }).unwrap();
+    assert_eq!((d.p.layouts.len(), d.p.layouts[0].name.as_str()), (2, "Figure 1"));
+    d.apply(Op::Delete { id: gid }).unwrap();
+    assert!(d.p.layouts.iter().all(|l| l.items.len() == 1 && l.items[0].kind == "text"), "a deleted graph leaves its layouts");
+    d.apply(Op::Delete { id: l.id }).unwrap();
+    assert_eq!(d.p.layouts.len(), 1);
+}

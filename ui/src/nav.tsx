@@ -2,12 +2,13 @@
 // the Info sheet and empty pages.
 import { For, Show, JSX } from "solid-js";
 import { Info } from "./api";
-import { P, item, open, Section, navOpen, act, openMenu, setBackstage, thumbs } from "./store";
+import { P, item, open, Section, navOpen, act, openMenu, thumbs } from "./store";
 import { C } from "./cmds";
 import { newGraph, useRender, GraphImg } from "./graph";
 import { Icon } from "./ui";
 import { Help } from "./help";
-import { analyze, soon, newTable } from "./roadmap";
+import { analyze, newTable } from "./roadmap";
+import { newLayout } from "./layout";
 
 export const SIDE: [Section, string, string][] = [["info", "infosheet", "Info"], ["data", "sheet", "Data"], ["results", "results", "Results"], ["graphs", "graph", "Graphs"], ["layouts", "layout", "Layouts"]];
 
@@ -19,6 +20,7 @@ const Head = (p: { l: string; h?: string; add?: () => void; title?: string }) =>
 export const Navigator = () => {
   const ctx = (e: MouseEvent, id: number, s: Section) => { open(s, id); openMenu(e, [
     ...(s === "data" ? [{ label: "New Graph of This Table", icon: "graph", run: () => newGraph(id) }, "-" as const] : []),
+    ...(s === "graphs" ? [{ label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, "-" as const] : []),
     { label: "Rename…", icon: "rename", run: C.rename }, { label: "Duplicate", icon: "copy", run: C.duplicate }, { label: "Delete", icon: "del", run: C.del },
   ]); };
   return (
@@ -32,8 +34,8 @@ export const Navigator = () => {
         <Head l="Graphs" h="graphview" add={C.newGraph} title="New graph of the open table" />
         <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
         <Show when={thumbs() && P().graphs.length}><div class="nthumbs"><For each={P().graphs}>{g => <Thumb id={g.id} on={item().s === "graphs" && item().id === g.id} />}</For></div></Show>
-        <Head l="Layouts" add={() => soon("F1")} title="New layout (0.2.11)" />
-        <p class="nnone">Page layouts arrive in 0.2.11</p>
+        <Head l="Layouts" h="layouts" add={() => newLayout()} title="New layout of the graphs" />
+        <For each={P().layouts ?? []} fallback={<p class="nnone">＋ arranges graphs on a page</p>}>{l => <button class="nitem" classList={{ on: item().s === "layouts" && item().id === l.id }} onClick={() => open("layouts", l.id)} onContextMenu={e => ctx(e, l.id, "layouts")} onDblClick={C.rename}><Icon n="layout" /><span>{l.name}</span></button>}</For>
       </aside>
     </Show>
   );
@@ -69,11 +71,4 @@ export const InfoPage = () => {
 
 export const Empty = (p: { icon: string; title: string; children: JSX.Element }) => (
   <div class="page emptypage"><div class="emptybox"><Icon n={p.icon} size={42} /><h1>{p.title}</h1>{p.children}</div></div>
-);
-export const LayoutsPage = () => (
-  <Empty icon="layout" title="Layouts">
-    <p>A layout is a page that arranges several graphs, tables and text, with panel letters A, B, C, ready for a paper or a poster.</p>
-    <p class="muted">Layouts arrive in 0.2.11. Until then, print each graph from File › Print, or export it and arrange it in your document.</p>
-    <p><button class="btn" onClick={() => setBackstage("print")}>Print a graph</button></p>
-  </Empty>
 );

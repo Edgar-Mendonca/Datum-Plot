@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.10";
+export const VERSION_NOW = "0.2.11";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -98,12 +98,12 @@ export const FEATURES: Feature[] = [
   ["E5", "Region tools", "0.2.21", "Drag over part of a curve for its statistics, area, a quick fit or its peaks.", "scipy"],
   ["E6", "Exclude from the graph", "0.2.9", "Right-click a point to exclude it (it stays in the table in blue italics).", ""],
   ["E7", "Graph thumbnails", "0.2.2", "Small pictures of each graph in the navigator (View › Thumbnails).", ""],
-  ["F1", "Layouts", "0.2.11", "Pages with several graphs, tables, text and pictures; panel letters A, B, C; align and distribute.", "matplotlib"],
-  ["F2", "Figures at journal size", "0.2.11", "Export a whole layout as one PDF, TIFF or SVG at its real size.", "matplotlib"],
+  ["F1", "Layouts", "0.2.11", "Pages with several graphs and text; panel letters A, B, C; drag to move and resize; arrange in columns. Tables and pictures on pages come later.", "matplotlib"],
+  ["F2", "Figures at journal size", "0.2.11", "Journal column widths and page sizes; export a whole layout as one PDF, SVG, EPS, PNG or TIFF at its real size.", "matplotlib"],
   ["F3", "Posters and slides", "0.2.23", "Templates for posters and slides.", ""],
   ["G1", "Picture and vector export", "0.1", "PNG and TIFF at any dpi; SVG, PDF and EPS with editable text.", "matplotlib"],
   ["G2", "Copy picture", "0.1.1", "Copy a graph and paste it into Word, PowerPoint or an email.", ""],
-  ["G3", "TIFF for journals", "0.2.11", "CMYK and LZW TIFF files with colour profiles.", "pillow"],
+  ["G3", "TIFF for journals", "0.2.11", "CMYK, LZW-compressed TIFF at 300–1200 dpi, for layouts and single graphs.", "pillow"],
   ["G4", "Batch export", "0.2.2", "Export every graph in the project at once.", "matplotlib"],
   ["G5", "PowerPoint and Word", "0.2.23", "One slide per graph; a Word report with graphs, results and methods text.", "python-pptx, python-docx"],
   ["G6", "Excel export", "0.2.2", "Data tables and results as an Excel workbook.", "openpyxl"],

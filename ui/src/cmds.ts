@@ -60,7 +60,7 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Nonparametric tests (Mann-Whitney, Kruskal-Wallis)", () => runAnalysis("B5")], ["Effect sizes", () => runAnalysis("B8")], ["Correlation", () => runAnalysis("B16")], ["Power and sample size", () => runAnalysis("B23")],
   ["Transform (log, normalise, baseline)", () => runAnalysis("A15")], ["Check data", () => runAnalysis("A18")], ["Frequency distribution (histogram)", () => runAnalysis("D4")], ["Area under the curve", () => runAnalysis("B14")],
   ["Smooth, derivative or integral", () => runAnalysis("B14s")], ["Global fit and model comparison", () => runAnalysis("B12")], ["Tensile test analysis", () => runAnalysis("B27")], ["Weibull analysis", () => runAnalysis("B29")],
-  ["Remove data sets", () => C.removeSets()], ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
+  ["New page layout", () => import("./layout").then(m => m.newLayout())], ["Remove data sets", () => C.removeSets()], ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
   ["Graph styles (Nature, IEEE, presentation…)", () => import("./store").then(m => m.openMenu({ x: 300, y: 120 }, T.styleMenu()))], ["Copy look to other graphs", T.copyLook], ["Colour schemes", T.paletteDialog],
   ["Export all graphs", T.exportAll], ["Export to Excel workbook", T.exportExcel],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),

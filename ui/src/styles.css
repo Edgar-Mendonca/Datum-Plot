@@ -590,3 +590,16 @@ input.mono { font-family: var(--mono) !important; }
 .hc.st .hdel { margin-left: auto; width: 16px; height: 16px; padding: 0; border: none; background: none; color: var(--text2); font-size: 13px; line-height: 14px; visibility: hidden; cursor: pointer; }
 .hc.st:hover .hdel { visibility: visible; }
 .hc.st .hdel:hover { color: #C0392B; }
+
+/* 0.2.11: page layouts */
+.lview { display: flex; flex-direction: column; height: 100%; width: 100%; flex: 1; min-height: 0; min-width: 0; outline: none; }
+.lbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.lbar svg { width: 18px; height: 18px; color: var(--blue); }
+.lpage { flex: 1; overflow: auto; padding: 24px; background: var(--bg2); }
+.lpaper { position: relative; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); margin: 0 auto; }
+.lpaper .gimg { position: absolute; left: 0; top: 0; pointer-events: none; }
+.litem { position: absolute; border: 1px dashed transparent; cursor: move; }
+.litem:hover { border-color: var(--sel2); }
+.litem.on { border: 1.5px solid var(--blue); }
+.litem .lsize { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--blue); cursor: nwse-resize; }
+.litem .lname { position: absolute; left: 0; top: -18px; font-size: 11px; background: var(--blue); color: #fff; padding: 0 5px; white-space: nowrap; }

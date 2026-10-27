@@ -206,14 +206,15 @@ export const copyGraph = async (id: number) => {
 const FORMATS: [string, string][] = [["png", "PNG picture"], ["tiff", "TIFF picture (journals)"], ["svg", "SVG vector (editable text)"], ["pdf", "PDF vector"], ["eps", "EPS vector"]];
 /** Export: format, resolution and background, then a Save dialog. */
 export const exportGraph = (g: Graph, fmt0 = "png") => openDialog(() => {
-  const [fmt, setFmt] = createSignal(fmt0), [dpi, setDpi] = createSignal(String(opts().dpi)), [tr, setTr] = createSignal(false);
+  const [fmt, setFmt] = createSignal(fmt0), [dpi, setDpi] = createSignal(String(opts().dpi)), [tr, setTr] = createSignal(false), [cmyk, setCmyk] = createSignal(false);
   const raster = () => fmt() === "png" || fmt() === "tiff";
   return (
-    <Dialog title={`Export · ${g.name}`} help="export" okText="Export…" ok={async () => { const p = await call<string | null>("export_graph", { id: g.id, fmt: fmt(), dpi: +dpi(), transparent: tr() }); if (p) toast(`Saved ${p}`, true); }}>
+    <Dialog title={`Export · ${g.name}`} help="export" okText="Export…" ok={async () => { const p = await call<string | null>("export_graph", { id: g.id, fmt: fmt(), dpi: +dpi(), transparent: tr(), cmyk: cmyk() }); if (p) toast(`Saved ${p}`, true); }}>
       <div class="form">
         <label>Format</label><Pick value={fmt()} set={setFmt} options={FORMATS} />
         <Show when={raster()}><label>Resolution</label><Pick value={dpi()} set={setDpi} options={[["150", "150 dpi (screen)"], ["300", "300 dpi (print, most journals)"], ["600", "600 dpi (line art)"], ["1200", "1200 dpi"]]} /></Show>
         <label>Background</label><Check label="Transparent" value={tr()} set={setTr} />
+        <Show when={fmt() === "tiff"}><label>Colour</label><Check label="CMYK for print (journals; LZW compressed)" value={cmyk()} set={setCmyk} /></Show>
       </div>
       <p class="muted">The size is the graph's size ({g.settings.width} × {g.settings.height} mm). Vector files keep text as text, so it stays editable in Illustrator or Inkscape.</p>
     </Dialog>

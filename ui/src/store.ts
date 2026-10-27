@@ -39,9 +39,10 @@ export const curTable = (): Table | undefined => table() ?? out()?.project.table
 export const open = (s: Section, id = 0) => {
   if (!id && s === "data") id = out()?.project.tables[0]?.id ?? 0;
   if (!id && s === "graphs") id = out()?.project.graphs.find(g => g.table === curTable()?.id)?.id ?? out()?.project.graphs[0]?.id ?? 0;
+  if (!id && s === "layouts") id = out()?.project.layouts?.[0]?.id ?? 0;
   if (!id && s === "results") id = out()?.project.analyses?.find(a => a.table === curTable()?.id)?.id ?? out()?.project.analyses?.[0]?.id ?? 0;
   setItem({ s, id });
-  setTab(s === "graphs" ? "graph" : s === "data" ? "data" : s === "results" ? "analyze" : tab());
+  setTab(s === "graphs" ? "graph" : s === "data" ? "data" : s === "results" ? "analyze" : s === "layouts" ? "layout" : tab());
 };
 /** After a change, keep the open item valid (it may have been deleted or undone). */
 const fixItem = () => {
@@ -49,6 +50,7 @@ const fixItem = () => {
   if (!p) return;
   if (it.s === "data" && !p.tables.some(t => t.id === it.id)) setItem({ s: "data", id: p.tables[0]?.id ?? 0 });
   if (it.s === "graphs" && !p.graphs.some(g => g.id === it.id)) setItem(p.graphs[0] ? { s: "graphs", id: p.graphs[0].id } : { s: "data", id: p.tables[0]?.id ?? 0 });
+  if (it.s === "layouts" && it.id && !p.layouts?.some(l => l.id === it.id)) setItem({ s: "layouts", id: p.layouts?.[0]?.id ?? 0 });
   if (it.s === "results" && it.id && !p.analyses?.some(a => a.id === it.id)) setItem({ s: "results", id: p.analyses?.[0]?.id ?? 0 });
 };
 

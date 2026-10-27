@@ -269,3 +269,18 @@ class EmptySets(unittest.TestCase):
         t = xy([0, 1, 2, 50, 51], [1, 2, 3, 4, 5])
         r = graph.render(t, {"x": {"breakFrom": 3, "breakTo": 49}})
         self.assertEqual(r["xlim"][1], 3)
+
+
+class Pages(unittest.TestCase):
+    def test_a_page_of_two_graphs_with_letters_and_cmyk_tiff(self):
+        import io as _io
+        from PIL import Image
+        t = xy([0, 1, 2, 3], [1, 4, 2, 5])
+        panels = {"1": {"table": t, "graph": {}, "overlays": []}, "2": {"table": col(CTRL, TRT1), "graph": {"column": "bars"}, "overlays": []}}
+        L = {"width": 174, "height": 70, "letters": "A", "items": [{"kind": "graph", "graph": 1, "x": 0, "y": 0, "w": 85, "h": 70}, {"kind": "graph", "graph": 2, "x": 89, "y": 0, "w": 85, "h": 70},
+                                                               {"kind": "graph", "graph": 9, "x": 0, "y": 0, "w": 50, "h": 50}, {"kind": "text", "x": 1, "y": 66, "text": "Figure 1"}]}
+        svg = graph.page(L, panels)["svg"]
+        self.assertTrue(all(s in svg for s in (">A<", ">B<", "Figure 1")) and ">C<" not in svg)
+        im = Image.open(_io.BytesIO(__import__("base64").b64decode(graph.page(L, panels, "tiff", dpi=150, cmyk=True)["data"])))
+        self.assertEqual((im.mode, round(im.size[0] / 150 * 25.4)), ("CMYK", 174))
+        self.assertTrue(graph.export(t, {}, "tiff", dpi=100, cmyk=True)["data"])

@@ -14,6 +14,8 @@ pub struct Project {
     pub graphs: Vec<Graph>,
     /// Analyses (results): settings only; Python computes the results when they are shown.
     pub analyses: Vec<Analysis>,
+    /// Page layouts: graphs, text and panel letters on a page of a given size.
+    pub layouts: Vec<Layout>,
     pub next_id: u32,
     /// Window settings saved with the file (page setup, open item…).
     pub ui: serde_json::Value,
@@ -21,7 +23,7 @@ pub struct Project {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Project1".into(), info: Info::default(), tables: vec![], graphs: vec![], analyses: vec![], next_id: 1, ui: serde_json::json!({}) }
+        Self { format: FORMAT, name: "Project1".into(), info: Info::default(), tables: vec![], graphs: vec![], analyses: vec![], layouts: vec![], next_id: 1, ui: serde_json::json!({}) }
     }
 }
 
@@ -180,6 +182,49 @@ impl Table {
         self.excluded.retain(|[r, c]| *r < rows && *c < w);
         self.excluded.sort_unstable();
         self.excluded.dedup();
+    }
+}
+
+/// A page layout (F1): items placed in millimetres from the top-left of a `width` × `height` page.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Layout {
+    pub id: u32,
+    pub name: String,
+    pub width: f64,
+    pub height: f64,
+    /// Panel letters on the graphs: A, a, (a) or none.
+    pub letters: String,
+    pub letter_size: f64,
+    pub font: String,
+    pub font_size: f64,
+    pub items: Vec<LayoutItem>,
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Self { id: 0, name: "Layout 1".into(), width: 180.0, height: 120.0, letters: "A".into(), letter_size: 10.0, font: "Arial".into(), font_size: 8.0, items: vec![] }
+    }
+}
+
+/// A graph (by id) or a text block on a layout.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LayoutItem {
+    pub kind: String,
+    pub graph: u32,
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
+    pub text: String,
+    pub size: f64,
+    pub bold: bool,
+}
+
+impl Default for LayoutItem {
+    fn default() -> Self {
+        Self { kind: "graph".into(), graph: 0, x: 0.0, y: 0.0, w: 80.0, h: 60.0, text: String::new(), size: 0.0, bold: false }
     }
 }
 
@@ -394,7 +439,12 @@ impl Project {
         for g in &mut self.graphs {
             g.settings.overlays.retain(|o| an.contains(&(*o, g.table)));
         }
-        let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).max().unwrap_or(0);
+        let gids: Vec<u32> = self.graphs.iter().map(|g| g.id).collect();
+        for l in &mut self.layouts {
+            l.items.retain(|i| i.kind != "graph" || gids.contains(&i.graph));
+            (l.width, l.height) = (l.width.clamp(20.0, 2000.0), l.height.clamp(20.0, 2000.0));
+        }
+        let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).chain(self.layouts.iter().map(|l| l.id)).max().unwrap_or(0);
         self.next_id = self.next_id.max(top + 1);
     }
     pub fn from_json(text: &str) -> Result<Self, String> {

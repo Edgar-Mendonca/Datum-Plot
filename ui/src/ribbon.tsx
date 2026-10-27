@@ -10,6 +10,8 @@ import { GraphSettings } from "./api";
 import { feature } from "./features";
 import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
 import * as T from "./tools";
+import * as L from "./layout";
+import { Layout } from "./api";
 import { annotate, zoomTool, zoomOut, resetAxes } from "./graph";
 import { Help, helpCard, HELP } from "./help";
 
@@ -122,6 +124,8 @@ const columnMenu = (): Item[] => curTable()?.kind === "parts" ? PARTS.map(([k, l
 const ZOOM = (): Item[] => [{ label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Pan (drag)", run: () => zoomTool("pan") }, { label: "Zoom Out", icon: "zout", run: () => { const g = graph(); if (g) zoomOut(g); } },
   { label: "Reset Axes", icon: "fit", run: () => { const g = graph(); if (g) resetAxes(g); } }];
 const ANNOT = (): Item[] => [...[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]].map(([k, l]) => ({ label: l, run: () => annotate(k) })), "-", { label: "Edit Notes…", run: () => C.format("notes") }];
+/** Runs `f` on the open layout (or says how to get one). */
+const lay = (f: (l: Layout) => void) => { const it = item(), l = it.s === "layouts" ? out()?.project.layouts?.find(x => x.id === it.id) : undefined; if (l) f(l); else toast(out()?.project.layouts?.length ? "Open a layout first (Layouts in the navigator)." : "Make a layout first: New Layout."); };
 const exportMenu = (): Item[] => [["Export…", "png"], ["PNG picture", "png"], ["TIFF picture", "tiff"], ["SVG vector", "svg"], ["PDF vector", "pdf"], ["EPS vector", "eps"]].map(([l, f], i) => ({ label: l, icon: i ? undefined : "export", run: () => C.exportG(f) }));
 export const Ribbon = () => (
   <section class="ribbon" ref={fitRibbon}>
@@ -171,9 +175,11 @@ export const Ribbon = () => (
       <G l="Layout" h="glayout"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /><S><B i="legend" l="Legend" on={!!gs()?.legend.show} run={() => setGS(s => { s.legend.show = !s.legend.show; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /><B i="opts" l="Graph Options" run={() => C.format("graph")} /></S></G>
     </Show>
     <Show when={tab() === "layout"}>
-      <G l="Layout"><N big i="layout" l="New Layout" id="F1" /><S><N i="list" l="Panel Letters" id="F1" /><N i="cols" l="Align" id="F1" /><N i="size" l="Journal Figure" id="F2" /></S></G>
+      <G l="Layout" h="layouts"><B big i="layout" l="New Layout" title="Arrange graphs on a page" run={() => L.newLayout()} />
+        <S><B i="list" l="Panel Letters" dd={e => lay(l => openMenu(e, L.letterMenu(l)))} /><B i="cols" l="Arrange" dd={e => lay(l => openMenu(e, L.arrangeMenu(l)))} /><B i="size" l="Journal Figure" dd={e => lay(l => openMenu(e, L.sizeMenu(l)))} /></S>
+        <S><B i="graph" l="Add Graph" dd={e => lay(l => openMenu(e, L.graphMenu(l)))} /></S></G>
       <G l="Templates"><N big i="layout" l="Poster" id="F3" /><N big i="layout" l="Slide" id="F3" /></G>
-      <G l="Export"><N big i="export" l="Export Layout" id="F2" /><N big i="image" l="TIFF for Journals" id="G3" /></G>
+      <G l="Export" h="exportall"><B big i="export" l="Export Layout" title="PDF, TIFF, PNG, SVG or EPS at the page's real size" run={() => lay(l => L.exportLayout(l))} /><B big i="image" l="TIFF for Journals" title="CMYK, LZW, 600 dpi" run={() => lay(l => L.exportLayout(l, true))} /></G>
     </Show>
     <Show when={tab() === "tools"}>
       <G l="Python"><N big i="fx" l="Python Console" id="H1" /><S><N i="fx" l="My Analyses" id="H2" /><N i="report" l="Notebook" id="H5" /></S></G>

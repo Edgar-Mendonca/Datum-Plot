@@ -29,8 +29,10 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   p.on("pageerror", e => errors.push(e.message));
   await p.addInitScript(([f, rd, ln]) => {
     f.state.project.analyses = [{ id: 99, table: f.state.project.tables[0].id, name: "Growth fit", kind: "linear", sets: [], options: { xmax: 10 } }];
+    f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
+      items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
-    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
+    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
@@ -313,6 +315,22 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".nhead .help"); await p.waitForTimeout(150);
   check("? in the navigator opens its card", ((await p.textContent(".dlg header")) || "").includes("Navigator"));
   await p.keyboard.press("Escape");
+  // 8b. 0.2.11: page layouts.
+  await p.click('.nav .nitem:has-text("Figure 1")');
+  await p.waitForTimeout(300);
+  check("a layout shows its page with a box per item", (await p.$$(".lpaper .litem")).length === 2 && !!(await p.$(".lpaper img.gimg")));
+  await reset();
+  const lb = await p.evaluate(() => { const r = document.querySelector(".lpaper .litem").getBoundingClientRect(); return [r.left + 30, r.top + 30]; });
+  await p.mouse.move(lb[0], lb[1]); await p.mouse.down(); await p.mouse.move(lb[0] + 40, lb[1] + 20, { steps: 4 }); await p.mouse.up();
+  await p.waitForTimeout(150);
+  const ls = (await ops()).find(o => o.LayoutSet)?.LayoutSet.layout;
+  check("dragging a panel moves it in whole millimetres", ls && ls.items[0].x > 0 && Number.isInteger(ls.items[0].x) && ls.items[0].y === 0, JSON.stringify(ls?.items?.[0]));
+  await reset();
+  await p.click('.tabs button:text-is("Layout")');
+  await p.click('.ribbon .rb.big:has-text("New Layout")');
+  await p.waitForTimeout(150);
+  const al = (await ops()).find(o => o.AddLayout)?.AddLayout.layout;
+  check("New Layout starts with the project's graphs", al && al.items.length === Math.min(4, P.graphs.length) && al.items[0].graph === P.graphs[0].id, JSON.stringify(al));
   // 9. 0.2.10: users' requests.
   await p.click(".nav .nitem:nth-of-type(2)");
   await p.waitForTimeout(200);
