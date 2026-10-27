@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.9 — 2026-10-27
+
+Work directly on the graph: move notes, zoom and pan, exclude points.
+
+**Select, drag and edit**
+- Click a note to select it, **drag it** to move it, press **Delete** to remove it, **double-click** it to edit its text.
+
+**Zoom and pan**
+- Format › Zoom and Pan (or right-click the graph): **Zoom to a Box** (drag around the part you want), **Pan** (drag the graph until Esc), **Zoom Out**, **Reset Axes**. The ranges are saved with the graph, so exports show the same view.
+
+**Exclude from the graph**
+- Right-click a point: **Exclude** it (its replicates at that X stay in the table in blue italics, and graphs and analyses leave them out), or format its data set.
+
 ## 0.2.8 — 2026-10-27
 
 Notes on graphs: text, arrows, lines and boxes.

@@ -585,3 +585,5 @@ input.mono { font-family: var(--mono) !important; }
 .gpaper.annot { cursor: crosshair; }
 .gdrag { position: absolute; left: 0; top: 0; pointer-events: none; }
 .gdrag line, .gdrag rect { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+.gpaper.pan { cursor: grab; }
+.gdrag rect.nsel { stroke: var(--blue); stroke-dasharray: none; fill: rgba(14, 140, 127, 0.12); }

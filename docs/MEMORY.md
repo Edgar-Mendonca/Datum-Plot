@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
+| **Current version** | **0.2.9** (2026-10-27: work on the graph). Earlier: **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -184,8 +184,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.6** | Special analyses | Bland-Altman and ROC (B18); Bland-Altman, ROC and forest plots (D10; volcano/bubble later) | ✅ |
 | **0.2.7** | Axes | Y axis breaks and a second (right) Y axis (D8) | ✅ |
 | **0.2.8** | Annotations | Text, arrows, lines and boxes on graphs, placed by click/drag, edited in Format Graph › Notes (D15) | ✅ |
-| 0.2.9 | Interactive graph | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) | 🔜 |
-| 0.2.10 – 0.2.11 | One or two features each | layouts (F1, F2, G3) · multi-panel (D12) | ⬜ |
+| **0.2.9** | Interactive graph | Notes: select, drag, Delete, double-click to edit (E2, E3); zoom to a box, pan, zoom out, reset axes (E4); right-click a point to exclude it (E6) | ✅ |
+| 0.2.10 | Layouts | Page layouts (F1), journal figures (F2), TIFF for journals (G3) | 🔜 |
+| 0.2.11 | Multi-panel | Multi-panel figures (D12) | ⬜ |
 | 0.2.12 – 0.2.17 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
 | 0.2.18 – 0.2.24 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
 | 1.0.0 | Stable | Signed installer (I6), validation report (R/NIST, J4), user guide | ⬜ |
@@ -258,13 +259,17 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 - **0.2.8** ("go"): `Note` in core (Copy Look keeps the target's notes), `draw_notes`, `graph.tsx` `tool`/`annotate` (click = text via prompt, drag = arrow/line/box with a dashed preview, Esc cancels), Format Graph › Notes table, Format › Annotate group, Graph › Annotation menu, help, Tell Me. 48 Python tests, 15 + 1 Rust, 58 UI checks.
 
+- **0.2.9** ("go"): all in `ui/src/graph.tsx` (no engine changes): `noteAt`/`pointAt` hit-testing in graph points, note drag (moved in screen points, stored in data units, so log axes work), Delete, double-click edit, selection marker; tools `zoom` (box → fixed x/y ranges; Y only for non-XY) and `pan` (drag until Esc) via `zoomTool`, `zoomOut`, `resetAxes`; right-click menu with Exclude (XY: the point's replicates → `Exclude` op) and Format; Format › Zoom and Pan menu; help, Tell Me. 48 Python tests, 15 + 1 Rust, 61 UI checks.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.2.9 interactive graph: select, drag and edit, zoom and pan, exclude points from the graph (E2–E4, E6), then down the list in PLAN-0.2 §12.
+**Next:** 0.2.10 page layouts (F1), journal figures (F2) and TIFF for journals (G3), then down the list in PLAN-0.2 §12.
 
-**0.2.8 limits:** notes are moved by editing their numbers (dragging arrives with 0.2.9); text is typed in a small prompt.
+**0.2.9 limits:** the legend and titles are not draggable yet (Format Graph places them); excluding by right-click works on XY graphs (column tables: exclude in the table).
+
+**0.2.8 limits:** note text is typed in a small prompt.
 
 **0.2.7 limits:** breaks only on linear Y axes of XY graphs, one break, not together with a right axis; hover in the top panel of a broken graph is not exact.
 

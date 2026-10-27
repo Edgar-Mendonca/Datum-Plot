@@ -168,11 +168,11 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | ID | Feature | Release |
 | --- | --- | --- |
 | E1 | Hover values, crosshair, double-click to format ✅ | ✅ |
-| E2 | **Click to select any part** (title, axis, tick labels, legend, one data set, one point): matplotlib reports where each element is, the window highlights it and the ribbon/Format pane shows its settings | 0.4 |
-| E3 | Drag the legend, titles and annotations; edit text in place | 0.4 |
-| E4 | Zoom and pan the plot (box zoom, wheel), reset | 0.4 |
+| E2 | **Click to select any part** (title, axis, tick labels, legend, one data set, one point): matplotlib reports where each element is, the window highlights it and the ribbon/Format pane shows its settings | ✅ 0.2.9 |
+| E3 | Drag the legend, titles and annotations; edit text in place | ✅ 0.2.9 |
+| E4 | Zoom and pan the plot (box zoom, wheel), reset | ✅ 0.2.9 |
 | E5 | Region of interest: drag a box to get statistics, area, a quick fit or peaks for just that region (Origin Gadgets) | 0.6 |
-| E6 | Exclude points from the graph (click a point → exclude it in the table) | 0.4 |
+| E6 | Exclude points from the graph (click a point → exclude it in the table) | ✅ 0.2.9 |
 | E7 | Undo every graph change ✅; graph thumbnails in the navigator | ✅ 0.2.2 |
 
 ### F. Layouts and figures for papers
@@ -347,7 +347,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.6** ✅ | ROC and Bland-Altman (B18), special graphs (D10: Bland-Altman, ROC, forest; volcano and bubble later) |
 | **0.2.7** ✅ | Axis breaks and a second Y axis (D8) |
 | **0.2.8** ✅ | Annotations (D15) |
-| 0.2.9 | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
+| **0.2.9** ✅ | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
 | 0.2.10 | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
 | 0.2.11 | Multi-panel figures (D12) |
 | 0.2.12 | Multiple variables (A7), multiple and logistic regression (B21) |

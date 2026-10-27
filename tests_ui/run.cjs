@@ -77,6 +77,21 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   check("hovering a point shows its data set, mean and n", ((await p.textContent(".gtip").catch(() => "")) || "").includes("mean"), await p.textContent(".gtip").catch(() => "none"));
 
+  await reset();
+  await p.mouse.click(hx, hy, { button: "right" });
+  await p.waitForTimeout(100);
+  check("right-clicking a point offers to exclude it", ((await p.textContent(".menu")) || "").includes("Exclude"));
+  await p.click('.menu button:has-text("Exclude")');
+  await p.waitForTimeout(150);
+  const exP = (await ops()).find(o => o.Exclude);
+  check("…and excludes its replicates in the table", exP && exP.Exclude.on && exP.Exclude.cells.length >= 1 && exP.Exclude.cells.every(c => c[0] === exP.Exclude.cells[0][0]), JSON.stringify(exP));
+  await reset();
+  await p.mouse.click(hx, hy, { button: "right" });
+  await p.click('.menu button:has-text("Zoom to a Box")');
+  await p.mouse.move(hx - 40, hy - 40); await p.mouse.down(); await p.mouse.move(hx + 40, hy + 40, { steps: 4 }); await p.mouse.up();
+  await p.waitForTimeout(150);
+  const zm = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
+  check("Zoom to a Box sets fixed axis ranges", zm && zm.x.auto === false && zm.y.auto === false && zm.x.min < zm.x.max && zm.y.min < zm.y.max, JSON.stringify(zm && [zm.x, zm.y]));
   // 4. The data table: headings over their columns, typing, ranges, exclude, paste.
   await p.click(".nav .nitem:nth-of-type(2)");
   await p.waitForTimeout(300);

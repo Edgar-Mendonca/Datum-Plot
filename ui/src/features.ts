@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.8";
+export const VERSION_NOW = "0.2.9";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -92,11 +92,11 @@ export const FEATURES: Feature[] = [
   ["D16", "Colour schemes", "0.2.2", "Okabe-Ito, Tableau, bright, muted, viridis, cividis, greyscale and your own colours, with a colour-blind preview.", "matplotlib"],
   ["D17", "Large data", "0.2.20", "A million points drawn quickly on screen.", "numpy"],
   ["E1", "Hover values and double-click formatting", "0.1", "Values under the mouse; double-click a part of the graph to format it.", ""],
-  ["E2", "Select parts of the graph", "0.2.9", "Click a title, axis, legend, data set or point to select it and change it.", "matplotlib"],
-  ["E3", "Drag and edit in place", "0.2.9", "Move the legend, titles and notes; edit text directly on the graph.", ""],
-  ["E4", "Zoom and pan", "0.2.9", "Box zoom, wheel zoom and pan inside the plot.", ""],
+  ["E2", "Select parts of the graph", "0.2.9", "Click a note to select it (Delete removes it); double-click an axis, the legend, a title or the data to format it; right-click a point for its data set.", "matplotlib"],
+  ["E3", "Drag and edit in place", "0.2.9", "Drag notes to move them and double-click to edit their text on the graph. Dragging the legend comes later.", ""],
+  ["E4", "Zoom and pan", "0.2.9", "Zoom to a box, zoom out, pan by dragging and reset the axes; Ctrl+wheel zooms the view.", ""],
   ["E5", "Region tools", "0.2.20", "Drag over part of a curve for its statistics, area, a quick fit or its peaks.", "scipy"],
-  ["E6", "Exclude from the graph", "0.2.9", "Click a point to exclude it in the table.", ""],
+  ["E6", "Exclude from the graph", "0.2.9", "Right-click a point to exclude it (it stays in the table in blue italics).", ""],
   ["E7", "Graph thumbnails", "0.2.2", "Small pictures of each graph in the navigator (View › Thumbnails).", ""],
   ["F1", "Layouts", "0.2.10", "Pages with several graphs, tables, text and pictures; panel letters A, B, C; align and distribute.", "matplotlib"],
   ["F2", "Figures at journal size", "0.2.10", "Export a whole layout as one PDF, TIFF or SVG at its real size.", "matplotlib"],
