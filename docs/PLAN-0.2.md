@@ -76,7 +76,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A2 | Column table | One group per column, values down (or mean/SD/N) — for t-tests and one-way ANOVA | ✅ 0.2.2 |
 | A3 | Grouped table | Rows × data sets with replicates — two-way ANOVA, grouped bars | ✅ 0.2.3 |
 | A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | ✅ 0.2.4 |
-| A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
+| A5 | Survival table | Time + event/censored per group — Kaplan-Meier | ✅ 0.2.16 |
 | A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | ✅ 0.2.5 |
 | A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | ✅ 0.2.14 |
 | A8 | Nested table | Sub-columns within groups (cells within animals) — nested t-test/ANOVA | 0.5 |
@@ -113,7 +113,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B16 | Correlation: Pearson, Spearman, Kendall, matrix, partial | scipy.stats, pandas | ✅ 0.2.2 |
 | B17 | Contingency: chi-square (Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, McNemar | scipy.stats, statsmodels | ✅ 0.2.4 |
 | B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | ✅ 0.2.6 |
-| B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | **lifelines** | 0.5 |
+| B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | statsmodels | ✅ 0.2.16 (Kaplan-Meier, median with CI, log-rank, Cox hazard ratios; Gehan-Breslow-Wilcoxon later) |
 | B20 | Nested t-test, nested one-way ANOVA (mixed models) | statsmodels | 0.5 |
 | B21 | Multiple linear, logistic and Poisson regression | statsmodels | ✅ 0.2.14 |
 | B22 | PCA, clustering (hierarchical, k-means) | numpy SVD, scipy.cluster | ✅ 0.2.15 |
@@ -153,7 +153,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D6 | Grouped bars (interleaved, separated, stacked), grouped scatter, heat map | ✅ 0.2.3 |
 | D7 | Pie, donut, 100 % stacked bars | ✅ 0.2.5 |
 | D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | ✅ 0.2.7 |
-| D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
+| D9 | Survival curves with censor ticks and the number-at-risk table | ✅ 0.2.16 (curves, censor ticks, CI band; the number-at-risk table later) |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
 | D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | ✅ 0.2.12 |
@@ -354,7 +354,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.13** ✅ | Security: `zip` 2 → 9.1.3 (RUSTSEC-2026-0367/0368/0369), `deny.toml` and the cargo-deny CI job (FAMILY §11), reported by Datum Sim |
 | **0.2.14** ✅ | Many variables (A7), multiple, logistic and Poisson regression (B21) |
 | **0.2.15** ✅ | PCA and clustering (B22) |
-| 0.2.16 | Survival table (A5), analysis (B19), curves (D9) |
+| **0.2.16** ✅ | Survival table (A5), analysis (B19), curves (D9) |
 | 0.2.17 | Nested table (A8) and tests (B20) |
 | 0.2.18 | Peaks (B24), signal processing (B25) |
 | 0.2.19 | DSC/TGA (B31), S–N curves (B30) |

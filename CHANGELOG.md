@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.16 — 2026-10-28
+
+Survival: time-to-event tables, Kaplan-Meier curves, the log-rank test and hazard ratios.
+
+**Survival tables**
+- File › New Table › **Survival**: one row per subject (a patient, a specimen, a component). Enter the time in X and, in that subject's group column, 1 if the event happened (death, failure) or 0 if it was censored (still going when the study ended, or lost).
+- A new sample on the Home page, **Time to failure**: bare and coated steel specimens in a salt-spray test stopped at 1000 hours.
+
+**Survival analysis**
+- Analyze › More › **Survival**: the Kaplan-Meier survival of each group, its median survival with a 95% confidence interval, and the full survival table (at risk, events, survival, standard error and 95% CI at each time).
+- With two or more groups: the log-rank test of whether the curves differ, and hazard ratios against the first group with their 95% CIs (Cox model). Checked against R (`survfit`, `survdiff`, `coxph`).
+
+**Survival curves**
+- A survival table's graph draws a staircase per group from 100%, with a tick at each censored subject. Format Graph › **Confidence band** shades each curve's 95% CI. Hovering shows the survival and the number still at risk.
+
 ## 0.2.15 — 2026-10-28
 
 Patterns in many variables: principal component analysis and clustering.

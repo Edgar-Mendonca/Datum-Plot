@@ -97,3 +97,33 @@ class Patterns(unittest.TestCase):
             self.assertIn("clear structure", r["answer"])
         with self.assertRaises(ValueError):
             A.run("cluster", multi(a=a, b=b), [], {"k": 10})
+
+
+def surv(groups):
+    """A survival table: time in X, one row per subject, 1 (event) or 0 (censored) in its group's column."""
+    rows = [(t, k, e) for k, g_ in enumerate(groups.values()) for t, e in g_]
+    cols = [[float(t) for t, _, _ in rows]] + [[float(e) if k == j else None for _, k, e in rows] for j in range(len(groups))]
+    return {"name": "S", "kind": "survival", "rows": len(rows), "sets": [{"title": n, "entry": "rep", "reps": 1} for n in groups], "cols": cols, "excluded": [], "xTitle": "Weeks", "yTitle": "Percent survival"}
+
+
+# R survival::aml
+AML = {"Maintained": [(9, 1), (13, 1), (13, 0), (18, 1), (23, 1), (28, 0), (31, 1), (34, 1), (45, 0), (48, 1), (161, 0)],
+       "Nonmaintained": [(5, 1), (5, 1), (8, 1), (8, 1), (12, 1), (16, 0), (23, 1), (27, 1), (30, 1), (33, 1), (43, 1), (45, 1)]}
+
+
+class Survival(unittest.TestCase):
+    def test_kaplan_meier_logrank_and_cox_match_r(self):
+        # R: survfit(Surv(time, status) ~ x, aml): medians 31 (18–NA) and 23 (8–NA); Maintained S = .909 .818 .716 .614 .491 .368 .184
+        # survdiff: Chisq = 3.4 on 1 df, p = 0.0653 (statsmodels survdiff: 3.39639); coxph: HR 2.498 (0.9159–6.813), p = 0.0737
+        r = A.run("survival", surv(AML), [], {})
+        s = r["tabs"][0]["tables"]
+        self.assertEqual([row[4:] for row in s[0]["rows"]], [["31", "18 to —"], ["23", "8 to —"]])
+        self.assertEqual([row[4] for row in r["tabs"][1]["tables"][0]["rows"] if row[2] != "0"], ["0.9091", "0.8182", "0.7159", "0.6136", "0.4909", "0.3682", "0.1841"])
+        self.assertEqual((s[1]["rows"][0][1], s[1]["rows"][2][1]), ("3.3964", "0.0653"))
+        self.assertEqual(s[2]["rows"][0][1:], ["2.498", "0.9159 to 6.813", "0.0737"])
+        self.assertIn("do not differ significantly", r["answer"])
+
+    def test_survival_graph(self):
+        out = graph.render(surv(AML), {"error": "ci"})
+        self.assertIn("<svg", out["svg"])
+        self.assertTrue(any(p and p[1] == 31 and abs(p[2] - 49.09) < 0.01 for p in out["points"]))

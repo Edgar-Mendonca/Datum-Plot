@@ -637,8 +637,8 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
-    from . import groups, regress, tools
-    KINDS.update({"multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
+    from . import groups, regress, survival, tools
+    KINDS.update({"survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 

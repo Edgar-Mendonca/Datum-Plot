@@ -66,7 +66,7 @@ const TABLES: Choice[] = [
   { id: "A2", name: "Column", icon: "sheet", group: "Data tables", desc: "Each column is a group (Control, Treated…). Compare groups with t-tests and ANOVA; dot plots, bars, box plots." },
   { id: "A3", name: "Grouped", icon: "table", group: "Data tables", desc: "Two factors: rows and data sets. Two-way ANOVA and grouped bars." },
   { id: "A4", name: "Contingency", icon: "grid", group: "Data tables", desc: "Counts of outcomes per group. Chi-square and Fisher's exact test." },
-  { id: "A5", name: "Survival", icon: "line", group: "Data tables", desc: "Time to failure or event, with censored items. Kaplan-Meier and log-rank; also fatigue and reliability data." },
+  { id: "A5", name: "Survival", icon: "line", group: "Data tables", desc: "One row per subject: the time in X, and 1 (event, failure) or 0 (censored: still going at the end) in its group's column. Kaplan-Meier curves and the log-rank test." },
   { id: "A6", name: "Parts of whole", icon: "dash", group: "Data tables", desc: "Fractions of a total, such as phase or composition fractions." },
   { id: "A7", name: "Many variables", icon: "cols", group: "Data tables", desc: "One row per sample with many measured properties. Multiple regression and a correlation matrix; graphs put the first variable on X." },
   { id: "A8", name: "Nested", icon: "group", group: "Data tables", desc: "Replicates within sub-groups, such as specimens within batches." },
@@ -74,7 +74,7 @@ const TABLES: Choice[] = [
   { id: "A10", name: "Matrix", icon: "grid", group: "Worksheets and 3D", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : c.id === "A7" ? "multi" : undefined)} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : c.id === "A7" ? "multi" : c.id === "A5" ? "survival" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
@@ -105,7 +105,7 @@ const ANALYSES: Choice[] = [
   { id: "B18", key: "B18r", name: "ROC curve", icon: "curve", group: "Relationships", desc: "How well a test separates two groups: the ROC curve, AUC and the best cut-off." },
   { id: "B21", name: "Multiple and logistic regression", icon: "cols", group: "Relationships", desc: "Several predictors at once: linear for measurements, logistic for 0/1 outcomes, Poisson for counts." },
   { id: "B22", name: "PCA and clustering", icon: "group", group: "Relationships", desc: "Patterns in many variables: principal components with a biplot; groups of similar rows by hierarchical or k-means clustering." },
-  { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier, log-rank and Cox regression." },
+  { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier survival, median survival with its 95% CI, the log-rank test and hazard ratios (Cox)." },
   { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, areas and multi-peak fits (XRD, Raman, DSC)." },
   { id: "B25", name: "Signal processing", icon: "graph", group: "Signals and spectra", desc: "FFT, filters and resampling." },
   { id: "B26", name: "Surface fitting", icon: "grid", group: "Signals and spectra", desc: "Fit Z = f(X, Y)." },
@@ -129,13 +129,14 @@ const GRAPHS: Choice[] = [
   { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Worksheets and 3D", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
-export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "parts" ? "D7" : curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? "D6" : "D1"} run={c => {
+export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "survival" ? "D9" : curTable()?.kind === "parts" ? "D7" : curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? "D6" : "D1"} run={c => {
   const t = curTable();
   if (c.id === "D4") { setTimeout(() => runAnalysis("D4")); return; }
   if (c.id === "D7") return t?.kind === "parts" ? toast("This is a parts-of-whole graph: Graph › Column Graph picks pie, donut or bars stacked to 100%.", true) : toast("Pie and donut charts show parts-of-whole tables: File › New Table › Parts of whole.");
   if (c.id === "D6") return t?.kind === "grouped" || t?.kind === "contingency" ? toast("This is a grouped graph: Graph › Column Graph picks grouped bars, stacked bars, dots, lines or a heat map.", true) : toast("Grouped graphs show grouped tables: File › New Table › Grouped.");
+  if (c.id === "D9") return t?.kind === "survival" ? toast("This is a survival graph: Format Graph › Confidence band shades the 95% CI.", true) : toast("Survival curves show survival tables: File › New Table › Survival.");
   if (c.id === "D2") return t?.kind === "column" ? toast("This is a column graph: Graph › Column Graph picks dots, bars, box plots or violins.", true) : toast("Column graphs show column tables: File › New Table › Column.");
-  toast(t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);
+  toast(t?.kind === "survival" ? "This survival table draws Kaplan-Meier curves." : t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);
 }} />);
 
 /** File › Import: a CSV, TXT or Excel file into a new XY table. */

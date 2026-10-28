@@ -146,7 +146,7 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 12);
+    assert_eq!(l.len(), 13);
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
@@ -162,6 +162,11 @@ fn templates_make_sense() {
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), t.row_titles[23].as_str(), p.analyses[0].kind.as_str()), ("multi", 24, 4, "S24", "multireg"));
     assert!((0..24).all(|r| t.get(r, 3).is_some()) && Table::multi(4, 0).rows == 1);
+    let p = templates::build(Some("corrosion")).unwrap();
+    let t = &p.tables[0];
+    assert_eq!((t.kind.as_str(), t.rows, t.width(), p.analyses[0].kind.as_str()), ("survival", 28, 3, "survival"));
+    assert!((0..28).all(|r| t.get(r, 0).is_some_and(|h| h <= 1000.0) && t.get(r, 1 + r / 14).is_some() && t.get(r, 2 - r / 14).is_none()));
+    assert!((0..28).any(|r| t.get(r, 1 + r / 14) == Some(0.0)), "some specimens outlast the test");
     for id in ["groups", "weibull"] {
         let p = templates::build(Some(id)).unwrap();
         assert!(p.tables[0].kind == "column" && p.tables[0].sets.iter().all(|s| s.reps == 1), "{id}");

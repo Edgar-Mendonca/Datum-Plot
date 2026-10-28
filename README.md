@@ -34,7 +34,7 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 - **Data tables** that work like a spreadsheet: XY tables (an X column and data sets with replicates, or a mean with SD or SEM and N) and column tables (one group per column). Paste from a spreadsheet, fill series, exclude a value without deleting it.
 - **Publication-quality graphs** drawn with matplotlib: means with SD, SEM, 95% CI or range, linear or log axes, colour-blind-safe colours, sizes in millimetres for journal columns.
 - **Export** as PNG or TIFF at any dpi, or as SVG, PDF and EPS with editable text. Copy into documents and slides. Print with headers, footers and captions.
-- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, t-tests, one-way ANOVA with multiple comparisons, nonparametric tests, effect sizes, correlation, power; linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, global fits and model comparison, area under the curve and smoothing; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables. Results stay linked to the data, explain themselves and give methods text.
+- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, t-tests, one-way ANOVA with multiple comparisons, nonparametric tests, effect sizes, correlation, power; linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, global fits and model comparison, area under the curve and smoothing; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables; survival analysis (Kaplan-Meier curves, median survival, log-rank test, hazard ratios). Results stay linked to the data, explain themselves and give methods text.
 - **Materials testing**: tensile tests (modulus, yield, UTS, elongation, toughness), Weibull strength, Arrhenius activation energies.
 - **Column graphs** (dots, bars, box plots, violins) with significance stars, journal styles and colour-blind-safe schemes. Export every graph at once, or the whole project to a spreadsheet (.xlsx). More arrives in releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
 
@@ -48,13 +48,13 @@ Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Me
 
 If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
 
-> Mendonca, E. (2026). *Datum Plot* (Version 0.2.15) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+> Mendonca, E. (2026). *Datum Plot* (Version 0.2.16) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
 
 ```bibtex
 @software{datum_plot,
   author  = {Mendonca, Edgar},
   title   = {Datum Plot},
-  version = {0.2.15},
+  version = {0.2.16},
   year    = {2026},
   url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
   license = {MIT}

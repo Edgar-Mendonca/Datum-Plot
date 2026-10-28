@@ -55,7 +55,7 @@ export const GraphView = (p: { g: Graph }) => {
     const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![6] ?? q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
     if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;
-      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "column" ? `mean ${num(+y.toPrecision(6))}` : `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
+      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "survival" ? `X ${num(x)} · ${num(+y.toPrecision(4))}% survival` : tb?.kind === "column" ? `mean ${num(+y.toPrecision(6))}` : `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, tb?.kind === "survival" ? `${n} at risk` : n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
     } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [tb?.kind === "column" ? `Y ${num(+y.toPrecision(4))}` : `X ${num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }
   };
   // ---------- working on the graph: notes, points, zoom and pan ----------
@@ -147,7 +147,7 @@ export const GraphView = (p: { g: Graph }) => {
       setTool(null); setDrag(null);
       if (kind !== "text" && Math.hypot(qx - px, qy - py) < 3) return toast("Drag to draw it.");
       const [x, y] = toData(px, py), [x2, y2] = toData(qx, qy);
-      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" || table()?.kind === "multi" ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
+      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(["xy", "multi", "survival"].includes(table()?.kind ?? "") ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
       const text = kind === "text" ? prompt("Text", "") : kind === "line" ? "" : prompt(kind === "arrow" ? "Text at the start of the arrow (optional)" : "Label (optional)", "");
       if (text === null || (kind === "text" && !text.trim())) return;
       setG(p.g, s => ({ ...s, notes: [...(s.notes ?? []), { kind, x, y, x2, y2, text, color: "", size: 0, bold: false }] }));
@@ -158,7 +158,7 @@ export const GraphView = (p: { g: Graph }) => {
   /** Pan: shifts both axis ranges by (dx, dy) points. */
   const panBy = (dx: number, dy: number) => {
     const R = r()!, [x0, y0, x1, y1] = R.plot, [ax, ay] = toData(x0 + dx, y1 + dy), [bx, by] = toData(x1 + dx, y0 + dy);
-    setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" || table()?.kind === "multi" ? { x: { ...s.x, auto: false, min: ax, max: bx } } : {}), y: { ...s.y, auto: false, min: ay, max: by } }));
+    setG(p.g, s => ({ ...s, ...(["xy", "multi", "survival"].includes(table()?.kind ?? "") ? { x: { ...s.x, auto: false, min: ax, max: bx } } : {}), y: { ...s.y, auto: false, min: ay, max: by } }));
   };
   onCleanup(() => { setTip(null); if (tool() === "pan" || tool() === "zoom") setTool(null); });
   return (
@@ -191,7 +191,7 @@ export const zoomOut = (g: Graph) => {
   const R = lastRender(g.id);
   if (!R) return;
   const wide = ([a, b]: [number, number], log: boolean) => log ? [a / Math.sqrt(b / a), b * Math.sqrt(b / a)] : [a - (b - a) / 2, b + (b - a) / 2];
-  const xy = ["xy", "multi"].includes(out()?.project.tables.find(t => t.id === g.table)?.kind ?? ""), [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
+  const xy = ["xy", "multi", "survival"].includes(out()?.project.tables.find(t => t.id === g.table)?.kind ?? ""), [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
   setG(g, s => ({ ...s, ...(xy ? { x: { ...s.x, auto: false, min: xa, max: xb } } : {}), y: { ...s.y, auto: false, min: ya, max: yb } }));
 };
 export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: true }, y: { ...s.y, auto: true } }));

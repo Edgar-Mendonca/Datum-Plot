@@ -99,7 +99,7 @@ def write_excel(path, project, analyses):
 
     for t in project.get("tables", []):
         ws = sheet(t["name"])
-        xy = t.get("kind", "xy") == "xy"
+        xy = t.get("kind", "xy") in ("xy", "survival")
         grouped = t.get("kind") in ("grouped", "contingency", "parts", "multi")
         heads = ([f"{t.get('xTitle') or 'X'}{' (' + t['xUnits'] + ')' if t.get('xUnits') else ''}"] if xy else ["Row"] if grouped else [])
         sub = {"msn": ["Mean", "SD", "N"], "mesn": ["Mean", "SEM", "N"]}

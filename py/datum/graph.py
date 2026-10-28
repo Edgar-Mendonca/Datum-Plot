@@ -217,6 +217,8 @@ def build(table, graph, overlays=(), fig=None):
         return column_figure(fig, ax, table, graph, overlays, colors, size)
     if table.get("kind") == "parts":
         return parts_figure(fig, ax, table, graph, size)
+    if table.get("kind") == "survival":
+        return survival_figure(fig, ax, table, graph, colors, size)
     if table.get("kind") in ("grouped", "contingency"):
         return grouped_figure(fig, ax, table, graph, overlays, colors, size)
     summary = stats.summarize(table)
@@ -529,6 +531,37 @@ def parts_figure(fig, ax, table, graph, size):
     if (graph.get("legend") or {}).get("show", True):
         leg = ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
     return fig, ax, leg, []
+
+
+def survival_figure(fig, ax, table, graph, colors, size):
+    """Kaplan-Meier curves (D9): a staircase per group from 100 %, a tick at each censored subject, 95 % CI shaded when the error is "ci"."""
+    from .survival import km, steps, subjects
+    points = []
+    for k in range(len(table["sets"])):
+        st = style_of(graph, k, colors)
+        t, e = subjects(table, k)
+        if not st["show"] or not len(t):
+            continue
+        rows = km(t, e)
+        xs, ys = steps(rows)
+        label = table["sets"][k].get("title") or f"Data set {chr(65 + k)}"
+        ax.plot(xs, ys, drawstyle="steps-post", color=st["color"], linewidth=st["width"] * 1.2, label=label, zorder=3)
+        if graph.get("error") == "ci":
+            lo, hi = [100.0] + [100 * r[6] for r in rows], [100.0] + [100 * (r[7] if math.isfinite(r[7]) else r[6]) for r in rows]
+            ax.fill_between(xs, lo, hi, step="post", color=st["color"], alpha=0.15, linewidth=0, zorder=2)
+        cx = [r[0] for r in rows if r[3]]
+        ax.plot(cx, [100 * r[4] for r in rows if r[3]], linestyle="none", marker="|", markersize=st["size"] * 0.9, markeredgewidth=1.0, color=st["color"], zorder=4)
+        points += [[k, r[0], 100 * r[4], r[1], 0.0, 0.0] for r in rows]
+    graph = {**graph, "y": {"auto": False, "min": 0, "max": 105, **{a: b for a, b in (graph.get("y") or {}).items() if a in ("step", "grid", "minor", "title")}}} if (graph.get("y") or {}).get("auto", True) else graph
+    axes(ax, table, graph, points)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    lg = graph.get("legend") or {}
+    leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" and len(points) and lg.get("show", True) else \
+        ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False) if lg.get("show", True) and len({p[0] for p in points}) > 1 else None
+    if not points:
+        ax.text(0.5, 0.5, "Enter each subject's time in X and 1 (event) or 0 (censored) in its group", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+    return fig, ax, leg, points
 
 
 def grouped_figure(fig, ax, table, graph, overlays, colors, size):

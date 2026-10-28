@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, twelve samples, open, import and roadmap", (await p.$$(".home .tile")).length === 16, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, thirteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 17, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -144,11 +144,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("Survival")');
+  await p.click('.ribbon .rb:has-text("Peaks")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B19") && (await p.textContent(".dlg")).includes("0.2.16"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B24") && (await p.textContent(".dlg")).includes("0.2.18"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 4);
+  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 3);
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
   check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
@@ -213,6 +213,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const cl = (await ops()).find(o => o.AddAnalysis);
   check("Clusters adds a k-means cluster analysis with four clusters", cl && cl.AddAnalysis.analysis.kind === "cluster" && cl.AddAnalysis.analysis.options.method === "kmeans" && cl.AddAnalysis.analysis.options.k === 4, JSON.stringify(cl));
+  await reset();
+  await p.click('.ribbon .rb[title^="Kaplan-Meier curves"]');
+  await p.waitForTimeout(200);
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const sv = (await ops()).find(o => o.AddAnalysis);
+  check("Survival adds a survival analysis", sv && sv.AddAnalysis.analysis.kind === "survival" && sv.AddAnalysis.overlay === false, JSON.stringify(sv));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
@@ -245,6 +252,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(150);
   check("New Table › Many variables asks the shell for a table of many variables", (await calls("new_table"))[0]?.kind === "multi", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Survival")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Survival asks the shell for a survival table", (await calls("new_table"))[0]?.kind === "survival", JSON.stringify(await calls("new_table")));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);

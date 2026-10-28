@@ -44,6 +44,17 @@ pub fn list() -> Vec<Tpl> {
         let p = build(Some(id)).unwrap();
         let t = &p.tables[0];
         let (xc, yc) = if t.kind == "multi" { (1, t.width() - 1) } else { (0, 1) };
+        if t.kind == "survival" {
+            let tmax = (0..t.rows).filter_map(|r| t.get(r, 0)).fold(1e-9f64, f64::max);
+            let mut pts: Vec<(f64, f64)> = (0..t.rows).filter_map(|r| Some((t.get(r, 0)?, t.get(r, 1)?))).collect();
+            pts.sort_by(|a, b| a.0.total_cmp(&b.0));
+            let (mut s, mut out, n) = (1.0, vec![(0.0, 1.0)], pts.len());
+            for (i, (x, e)) in pts.iter().enumerate() {
+                if *e == 1.0 { s *= 1.0 - 1.0 / (n - i) as f64; }
+                out.push((x / tmax, s));
+            }
+            return out;
+        }
         if t.kind != "xy" && t.kind != "multi" {
             let means: Vec<f64> = t.spans().iter().map(|&(c, _)| { let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, c)).collect(); v.iter().sum::<f64>() / v.len().max(1) as f64 }).collect();
             let top = means.iter().fold(0f64, |a, b| a.max(*b));
@@ -69,6 +80,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "counts", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
         Tpl { id: "phases", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
         Tpl { id: "hardness", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
+        Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -220,6 +232,30 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { points: "each".into(), sets: vec![SetStyle::default(), SetStyle { show: false, ..Default::default() }], ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Multiple regression".into(), kind: "multireg".into(), sets: vec![], options: serde_json::json!({ "y": 2, "model": "linear" }) });
+        }
+        Some("corrosion") => {
+            let mut seed = 11u64;
+            let mut t = Table::survival(2);
+            t.name = "Failures".into();
+            t.x_title = "Time".into();
+            t.x_units = "h".into();
+            t.rows = 28;
+            t.normalize();
+            for (k, (name, scale)) in [("Bare", 380.0), ("Coated", 900.0)].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                for i in 0..14 {
+                    let u: f64 = 0.5 + jitter(&mut seed, 0.48);
+                    let h = round(scale * (-(1.0 - u).ln()).powf(1.0 / 1.8), 0);
+                    let r = k * 14 + i;
+                    t.cols[0][r] = Some(h.min(1000.0));
+                    t.cols[k + 1][r] = Some(if h < 1000.0 { 1.0 } else { 0.0 });
+                }
+            }
+            p.name = "Time to failure".into();
+            p.info = Info { title: "Salt-spray corrosion".into(), experiment: "Hours until the first pit on 14 bare and 14 coated steel specimens in a salt-spray cabinet. The test stopped at 1000 h, so specimens still intact then are censored (0). Kaplan-Meier curves and the log-rank test compare the two.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { error: "none".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Survival analysis".into(), kind: "survival".into(), sets: vec![], options: serde_json::json!({}) });
         }
         Some("weibull") => {
             let mut seed = 3u64;

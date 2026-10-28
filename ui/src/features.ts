@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.15";
+export const VERSION_NOW = "0.2.16";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -20,7 +20,7 @@ export const FEATURES: Feature[] = [
   ["A2", "Column table", "0.2.2", "One group per column, values down the column (or mean/SD/N). For t-tests and one-way ANOVA.", ""],
   ["A3", "Grouped table", "0.2.3", "Rows by data sets with replicates side by side. For two-way ANOVA and grouped bars.", ""],
   ["A4", "Contingency table", "0.2.4", "Counts in rows by columns. For chi-square and Fisher's exact test.", ""],
-  ["A5", "Survival table", "0.2.16", "Time to event and whether it happened (or was censored), per group. For Kaplan-Meier curves.", ""],
+  ["A5", "Survival table", "0.2.16", "One row per subject: the time in X, and 1 (event) or 0 (censored) in its group's column. For Kaplan-Meier curves.", ""],
   ["A6", "Parts of whole", "0.2.5", "Values that add up to a whole. For pie, donut and 100 % stacked bars.", ""],
   ["A7", "Many variables", "0.2.14", "One row per sample, one column per variable. For multiple regression and correlation matrices; graphs put the first variable on X.", "pandas"],
   ["A8", "Nested table", "0.2.17", "Sub-columns within groups, such as specimens within batches. For nested t-tests and ANOVA.", ""],
@@ -52,7 +52,7 @@ export const FEATURES: Feature[] = [
   ["B16", "Correlation", "0.2.2", "Pearson (with 95 % CI), Spearman and Kendall; X against Y, or between data sets with a correlation matrix.", "scipy, pandas"],
   ["B17", "Contingency tests", "0.2.4", "Chi-square, Fisher's exact test, relative risk, odds ratio, sensitivity and specificity.", "scipy, statsmodels"],
   ["B18", "ROC and Bland-Altman", "0.2.6", "ROC curves with AUC, its CI and the best cut-off; Bland-Altman bias and limits of agreement with CIs.", "numpy"],
-  ["B19", "Survival analysis", "0.2.16", "Kaplan-Meier, log-rank, median survival, hazard ratios, Cox regression.", "lifelines"],
+  ["B19", "Survival analysis", "0.2.16", "Kaplan-Meier, median survival with its 95% CI, the log-rank test and hazard ratios (Cox).", "statsmodels"],
   ["B20", "Nested t-test and ANOVA", "0.2.17", "Mixed models for data with sub-groups.", "statsmodels"],
   ["B21", "Multiple and logistic regression", "0.2.14", "Many predictors: linear, logistic (0/1 outcomes) and Poisson (counts) regression, with odds or rate ratios.", "statsmodels"],
   ["B22", "PCA and clustering", "0.2.15", "Principal components (scree plot, biplot, loadings, scores) and hierarchical or k-means clustering (dendrogram, cluster means).", "numpy, scipy"],
@@ -82,7 +82,7 @@ export const FEATURES: Feature[] = [
   ["D6", "Grouped graphs and heat maps", "0.2.3", "Interleaved, separated and stacked bars, grouped scatter, heat maps.", "matplotlib"],
   ["D7", "Pie and donut", "0.2.5", "Parts of a whole, and 100 % stacked bars.", "matplotlib"],
   ["D8", "Axis breaks and double Y", "0.2.7", "Broken axes, a second Y axis, top and right axes, reversed and probability scales.", "matplotlib"],
-  ["D9", "Survival curves", "0.2.16", "Staircase curves with censor ticks and the number at risk.", "matplotlib, lifelines"],
+  ["D9", "Survival curves", "0.2.16", "Staircase curves with censor ticks and an optional 95% confidence band.", "matplotlib"],
   ["D10", "Special graphs", "0.2.6", "Bland-Altman and ROC plots, and forest plots of the differences after ANOVA. Volcano and bubble plots come later.", "matplotlib"],
   ["D11", "3D, contour and polar", "0.2.21", "Contours, 3D surfaces and scatter, polar, ternary, waterfall, vector and radar plots.", "matplotlib"],
   ["D12", "Multi-panel graphs and insets", "0.2.12", "Graphs whose plot frames line up across a layout, stacked panels sharing one X axis, and insets (a small graph on a white card over another).", "matplotlib"],

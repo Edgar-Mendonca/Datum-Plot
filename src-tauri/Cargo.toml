@@ -1,6 +1,6 @@
 [package]
 name = "datum-plot"
-version = "0.2.15"
+version = "0.2.16"
 edition = "2021"
 description = "Datum Plot: scientific graphs and statistics for Windows."
 license = "MIT"
