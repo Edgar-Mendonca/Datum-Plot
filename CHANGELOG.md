@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.13 — 2026-10-28
+
+Security: updated the library that unpacks the Python engine.
+
+**Security**
+- The library that unpacks the built-in Python engine on the first start (`zip`) moves from version 2 to 9.1.3, which fixes three reported problems with symbolic links and file permissions (RUSTSEC-2026-0367, 0368 and 0369). Datum Plot only ever unpacks its own bundled file and did not use the affected function, so the risk was low, but it is now gone.
+- Every change is now checked for security advisories, licences and where libraries come from (`cargo deny`), as in the other Datum apps.
+
+**Roadmap**
+- Multiple variables and regression move to 0.2.14, and the releases after them one number up (Help › Roadmap).
+
 ## 0.2.12 — 2026-10-28
 
 Multi-panel figures: lined-up axes, stacked panels sharing one X axis, and insets.

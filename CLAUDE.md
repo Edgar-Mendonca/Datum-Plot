@@ -28,6 +28,7 @@ Checks before pushing:
 - `cargo test --workspace`
 - `npm run check:ui`
 - UI tests: `npm run test:ui` (Playwright against `ui/dist` with the `dump` fixture)
+- `cargo deny check` (advisories, licences, sources; `deny.toml`, also a CI job)
 
 Releasing:
 1. Bump the version in `src-tauri/Cargo.toml` and `crates/core/Cargo.toml`.

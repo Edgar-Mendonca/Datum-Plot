@@ -36,3 +36,9 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
           cargo run -q -p datum-core --example dump > tests_ui/fixture.json
           NODE_PATH=$(npm root -g) PYTHON=python node tests_ui/run.cjs
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
