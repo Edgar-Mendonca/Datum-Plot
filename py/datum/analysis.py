@@ -637,8 +637,8 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
-    from . import groups, nested, regress, survival, tools
-    KINDS.update({"nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
+    from . import groups, nested, regress, signal, survival, tools
+    KINDS.update({"peaks": signal.peaks, "signal": signal.signal, "nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 
@@ -651,7 +651,7 @@ def run(kind, table, sets, options):
     if table.get("kind") == "multi" and kind not in ("multireg", "correlation", "pca", "cluster"):
         from .regress import xy_view
         table = xy_view(table)  # the first variable is X for every other analysis
-    if table.get("fromMulti") and not sets and kind in ("linear", "fit", "arrhenius", "auc", "smooth", "tensile", "transform"):
+    if table.get("fromMulti") and not sets and kind in ("linear", "fit", "arrhenius", "auc", "smooth", "tensile", "transform", "peaks", "signal"):
         sets = list(range(1, len(table["sets"])))
     ks = chosen(table, sets)
     empty = [k for k in ks if kind in COMPARE and not values(table, k)]

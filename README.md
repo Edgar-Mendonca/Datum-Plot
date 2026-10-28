@@ -35,6 +35,7 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 - **Publication-quality graphs** drawn with matplotlib: means with SD, SEM, 95% CI or range, linear or log axes, colour-blind-safe colours, sizes in millimetres for journal columns.
 - **Export** as PNG or TIFF at any dpi, or as SVG, PDF and EPS with editable text. Copy into documents and slides. Print with headers, footers and captions.
 - **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, t-tests, one-way ANOVA with multiple comparisons, nonparametric tests, effect sizes, correlation, power; linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, global fits and model comparison, area under the curve and smoothing; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables; survival analysis (Kaplan-Meier curves, median survival, log-rank test, hazard ratios); nested t-tests and ANOVA for subgroups within groups. Results stay linked to the data, explain themselves and give methods text.
+- **Peaks and signals**: find peaks above a straight or polynomial baseline (positions, heights, widths, areas), fit them as Gaussian, Lorentzian or Voigt peaks; Fourier spectra, low-, high- and band-pass filters, resampling.
 - **Materials testing**: tensile tests (modulus, yield, UTS, elongation, toughness), Weibull strength, Arrhenius activation energies.
 - **Column graphs** (dots, bars, box plots, violins) with significance stars, journal styles and colour-blind-safe schemes. Export every graph at once, or the whole project to a spreadsheet (.xlsx). More arrives in releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
 
@@ -48,13 +49,13 @@ Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Me
 
 If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
 
-> Mendonca, E. (2026). *Datum Plot* (Version 0.2.17) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+> Mendonca, E. (2026). *Datum Plot* (Version 0.2.18) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
 
 ```bibtex
 @software{datum_plot,
   author  = {Mendonca, Edgar},
   title   = {Datum Plot},
-  version = {0.2.17},
+  version = {0.2.18},
   year    = {2026},
   url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
   license = {MIT}

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.18 — 2026-10-28
+
+Peaks and signals: find and fit peaks, Fourier spectra and filters.
+
+**Peak analysis**
+- Analyze › More › **Peaks**: finds the peaks of each XY data set above a baseline, a straight line from the first to the last point or a polynomial that follows a curved background. For each peak: its position, height, width at half height and area. Dips (endotherms, absorption bands) work too.
+- Optionally fits all the peaks at once as **Gaussian, Lorentzian or Voigt** peaks: centres and areas with their standard errors, so overlapping peaks are separated.
+- The graph shows the baseline (dashed), the fitted curve and a number at each peak. New table from result gives the baseline-corrected data. Noise is not counted as peaks.
+- A new sample on the Home page, **Spectrum peaks**: three overlapping bands on a curved background.
+
+**Signal processing**
+- Analyze › More › **Signal**: the **Fourier spectrum** (which frequencies a signal holds, and the strongest one), **low-, high- and band-pass filters** (Butterworth, run forwards and backwards so nothing shifts), and **resampling** onto evenly spaced X. Unevenly spaced data are interpolated first, and the result says so.
+
 ## 0.2.17 — 2026-10-28
 
 Nested data: subgroups within groups, the nested t-test and the nested one-way ANOVA.

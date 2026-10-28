@@ -106,8 +106,8 @@ const ANALYSES: Choice[] = [
   { id: "B21", name: "Multiple and logistic regression", icon: "cols", group: "Relationships", desc: "Several predictors at once: linear for measurements, logistic for 0/1 outcomes, Poisson for counts." },
   { id: "B22", name: "PCA and clustering", icon: "group", group: "Relationships", desc: "Patterns in many variables: principal components with a biplot; groups of similar rows by hierarchical or k-means clustering." },
   { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier survival, median survival with its 95% CI, the log-rank test and hazard ratios (Cox)." },
-  { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, areas and multi-peak fits (XRD, Raman, DSC)." },
-  { id: "B25", name: "Signal processing", icon: "graph", group: "Signals and spectra", desc: "FFT, filters and resampling." },
+  { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, widths, areas and multi-peak fits (XRD, Raman, chromatograms)." },
+  { id: "B25", name: "Signal processing", icon: "graph", group: "Signals and spectra", desc: "Fourier spectrum, low-, high- and band-pass filters, resampling." },
   { id: "B26", name: "Surface fitting", icon: "grid", group: "Signals and spectra", desc: "Fit Z = f(X, Y)." },
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];

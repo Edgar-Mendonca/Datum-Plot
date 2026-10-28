@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, fourteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 18, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, fifteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 19, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -144,11 +144,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Analyze")');
-  await p.click('.ribbon .rb:has-text("Peaks")');
+  await p.click('.ribbon .rb:has-text("DSC / TGA")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B24") && (await p.textContent(".dlg")).includes("0.2.18"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B31") && (await p.textContent(".dlg")).includes("0.2.19"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 3);
+  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 2);
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
   check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
@@ -227,6 +227,23 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const ne = (await ops()).find(o => o.AddAnalysis);
   check("Nested adds a nested t-test or ANOVA", ne && ne.AddAnalysis.analysis.kind === "nested" && ne.AddAnalysis.overlay === false, JSON.stringify(ne));
+  await reset();
+  await p.click('.ribbon .rb[title^="Find peaks"]');
+  await p.waitForTimeout(200);
+  await p.selectOption('.dlg select:has(option[value="voigt"])', "gauss");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const pk = (await ops()).find(o => o.AddAnalysis);
+  check("Peaks adds a peak analysis with a Gaussian fit, drawn on the graph", pk && pk.AddAnalysis.analysis.kind === "peaks" && pk.AddAnalysis.analysis.options.fit === "gauss" && pk.AddAnalysis.overlay === true, JSON.stringify(pk));
+  await reset();
+  await p.click('.ribbon .rb[title^="Fourier spectrum"]');
+  await p.waitForTimeout(200);
+  await p.selectOption('.dlg select:has(option[value="lowpass"])', "lowpass");
+  await p.fill('.dlg input[type="number"]', "2");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const sg = (await ops()).find(o => o.AddAnalysis);
+  check("Signal adds a low-pass filter with its cut-off", sg && sg.AddAnalysis.analysis.kind === "signal" && sg.AddAnalysis.analysis.options.op === "lowpass" && sg.AddAnalysis.analysis.options.high === 2, JSON.stringify(sg));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');

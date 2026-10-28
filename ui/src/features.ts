@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.17";
+export const VERSION_NOW = "0.2.18";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -57,8 +57,8 @@ export const FEATURES: Feature[] = [
   ["B21", "Multiple and logistic regression", "0.2.14", "Many predictors: linear, logistic (0/1 outcomes) and Poisson (counts) regression, with odds or rate ratios.", "statsmodels"],
   ["B22", "PCA and clustering", "0.2.15", "Principal components (scree plot, biplot, loadings, scores) and hierarchical or k-means clustering (dendrogram, cluster means).", "numpy, scipy"],
   ["B23", "Power and sample size", "0.2.2", "How many samples you need, or the power you have, for t-tests, ANOVA and proportions.", "statsmodels"],
-  ["B24", "Peak analysis", "0.2.18", "Baseline, find peaks, areas and widths, fit many peaks at once (XRD, spectra, chromatograms).", "scipy, lmfit, pybaselines"],
-  ["B25", "Signal processing", "0.2.18", "FFT, filters, convolution, resampling and interpolation.", "numpy, scipy"],
+  ["B24", "Peak analysis", "0.2.18", "Baseline (line or polynomial), find peaks, positions, heights, widths and areas, fit many peaks at once as Gaussian, Lorentzian or Voigt (XRD, spectra, chromatograms).", "scipy, lmfit"],
+  ["B25", "Signal processing", "0.2.18", "Fourier spectrum, low-, high- and band-pass Butterworth filters, resampling onto even X.", "numpy, scipy"],
   ["B26", "Surface fitting", "0.2.21", "Fit Z = f(X, Y) and implicit equations.", "lmfit"],
   ["B27", "Tensile test analysis", "0.2.2", "From stress–strain data: Young's modulus, 0.2 % offset yield, ultimate strength, elongation at break and toughness, per specimen and as mean ± SD.", "numpy, scipy"],
   ["B28", "Arrhenius and activation energy", "0.2.0", "ln(k) against 1/T: activation energy and pre-factor with confidence intervals, in kJ/mol or eV.", "scipy"],

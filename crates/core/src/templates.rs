@@ -82,6 +82,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "hardness", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
         Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
         Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
+        Tpl { id: "spectrum", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -296,6 +297,22 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { column: "box".into(), points: "each".into(), ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Weibull analysis".into(), kind: "weibull".into(), sets: vec![], options: serde_json::json!({ "method": "mle" }) });
+        }
+        Some("spectrum") => {
+            let xs: Vec<f64> = (0..=300).map(|i| 200.0 + 2.0 * i as f64).collect();
+            let band = |x: f64, a: f64, c: f64, w: f64| a * (-((x - c) / w).powi(2) / 2.0).exp();
+            let mut seed = 17u64;
+            let mut t = Table { name: "Spectrum".into(), x_title: "Raman shift".into(), x_units: "cm⁻¹".into(), y_title: "Intensity".into(), y_units: "counts".into(), rows: xs.len(),
+                sets: vec![DataSet { title: "Sample".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+            let f = |x: f64| 120.0 + 0.00012 * (x - 200.0).powi(2) + band(x, 900.0, 420.0, 9.0) + band(x, 520.0, 470.0, 14.0) + band(x, 640.0, 640.0, 11.0);
+            t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(f(v) + jitter(&mut seed, 12.0), 0))).collect()];
+            t.normalize();
+            p.name = "Spectrum peaks".into();
+            p.info = Info { title: "Raman bands".into(), experiment: "A spectrum with three bands on a curved fluorescence background. Peak analysis removes a polynomial baseline, finds the bands and fits them as Gaussians: position, width and area of each.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: true, points: "mean".into(), error: "none".into(), y: Axis { auto: true, ..Axis::default() }, sets: vec![SetStyle { symbol: "none".into(), width: 1.0, ..Default::default() }], ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Peak analysis".into(), kind: "peaks".into(), sets: vec![], options: serde_json::json!({ "baseline": "poly", "order": 2, "fit": "gauss" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("dsc") => {
             let xs: Vec<f64> = (0..=60).map(|i| 140.0 + i as f64).collect();
