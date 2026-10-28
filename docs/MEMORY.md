@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Plot: a Windows desktop app for scientific graphs, statistics and curve fitting, combining GraphPad Prism (guided tables → analyses → graphs, linked live) and OriginPro (workbooks, many graph types, analysis power) |
 | **Family** | Second Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.11** (released 2026-10-27: page layouts). Earlier: **0.2.10** (released 2026-10-27: users' requests). Earlier: **0.2.9** (released 2026-10-27: work on the graph). Earlier: **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
+| **Current version** | **0.2.12** (2026-10-28: multi-panel figures). Earlier: **0.2.11** (released 2026-10-27: page layouts). Earlier: **0.2.10** (released 2026-10-27: users' requests). Earlier: **0.2.9** (released 2026-10-27: work on the graph). Earlier: **0.2.8** (released 2026-10-27: annotations). Earlier: **0.2.7** (released 2026-10-27: axis breaks, second Y axis). Earlier: **0.2.6** (released 2026-10-27: Bland-Altman, ROC, forest plots). Earlier: **0.2.5** (released 2026-10-27: parts of whole, pie and donut). Earlier: **0.2.4** (released 2026-10-27: contingency tables, chi-square and Fisher). Earlier: **0.2.3** (released 2026-10-27, installer 113 MB: grouped tables, two-way ANOVA, grouped graphs). Earlier: **0.2.2** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Plot/releases/tag/v0.2.2; installer 113 MB; the big build: compare groups, materials, data tools, styles, export; 28 features). Earlier: 0.1.0, 0.1.1, 0.2.0 (installer 113 MB), 0.2.1 (? help beside the tools) |
 | **Repo** | `Edgar-Mendonca/Datum-Plot` · working branch `claude/epic-mayer-6faugf` |
 | **Identity** | Accent **Teal** (`--blue #0E8C7F`, `--blue2 #0B7468`, `--sky #8FD3C9`, `--pale #E3F5F2`, `--sel #D3EFEA`, `--sel2 #A9DDD4`, `--accent2 #3FC2B2`; dark `--blue #3FC2B2`, File sidebar dark `#0A4A44`) · files `.dplot` · identifier `com.edgarmendonca.datumplot` · installer `DatumPlot-x.y.z-setup.exe` · logo `docs/brand/datum-plot-icon.svg` = `ui/public/logo.svg` (teal axes, tint points, fitted curve, amber `#F2B233` diamond) |
 | **Stack** | Rust shell (`src-tauri`) + Rust project engine (`crates/core`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. **Python worker** (`py/`) with numpy, SciPy and matplotlib for every calculation and every graph; the installer bundles embeddable CPython 3.13. |
@@ -189,8 +189,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.9** | Interactive graph | Notes: select, drag, Delete, double-click to edit (E2, E3); zoom to a box, pan, zoom out, reset axes (E4); right-click a point to exclude it (E6) | ✅ |
 | **0.2.10** | Users' requests | New tables open at once (File page closes); Remove Data Set (ribbon, table menu, × on headings); Significance offers t-test/ANOVA/nonparametric with the filled groups; empty data sets left out of comparisons; X axis breaks; Axis Break on the Graph tab and graph menu | ✅ |
 | **0.2.11** | Layouts | Page layouts with drag/resize, Arrange, panel letters, text (F1); journal sizes and whole-page export (F2); CMYK LZW TIFF (G3) | ✅ |
-| 0.2.12 | Multi-panel | Multi-panel figures and insets (D12) | 🔜 |
-| 0.2.13 – 0.2.18 | Statistics and materials | Multiple variables + regression (A7, B21) · PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
+| **0.2.12** | Multi-panel | Lined-up plot frames, stacked panels sharing X, insets, Bring to Front (D12) | ✅ |
+| 0.2.13 | Many variables | Multiple variables + regression (A7, B21) | 🔜 |
+| 0.2.14 – 0.2.18 | Statistics and materials | PCA (B22) · survival (A5, B19, D9) · nested (A8, B20) · peaks + signals (B24, B25) · DSC/TGA + S–N (B31, B30) | ⬜ |
 | 0.2.19 – 0.2.25 | Origin power and Python | Worksheet + formulas (A9, A11) · matrix + 3D + surface fits (A10, D11, B26) · large data + regions (D17, E5) · Prism/instrument import (A13, A14) · PowerPoint/Word + posters (G5, F3) · console + own analyses (H1, H2) · templates/batch/notebooks (H3, H4, H5) | ⬜ |
 | 1.0.0 | Stable | Signed installer (I6), validation report (R/NIST, J4), user guide | ⬜ |
 
@@ -268,11 +269,13 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 - **0.2.11** ("go"): core `Layout`/`LayoutItem`, AddLayout, LayoutSet, Delete/Rename/Duplicate/normalize (deleted graphs leave layouts), test; shell `page_req`, `render_page`, `export_page`, `export_graph(cmyk)`; Python `graph.page` + `cmyk_tiff`, `build(fig=…)`, worker `page`; UI `ui/src/layout.tsx` (LayoutsPage, drag/resize boxes over the engine's SVG, Arrange, Letters, Page size, ＋ Graph/Text, Export dialog), navigator lists layouts (＋, New Layout with This Graph), Layout tab real, graph export CMYK, help, Tell Me. 51 Python tests, 16 + 1 Rust, 66 UI checks; checked a layout in the real app.
 
+- **0.2.12** ("go"): `graph.page` now two-pass over all items (pass 1 positions, then alignment of frames by column (x, w) and row (y, h) groups using the largest margins, then pass 2), `strip` hides X titles/numbers (`hideX`), insets drawn last on a white card with 75 % text and no letter; core `Layout.align` (default true), `LayoutItem.inset/hide_x` (camelCase); UI Arrange › Stack sharing X / Line Up the Axes, right-click panel menu (Add an Inset Here, Inset, Hide X, Open, Bring to Front, Delete). 53 Python tests, 16 + 1 Rust, 67 UI checks.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.2.12 multi-panel figures and insets (D12), then down the list in PLAN-0.2 §12.
+**Next:** 0.2.13 multiple-variables tables (A7) with multiple and logistic regression (B21), then down the list in PLAN-0.2 §12.
 
 **0.2.11 limits:** layouts hold graphs and text (no data tables or pictures yet); no colour profiles in TIFFs; posters and slide templates come with F3.
 

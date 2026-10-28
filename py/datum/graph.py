@@ -658,30 +658,78 @@ def page(layout, panels, fmt="svg", path=None, dpi=300, cmyk=False):
     FigureCanvasAgg(fig)
     fig.patch.set_facecolor("white")
     style, n = LETTERS.get(layout.get("letters", "A"), LETTERS["A"]), 0
-    for it in layout.get("items") or []:
+    items = sorted(layout.get("items") or [], key=lambda it: bool(it.get("inset")))  # insets on top
+    def strip(f, it):
+        """A stacked panel above another keeps its X axis but drops its title and numbers (D12)."""
+        if it.get("hideX"):
+            for a in f.axes:
+                a.set_xlabel("")
+                a.tick_params(axis="x", which="both", labelbottom=False)
+    # Pass 1: each graph alone at its panel size; constrained layout says where its axes go.
+    done = []
+    for it in items:
+        x, y, w, h = (float(it.get(k) or 0) for k in ("x", "y", "w", "h"))
+        p = panels.get(str(it.get("graph"))) if it.get("kind") != "text" else None
+        if it.get("kind") == "text" or not p or w < 10 or h < 10:
+            done.append((it, None, None))
+            continue
+        g = {**p["graph"], "width": w, "height": h}
+        if it.get("inset"):  # smaller text in an inset
+            g["fontSize"] = max(5.0, float(g.get("fontSize") or 10) * 0.75)
+        with matplotlib.rc_context(rc_for(g)):
+            one, *_ = figure(p["table"], g, p.get("overlays", []))
+            strip(one, it)
+            one.canvas.draw()
+        done.append((it, g, [list(a.get_position().bounds) for a in one.axes]))
+    # Align the plot frames of panels in the same column (left and right) and row (bottom and top).
+    if layout.get("align", True):
+        frames = [(it, pos) for it, g, pos in done if pos and not it.get("inset")]
+        def margins(it, pos):
+            x0 = min(b[0] for b in pos); x1 = max(b[0] + b[2] for b in pos); y0 = min(b[1] for b in pos); y1 = max(b[1] + b[3] for b in pos)
+            return x0 * it["w"], (1 - x1) * it["w"], y0 * it["h"], (1 - y1) * it["h"], (x0, x1, y0, y1)
+        m = {id(it): margins(it, pos) for it, pos in frames}
+        target = {}
+        for key, idx in ((lambda it: (round(it["x"]), round(it["w"])), (0, 1)), (lambda it: (round(it["y"]), round(it["h"])), (2, 3))):
+            groups = {}
+            for it, _ in frames:
+                groups.setdefault(key(it), []).append(it)
+            for grp in groups.values():
+                for i in idx:
+                    v = max(m[id(it)][i] for it in grp)
+                    for it in grp:
+                        target.setdefault(id(it), list(m[id(it)][:4]))[i] = v
+        for it, pos in frames:
+            l, r, b_, t = target[id(it)]
+            x0, x1, y0, y1 = m[id(it)][4]
+            nx0, nx1, ny0, ny1 = l / it["w"], 1 - r / it["w"], b_ / it["h"], 1 - t / it["h"]
+            sx, sy = (nx1 - nx0) / max(x1 - x0, 1e-9), (ny1 - ny0) / max(y1 - y0, 1e-9)
+            for bb in pos:
+                bb[:] = [nx0 + (bb[0] - x0) * sx, ny0 + (bb[1] - y0) * sy, bb[2] * sx, bb[3] * sy]
+    # Pass 2: every item into its place on the page.
+    for it, g, pos in done:
         x, y, w, h = (float(it.get(k) or 0) for k in ("x", "y", "w", "h"))
         if it.get("kind") == "text":
             with matplotlib.rc_context(rc_for(base)):
                 fig.text(x / W, 1 - y / H, it.get("text", ""), ha="left", va="top", fontsize=float(it.get("size") or base["fontSize"]), fontweight="bold" if it.get("bold") else "normal", wrap=True)
             continue
-        p = panels.get(str(it.get("graph")))
-        if not p or w < 10 or h < 10:
+        if pos is None:
             continue
-        g = {**p["graph"], "width": w, "height": h}
+        p = panels[str(it.get("graph"))]
         with matplotlib.rc_context(rc_for(g)):
-            one, *_ = figure(p["table"], g, p.get("overlays", []))
-            one.canvas.draw()
-            pos = [a.get_position().bounds for a in one.axes]
             sf = fig.add_subfigure(GridSpec(1, 1, figure=fig)[0])
             sf.bbox_relative.set_points(np.array([[x / W, 1 - (y + h) / H], [(x + w) / W, 1 - y / H]]))  # its place on the page
-            sf.patch.set_alpha(0)
             figure(p["table"], g, p.get("overlays", []), fig=sf)
+            if it.get("inset"):  # a white card over the graph below
+                sf.patch.set_alpha(1); sf.patch.set_facecolor("white"); sf.patch.set_edgecolor("#3A4655"); sf.patch.set_linewidth(0.6)
+            else:
+                sf.patch.set_alpha(0)
+            strip(sf, it)
             for a, b in zip(sf.axes, pos):
                 a.set_position(b)
-            lab = style(n)
+            lab = "" if it.get("inset") else style(n)
             if lab:
                 sf.text(0.0, 1.0, lab, ha="left", va="top", fontsize=float(layout.get("letterSize") or 10), fontweight="bold")
-            n += 1
+            n += 0 if it.get("inset") else 1
     with matplotlib.rc_context(rc_for(base)):
         buf = io.BytesIO() if fmt != "svg" or path else io.StringIO()
         save_fmt = "png" if fmt == "tiff" and cmyk else fmt

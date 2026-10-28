@@ -156,7 +156,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D9 | Survival curves with censor ticks and the number-at-risk table | 0.5 |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
-| D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | 0.6 |
+| D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | ✅ 0.2.12 |
 | D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
 | D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
 | D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | ✅ 0.2.8 |
@@ -350,7 +350,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.9** ✅ | Select, drag and edit (E2, E3), zoom and pan (E4), exclude from the graph (E6) |
 | **0.2.10** ✅ | Users' requests (session 8): new tables open at once, Remove Data Set, Significance offers t-test/ANOVA/nonparametric, empty data sets left out, X axis breaks |
 | **0.2.11** ✅ | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
-| 0.2.12 | Multi-panel figures (D12) |
+| **0.2.12** ✅ | Multi-panel figures (D12) |
 | 0.2.13 | Multiple variables (A7), multiple and logistic regression (B21) |
 | 0.2.14 | PCA and clustering (B22) |
 | 0.2.15 | Survival table (A5), analysis (B19), curves (D9) |

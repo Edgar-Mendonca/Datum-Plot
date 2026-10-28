@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.11";
+export const VERSION_NOW = "0.2.12";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -85,7 +85,7 @@ export const FEATURES: Feature[] = [
   ["D9", "Survival curves", "0.2.15", "Staircase curves with censor ticks and the number at risk.", "matplotlib, lifelines"],
   ["D10", "Special graphs", "0.2.6", "Bland-Altman and ROC plots, and forest plots of the differences after ANOVA. Volcano and bubble plots come later.", "matplotlib"],
   ["D11", "3D, contour and polar", "0.2.20", "Contours, 3D surfaces and scatter, polar, ternary, waterfall, vector and radar plots.", "matplotlib"],
-  ["D12", "Multi-panel graphs and insets", "0.2.12", "Stacked and grid panels, insets, layers with linked axes.", "matplotlib"],
+  ["D12", "Multi-panel graphs and insets", "0.2.12", "Graphs whose plot frames line up across a layout, stacked panels sharing one X axis, and insets (a small graph on a white card over another).", "matplotlib"],
   ["D13", "Graph styles", "0.2.2", "Prism, Origin, Nature, Science, ACS, IEEE, presentation and greyscale styles; save your own.", "matplotlib"],
   ["D14", "Copy look", "0.2.2", "Apply one graph's formatting to other graphs.", ""],
   ["D15", "Annotations", "0.2.8", "Text, arrows, lines and boxes; Greek letters, sub- and superscripts, simple equations.", "matplotlib"],

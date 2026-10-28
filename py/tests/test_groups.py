@@ -284,3 +284,12 @@ class Pages(unittest.TestCase):
         im = Image.open(_io.BytesIO(__import__("base64").b64decode(graph.page(L, panels, "tiff", dpi=150, cmyk=True)["data"])))
         self.assertEqual((im.mode, round(im.size[0] / 150 * 25.4)), ("CMYK", 174))
         self.assertTrue(graph.export(t, {}, "tiff", dpi=100, cmyk=True)["data"])
+
+    def test_aligned_stacked_panels_and_an_inset(self):
+        t, u = xy([0, 1, 2, 3], [1, 4, 2, 5]), xy([0, 1, 2], [1000, 2000, 1500])
+        panels = {"1": {"table": t, "graph": {}, "overlays": []}, "2": {"table": u, "graph": {}, "overlays": []}}
+        L = {"width": 100, "height": 120, "letters": "A", "align": True, "items": [{"kind": "graph", "graph": 1, "x": 0, "y": 0, "w": 100, "h": 60, "hideX": True},
+                                                                                 {"kind": "graph", "graph": 2, "x": 0, "y": 60, "w": 100, "h": 60}, {"kind": "graph", "graph": 1, "x": 55, "y": 65, "w": 40, "h": 30, "inset": True}]}
+        svg = graph.page(L, panels)["svg"]
+        self.assertTrue(">A<" in svg and ">B<" in svg and ">C<" not in svg, "insets have no letter")
+        self.assertNotEqual(svg, graph.page({**L, "align": False}, panels)["svg"], "lining up moves the frames (Y numbers of different widths)")

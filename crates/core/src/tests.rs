@@ -251,7 +251,9 @@ fn layouts_hold_graphs_and_lose_deleted_ones() {
     let items = vec![LayoutItem { graph: gid, ..Default::default() }, LayoutItem { kind: "text".into(), text: "Figure 1".into(), ..Default::default() }];
     d.apply(Op::AddLayout { layout: Box::new(Layout { items, ..Default::default() }) }).unwrap();
     let l = d.p.layouts[0].clone();
-    assert_eq!((l.name.as_str(), l.items.len(), l.id > gid), ("Layout 1", 2, true));
+    assert_eq!((l.name.as_str(), l.items.len(), l.id > gid, l.align), ("Layout 1", 2, true, true));
+    let it: LayoutItem = serde_json::from_str(r#"{"graph": 3, "inset": true, "hideX": true}"#).unwrap();
+    assert!(it.inset && it.hide_x && it.kind == "graph");
     d.apply(Op::LayoutSet { layout: Box::new(Layout { width: 89.0, ..l.clone() }) }).unwrap();
     assert_eq!(d.p.layouts[0].width, 89.0);
     d.apply(Op::Duplicate { id: l.id }).unwrap();

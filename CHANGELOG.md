@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.12 — 2026-10-28
+
+Multi-panel figures: lined-up axes, stacked panels sharing one X axis, and insets.
+
+**Lined-up axes**
+- On a layout, graphs in the same column line up their plot frames left and right, and graphs in the same row top and bottom, even when their Y numbers or titles differ in width (Arrange › Line Up the Axes; on by default).
+
+**Stacked panels**
+- Arrange › **Stack, sharing the X axis**: the graphs in one column with no gaps; only the bottom one keeps its X axis title and numbers. Any panel can drop them (right-click › Hide X Axis Title and Numbers).
+
+**Insets**
+- Right-click a graph panel › **Add an Inset Here**: a small graph on a white card in its top-right corner, with smaller text and no panel letter. Move and resize it like any panel; any panel can be made an inset.
+- **Bring to Front** puts a panel over the others.
+
 ## 0.2.11 — 2026-10-27
 
 Page layouts: several graphs on one page with panel letters, at a journal's size, exported as one file.

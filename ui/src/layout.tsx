@@ -42,7 +42,17 @@ export const newLayout = async (graphs?: number[]) => {
 const addGraph = (l: Layout, g: number) => set({ ...l, items: [...l.items, { kind: "graph", graph: g, x: 0, y: 0, w: Math.min(80, l.width), h: Math.min(60, l.height), text: "", size: 0, bold: false }] });
 const addText = (l: Layout) => { const t = prompt("Text (a caption or a label)", "Figure 1. "); if (t) set({ ...l, items: [...l.items, { kind: "text", graph: 0, x: 2, y: Math.max(0, l.height - 10), w: l.width - 4, h: 8, text: t, size: 0, bold: false }] }); };
 export const graphMenu = (l: Layout): Item[] => P().graphs.length ? P().graphs.map(g => ({ label: g.name, run: () => addGraph(l, g.id) })) : [{ label: "No graphs yet", off: true }];
-export const arrangeMenu = (l: Layout): Item[] => [[1, "One column"], [2, "Two columns"], [3, "Three columns"], [4, "Four columns"]].map(([c, t]) => ({ label: t as string, run: () => arrange(l, c as number) }));
+export const arrangeMenu = (l: Layout): Item[] => [...[[1, "One column"], [2, "Two columns"], [3, "Three columns"], [4, "Four columns"]].map(([c, t]) => ({ label: t as string, run: () => arrange(l, c as number) })),
+  "-", { label: "Stack, sharing the X axis", run: () => stack(l) }, { label: "Line Up the Axes", on: l.align !== false, run: () => set({ ...l, align: l.align === false }) }];
+/** One column with no gaps; only the bottom graph keeps its X axis title and numbers (D12). */
+export const stack = (l: Layout) => {
+  const gs = l.items.filter(i => i.kind === "graph" && !i.inset), rest = l.items.filter(i => i.kind !== "graph" || i.inset);
+  if (gs.length < 2) return toast("Stacking needs two or more graphs.");
+  const cap = l.items.some(i => i.kind === "text") ? 12 : 0, h = (l.height - cap) / gs.length;
+  set({ ...l, align: true, items: [...gs.map((it, i) => ({ ...it, x: 0, y: i * h, w: l.width, h, hideX: i < gs.length - 1 })), ...rest] });
+};
+/** A small graph on a white card in the top-right of a graph panel (D12). */
+const addInset = (l: Layout, at: LayoutItem, g: number) => set({ ...l, items: [...l.items, { kind: "graph", graph: g, x: at.x + at.w * 0.52, y: at.y + 2, w: at.w * 0.45, h: at.h * 0.45, text: "", size: 0, bold: false, inset: true }] });
 export const sizeMenu = (l: Layout): Item[] => PAGES.map(([t, w, h]) => ({ label: t, on: l.width === w && l.height === h, run: () => set({ ...l, width: w, height: h }) }));
 export const letterMenu = (l: Layout): Item[] => [["A", "A, B, C"], ["a", "a, b, c"], ["(a)", "(a), (b), (c)"], ["none", "No letters"]].map(([k, t]) => ({ label: t, on: l.letters === k, run: () => set({ ...l, letters: k }) }));
 
@@ -97,6 +107,15 @@ const LayoutView = () => {
   };
   const keys = (e: KeyboardEvent) => { if ((e.key === "Delete" || e.key === "Backspace") && sel() !== null) { e.preventDefault(); remove(sel()!); } if (e.key === "Escape") setSel(null); };
   const name = (it: LayoutItem) => it.kind === "graph" ? P().graphs.find(g => g.id === it.graph)?.name ?? "Graph" : it.text;
+  const itemMenu = (e: MouseEvent, i: number) => {
+    e.preventDefault(); e.stopPropagation(); setSel(i);
+    const it = l().items[i];
+    openMenu(e, [...(it.kind === "graph" ? [
+      { label: "Add an Inset Here", sub: P().graphs.map(g => ({ label: g.name, run: () => addInset(l(), it, g.id) })) } as Item,
+      { label: "Inset (white card, small text)", on: !!it.inset, run: () => put(i, { ...it, inset: !it.inset }) },
+      { label: "Hide X Axis Title and Numbers", on: !!it.hideX, run: () => put(i, { ...it, hideX: !it.hideX }) }, { label: "Open the Graph", icon: "graph", run: () => open("graphs", it.graph) }, "-" as const] : [{ label: "Edit Text…", icon: "rename", run: () => editText(i) }, "-" as const]),
+      { label: "Bring to Front", run: () => set({ ...l(), items: [...l().items.filter((_, j) => j !== i), it] }) }, { label: "Delete", icon: "del", keys: "Del", run: () => remove(i) }]);
+  };
   const editText = (i: number) => { const it = l().items[i]; if (it.kind !== "text") return open("graphs", it.graph); const t = prompt("Text", it.text); if (t !== null) put(i, { ...it, text: t }); };
   onCleanup(() => setSel(null));
   return (
@@ -113,9 +132,9 @@ const LayoutView = () => {
         <div class="lpaper" style={{ width: `${l().width * s()}px`, height: `${l().height * s()}px` }}>
           <Show when={r()} fallback={<div class="gwait">{err() || "Drawing the page…"}</div>}>{R => <img class="gimg" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(R().svg)}`} width={l().width * s()} height={l().height * s()} alt="" draggable={false} />}</Show>
           <For each={l().items}>{(it0, i) => { const it = () => (live() && sel() === i() ? live()! : it0); return (
-            <div class="litem" classList={{ on: sel() === i(), text: it0.kind === "text" }} style={{ left: `${it().x * s()}px`, top: `${it().y * s()}px`, width: `${it().w * s()}px`, height: `${it().h * s()}px` }}
+            <div class="litem" classList={{ on: sel() === i(), text: it0.kind === "text", inset: !!it0.inset }} style={{ left: `${it().x * s()}px`, top: `${it().y * s()}px`, width: `${it().w * s()}px`, height: `${it().h * s()}px` }}
               title={`${name(it0)} · ${Math.round(it().w)} × ${Math.round(it().h)} mm · drag to move, corner to resize, double-click to ${it0.kind === "text" ? "edit" : "open the graph"}, Delete to remove`}
-              onMouseDown={e => drag(e, i(), false)} onDblClick={() => editText(i())}>
+              onMouseDown={e => drag(e, i(), false)} onDblClick={() => editText(i())} onContextMenu={e => itemMenu(e, i())}>
               <Show when={sel() === i()}><span class="lname">{name(it0)} · {Math.round(it().w)} × {Math.round(it().h)} mm</span><i class="lsize" onMouseDown={e => drag(e, i(), true)} /></Show>
             </div>); }}</For>
         </div>

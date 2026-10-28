@@ -198,18 +198,21 @@ pub struct Layout {
     pub letter_size: f64,
     pub font: String,
     pub font_size: f64,
+    /// Line up the plot frames of graphs in the same column and row (D12).
+    pub align: bool,
     pub items: Vec<LayoutItem>,
 }
 
 impl Default for Layout {
     fn default() -> Self {
-        Self { id: 0, name: "Layout 1".into(), width: 180.0, height: 120.0, letters: "A".into(), letter_size: 10.0, font: "Arial".into(), font_size: 8.0, items: vec![] }
+        Self { id: 0, name: "Layout 1".into(), width: 180.0, height: 120.0, letters: "A".into(), letter_size: 10.0, font: "Arial".into(), font_size: 8.0, align: true, items: vec![] }
     }
 }
 
-/// A graph (by id) or a text block on a layout.
+/// A graph (by id) or a text block on a layout; a graph can be an inset (a small graph on a white
+/// card over another) or drop its X axis title and numbers (stacked panels sharing X).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "camelCase")]
 pub struct LayoutItem {
     pub kind: String,
     pub graph: u32,
@@ -220,11 +223,13 @@ pub struct LayoutItem {
     pub text: String,
     pub size: f64,
     pub bold: bool,
+    pub inset: bool,
+    pub hide_x: bool,
 }
 
 impl Default for LayoutItem {
     fn default() -> Self {
-        Self { kind: "graph".into(), graph: 0, x: 0.0, y: 0.0, w: 80.0, h: 60.0, text: String::new(), size: 0.0, bold: false }
+        Self { kind: "graph".into(), graph: 0, x: 0.0, y: 0.0, w: 80.0, h: 60.0, text: String::new(), size: 0.0, bold: false, inset: false, hide_x: false }
     }
 }
 

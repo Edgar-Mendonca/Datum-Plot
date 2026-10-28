@@ -326,6 +326,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   const ls = (await ops()).find(o => o.LayoutSet)?.LayoutSet.layout;
   check("dragging a panel moves it in whole millimetres", ls && ls.items[0].x > 0 && Number.isInteger(ls.items[0].x) && ls.items[0].y === 0, JSON.stringify(ls?.items?.[0]));
   await reset();
+  await p.click(".lpaper .litem >> nth=0", { button: "right" });
+  await p.click('.menu button:has-text("Hide X Axis Title")');
+  await p.waitForTimeout(150);
+  check("a panel can drop its X axis title (stacked panels)", (await ops()).find(o => o.LayoutSet)?.LayoutSet.layout.items[0].hideX === true);
+  await reset();
   await p.click('.tabs button:text-is("Layout")');
   await p.click('.ribbon .rb.big:has-text("New Layout")');
   await p.waitForTimeout(150);
