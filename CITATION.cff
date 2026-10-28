@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use Datum Plot in your work, please cite it as below."
+type: software
+title: "Datum Plot"
+abstract: "Scientific graphs, statistics, regression and curve fitting in one app for Windows."
+authors:
+  - family-names: "Mendonca"
+    given-names: "Edgar"
+version: "0.2.14"
+date-released: "2026-10-28"
+license: MIT
+repository-code: "https://github.com/Edgar-Mendonca/Datum-Plot"
+url: "https://github.com/Edgar-Mendonca/Datum-Plot"
+keywords: [statistics, regression, curve fitting, scientific graphs, data analysis]

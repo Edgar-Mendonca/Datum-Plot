@@ -43,12 +43,13 @@ pub fn list() -> Vec<Tpl> {
     let dots = |id: &str| {
         let p = build(Some(id)).unwrap();
         let t = &p.tables[0];
-        if t.kind != "xy" {
+        let (xc, yc) = if t.kind == "multi" { (1, t.width() - 1) } else { (0, 1) };
+        if t.kind != "xy" && t.kind != "multi" {
             let means: Vec<f64> = t.spans().iter().map(|&(c, _)| { let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, c)).collect(); v.iter().sum::<f64>() / v.len().max(1) as f64 }).collect();
             let top = means.iter().fold(0f64, |a, b| a.max(*b));
             return means.iter().enumerate().map(|(i, m)| (i as f64 / (means.len() - 1).max(1) as f64, m / top.max(1e-9))).collect();
         }
-        let pts: Vec<(f64, f64)> = (0..t.rows).filter_map(|r| { let x = t.get(r, 0)?; let ys: Vec<f64> = (1..1 + t.sets[0].width()).filter_map(|c| t.get(r, c)).collect(); (!ys.is_empty()).then(|| (x, ys[0])) }).collect();
+        let pts: Vec<(f64, f64)> = (0..t.rows).filter_map(|r| { let x = t.get(r, xc)?; let ys: Vec<f64> = (yc..yc + t.sets[0].width()).filter_map(|c| t.get(r, c)).collect(); (!ys.is_empty()).then(|| (x, ys[0])) }).collect();
         let log = p.graphs[0].settings.x.scale == "log";
         let fx = |x: f64| if log { x.log10() } else { x };
         let (x0, x1) = pts.iter().fold((f64::MAX, f64::MIN), |a, p| (a.0.min(fx(p.0)), a.1.max(fx(p.0))));
@@ -67,6 +68,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "twoway", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
         Tpl { id: "counts", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
         Tpl { id: "phases", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
+        Tpl { id: "hardness", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -196,6 +198,28 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { column: "pie".into(), points: "mean".into(), error: "none".into(), ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Fractions of total".into(), kind: "parts".into(), sets: vec![], options: serde_json::json!({}) });
+        }
+        Some("hardness") => {
+            let mut seed = 5u64;
+            let mut t = Table::multi(3, 24);
+            t.name = "Steels".into();
+            for (k, n) in ["Carbon", "Tempering", "Hardness"].iter().enumerate() {
+                t.sets[k].title = (*n).into();
+            }
+            for r in 0..24 {
+                let (c, temp) = (0.2 + 0.1 * (r % 6) as f64, 200.0 + 100.0 * (r / 6) as f64);
+                t.row_titles[r] = format!("S{}", r + 1);
+                t.cols[1][r] = Some(round(c + jitter(&mut seed, 0.01), 3));
+                t.cols[2][r] = Some(temp);
+                t.cols[3][r] = Some(round(330.0 + 520.0 * c - 0.55 * temp + jitter(&mut seed, 18.0), 0));
+            }
+            t.y_title = "Hardness".into();
+            t.y_units = "HV".into();
+            p.name = "Many variables".into();
+            p.info = Info { title: "Hardness of tempered steels".into(), experiment: "Vickers hardness of 24 quenched steels with six carbon contents (wt%), tempered at four temperatures (°C). Multiple regression gives the effect of each on the hardness, holding the other constant.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { points: "each".into(), sets: vec![SetStyle::default(), SetStyle { show: false, ..Default::default() }], ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Multiple regression".into(), kind: "multireg".into(), sets: vec![], options: serde_json::json!({ "y": 2, "model": "linear" }) });
         }
         Some("weibull") => {
             let mut seed = 3u64;

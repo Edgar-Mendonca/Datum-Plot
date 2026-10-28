@@ -8,18 +8,61 @@
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, contingency tables, correlation, power, Bland-Altman and ROC.",
-    "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison.",
+    "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression on tables of many variables.",
     "Materials testing: tensile tests, Weibull strength and Arrhenius activation energies.",
     "Publication graphs: error bars, axis breaks, a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
     "Page layouts at journal sizes; export as PNG or TIFF (with CMYK), SVG, PDF or EPS.",
     "Interactive graphs: zoom, pan, drag notes and exclude points with a right-click.",
     "Free and open source (MIT), Windows first, installs in seconds with Python inside, and updates itself."
   ],
-  "screenshots": ["docs/images/graph.png", "docs/images/table.png"],
+  "screenshots": [
+    "docs/images/graph.png",
+    "docs/images/table.png"
+  ],
   "roadmap": [
-    { "v": "0.2.14", "title": "Many variables", "when": "Next", "items": ["A table of many variables", "Multiple and logistic regression"] },
-    { "v": "0.2.15 – 0.2.19", "title": "Statistics and materials", "when": "Soon", "items": ["Principal component analysis", "Survival curves", "Nested data", "Peaks and signal processing", "DSC/TGA thermal analysis and S–N fatigue curves"] },
-    { "v": "0.2.20 – 0.2.26", "title": "Worksheets, 3D and Python", "when": "Later", "items": ["Worksheets with formulas", "Matrices, 3D graphs and surface fits", "Large data sets and regions", "Project and instrument file import", "Slides, reports and posters", "A Python console and your own analyses", "Templates, batch processing and notebooks"] },
-    { "v": "1.0.0", "title": "Stable", "when": "Goal", "items": ["Signed installer", "Validation report against reference values", "User guide"] }
+    {
+      "v": "0.2.15",
+      "title": "Patterns in many variables",
+      "when": "Next",
+      "items": [
+        "Principal component analysis",
+        "Clustering (hierarchical and k-means)"
+      ]
+    },
+    {
+      "v": "0.2.16 – 0.2.19",
+      "title": "Statistics and materials",
+      "when": "Soon",
+      "items": [
+        "Survival curves",
+        "Nested data",
+        "Peaks and signal processing",
+        "DSC/TGA thermal analysis and S–N fatigue curves"
+      ]
+    },
+    {
+      "v": "0.2.20 – 0.2.26",
+      "title": "Worksheets, 3D and Python",
+      "when": "Later",
+      "items": [
+        "Worksheets with formulas",
+        "Matrices, 3D graphs and surface fits",
+        "Large data sets and regions",
+        "Project and instrument file import",
+        "Slides, reports and posters",
+        "A Python console and your own analyses",
+        "Templates, batch processing and notebooks"
+      ]
+    },
+    {
+      "v": "1.0.0",
+      "title": "Stable",
+      "when": "Goal",
+      "items": [
+        "Signed installer",
+        "Validation report against reference values",
+        "User guide"
+      ]
+    }
   ]
 }

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.14 — 2026-10-28
+
+Many variables: a table with one row per sample, and multiple, logistic and Poisson regression.
+
+**Many variables**
+- File › New Table › **Many variables**: one row per sample (name the rows), one column per measured property. Its graph puts the first variable on X and the others on Y; every XY analysis (linear regression, curve fits…) works on it the same way.
+- A new sample on the Home page, **Many variables**: the hardness of 24 steels from their carbon content and tempering temperature.
+
+**Multiple regression**
+- Analyze › Regression › **Multiple**: predict one variable (the outcome) from several others at once. Choose the model:
+  - **Linear** for a measurement: each predictor's effect with its standard error, P value and 95% CI; R², adjusted R², the F test, AIC, and how much the predictors overlap (VIF).
+  - **Logistic** for an outcome of 0 or 1 (fail or pass): odds ratios with their 95% CIs, the likelihood ratio test, pseudo R² and how many rows the model classifies correctly.
+  - **Poisson** for counts: rate ratios, and a check for counts that vary more than the model expects.
+- Rows with a missing value are left out and counted. Plots of predicted against actual values and of the residuals. Checked against R (`lm` and `glm`).
+
+**How to cite**
+- The README says how to cite Datum Plot, and GitHub's "Cite this repository" button gives APA and BibTeX.
+
 ## 0.2.13 — 2026-10-28
 
 Security: updated the library that unpacks the Python engine.

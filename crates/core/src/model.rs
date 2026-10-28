@@ -75,7 +75,7 @@ impl DataSet {
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
 /// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell) or "parts"
+/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample) or "parts"
 /// (parts of a whole: parts in the rows, one whole per data set);
 /// only XY tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -149,6 +149,14 @@ impl Table {
         for (r, n) in t.row_titles.iter_mut().enumerate() {
             *n = format!("Part {}", r + 1);
         }
+        t
+    }
+    /// An empty table of many variables: one row per sample (named in the row titles), one data set
+    /// per variable with one value per cell. Graphs put the first variable on X.
+    pub fn multi(vars: usize, rows: usize) -> Self {
+        let sets = (0..vars).map(|k| DataSet { title: format!("Variable {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
+        let mut t = Table { kind: "multi".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
+        t.normalize();
         t
     }
     /// (first grid column, width) of each data set.

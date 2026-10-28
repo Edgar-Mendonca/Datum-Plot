@@ -205,7 +205,14 @@ def build(table, graph, overlays=(), fig=None):
     if not frame:
         for side in ("top", "right"):
             ax.spines[side].set_visible(False)
+    hidden_x = table.get("kind") == "multi"
+    if hidden_x:  # many variables: the first one on X, the others on Y
+        from .regress import xy_view
+        table, sets = xy_view(table), list(graph.get("sets") or [])
+        graph = dict(graph, sets=[dict(sets[0] if sets else {}, show=False), *sets[1:]])
     colors = palette(graph, len(table["sets"]))
+    if hidden_x:
+        colors = colors[-1:] + colors[:-1]  # the first Y variable takes the first colour
     if table.get("kind") == "column":
         return column_figure(fig, ax, table, graph, overlays, colors, size)
     if table.get("kind") == "parts":

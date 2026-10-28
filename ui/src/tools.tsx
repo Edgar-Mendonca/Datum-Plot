@@ -10,7 +10,7 @@ import { Dialog, Pick, Check } from "./ui";
 const needT = () => { const t = curTable(); if (!t) toast("Open a data table first."); return t; };
 const needG = () => { const g = graph(); if (!g) toast("Open a graph first."); return g; };
 /** The grid columns of a table, as [column, name]. */
-const columns = (t: Table): [string, string][] => [...(t.kind === "column" ? [] : [["0", `X: ${t.xTitle || "X"}`] as [string, string]]),
+const columns = (t: Table): [string, string][] => [...(t.kind === "column" || t.kind === "multi" ? [] : [["0", `X: ${t.xTitle || "X"}`] as [string, string]]),
   ...t.sets.flatMap((s, k) => Array.from({ length: spans(t)[k][1] }, (_, j) => [String(spans(t)[k][0] + j), `${letter(k)}: ${s.title || `Data set ${letter(k)}`}${spans(t)[k][1] > 1 ? ` · ${s.entry === "rep" ? `Y${j + 1}` : ["Mean", "SD/SEM", "N"][j]}` : ""}`] as [string, string]))];
 
 // ---------- sort, find, exclude rows (A17) ----------

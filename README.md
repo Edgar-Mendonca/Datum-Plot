@@ -42,6 +42,25 @@ Everything stays on your computer. The only network call is the update check to 
 
 Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Mendonca/Datum-Plot/releases/latest) and run it. It installs for your user account, with its own Python, and updates itself from the Home page.
 
+## How to cite
+
+If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
+
+> Mendonca, E. (2026). *Datum Plot* (Version 0.2.14) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+
+```bibtex
+@software{datum_plot,
+  author  = {Mendonca, Edgar},
+  title   = {Datum Plot},
+  version = {0.2.14},
+  year    = {2026},
+  url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
+  license = {MIT}
+}
+```
+
+GitHub's **Cite this repository** button (from [CITATION.cff](CITATION.cff)) gives the same in APA and BibTeX. Every result's **methods text** already names Datum Plot and the Python library behind the calculation (for example SciPy or statsmodels); cite those too if your journal asks for it.
+
 ## Build
 
 Rust (stable), Node 22 and Python 3.13 with `pip install -r py/requirements.txt`:

@@ -221,7 +221,7 @@ const TableHead = (p: { t: Table }) => {
         <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label></Show>
       <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.yUnits} onChange={e => set("yUnits", e.currentTarget.value)} /></label>
-      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
+      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : p.t.kind === "multi" ? "Many variables · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
     </div>
   );
 };

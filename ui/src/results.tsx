@@ -11,17 +11,17 @@ import { Help } from "./help";
 export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   describe: ["Descriptive statistics", "B1", false], normality: ["Normality tests", "B2", false], outliers: ["Outliers", "B3", false],
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
-  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], power: ["Power and sample size", "B23", false],
+  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
   tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
 };
 /** Does this analysis draw on the graphs of table `t`? */
-export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && t?.kind === "xy"; };
+export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && (t?.kind === "xy" || t?.kind === "multi"); };
 /** Catalogue id → analysis kind (and preset options), for the Analyze gallery and ribbon. */
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
   B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
-  B16: ["correlation", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
+  B16: ["correlation", {}], B21: ["multireg", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
 const DEFAULTS: Record<string, Record<string, any>> = {
@@ -31,7 +31,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
-  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
+  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
@@ -77,7 +77,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
         <div class="form">
           <label>Name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}`} value={on(k())} set={() => toggle(k())} />}</For></span>
-          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "contingency", "power"].includes(kind)}><Alpha /></Show>
+          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "contingency", "power", "multireg"].includes(kind)}><Alpha /></Show>
           <Show when={kind === "ttest"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["unpaired", "Unpaired (two independent groups)"], ["paired", "Paired (the same items twice, row by row)"], ["ratio", "Ratio paired (ratios, not differences)"], ["one", "One sample against a value"]]} />
             <Show when={o().test === "unpaired"}><label /><Check label="Welch's correction (do not assume equal SDs; recommended)" value={!!o().welch} set={v => put("welch", v)} /></Show>
@@ -95,6 +95,11 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label /><p class="muted">The first two data sets are the two methods; each row is one item measured by both.</p></Show>
           <Show when={kind === "roc"}><label>Positive when</label><Pick value={o().direction} set={v => put("direction", v)} options={[["higher", "The value is high"], ["lower", "The value is low"]]} />
             <label /><p class="muted">The first data set holds the controls (negatives), the second the cases (positives).</p></Show>
+          <Show when={kind === "multireg"}>
+            <label>Outcome (Y)</label><Pick value={String(o().y ?? 0)} set={v => put("y", +v)} options={t.sets.map((s, k) => [String(k), `${letter(k)}: ${s.title || `Data set ${letter(k)}`}`] as [string, string])} />
+            <label>Model</label><Pick value={o().model} set={v => put("model", v)} options={[["linear", "Linear: the outcome is a measurement"], ["logistic", "Logistic: the outcome is 0 or 1 (fail or pass, no or yes)"], ["poisson", "Poisson: the outcome is a count"]]} />
+            <label /><span class="muted">The other ticked data sets are the predictors. Rows with a missing value are left out.</span>
+          </Show>
           <Show when={kind === "contingency"}>
             <label>2 × 2 tables</label><span class="stackr"><Check label="Yates' continuity correction on the chi-square test" value={!!o().yates} set={v => put("yates", v)} />
               <Check label="Diagnostic test: rows are test results (positive first), data sets the true state (yes first)" value={!!o().diagnostic} set={v => put("diagnostic", v)} /></span>

@@ -89,8 +89,8 @@ export const GraphView = (p: { g: Graph }) => {
   /** Leaves a point (all its replicates at that X) out of the graph and analyses: the Exclude op. */
   const excludePoint = (q: (number | undefined)[]) => {
     const t = table();
-    if (!t || t.kind !== "xy") return;
-    const r0 = t.cols[0].findIndex(v => v === q[1]), [c0, w] = spans(t)[q[0]!];
+    if (!t || (t.kind !== "xy" && t.kind !== "multi")) return;
+    const [c0, w] = spans(t)[q[0]!], r0 = t.kind === "multi" ? t.cols[1].findIndex((v, r) => v === q[1] && t.cols[c0]?.[r] === q[2]) : t.cols[0].findIndex(v => v === q[1]);
     const cells = Array.from({ length: w }, (_, j) => [r0, c0 + j]).filter(([r, c]) => t.cols[c]?.[r] !== null && t.cols[c]?.[r] !== undefined);
     if (r0 >= 0 && cells.length) act({ Exclude: { table: t.id, cells, on: true } }).then(ok => ok && toast("Excluded: it stays in the table in blue italics (Ctrl+E there includes it again).", true));
   };
@@ -111,7 +111,7 @@ export const GraphView = (p: { g: Graph }) => {
     const name = q ? t?.sets[q[0]]?.title || `Data set ${q[0] + 1}` : "";
     openMenu(e, [
       ...(i !== null ? [{ label: "Edit Note Text…", icon: "rename", run: () => editNote(i) }, { label: "Delete Note", icon: "del", keys: "Del", run: () => delNote(i) }, "-" as const] : []),
-      ...(q ? [...(t?.kind === "xy" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
+      ...(q ? [...(t?.kind === "xy" || t?.kind === "multi" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
       { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, "x") },
       { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
       { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
@@ -147,7 +147,7 @@ export const GraphView = (p: { g: Graph }) => {
       setTool(null); setDrag(null);
       if (kind !== "text" && Math.hypot(qx - px, qy - py) < 3) return toast("Drag to draw it.");
       const [x, y] = toData(px, py), [x2, y2] = toData(qx, qy);
-      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
+      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" || table()?.kind === "multi" ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
       const text = kind === "text" ? prompt("Text", "") : kind === "line" ? "" : prompt(kind === "arrow" ? "Text at the start of the arrow (optional)" : "Label (optional)", "");
       if (text === null || (kind === "text" && !text.trim())) return;
       setG(p.g, s => ({ ...s, notes: [...(s.notes ?? []), { kind, x, y, x2, y2, text, color: "", size: 0, bold: false }] }));
@@ -158,7 +158,7 @@ export const GraphView = (p: { g: Graph }) => {
   /** Pan: shifts both axis ranges by (dx, dy) points. */
   const panBy = (dx: number, dy: number) => {
     const R = r()!, [x0, y0, x1, y1] = R.plot, [ax, ay] = toData(x0 + dx, y1 + dy), [bx, by] = toData(x1 + dx, y0 + dy);
-    setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" ? { x: { ...s.x, auto: false, min: ax, max: bx } } : {}), y: { ...s.y, auto: false, min: ay, max: by } }));
+    setG(p.g, s => ({ ...s, ...(table()?.kind === "xy" || table()?.kind === "multi" ? { x: { ...s.x, auto: false, min: ax, max: bx } } : {}), y: { ...s.y, auto: false, min: ay, max: by } }));
   };
   onCleanup(() => { setTip(null); if (tool() === "pan" || tool() === "zoom") setTool(null); });
   return (
@@ -191,7 +191,7 @@ export const zoomOut = (g: Graph) => {
   const R = lastRender(g.id);
   if (!R) return;
   const wide = ([a, b]: [number, number], log: boolean) => log ? [a / Math.sqrt(b / a), b * Math.sqrt(b / a)] : [a - (b - a) / 2, b + (b - a) / 2];
-  const xy = out()?.project.tables.find(t => t.id === g.table)?.kind === "xy", [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
+  const xy = ["xy", "multi"].includes(out()?.project.tables.find(t => t.id === g.table)?.kind ?? ""), [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
   setG(g, s => ({ ...s, ...(xy ? { x: { ...s.x, auto: false, min: xa, max: xb } } : {}), y: { ...s.y, auto: false, min: ya, max: yb } }));
 };
 export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: true }, y: { ...s.y, auto: true } }));

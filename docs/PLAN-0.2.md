@@ -78,7 +78,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A4 | Contingency table | Counts in rows × columns — chi-square, Fisher | ✅ 0.2.4 |
 | A5 | Survival table | Time + event/censored per group — Kaplan-Meier | 0.5 |
 | A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | ✅ 0.2.5 |
-| A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | 0.5 |
+| A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | ✅ 0.2.14 |
 | A8 | Nested table | Sub-columns within groups (cells within animals) — nested t-test/ANOVA | 0.5 |
 | A9 | Worksheet (Origin) | Free columns with roles (X, Y, Z, error, label), long name, units, comments, sparklines | 0.6 |
 | A10 | Matrix | A Z grid for heat maps, contours, 3D surfaces | 0.6 |
@@ -115,7 +115,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B18 | ROC curves and AUC, Bland-Altman | numpy, scipy | ✅ 0.2.6 |
 | B19 | Survival: Kaplan-Meier, log-rank, Gehan-Breslow-Wilcoxon, median survival, hazard ratio, Cox regression | **lifelines** | 0.5 |
 | B20 | Nested t-test, nested one-way ANOVA (mixed models) | statsmodels | 0.5 |
-| B21 | Multiple linear, logistic and Poisson regression | statsmodels | 0.5 |
+| B21 | Multiple linear, logistic and Poisson regression | statsmodels | ✅ 0.2.14 |
 | B22 | PCA, clustering (hierarchical, k-means) | numpy SVD, scipy.cluster | 0.5 |
 | B23 | Power and sample size (t-tests, ANOVA, proportions) | statsmodels.stats.power | ✅ 0.2.2 |
 | B24 | Peak analysis: baseline, find peaks, areas, multi-peak fit | scipy.signal, lmfit, pybaselines | 0.6 |
@@ -352,7 +352,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.11** ✅ | Layouts (F1), journal figures (F2), TIFF for journals (G3) |
 | **0.2.12** ✅ | Multi-panel figures (D12) |
 | **0.2.13** ✅ | Security: `zip` 2 → 9.1.3 (RUSTSEC-2026-0367/0368/0369), `deny.toml` and the cargo-deny CI job (FAMILY §11), reported by Datum Sim |
-| 0.2.14 | Multiple variables (A7), multiple and logistic regression (B21) |
+| **0.2.14** ✅ | Many variables (A7), multiple, logistic and Poisson regression (B21) |
 | 0.2.15 | PCA and clustering (B22) |
 | 0.2.16 | Survival table (A5), analysis (B19), curves (D9) |
 | 0.2.17 | Nested table (A8) and tests (B20) |

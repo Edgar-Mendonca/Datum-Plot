@@ -48,7 +48,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
       <div class="fmtpage">
         <Show when={tab() === "sets"}>
           <div class="form">
-            <Show when={t()?.kind !== "xy"}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
+            <Show when={t()?.kind !== "xy" && t()?.kind !== "multi"}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
                 ? [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
               <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>

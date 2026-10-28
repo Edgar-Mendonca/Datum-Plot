@@ -1,12 +1,12 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.13";
+export const VERSION_NOW = "0.2.14";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
   "0.2.6": "ROC, Bland-Altman and special graphs", "0.2.7": "Axis breaks and a second Y axis", "0.2.8": "Annotations", "0.2.9": "Click, drag, zoom and exclude on the graph", "0.2.10": "Users' requests: open new tables, remove data sets, choose the test, X axis gaps", "0.2.11": "Page layouts and journal figures",
-  "0.2.12": "Multi-panel figures", "0.2.13": "Security: the library that unpacks the Python engine, licence checks", "0.2.14": "Multiple variables and multiple regression", "0.2.15": "PCA and clustering", "0.2.16": "Survival analysis", "0.2.17": "Nested data",
+  "0.2.12": "Multi-panel figures", "0.2.13": "Security: the library that unpacks the Python engine, licence checks", "0.2.14": "Many variables and multiple regression", "0.2.15": "PCA and clustering", "0.2.16": "Survival analysis", "0.2.17": "Nested data",
   "0.2.18": "Peaks and signal processing", "0.2.19": "DSC/TGA and S–N curves", "0.2.20": "Worksheets and column formulas", "0.2.21": "Matrices, 3D and surface fits", "0.2.22": "Large data and region tools",
   "0.2.23": "Project and instrument import", "0.2.24": "Slides, documents and posters", "0.2.25": "Python console and your own analyses", "0.2.26": "Templates, batch and notebooks", "1.0": "Stable, signed, validated",
 };
@@ -22,7 +22,7 @@ export const FEATURES: Feature[] = [
   ["A4", "Contingency table", "0.2.4", "Counts in rows by columns. For chi-square and Fisher's exact test.", ""],
   ["A5", "Survival table", "0.2.16", "Time to event and whether it happened (or was censored), per group. For Kaplan-Meier curves.", ""],
   ["A6", "Parts of whole", "0.2.5", "Values that add up to a whole. For pie, donut and 100 % stacked bars.", ""],
-  ["A7", "Multiple variables", "0.2.14", "One row per sample, many columns of numbers and text. For multiple regression, correlation matrices and PCA.", "pandas"],
+  ["A7", "Many variables", "0.2.14", "One row per sample, one column per variable. For multiple regression and correlation matrices; graphs put the first variable on X.", "pandas"],
   ["A8", "Nested table", "0.2.17", "Sub-columns within groups, such as specimens within batches. For nested t-tests and ANOVA.", ""],
   ["A9", "Worksheet", "0.2.20", "Free columns with roles (X, Y, Z, error, label), long names, units and comments.", "pandas"],
   ["A10", "Matrix", "0.2.21", "A grid of Z values over X and Y. For heat maps, contours and 3D surfaces.", "numpy"],
@@ -54,7 +54,7 @@ export const FEATURES: Feature[] = [
   ["B18", "ROC and Bland-Altman", "0.2.6", "ROC curves with AUC, its CI and the best cut-off; Bland-Altman bias and limits of agreement with CIs.", "numpy"],
   ["B19", "Survival analysis", "0.2.16", "Kaplan-Meier, log-rank, median survival, hazard ratios, Cox regression.", "lifelines"],
   ["B20", "Nested t-test and ANOVA", "0.2.17", "Mixed models for data with sub-groups.", "statsmodels"],
-  ["B21", "Multiple and logistic regression", "0.2.14", "Many predictors; logistic and Poisson regression.", "statsmodels"],
+  ["B21", "Multiple and logistic regression", "0.2.14", "Many predictors: linear, logistic (0/1 outcomes) and Poisson (counts) regression, with odds or rate ratios.", "statsmodels"],
   ["B22", "PCA and clustering", "0.2.15", "Principal components, hierarchical and k-means clustering.", "numpy, scipy"],
   ["B23", "Power and sample size", "0.2.2", "How many samples you need, or the power you have, for t-tests, ANOVA and proportions.", "statsmodels"],
   ["B24", "Peak analysis", "0.2.18", "Baseline, find peaks, areas and widths, fit many peaks at once (XRD, spectra, chromatograms).", "scipy, lmfit, pybaselines"],

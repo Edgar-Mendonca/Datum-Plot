@@ -637,8 +637,8 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
-    from . import groups, tools
-    KINDS.update({"ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
+    from . import groups, regress, tools
+    KINDS.update({"multireg": regress.multireg, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 
@@ -648,6 +648,11 @@ COMPARE = {"ttest", "nonparam", "anova", "correlation", "power", "blandaltman", 
 
 
 def run(kind, table, sets, options):
+    if table.get("kind") == "multi" and kind not in ("multireg", "correlation"):
+        from .regress import xy_view
+        table = xy_view(table)  # the first variable is X for every other analysis
+    if table.get("fromMulti") and not sets and kind in ("linear", "fit", "arrhenius", "auc", "smooth", "tensile", "transform"):
+        sets = list(range(1, len(table["sets"])))
     ks = chosen(table, sets)
     empty = [k for k in ks if kind in COMPARE and not values(table, k)]
     ks = [k for k in ks if k not in empty]

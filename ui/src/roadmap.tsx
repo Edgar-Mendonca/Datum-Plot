@@ -68,13 +68,13 @@ const TABLES: Choice[] = [
   { id: "A4", name: "Contingency", icon: "grid", group: "Data tables", desc: "Counts of outcomes per group. Chi-square and Fisher's exact test." },
   { id: "A5", name: "Survival", icon: "line", group: "Data tables", desc: "Time to failure or event, with censored items. Kaplan-Meier and log-rank; also fatigue and reliability data." },
   { id: "A6", name: "Parts of whole", icon: "dash", group: "Data tables", desc: "Fractions of a total, such as phase or composition fractions." },
-  { id: "A7", name: "Multiple variables", icon: "cols", group: "Data tables", desc: "One row per sample with many measured properties. Multiple regression, correlation matrix, PCA." },
+  { id: "A7", name: "Many variables", icon: "cols", group: "Data tables", desc: "One row per sample with many measured properties. Multiple regression and a correlation matrix; graphs put the first variable on X." },
   { id: "A8", name: "Nested", icon: "group", group: "Data tables", desc: "Replicates within sub-groups, such as specimens within batches." },
   { id: "A9", name: "Worksheet", icon: "sheet", group: "Worksheets and 3D", desc: "Free columns with roles, long names and units, for raw instrument data." },
   { id: "A10", name: "Matrix", icon: "grid", group: "Worksheets and 3D", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : undefined)} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : c.id === "A7" ? "multi" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },
@@ -103,7 +103,7 @@ const ANALYSES: Choice[] = [
   { id: "B17", name: "Contingency", icon: "grid", group: "Relationships", desc: "Tests on counts." },
   { id: "B18", name: "Bland-Altman", icon: "err", group: "Relationships", desc: "Agreement of two measuring methods: bias and limits of agreement, with the Bland-Altman plot." },
   { id: "B18", key: "B18r", name: "ROC curve", icon: "curve", group: "Relationships", desc: "How well a test separates two groups: the ROC curve, AUC and the best cut-off." },
-  { id: "B21", name: "Multiple and logistic regression", icon: "cols", group: "Relationships", desc: "Several predictors at once." },
+  { id: "B21", name: "Multiple and logistic regression", icon: "cols", group: "Relationships", desc: "Several predictors at once: linear for measurements, logistic for 0/1 outcomes, Poisson for counts." },
   { id: "B22", name: "PCA and clustering", icon: "group", group: "Relationships", desc: "Patterns in many variables." },
   { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier, log-rank and Cox regression." },
   { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, areas and multi-peak fits (XRD, Raman, DSC)." },

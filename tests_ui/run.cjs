@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, eleven samples, open, import and roadmap", (await p.$$(".home .tile")).length === 15, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, twelve samples, open, import and roadmap", (await p.$$(".home .tile")).length === 16, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -196,6 +196,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const an = (await ops()).find(o => o.AddAnalysis);
   check("ANOVA on an XY table draws no brackets", an && an.AddAnalysis.analysis.kind === "anova" && an.AddAnalysis.overlay === false && an.AddAnalysis.analysis.options.posthoc === "tukey", JSON.stringify(an));
+  await reset();
+  await p.click('.ribbon .rb[title^="Multiple, logistic"]');
+  await p.waitForTimeout(200);
+  await p.selectOption('.dlg select:has(option[value="logistic"])', "logistic");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const mr = (await ops()).find(o => o.AddAnalysis);
+  check("Multiple regression adds a logistic model with an outcome, not drawn on the graph", mr && mr.AddAnalysis.analysis.kind === "multireg" && mr.AddAnalysis.analysis.options.model === "logistic" && mr.AddAnalysis.analysis.options.y === 0 && mr.AddAnalysis.overlay === false, JSON.stringify(mr));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
@@ -221,6 +229,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(150);
   check("New Table › Grouped asks the shell for a grouped table", (await calls("new_table"))[0]?.kind === "grouped", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Many variables")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Many variables asks the shell for a table of many variables", (await calls("new_table"))[0]?.kind === "multi", JSON.stringify(await calls("new_table")));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);
