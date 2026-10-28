@@ -250,6 +250,8 @@ export const exportAll = () => {
   });
 };
 export const exportExcel = async () => { const p = await call<string | null>("export_excel"); if (p) toast(`Saved ${p}`, true); };
+/** Tools › PowerPoint (one graph per slide) or Word Report (graphs, results and methods) (G5). */
+export const exportReport = async (kind: "slides" | "word") => { toast(kind === "slides" ? "Making the slides…" : "Writing the report…", true); const p = await call<string | null>("export_report", { kind }); if (p) toast(`Saved ${p}`, true); };
 
 /** Graph › Significance: brackets come from a t-test (two groups) or a one-way ANOVA. */
 export const significance = (e?: MouseEvent) => {

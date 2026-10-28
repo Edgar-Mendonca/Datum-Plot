@@ -195,6 +195,23 @@ def figure(table, graph, overlays=(), fig=None):
     return fig, ax, leg, points
 
 
+BIG = 5000  # points in a data set from which drawing is thinned (D17)
+
+
+def thin(xs, ys, n=2000):
+    """At most 2n points that draw the same line on screen: the lowest and highest of each of n stretches, in order."""
+    x, y = np.asarray(xs, float), np.asarray(ys, float)
+    if len(x) <= 2 * n:
+        return x, y
+    keep = []
+    for part in np.array_split(np.arange(len(x)), n):
+        seg = y[part]
+        if np.isfinite(seg).any():
+            keep += sorted({part[int(np.nanargmin(seg))], part[int(np.nanargmax(seg))]})
+    keep = np.array(sorted(set([0, len(x) - 1] + keep)))
+    return x[keep], y[keep]
+
+
 def with_break(fig, ax, graph, frame, size, draw):
     """`draw(ax)` with a break in the Y axis when one is set: the graph drawn twice, a short panel above
     the gap and a tall one below (column, grouped and nested graphs; XY graphs have their own)."""
@@ -288,7 +305,16 @@ def build(table, graph, overlays=(), fig=None):
             face = col if st["filled"] else "white"
             line = st["line"] if st["line"] is not None else conn
             label = (s.get("title") or f"Data set {chr(65 + k)}") + (" (right axis)" if which == "right" else "")
-            if each:
+            big = len(pts) > BIG
+            if big:  # large data (D17): the line keeps its shape on screen, dense markers become a picture inside the vector file
+                tx, ty = thin(xs, ys)
+                if line or not mk:
+                    ax.plot(tx, ty, color=col, linewidth=st["width"], label=label if not mk else None, zorder=2)
+                if mk:
+                    ex = [p["x"] for p in pts for _ in p["values"]] if each else xs
+                    ey = [v for p in pts for v in p["values"]] if each else ys
+                    ax.plot(ex, ey, linestyle="none", marker=mk, markersize=max(1.0, st["size"] * 0.35), markerfacecolor=col, markeredgewidth=0, color=col, label=label, rasterized=True, zorder=3)
+            elif each:
                 ex = [p["x"] for p in pts for _ in p["values"]]
                 ey = [v for p in pts for v in p["values"]]
                 ax.plot(ex, ey, linestyle="none", marker=mk or "o", markersize=st["size"], markerfacecolor=face, markeredgecolor=col, color=col, label=label, zorder=3)
@@ -301,7 +327,7 @@ def build(table, graph, overlays=(), fig=None):
                     yerr = [[0 if direction == "up" else v for v in lo], [0 if direction == "down" else v for v in hi]]
                 ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
                             markerfacecolor=face, markeredgecolor=col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
-            points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in pts]
+            points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in (pts[::len(pts) // 2000 + 1] if big else pts)]  # hover: a sample of a big set
         return points
 
     lg = graph.get("legend") or {}
@@ -909,6 +935,7 @@ def page(layout, panels, fmt="svg", path=None, dpi=300, cmyk=False):
             done.append((it, None, None))
             continue
         g = {**p["graph"], "width": w, "height": h}
+        g["fontSize"] = max(float(g.get("fontSize") or 10), float(layout.get("fontSize") or 0))  # posters and slides: text that reads from afar
         if it.get("inset"):  # smaller text in an inset
             g["fontSize"] = max(5.0, float(g.get("fontSize") or 10) * 0.75)
         with matplotlib.rc_context(rc_for(g)):

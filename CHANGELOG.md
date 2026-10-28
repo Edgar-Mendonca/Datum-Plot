@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.22 — 2026-10-28
+
+Large data, region statistics, importing projects, plates and many runs, and slides, reports and posters.
+
+**Large data**
+- Graphs with hundreds of thousands of points stay quick: a line is thinned to what the screen can show, and dense points are drawn as a picture inside SVG and PDF files while the text stays text. 200 000 points draw in about a second (before: over six) and export at 75 kB (before: 21 MB). Analyses of large tables are faster too.
+
+**Statistics of a region**
+- Right-click a graph › **Statistics of a Region** (or Graph › Zoom ▾), then drag a box over part of the curves: for each curve, the points inside, mean, SD, range, area, slope and highest point. Copy the table, or open a linear fit limited to that range.
+
+**Import**
+- **.pzfx projects**: File › Import reads every table of a .pzfx file (XY, column, grouped, contingency, survival, parts of whole and nested) with titles, replicates, row titles and excluded values, each with its graph.
+- **Plate readers**: a sheet with a 96- or 384-well block (columns 1, 2, 3… and rows A, B, C…) is offered as a plate: a grouped table with rows A–H and columns 1–12, ready for a heat map.
+- **Several files at once**: Data › Several Files reads many runs (tensile tests, spectra): one data set per file, in one table when they share their X values.
+
+**Slides, reports and posters**
+- Tools › **PowerPoint**: a 16:9 deck with a title slide, every graph on its own slide and a slide per result (.pptx).
+- Tools › **Word Report**: the project's details, every graph with a numbered caption, every result with its answer and main table, and the methods text (.docx).
+- Layout › **Poster** (A0) and **Slide** (16:9): a page with a large title and your graphs in a grid; graph text grows to suit the page. New page sizes: poster A0 and A1, slide 4:3.
+
+**Behind the scenes**
+- The built-in Python adds two libraries for slides and documents, so the first start after this update unpacks a new Python runtime (about a minute, once).
+
 ## 0.2.21 — 2026-10-28
 
 Testers' requests (axis breaks on column graphs, wider columns, empty columns left alone), and matrices with contour maps, 3D surfaces, polar graphs and surface fits.

@@ -12,7 +12,7 @@
   "steps": [
     {
       "title": "Enter the data",
-      "text": "Choose a table for your kind of data and type, paste or import it (CSV, TXT or .xlsx)."
+      "text": "Choose a table for your kind of data and type, paste or import it (CSV, TXT, .xlsx, .pzfx, plate readers, many runs at once)."
     },
     {
       "title": "Analyse",
@@ -26,14 +26,15 @@
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
     "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change.",
+    "Import CSV, TXT, .xlsx and .pzfx files, plate readers and many runs at once; large data sets stay quick.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Matrices and 3D: contour maps, heat maps and 3D surfaces, polar graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
-    "Page layouts at journal sizes; export as PNG or TIFF (with CMYK), SVG, PDF or EPS.",
-    "Interactive graphs: zoom, pan, drag notes and exclude points with a right-click.",
+    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx) or a report with graphs, results and methods (.docx).",
+    "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "Free and open source (MIT), Windows first, installs in seconds with Python inside, and updates itself."
   ],
   "screenshots": [
@@ -42,30 +43,13 @@
   ],
   "roadmap": [
     {
-      "v": "0.2.22",
-      "title": "Large data",
+      "v": "0.2.23",
+      "title": "Python and automation",
       "when": "Next",
       "items": [
-        "Large data sets: fast drawing of many points",
-        "Region tools: pick and analyse part of a curve"
-      ]
-    },
-    {
-      "v": "0.2.23 – 0.2.24",
-      "title": "Import and reports",
-      "when": "Soon",
-      "items": [
-        "Project and instrument file import",
-        "Slides, reports and posters"
-      ]
-    },
-    {
-      "v": "0.2.25 – 0.2.26",
-      "title": "Python and automation",
-      "when": "Later",
-      "items": [
         "A Python console and your own analyses",
-        "Templates, batch processing and notebooks"
+        "Analysis templates and batch processing",
+        "Notebook export"
       ]
     },
     {

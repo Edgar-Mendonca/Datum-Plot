@@ -146,9 +146,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.tabs button:text-is("Tools")');
   await p.click('.ribbon .rb:has-text("Python Console")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("H1") && (await p.textContent(".dlg")).includes("0.2.25"));
+  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("H1") && (await p.textContent(".dlg")).includes("0.2.23"));
   await p.keyboard.press("Escape");
   check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 4);
+  await reset();
+  await p.click('.ribbon .rb:has-text("PowerPoint")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb:has-text("Word Report")'); await p.waitForTimeout(100);
+  check("PowerPoint and Word Report ask the shell for slides and a report", JSON.stringify((await calls("export_report")).map(c => c.kind)) === '["slides","word"]', JSON.stringify(await calls("export_report")));
   await p.click('.tabs button:text-is("Analyze")');
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
@@ -332,6 +336,10 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   check("New Table › Matrix asks the shell for a matrix", (await calls("new_table"))[0]?.kind === "matrix", JSON.stringify(await calls("new_table")));
   await reset();
+  await p.click('.ribbon .rb:has-text("Several Files")');
+  await p.waitForTimeout(150);
+  check("Several Files asks the shell to import several runs", (await calls("import_files")).length === 1);
+  await reset();
   await p.click('.ribbon .rb:has-text("Column Formula")');
   await p.waitForTimeout(150);
   check("Column Formula explains that formulas fill one-value data sets", ((await p.textContent("#toast")) || "").includes("one value per row") && !(await p.$(".dlg")));
@@ -465,6 +473,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   const al = (await ops()).find(o => o.AddLayout)?.AddLayout.layout;
   check("New Layout starts with the project's graphs", al && al.items.length === Math.min(4, P.graphs.length) && al.items[0].graph === P.graphs[0].id, JSON.stringify(al));
+  await reset();
+  await p.click('.ribbon .rb.big:has-text("Poster")');
+  await p.waitForTimeout(200);
+  const po = (await ops()).find(o => o.AddLayout)?.AddLayout.layout;
+  check("Poster makes an A0 page with a big title and the graphs", po && po.width === 841 && po.height === 1189 && po.items[0].kind === "text" && po.items[0].size === 72 && po.items.some(i => i.kind === "graph"), JSON.stringify(po));
   // 9. 0.2.10: users' requests.
   await p.click(".nav .nitem:nth-of-type(2)");
   await p.waitForTimeout(200);

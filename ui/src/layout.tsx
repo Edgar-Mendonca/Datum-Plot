@@ -10,7 +10,8 @@ import { Help } from "./help";
 
 /** Journal and page sizes in millimetres (width, height). */
 export const PAGES: [string, number, number][] = [["Single column (85 mm)", 85, 100], ["1.5 columns (114 mm)", 114, 110], ["Double column (174 mm)", 174, 130], ["Nature double (183 mm)", 183, 150],
-  ["A4 page (210 × 297)", 210, 297], ["Letter page (216 × 279)", 216, 279], ["Slide 16:9 (254 × 143)", 254, 143]];
+  ["A4 page (210 × 297)", 210, 297], ["Letter page (216 × 279)", 216, 279], ["Slide 16:9 (254 × 143)", 254, 143],
+  ["Slide 4:3 (254 × 190)", 254, 190], ["Poster A1 (594 × 841)", 594, 841], ["Poster A0 (841 × 1189)", 841, 1189]];
 const GAP = 3;
 const layout = () => P().layouts?.find(l => l.id === item().id);
 const set = (l: Layout) => act({ LayoutSet: { layout: l } });
@@ -24,6 +25,24 @@ export const arrange = (l: Layout, cols: number) => {
   const items = gs.map((it, i) => ({ ...it, x: (i % cols) * (w + GAP), y: Math.floor(i / cols) * (h + GAP), w, h }))
     .concat(rest.map((it, i) => ({ ...it, x: 0, y: l.height - cap + i * 5, w: l.width, h: 10 })));
   set({ ...l, items });
+};
+
+/** Layout › Poster or Slide (F3): a page with a title and the project's graphs in a grid below it, in sizes
+ * that read from across a room (A0 poster: 72 pt title, 24 pt text; 16:9 slide: 28 pt title, 14 pt text). */
+export const templateLayout = async (kind: "poster" | "slide") => {
+  const poster = kind === "poster", [W, H] = poster ? [841, 1189] : [254, 143], m = poster ? 30 : 8, top = poster ? 110 : 26, foot = poster ? 50 : 0;
+  const ids = P().graphs.slice(0, poster ? 6 : 2).map(g => g.id), cols = poster ? 2 : Math.max(ids.length, 1), rows = Math.max(1, Math.ceil(ids.length / cols)), gap = poster ? 20 : 6;
+  const w = (W - 2 * m - gap * (cols - 1)) / cols, h = (H - top - foot - m - gap * (rows - 1)) / rows;
+  const t = (text: string, y: number, hh: number, size: number, bold: boolean) => ({ kind: "text", graph: 0, x: m, y, w: W - 2 * m, h: hh, text, size, bold });
+  const items = [t(P().info?.title || P().name || "Title", m * 0.6, poster ? 60 : 14, poster ? 72 : 28, true),
+    ...ids.map((g, i) => ({ kind: "graph", graph: g, x: m + (i % cols) * (w + gap), y: top + Math.floor(i / cols) * (h + gap), w, h, text: "", size: 0, bold: false })),
+    ...(poster ? [t([P().info?.researcher, P().info?.organisation].filter(Boolean).join(" · ") || "Authors · Organisation", H - foot, 30, 28, false)] : [])];
+  const l: Layout = { id: 0, name: poster ? "Poster" : "Slide", width: W, height: H, letters: poster ? "A" : "none", letterSize: poster ? 40 : 14, font: "Arial", fontSize: poster ? 24 : 14, items };
+  if (await act({ AddLayout: { layout: l } })) {
+    const ls = out()!.project.layouts;
+    open("layouts", ls[ls.length - 1].id);
+    toast(poster ? "An A0 poster with your graphs: click the title to change it; File › Export Page saves it as PDF." : "A 16:9 slide with your graphs: Tools › PowerPoint makes a deck of every graph.", true);
+  }
 };
 
 /** A new layout of the project's graphs (up to four, two per row), or of the given graph. */

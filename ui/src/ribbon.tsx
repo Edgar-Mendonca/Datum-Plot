@@ -9,7 +9,7 @@ import { setG, ERRORS, SIZES, MATRIX, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
 import { feature } from "./features";
 import { formulaDialog } from "./datatable";
-import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
+import { soon, newTable, analyze, graphTypes, importFile, importFiles, runAnalysis } from "./roadmap";
 import * as T from "./tools";
 import * as L from "./layout";
 import { Layout } from "./api";
@@ -122,7 +122,7 @@ const PARTS: [string, string][] = [["pie", "Pie"], ["donut", "Donut"], ["percent
 const columnMenu = (): Item[] => curTable()?.kind === "matrix" ? MATRIX.map(([k, l]) => ({ label: l, on: (gs()?.column || "contour") === k, run: () => setGS(s => { s.column = k; }) })) : curTable()?.kind === "parts" ? PARTS.map(([k, l]) => ({ label: l, on: (gs()?.column || "pie") === k, run: () => setGS(s => { s.column = k; }) })) : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? [...GROUPED.map(([k, l]) => ({ label: l, on: (gs()?.column || "bars") === k, run: () => setGS(s => { s.column = k; }) })), "-",
   { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }] : [...COLUMNS.map(([k, l]) => ({ label: l, on: (gs()?.column || "scatter") === k, run: () => setGS(s => { s.column = k; }) })), "-",
   { label: "Show Each Value", on: gs()?.points === "each", run: () => setGS(s => { s.points = s.points === "each" ? "mean" : "each"; }) }];
-const ZOOM = (): Item[] => [{ label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Pan (drag)", run: () => zoomTool("pan") }, { label: "Zoom Out", icon: "zout", run: () => { const g = graph(); if (g) zoomOut(g); } },
+const ZOOM = (): Item[] => [{ label: "Statistics of a Region", icon: "sigma", run: () => zoomTool("region") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Pan (drag)", run: () => zoomTool("pan") }, { label: "Zoom Out", icon: "zout", run: () => { const g = graph(); if (g) zoomOut(g); } },
   { label: "Reset Axes", icon: "fit", run: () => { const g = graph(); if (g) resetAxes(g); } }];
 const ANNOT = (): Item[] => [...[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]].map(([k, l]) => ({ label: l, run: () => annotate(k) })), "-", { label: "Edit Notes…", run: () => C.format("notes") }];
 /** Runs `f` on the open layout (or says how to get one). */
@@ -134,7 +134,7 @@ export const Ribbon = () => (
       <G l="Clipboard" h="clipboard"><B big i="paste" l="Paste" run={() => document.execCommand("paste")} dd={e => openMenu(e, [{ label: "Paste", icon: "paste", run: () => document.execCommand("paste"), keys: "Ctrl+V" }, { label: "Paste Special…", icon: "paste", run: () => D.pasteSpecial(), keys: "Ctrl+Alt+V" }, "-", { label: "Paste Values", run: () => F.target()?.paste?.("values", false) }, { label: "Paste Formatting", icon: "paint", run: () => F.target()?.paste?.("formats", false) }, { label: "Transpose", run: () => F.target()?.paste?.("all", true) }])} />
         <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
       <Font />
-      <G l="Insert" h="insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="CSV, TXT or Excel file" run={importFile} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="del" l="Remove Data Set" title="Delete data sets (columns) and their values" run={C.removeSets} /></S><S><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
+      <G l="Insert" h="insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="A CSV, TXT, .xlsx or .pzfx file; plate-reader sheets become plates" run={importFile} /><B big i="folder" l="Several Files" title="Several runs at once: one data set per file" run={importFiles} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="del" l="Remove Data Set" title="Delete data sets (columns) and their values" run={C.removeSets} /></S><S><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
       <G l="Transform" h="transform"><S><B i="fx" l="Transform" title="A new table of log, 1/X, normalised… values" run={() => runAnalysis("A15")} /><B i="fx" l="Column Formula" title="Fill a data set from the others: log10(A), (B - mean(B)) / sd(B)…" run={() => { const t = curTable(); if (t) formulaDialog(t); else toast("Open a data table first."); }} /><B i="sort" l="Sort" run={T.sortDialog} /></S>
         <S><B i="find" l="Find" title="Ctrl+F" run={T.findDialog} /><B i="filter" l="Exclude Rows" title="Exclude rows by a rule" run={T.excludeRows} /><B i="check" l="Check Data" run={() => runAnalysis("A18")} /></S><S><B i="exclude" l="Find Outliers" run={() => runAnalysis("A16")} /></S></G>
       <G l="Values" h="values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
@@ -179,13 +179,13 @@ export const Ribbon = () => (
       <G l="Layout" h="layouts"><B big i="layout" l="New Layout" title="Arrange graphs on a page" run={() => L.newLayout()} />
         <S><B i="list" l="Panel Letters" dd={e => lay(l => openMenu(e, L.letterMenu(l)))} /><B i="cols" l="Arrange" dd={e => lay(l => openMenu(e, L.arrangeMenu(l)))} /><B i="size" l="Journal Figure" dd={e => lay(l => openMenu(e, L.sizeMenu(l)))} /></S>
         <S><B i="graph" l="Add Graph" dd={e => lay(l => openMenu(e, L.graphMenu(l)))} /></S></G>
-      <G l="Templates"><N big i="layout" l="Poster" id="F3" /><N big i="layout" l="Slide" id="F3" /></G>
+      <G l="Templates"><B big i="layout" l="Poster" title="An A0 poster with a title and your graphs" run={() => L.templateLayout("poster")} /><B big i="layout" l="Slide" title="A 16:9 slide with a title and your graphs" run={() => L.templateLayout("slide")} /></G>
       <G l="Export" h="exportall"><B big i="export" l="Export Layout" title="PDF, TIFF, PNG, SVG or EPS at the page's real size" run={() => lay(l => L.exportLayout(l))} /><B big i="image" l="TIFF for Journals" title="CMYK, LZW, 600 dpi" run={() => lay(l => L.exportLayout(l, true))} /></G>
     </Show>
     <Show when={tab() === "tools"}>
       <G l="Python"><N big i="fx" l="Python Console" id="H1" /><S><N i="fx" l="My Analyses" id="H2" /><N i="report" l="Notebook" id="H5" /></S></G>
       <G l="Automate"><N big i="repeat" l="Analysis Template" id="H3" /><N big i="folder" l="Batch Process" id="H4" /></G>
-      <G l="Export" h="exportall"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Excel Workbook" title="Data tables and results as an Excel workbook" run={T.exportExcel} /><S><N i="report" l="PowerPoint" id="G5" /><N i="report" l="Word Report" id="G5" /></S></G>
+      <G l="Export" h="exportall"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Excel Workbook" title="Data tables and results as an Excel workbook" run={T.exportExcel} /><S><B i="report" l="PowerPoint" title="Every graph on its own slide, and the results (.pptx)" run={() => T.exportReport("slides")} /><B i="report" l="Word Report" title="A report with the graphs, the results and the methods text (.docx)" run={() => T.exportReport("word")} /></S></G>
       <G l="Engine" h="engine"><B big i="update" l="Restart Engine" title="Restart the Python engine" run={() => call("restart_engine").then(() => toast("The Python engine restarted.", true))} /></G>
     </Show>
     <Show when={tab() === "view"}>

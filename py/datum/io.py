@@ -70,13 +70,17 @@ def read_excel(path):
 def read_file(path):
     """{"sheets": [{"name", "rows": [[text]]}]} for a CSV, TSV, TXT or XLSX file."""
     ext = os.path.splitext(path)[1].lower()
+    if ext == ".pzfx":
+        from .imports import read_pzfx
+        return {"sheets": [], "tables": read_pzfx(path)}
     if ext in (".xlsx", ".xlsm"):
         sheets = read_excel(path)
     elif ext in (".csv", ".tsv", ".txt", ".dat", ".prn"):
         sheets = read_text(path)
     else:
-        raise ValueError(f"Datum Plot cannot read {ext or 'this kind of'} files yet. Use CSV, TXT or Excel (.xlsx).")
-    return {"sheets": sheets}
+        raise ValueError(f"Datum Plot cannot read {ext or 'this kind of'} files yet. Use CSV, TXT, .xlsx or .pzfx.")
+    from .imports import plates
+    return {"sheets": sheets, "plates": plates(sheets)}
 
 
 def write_excel(path, project, analyses):

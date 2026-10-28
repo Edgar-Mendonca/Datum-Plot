@@ -554,7 +554,7 @@ dependencies = [
 
 [[package]]
 name = "datum-core"
-version = "0.2.21"
+version = "0.2.22"
 dependencies = [
  "serde",
  "serde_json",
@@ -562,7 +562,7 @@ dependencies = [
 
 [[package]]
 name = "datum-plot"
-version = "0.2.21"
+version = "0.2.22"
 dependencies = [
  "chrono",
  "datum-core",

@@ -84,8 +84,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A10 | Matrix | A Z grid for heat maps, contours, 3D surfaces | ✅ 0.2.21 |
 | A11 | Column formulas | "Set column values" with formulas, e.g. `log10(A)`, `(B - mean(B)) / sd(B)`, evaluated by numpy | ✅ 0.2.20 |
 | A12 | Import CSV / TXT / XLSX | With a preview: delimiter, header rows, which columns go where | 0.1.1 |
-| A13 | Import Prism `.pzfx` | Tables, titles and replicates from Prism projects | 0.4 |
-| A14 | Instrument and plate import | Plate readers (96/384 wells) with a plate map of samples, standards and blanks; Origin ASCII; spectra folders | 0.6 |
+| A13 | Import `.pzfx` | Tables, titles and replicates from .pzfx projects | ✅ 0.2.22 |
+| A14 | Instrument and plate import | Plate readers (96/384 wells) with a plate map of samples, standards and blanks; spectra folders | ✅ 0.2.22 (plate blocks as grouped tables, several runs at once; plate maps later) |
 | A15 | Transforms | New linked table: log, ln, reciprocal, normalise (0–100 %), subtract baseline, row means, transpose, remove blanks, fractions of total | ✅ 0.2.2 |
 | A16 | Exclude, outlier flags | Exclude by hand ✅; flag outliers found by ROUT/Grubbs and exclude them in one click | 0.2 |
 | A17 | Sort, find, filter | Sort rows by X, find values, hide rows by a rule | ✅ 0.2.2 |
@@ -161,7 +161,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
 | D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | ✅ 0.2.8 |
 | D16 | Colour schemes: Okabe-Ito ✅, viridis family, greyscale, custom palettes; colour-blind preview | ✅ 0.2.2 |
-| D17 | Large data (1 million points) with fast decimation for screen | 0.6 |
+| D17 | Large data (1 million points) with fast decimation for screen | ✅ 0.2.22 (200 000 points: draw 1.4 s, 75 kB) |
 
 ### E. Working with the graph on screen
 
@@ -171,7 +171,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | E2 | **Click to select any part** (title, axis, tick labels, legend, one data set, one point): matplotlib reports where each element is, the window highlights it and the ribbon/Format pane shows its settings | ✅ 0.2.9 |
 | E3 | Drag the legend, titles and annotations; edit text in place | ✅ 0.2.9 |
 | E4 | Zoom and pan the plot (box zoom, wheel), reset | ✅ 0.2.9 |
-| E5 | Region of interest: drag a box to get statistics, area, a quick fit or peaks for just that region (Origin Gadgets) | 0.6 |
+| E5 | Region of interest: drag a box to get statistics, area, a quick fit or peaks for just that region | ✅ 0.2.22 |
 | E6 | Exclude points from the graph (click a point → exclude it in the table) | ✅ 0.2.9 |
 | E7 | Undo every graph change ✅; graph thumbnails in the navigator | ✅ 0.2.2 |
 
@@ -181,7 +181,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | --- | --- | --- |
 | F1 | Layout pages: several graphs, tables, text and pictures on a page; panel letters A, B, C; align and distribute | ✅ 0.2.11 |
 | F2 | Figure sizes for journals; export a whole layout as one PDF/TIFF/SVG (drawn by matplotlib at real size) | ✅ 0.2.11 |
-| F3 | Poster and slide templates | 0.6 |
+| F3 | Poster and slide templates | ✅ 0.2.22 |
 
 ### G. Export and sharing
 
@@ -191,7 +191,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | G2 | **Copy picture that works on Windows** (PNG through Rust), copy as SVG for Office 365 | 0.1.1 |
 | G3 | TIFF in CMYK and LZW for journals; colour profile | ✅ 0.2.11 |
 | G4 | Batch export: every graph in the project at once | ✅ 0.2.2 |
-| G5 | **Send to PowerPoint**: one slide per graph; **Word report**: graphs, results tables and methods text | 0.7 (python-pptx, python-docx) |
+| G5 | **Slides (.pptx)**: one slide per graph; **report (.docx)**: graphs, results tables and methods text | ✅ 0.2.22 (python-pptx, python-docx) |
 | G6 | Export tables and results to Excel | ✅ 0.2.2 |
 
 ### H. Python inside: scripting and extending
@@ -360,9 +360,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.19** ✅ | DSC/TGA (B31), S–N curves (B30) |
 | **0.2.20** ✅ | Worksheet (A9), column formulas (A11) |
 | **0.2.21** ✅ | Users' requests (session 8, second round): axis breaks on column/grouped/nested graphs, no × in headings, resizable columns saved in the project, empty data sets dimmed and unticked in dialogs; Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
-| 0.2.22 | Large data (D17), region tools (E5) |
-| 0.2.23 | Prism import (A13), instrument import (A14) |
-| 0.2.24 | PowerPoint and Word (G5), posters (F3) |
-| 0.2.25 | Python console (H1), own analyses (H2) |
-| 0.2.26 | Templates (H3), batch (H4), notebooks (H5) |
+| **0.2.22** ✅ | Large data (D17), region tools (E5), .pzfx import (A13), instrument import (A14), slides and reports (G5), posters (F3) — combined at the user's request |
+| 0.2.23 | Python console (H1), own analyses (H2), templates (H3), batch (H4), notebooks (H5) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

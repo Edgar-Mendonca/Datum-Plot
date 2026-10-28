@@ -2,7 +2,7 @@
 // feature that is not built yet, the Roadmap page, and File › Import.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { FEATURES, AREAS, RELEASES, feature, ready, VERSION_NOW } from "./features";
-import { openDialog, closeDialog, call, act, out, open, toast, setBackstage, curTable } from "./store";
+import { openDialog, closeDialog, call, act, out, setOut, open, toast, setBackstage, curTable } from "./store";
 import { analysisDialog, BY_ID } from "./results";
 import { Dialog, Pick, Check, Icon } from "./ui";
 import { C } from "./cmds";
@@ -141,9 +141,25 @@ export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" hel
 }} />);
 
 /** File › Import: a CSV, TXT or Excel file into a new XY table. */
+/** Adds ready tables (a .pzfx project, plates, several runs) and opens the first. */
+const addTables = async (tables: any[], what: string) => {
+  const o = await call<any>("import_tables", { tables });
+  if (!o) return false;
+  setOut(o);
+  const ts = o.project.tables;
+  open("data", ts[ts.length - tables.length].id);
+  toast(`Imported: ${what}.`, true);
+  return true;
+};
+/** File › Import Several Files: one run per file, in one table when they share X (A14). */
+export const importFiles = async () => {
+  const o = await call<any>("import_files");
+  if (o) { setOut(o); const ts = o.project.tables; open("data", ts[ts.length - 1].id); toast("Imported the files.", true); }
+};
 export const importFile = async () => {
-  const r = await call<{ name: string; sheets: { name: string; rows: string[][] }[] } | null>("import_file");
+  const r = await call<{ name: string; sheets: { name: string; rows: string[][] }[]; tables?: any[]; plates?: any[] } | null>("import_file");
   if (!r) return;
+  if (r.tables?.length) return addTables(r.tables, `${r.tables.length} table${r.tables.length > 1 ? "s" : ""} from ${r.name}`);
   if (!r.sheets.some(s => s.rows.length)) return toast("That file has no data.");
   openDialog(() => {
     const [k, setK] = createSignal(Math.max(0, r.sheets.findIndex(s => s.rows.length))), rows = () => r.sheets[k()].rows;
@@ -155,7 +171,9 @@ export const importFile = async () => {
     const ncols = () => Math.max(...rows().map(l => l.length), 0);
     const order = () => [x(), ...Array.from({ length: ncols() }, (_, j) => j).filter(j => j !== x())];
     const arranged = () => rows().map(l => order().map(j => l[j] ?? ""));
+    const [plate, setPlate] = createSignal(!!r.plates?.length);
     const go = async () => {
+      if (plate() && r.plates?.length) return addTables(r.plates, `${r.plates.length > 1 ? `${r.plates.length} plates` : "The plate"} as a grouped table (rows ${r.plates[0].rowTitles[0]}–${r.plates[0].rowTitles[r.plates[0].rows - 1]})`);
       const ok = await act({ Import: { name: name() || "Imported", entry: entry(), reps: entry() === "rep" ? reps() : 3, header: head(), rows: arranged(), graph: null } });
       if (ok) { const p = out()!.project; open("data", p.tables[p.tables.length - 1].id); toast(`Imported ${rows().length - (head() ? 1 : 0)} rows.`, true); }
       return ok;
@@ -163,6 +181,7 @@ export const importFile = async () => {
     return (
       <Dialog title={`Import · ${r.name}`} help="import" wide okText="Import" ok={go}>
         <div class="form">
+          <Show when={r.plates?.length}><label>Plate reader</label><Check label={`Import the ${r.plates![0].sets.length * r.plates![0].rows}-well plate as a grouped table (rows ${r.plates![0].rowTitles[0]}–${r.plates![0].rowTitles[r.plates![0].rows - 1]}, columns 1–${r.plates![0].sets.length}); untick to import the sheet as it is`} value={plate()} set={setPlate} /></Show>
           <Show when={r.sheets.length > 1}><label>Sheet</label><Pick value={String(k())} set={v => { setK(+v); setHead(words(rows()[0])); setX(0); setReps(words(rows()[0]) ? guess() : 1); }} options={r.sheets.map((s, i) => [String(i), `${s.name} (${s.rows.length} rows)`] as [string, string])} /></Show>
           <label>Table name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Headings</label><Check label="The first row holds the column titles" value={head()} set={setHead} />

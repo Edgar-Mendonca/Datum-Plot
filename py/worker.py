@@ -40,6 +40,15 @@ def main():
         if cmd == "excel":
             from datum import io as dio
             return dio.write_excel(q["path"], q["project"], q.get("analyses", []))
+        if cmd == "report":
+            from datum import report
+            return (report.slides if q.get("kind") == "slides" else report.word)(q["project"], q["path"])
+        if cmd == "read_many":
+            from datum import imports
+            return {"tables": imports.read_many(q["paths"])}
+        if cmd == "region":
+            from datum import region
+            return region.region(q["table"], q["x0"], q["x1"], q.get("y0"), q.get("y1"))
         if cmd == "formula":
             from datum import sheet
             return sheet.recalc(q["table"], q.get("k"), q.get("text"))

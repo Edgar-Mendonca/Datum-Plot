@@ -52,6 +52,7 @@ jobs:
           rt/python.exe -m compileall -q -j 0 rt/Lib/site-packages
           printf '{"cmd":"ping"}\n' | rt/python.exe -X utf8 py/worker.py | tee ping.txt
           grep -q '"matplotlib"' ping.txt
+          rt/python.exe -c "import pptx, docx, statsmodels, lmfit; print('slides, reports and statistics load')"
           du -sh rt
           mkdir -p out
           python -c "import shutil; shutil.make_archive('src-tauri/runtime', 'zip', 'rt')"

@@ -79,3 +79,14 @@ class Signals(unittest.TestCase):
         r = A.run("signal", xy([0, 1, 3, 6, 10, 15, 21, 28, 36], [0, 1, 3, 6, 10, 15, 21, 28, 36]), [], {"op": "resample", "n": 5})
         self.assertEqual(r["table"]["cols"][0], [0, 9, 18, 27, 36])
         self.assertEqual(r["table"]["cols"][1], [0, 9, 18, 27, 36])
+
+
+class Region(unittest.TestCase):
+    def test_statistics_area_slope_and_peak_of_part_of_a_curve(self):
+        from datum import region
+        x = np.arange(0, 11, 1.0)
+        r = region.region(xy(x, 2 * x + 1, 10 - x), 2, 6)
+        a, b = r["rows"]
+        self.assertEqual((a[1], a[2], a[5], a[6], a[7]), ("5", "9", "36", "2 (R² 1)", "13 at 6"))  # mean of 5..13; area ∫2..6 (2x+1) = 36
+        self.assertEqual((b[2], b[5], b[7]), ("6", "24", "8 at 2"))
+        self.assertEqual(region.region(xy(x, 2 * x + 1), 6, 2, 0, 10)["rows"][0][1], "3")  # a box: Y limits too (5, 7 and 9 lie inside)

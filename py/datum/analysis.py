@@ -65,7 +65,7 @@ def points(table, k, o):
     for p in pts:
         if (lo is not None and p["x"] < lo) or (hi is not None and p["x"] > hi):
             continue
-        if o.get("points", "each") == "mean" or table["sets"][k]["entry"] != "rep":
+        if o.get("points", "each") == "mean" or table["sets"][k]["entry"] != "rep" or stats.set_columns(table)[k][1] == 1:  # one value per row: the mean is the value
             xs.append(p["x"]); ys.append(p["mean"]); cells.append([p["row"], c0])
         else:
             for j in range(stats.set_columns(table)[k][1]):
@@ -100,6 +100,9 @@ def small_plot(title, draw, w=70, h=50):
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
         draw(ax)
+        for ln in ax.get_lines():  # thousands of points become a picture inside the SVG (D17)
+            if len(ln.get_xdata()) > 5000:
+                ln.set_rasterized(True)
         buf = io.StringIO()
         fig.savefig(buf, format="svg", metadata={"Date": None})
     return {"title": title, "svg": buf.getvalue()}

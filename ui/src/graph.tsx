@@ -114,7 +114,7 @@ export const GraphView = (p: { g: Graph }) => {
       ...(i !== null ? [{ label: "Edit Note Text…", icon: "rename", run: () => editNote(i) }, { label: "Delete Note", icon: "del", keys: "Del", run: () => delNote(i) }, "-" as const] : []),
       ...(q ? [...(t?.kind === "xy" || t?.kind === "multi" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
       { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, "x") },
-      { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
+      { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Statistics of a Region…", icon: "sigma", run: () => zoomTool("region") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
       { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
       { label: "Go to Data Table", icon: "sheet", run: () => open("data", p.g.table) },
     ]);
@@ -148,6 +148,7 @@ export const GraphView = (p: { g: Graph }) => {
       setTool(null); setDrag(null);
       if (kind !== "text" && Math.hypot(qx - px, qy - py) < 3) return toast("Drag to draw it.");
       const [x, y] = toData(px, py), [x2, y2] = toData(qx, qy);
+      if (kind === "region") return regionCard(p.g, x, x2, y, y2);
       if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(["xy", "multi", "survival", "sheet"].includes(table()?.kind ?? "") ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
       const text = kind === "text" ? prompt("Text", "") : kind === "line" ? "" : prompt(kind === "arrow" ? "Text at the start of the arrow (optional)" : "Label (optional)", "");
       if (text === null || (kind === "text" && !text.trim())) return;
@@ -168,7 +169,7 @@ export const GraphView = (p: { g: Graph }) => {
         <Show when={r()} fallback={<div class="gwait">{err() || (engine()?.error ?? engine()?.status ?? "Drawing the graph…")}</div>}>{R => (
           <div class="gpaper" classList={{ annot: !!tool() && tool() !== "pan", pan: tool() === "pan" }} style={{ width: `${R().w * k()}px`, height: `${R().h * k()}px` }} onMouseDown={down} onMouseMove={move} onMouseLeave={() => { setTip(null); setCross(null); }} onDblClick={dbl} onContextMenu={menu}>
             <GraphImg r={R()} scale={k()} />
-            <Show when={drag()}>{d => { const [a, b2, c, e] = d().map(v => v * k()); return <svg class="gdrag" width={R().w * k()} height={R().h * k()}>{tool() === "box" || tool() === "zoom"
+            <Show when={drag()}>{d => { const [a, b2, c, e] = d().map(v => v * k()); return <svg class="gdrag" width={R().w * k()} height={R().h * k()}>{tool() === "box" || tool() === "zoom" || tool() === "region"
               ? <rect x={Math.min(a, c)} y={Math.min(b2, e)} width={Math.abs(c - a)} height={Math.abs(e - b2)} /> : <line x1={a} y1={b2} x2={c} y2={e} />}</svg>; }}</Show>
             <Show when={sel() !== null && notes()[sel()!]}>{n => { const [x, y] = toPt(n().x, n().y), [dx, dy] = shift() ?? [0, 0]; return <svg class="gdrag" width={R().w * k()} height={R().h * k()}>
               <rect class="nsel" x={(x + dx) * k() - 7} y={(y + dy) * k() - 7} width="14" height="14" /></svg>; }}</Show>
@@ -186,7 +187,24 @@ export const GraphView = (p: { g: Graph }) => {
 };
 
 /** Zoom to a box (one drag) or pan (drag until Esc). */
-export const zoomTool = (kind: "zoom" | "pan") => { setTool(kind); toast(kind === "zoom" ? "Drag a box around the part to zoom into (Esc cancels)." : "Drag the graph to pan; Esc stops.", true); };
+export const zoomTool = (kind: "zoom" | "pan" | "region") => { setTool(kind); toast(kind === "zoom" ? "Drag a box around the part to zoom into (Esc cancels)." : kind === "region" ? "Drag over part of the curves for their statistics, area, slope and highest point (Esc cancels)." : "Drag the graph to pan; Esc stops.", true); };
+
+/** The region tool (E5): what each curve does inside the dragged box. */
+const regionCard = async (g: Graph, x0: number, x1: number, y0: number, y1: number) => {
+  const r = await call<{ x0: number; x1: number; columns: string[]; rows: string[][] }>("region", { table: g.table, x0, x1, y0, y1 });
+  if (!r) return;
+  if (!r.rows.length) return toast("No points of the curves lie in that box.");
+  const t = out()!.project.tables.find(x => x.id === g.table);
+  const text = [r.columns.join("\t"), ...r.rows.map(l => l.join("\t"))].join("\n");
+  openDialog(() => (
+    <Dialog title={`Region · X from ${num(+r.x0.toPrecision(5))} to ${num(+r.x1.toPrecision(5))}`} help="region" wide cancel="Close"
+      extra={<><button class="btn" onClick={() => call("copy_text", { text }).then(() => toast("Copied: paste it into a spreadsheet or a document.", true))}>Copy</button>
+        <Show when={t && ["xy", "sheet", "multi"].includes(t.kind)}><button class="btn" onClick={() => import("./results").then(m => m.analysisDialog("linear", t, undefined, { xmin: r.x0, xmax: r.x1 }))}>Linear fit of this range…</button></Show></>}>
+      <table class="tbl"><thead><tr><For each={r.columns}>{c => <th>{c}</th>}</For></tr></thead><tbody><For each={r.rows}>{l => <tr><For each={l}>{v => <td>{v}</td>}</For></tr>}</For></tbody></table>
+      <p class="muted">Points inside the box, every replicate counted. Area: under the means from the first to the last point in the box. Slope: a straight line through those points.</p>
+    </Dialog>
+  ));
+};
 /** Doubles both axis ranges around their middle (geometric on log axes). */
 export const zoomOut = (g: Graph) => {
   const R = lastRender(g.id);

@@ -119,14 +119,70 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
 }
 
 /// A new, empty data table (XY from the options, a column or a grouped table) with its graph.
+/// A new table's graph: the options' look with what suits its kind.
+fn graph_for(kind: &str, g: GraphSettings) -> GraphSettings {
+    match kind {
+        "column" | "multi" => GraphSettings { points: "each".into(), ..g },
+        "grouped" => GraphSettings { column: "bars".into(), ..g },
+        "survival" => GraphSettings { error: "none".into(), ..g },
+        "nested" => GraphSettings { error: "sd".into(), ..g },
+        "matrix" => GraphSettings { column: "contour".into(), palette: "viridis".into(), ..g },
+        "parts" => GraphSettings { column: "pie".into(), error: "none".into(), ..g },
+        "contingency" => GraphSettings { column: "percent".into(), error: "none".into(), ..g },
+        _ => g,
+    }
+}
+
+/// Adds imported tables (a .pzfx project, a plate, several runs), each with its graph, as one step (A13, A14).
+#[tauri::command]
+fn import_tables(st: State<St>, tables: Vec<Table>) -> R<Value> {
+    let mut a = st.0.lock().unwrap();
+    let g = a.opts.graph();
+    let ops = tables.into_iter().map(|t| Op::NewTable { graph: Some(Box::new(graph_for(&t.kind, g.clone()))), table: Box::new(t) }).collect();
+    a.doc.apply(Op::Batch(ops))?;
+    a.rev += 1;
+    Ok(out(&a))
+}
+
+/// File › Import Several Files: one run per file, joined when they share X (A14).
+#[tauri::command]
+async fn import_files(app: AppHandle, st: State<'_, St>) -> R<Option<Value>> {
+    let Some(files) = app.dialog().file().add_filter("Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm"]).blocking_pick_files() else { return Ok(None) };
+    let paths: Vec<String> = files.into_iter().filter_map(|f| f.into_path().ok()).map(|p| p.display().to_string()).collect();
+    let q = json!({ "cmd": "read_many", "paths": paths });
+    let h = app.clone();
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let tables: Vec<Table> = serde_json::from_value(r["tables"].clone()).map_err(|e| e.to_string())?;
+    import_tables(st, tables).map(Some)
+}
+
+/// The region tool (E5): statistics of each curve between two X values (and Y values, for a box).
+#[tauri::command]
+async fn region(app: AppHandle, st: State<'_, St>, table: u32, x0: f64, x1: f64, y0: Option<f64>, y1: Option<f64>) -> R<Value> {
+    let q = {
+        let a = st.0.lock().unwrap();
+        json!({ "cmd": "region", "table": a.doc.p.table(table).ok_or("That data table no longer exists.")?, "x0": x0, "x1": x1, "y0": y0, "y1": y1 })
+    };
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().ask(&app, &q)).await.map_err(|e| e.to_string())?
+}
+
+/// Tools › Slides (.pptx, one graph per slide) or Word Report (.docx: graphs, results, methods) (G5).
+#[tauri::command]
+async fn export_report(app: AppHandle, st: State<'_, St>, kind: String) -> R<Option<String>> {
+    let (name, project) = { let a = st.0.lock().unwrap(); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
+    let (label, ext) = if kind == "slides" { ("Slides", "pptx") } else { ("Report", "docx") };
+    let Some(path) = app.dialog().file().add_filter(label, &[ext]).set_file_name(format!("{name}.{ext}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let q = json!({ "cmd": "report", "kind": kind, "project": project, "path": path.display().to_string() });
+    let h = app.clone();
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    Ok(Some(path.display().to_string()))
+}
+
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
     let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), Some("nested") => Table::nested(2, 3), Some("sheet") => Table::sheet(3), Some("matrix") => Table::matrix(10, 5), _ => a.opts.table() };
-    let g = match t.kind.as_str() { "column" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "grouped" => GraphSettings { column: "bars".into(), ..a.opts.graph() },
-        "multi" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "survival" => GraphSettings { error: "none".into(), ..a.opts.graph() }, "nested" => GraphSettings { error: "sd".into(), ..a.opts.graph() }, "matrix" => GraphSettings { column: "contour".into(), palette: "viridis".into(), ..a.opts.graph() },
-        "parts" => GraphSettings { column: "pie".into(), error: "none".into(), ..a.opts.graph() },
-        "contingency" => GraphSettings { column: "percent".into(), error: "none".into(), ..a.opts.graph() }, _ => a.opts.graph() };
+    let g = graph_for(&t.kind, a.opts.graph());
     let (table, graph) = (Box::new(Table { name: String::new(), ..t }), Some(Box::new(g)));
     a.doc.apply(Op::NewTable { table, graph })?;
     a.rev += 1;
@@ -426,7 +482,7 @@ fn read_clipboard(app: AppHandle) -> String {
 /// File › Import: a CSV, TXT or Excel file read by Python, for the Import dialog.
 #[tauri::command]
 async fn import_file(app: AppHandle) -> R<Option<Value>> {
-    let Some(path) = pick(&app, "Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm"]) else { return Ok(None) };
+    let Some(path) = pick(&app, "Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm", "pzfx"]) else { return Ok(None) };
     let q = json!({ "cmd": "read", "path": path.display().to_string() });
     let h = app.clone();
     let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
@@ -652,7 +708,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())
