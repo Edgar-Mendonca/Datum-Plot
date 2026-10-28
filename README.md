@@ -27,6 +27,8 @@
 
 ## What it does
 
+Datum Plot is part of Datum; see its page: https://edgar-mendonca.github.io/Datum/apps/plot
+
 Datum Plot keeps a project as a chain: **data tables → analyses → results → graphs → layouts**. Everything stays linked, so changing a value redraws its graphs.
 
 - **Data tables** that work like a spreadsheet: XY tables (an X column and data sets with replicates, or a mean with SD or SEM and N) and column tables (one group per column). Paste from a spreadsheet, fill series, exclude a value without deleting it.

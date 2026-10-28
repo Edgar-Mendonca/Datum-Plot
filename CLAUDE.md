@@ -33,5 +33,5 @@ Checks before pushing:
 Releasing:
 1. Bump the version in `src-tauri/Cargo.toml` and `crates/core/Cargo.toml`.
 2. Add a CHANGELOG section (`## x.y.z — date`, a one-line summary, bold sections in plain language).
-   Update `docs/site.json` (FAMILY §10: highlights, roadmap with Next/Soon/Later/Goal) together with the MEMORY roadmap. Public text (CHANGELOG, README, site.json) never names, compares with or claims to copy a commercial product (FAMILY §13); name file formats by extension. Bump `version` and `date-released` in `CITATION.cff`.
+   Update `docs/site.json` (FAMILY §10: about, steps, highlights, roadmap with Next/Soon/Later/Goal) together with the MEMORY roadmap. Public text (CHANGELOG, README, site.json) never names, compares with or claims to copy a commercial product (FAMILY §13); name file formats by extension. Bump `version` and `date-released` in `CITATION.cff`.
 3. Push the tag `vX.Y.Z`, or run `release.yml` with workflow_dispatch when tag pushes are blocked. The workflow creates the tag and publishes **one** installer (`DatumPlot-x.y.z-setup.exe`, Python inside) and `SHA256SUMS.txt`. No extra update or runtime files (the user's rule).

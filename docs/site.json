@@ -5,6 +5,24 @@
   "logo": "docs/brand/datum-plot-icon.svg",
   "tagline": "Analyse data and make publication-ready graphs: statistics, regression, curve fitting and page layouts, in one app for Windows.",
   "for": "Scientists, researchers, lab teams and students.",
+  "about": [
+    "Datum Plot keeps data, analyses and graphs linked. Type or paste data into a table, choose an analysis, and the results and the graph follow; change a value and everything updates.",
+    "It covers the statistics most lab and research work needs, from t-tests and ANOVA to regression and curve fitting, explains each result in plain words with ready methods text, and makes figures ready for a journal: multi-panel layouts at journal sizes, exported as PNG, TIFF, SVG, PDF or EPS. Python runs inside the app, with nothing else to install."
+  ],
+  "steps": [
+    {
+      "title": "Enter the data",
+      "text": "Choose a table for your kind of data and type, paste or import it (CSV, TXT or .xlsx)."
+    },
+    {
+      "title": "Analyse",
+      "text": "Pick a test or a fit; the results, P values and methods text open on a results sheet linked to the data, and fits are drawn on the graph."
+    },
+    {
+      "title": "Graph and export",
+      "text": "Style the graph, lay out the figure and export it at journal size."
+    }
+  ],
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, contingency tables, correlation, power, Bland-Altman and ROC.",
