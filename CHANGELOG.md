@@ -186,11 +186,11 @@ A big update: comparing groups, materials testing, data tools, graph styles and 
 - **Frequency distributions**: histograms with a normal curve, cumulative distributions and QQ plots.
 
 **Graphs and export**
-- **Styles**: Prism, Origin, Nature, Science, ACS, IEEE, presentation and greyscale; save your own.
+- **Styles**: open axes, framed box, Nature, Science, ACS, IEEE, presentation and greyscale; save your own.
 - **Colour schemes**: Okabe-Ito, Tol bright and muted, Tableau, viridis, cividis, magma, greyscale or your own colours, each previewed as people with colour-blindness see it.
 - **Copy Look** gives other graphs a graph's fonts, sizes, colours and symbols.
 - **Thumbnails** of the graphs in the navigator (View › Thumbnails).
-- **Export All Graphs** into a folder, and an **Excel workbook** with every data table and result (Tools tab).
+- **Export All Graphs** into a folder, and a **spreadsheet workbook (.xlsx)** with every data table and result (Tools tab).
 
 **Help and samples**
 - **Test Chooser**: a few questions open the right analysis. **Statistics Guide**: which test when, P values, confidence intervals, SD or SEM, common mistakes.
@@ -220,7 +220,7 @@ Statistics, linear regression and curve fitting, with results that stay linked t
 
 **Results**
 - Analyze… (or the Analyze tab) adds an analysis to the project. It appears under **Results** in the navigator, linked to its table: change a value and the result updates.
-- Each results sheet has tabs (Summary, Details, Interpolated) with tables you can copy straight into Excel or Word, and small plots (residuals, QQ plots, Arrhenius plots).
+- Each results sheet has tabs (Summary, Details, Interpolated) with tables you can copy straight into a spreadsheet or a document, and small plots (residuals, QQ plots, Arrhenius plots).
 - The panel on the right gives **the answer in one sentence**, **checks** of the assumptions (✓, ⚠), **methods text** and a figure legend to paste into a report, and **Python code** that reproduces the calculation.
 - P values are exact (or < 0.0001) with APA stars.
 
@@ -263,17 +263,17 @@ Copy Picture works, updates are small, data import, and the whole app laid out: 
 - The copy of Python that 0.1.0 kept in the program folder is removed.
 
 **Copy Picture works**
-- Copy Picture (and Ctrl+C on a graph) now puts the graph on the Windows clipboard as a picture, so it pastes into Word, PowerPoint and email. Paste Special and the Print page's codes use the Windows clipboard too.
+- Copy Picture (and Ctrl+C on a graph) now puts the graph on the Windows clipboard as a picture, so it pastes into documents, slides and email. Paste Special and the Print page's codes use the Windows clipboard too.
 
 **Import data**
-- File › Import, Data › Import or Home › Import data: CSV, TSV, TXT and Excel (.xlsx) files.
+- File › Import, Data › Import or Home › Import data: CSV, TSV, TXT and spreadsheet (.xlsx) files.
 - A preview shows the file. Choose the sheet, whether the first row holds titles, the X column, and how many replicates make one data set (guessed from the titles, such as "Sample 1, , Sample 2, ,").
 - Semicolon files with decimal commas (1,5) are read correctly.
 
 **Everything laid out**
 - **Help › Roadmap** (also on the File page and Home): all 99 features (ready and planned), what each does, the Python library behind it and the release it arrives in. Search it or filter by release.
 - Planned commands already sit in the ribbon, dimmed with an amber dot. Clicking one tells you what it will do and when.
-- New ribbon tabs: **Layout** (layouts, journal figures, posters) and **Tools** (Python console, your own analyses, batch processing, PowerPoint and Word export, Restart Engine).
+- New ribbon tabs: **Layout** (layouts, journal figures, posters) and **Tools** (Python console, your own analyses, batch processing, slide and document export, Restart Engine).
 - **Analyze…** opens a gallery of every analysis by family: statistics, regression and fitting, comparing groups, relationships, survival, signals and spectra, planning.
 - **New Table** opens a gallery of every kind of data table; **Graph Type** a gallery of every kind of graph.
 
@@ -301,7 +301,7 @@ The first version of Datum Plot: the application, automatic updates, an XY data 
 **XY data table**
 - An X column, then data sets A, B, C… Each data set has replicate columns (Y1, Y2, …), or takes a mean with its SD or SEM and N.
 - Titles and units for X and Y become the axis titles. Row titles for samples or animals.
-- Works like Excel: select ranges with the mouse, Shift and Ctrl; copy and paste with Excel (a first row of headings becomes the titles, and the table grows to fit); fill handle with series; Paste Special; bold, italic, colours and alignment.
+- Works like a spreadsheet: select ranges with the mouse, Shift and Ctrl; copy and paste with spreadsheets (a first row of headings becomes the titles, and the table grows to fit); fill handle with series; Paste Special; bold, italic, colours and alignment.
 - **Exclude** a value with Ctrl+E: it stays in the table, shown in blue and struck through, and graphs leave it out.
 - Sum, Average and Count of the selected cells above the grid.
 
@@ -309,18 +309,18 @@ The first version of Datum Plot: the application, automatic updates, an XY data 
 - Every table comes with a graph; add more with New Graph.
 - Means with error bars (SD, SEM, 95% confidence interval or range, above, below or both), or every replicate. Points can be joined by lines.
 - Linear or logarithmic axes, automatic or fixed ranges, tick spacing, minor ticks and gridlines.
-- Prism-style open axes or a framed box, Okabe-Ito colours that people with colour-blindness can tell apart, eight symbols, a legend, and the graph's size in millimetres with journal presets (single, 1.5 and double column).
+- Open axes with outward ticks or a framed box, Okabe-Ito colours that people with colour-blindness can tell apart, eight symbols, a legend, and the graph's size in millimetres with journal presets (single, 1.5 and double column).
 - **Format Graph** opens beside the graph and every change shows at once. Double-click an axis, the legend or the data to open the right page.
 - Hover over a point to see its mean, n, SD and SEM; elsewhere the crosshair shows the X and Y values.
 
 **Export and print**
 - Export as PNG or TIFF at 150 to 1200 dpi, or as SVG, PDF or EPS with the text kept as text (editable in Illustrator or Inkscape). Transparent backgrounds too.
-- Copy a graph (Ctrl+C on the graph) and paste it into Word, PowerPoint or an email.
+- Copy a graph (Ctrl+C on the graph) and paste it into a document, a slide or an email.
 - File › Print with a live preview: the graph at its real size or fitted to the page, a caption saying what the points show, headers and footers with your logo, page numbers and Info fields. Choose "Save as PDF" to make a PDF. Data tables and the Info sheet print too.
 
 **Known limits in 0.1**
 - No analyses yet: column statistics arrive in 0.1.1, t-tests, ANOVA and curve fitting in 0.2.0. The Analyze tab says what comes when.
 - Only XY tables. Column, grouped, contingency and survival tables come later.
-- No CSV or Excel import yet: copy the cells in Excel and paste them into a table.
+- No CSV or spreadsheet import yet: copy the cells in a spreadsheet and paste them into a table.
 - No page layouts with several graphs yet (0.3).
 - The installer is larger than Datum Plan's because it carries Python, numpy, SciPy and matplotlib. The first start after installing takes a few seconds longer while matplotlib reads the installed fonts.

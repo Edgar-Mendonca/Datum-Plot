@@ -70,8 +70,8 @@ const TABLES: Choice[] = [
   { id: "A6", name: "Parts of whole", icon: "dash", group: "Data tables", desc: "Fractions of a total, such as phase or composition fractions." },
   { id: "A7", name: "Multiple variables", icon: "cols", group: "Data tables", desc: "One row per sample with many measured properties. Multiple regression, correlation matrix, PCA." },
   { id: "A8", name: "Nested", icon: "group", group: "Data tables", desc: "Replicates within sub-groups, such as specimens within batches." },
-  { id: "A9", name: "Worksheet", icon: "sheet", group: "Origin-style", desc: "Free columns with roles, long names and units, for raw instrument data." },
-  { id: "A10", name: "Matrix", icon: "grid", group: "Origin-style", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
+  { id: "A9", name: "Worksheet", icon: "sheet", group: "Worksheets and 3D", desc: "Free columns with roles, long names and units, for raw instrument data." },
+  { id: "A10", name: "Matrix", icon: "grid", group: "Worksheets and 3D", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
 export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : undefined)} />);
@@ -125,8 +125,8 @@ const GRAPHS: Choice[] = [
   { id: "D7", name: "Pie and donut", icon: "dash", group: "Groups", desc: "Parts of a whole." },
   { id: "D9", name: "Survival curve", icon: "line", group: "Special", desc: "Kaplan-Meier staircase." },
   { id: "D10", name: "Volcano, forest, ROC", icon: "xy", group: "Special", desc: "Special-purpose graphs." },
-  { id: "D11", name: "3D, contour, polar, ternary", icon: "grid", group: "Origin-style", desc: "Surfaces, maps, phase diagrams." },
-  { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Origin-style", desc: "Several plots in one figure." },
+  { id: "D11", name: "3D, contour, polar, ternary", icon: "grid", group: "Worksheets and 3D", desc: "Surfaces, maps, phase diagrams." },
+  { id: "D12", name: "Multi-panel and insets", icon: "layout", group: "Worksheets and 3D", desc: "Several plots in one figure." },
 ];
 /** Graph › Graph Type: every kind of graph; XY is ready. */
 export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" help="graphtype" items={GRAPHS} ok="Use" first={curTable()?.kind === "parts" ? "D7" : curTable()?.kind === "column" ? "D2" : curTable()?.kind === "grouped" || curTable()?.kind === "contingency" ? "D6" : "D1"} run={c => {
