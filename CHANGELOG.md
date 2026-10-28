@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.15 — 2026-10-28
+
+Patterns in many variables: principal component analysis and clustering.
+
+**Principal components**
+- Analyze › More › **PCA**: finds the few directions that carry most of the variation in many variables. You get each component's eigenvalue and share of the variance, the loadings (which variables make up each component), the scores of every row, how many components are worth keeping, a scree plot and a biplot (rows as points, variables as arrows).
+- Each variable is scaled to SD 1 by default, so units do not matter; untick it to keep the original scales. Checked against R (`prcomp`).
+
+**Clustering**
+- Analyze › More › **Clusters**: groups similar rows. Hierarchical clustering (Ward's, average or complete linkage) with a dendrogram, or k-means (the best of ten starts). You choose the number of clusters and get each cluster's size and means, the cluster of every row, the mean silhouette (how distinct the clusters are) and a picture of the clusters on the first two components.
+
+**Results become tables**
+- **New table from result** turns the PC scores, or the data with each row's cluster number, into a table of many variables to graph or analyse further.
+
 ## 0.2.14 — 2026-10-28
 
 Many variables: a table with one row per sample, and multiple, logistic and Poisson regression.

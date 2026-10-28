@@ -104,7 +104,7 @@ const ANALYSES: Choice[] = [
   { id: "B18", name: "Bland-Altman", icon: "err", group: "Relationships", desc: "Agreement of two measuring methods: bias and limits of agreement, with the Bland-Altman plot." },
   { id: "B18", key: "B18r", name: "ROC curve", icon: "curve", group: "Relationships", desc: "How well a test separates two groups: the ROC curve, AUC and the best cut-off." },
   { id: "B21", name: "Multiple and logistic regression", icon: "cols", group: "Relationships", desc: "Several predictors at once: linear for measurements, logistic for 0/1 outcomes, Poisson for counts." },
-  { id: "B22", name: "PCA and clustering", icon: "group", group: "Relationships", desc: "Patterns in many variables." },
+  { id: "B22", name: "PCA and clustering", icon: "group", group: "Relationships", desc: "Patterns in many variables: principal components with a biplot; groups of similar rows by hierarchical or k-means clustering." },
   { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier, log-rank and Cox regression." },
   { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, areas and multi-peak fits (XRD, Raman, DSC)." },
   { id: "B25", name: "Signal processing", icon: "graph", group: "Signals and spectra", desc: "FFT, filters and resampling." },

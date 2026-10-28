@@ -148,7 +148,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("B19") && (await p.textContent(".dlg")).includes("0.2.16"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 5);
+  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 4);
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
   check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
@@ -204,6 +204,15 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const mr = (await ops()).find(o => o.AddAnalysis);
   check("Multiple regression adds a logistic model with an outcome, not drawn on the graph", mr && mr.AddAnalysis.analysis.kind === "multireg" && mr.AddAnalysis.analysis.options.model === "logistic" && mr.AddAnalysis.analysis.options.y === 0 && mr.AddAnalysis.overlay === false, JSON.stringify(mr));
+  await reset();
+  await p.click('.ribbon .rb[title^="Group similar rows"]');
+  await p.waitForTimeout(200);
+  await p.selectOption('.dlg select:has(option[value="kmeans"])', "kmeans");
+  await p.fill('.dlg input[type="number"]', "4");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const cl = (await ops()).find(o => o.AddAnalysis);
+  check("Clusters adds a k-means cluster analysis with four clusters", cl && cl.AddAnalysis.analysis.kind === "cluster" && cl.AddAnalysis.analysis.options.method === "kmeans" && cl.AddAnalysis.analysis.options.k === 4, JSON.stringify(cl));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
