@@ -139,8 +139,8 @@ def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, 
             if c.get("plo") and bands in ("pi", "both"):
                 ax.plot(c["x"], c["plo"], color=col, linewidth=0.8, linestyle="--", zorder=2)
                 ax.plot(c["x"], c["phi"], color=col, linewidth=0.8, linestyle="--", zorder=2)
-            for mx, my, mt in c.get("marks", []):  # numbered peaks
-                ax.annotate(mt, (mx, my), xytext=(0, 4), textcoords="offset points", ha="center", va="bottom", color=col, fontsize=size * 0.75, zorder=5)
+            for mx, my, mt, *down in c.get("marks", []):  # numbered peaks (below a dip)
+                ax.annotate(mt, (mx, my), xytext=(0, -5 if down and down[0] else 4), textcoords="offset points", ha="center", va="top" if down and down[0] else "bottom", color=col, fontsize=size * 0.75, zorder=5)
             ax = ax_ if twin and c["set"] in twin[1] else ax
             if o.get("label", True) and c.get("label"):
                 labels.append((c["label"], col))

@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.18";
+export const VERSION_NOW = "0.2.19";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -63,8 +63,8 @@ export const FEATURES: Feature[] = [
   ["B27", "Tensile test analysis", "0.2.2", "From stress–strain data: Young's modulus, 0.2 % offset yield, ultimate strength, elongation at break and toughness, per specimen and as mean ± SD.", "numpy, scipy"],
   ["B28", "Arrhenius and activation energy", "0.2.0", "ln(k) against 1/T: activation energy and pre-factor with confidence intervals, in kJ/mol or eV.", "scipy"],
   ["B29", "Weibull analysis", "0.2.2", "Weibull modulus and characteristic strength from fracture data, with the Weibull plot and bounds.", "scipy"],
-  ["B30", "Fatigue S–N curves", "0.2.19", "Stress against cycles to failure on log–log axes with a Basquin fit.", "scipy"],
-  ["B31", "DSC and TGA peaks", "0.2.19", "Peak areas, onset and peak temperatures from thermal analysis curves.", "scipy"],
+  ["B30", "Fatigue S–N curves", "0.2.19", "Stress against cycles to failure with a Basquin fit, run-outs left out of the fit, and the fatigue strength at any life.", "scipy"],
+  ["B31", "DSC and TGA peaks", "0.2.19", "DSC: extrapolated onset, peak and endset temperatures and the enthalpy; TGA: step onsets, fastest loss, mass lost and residue.", "scipy"],
   ["C1", "Results sheets", "0.2.0", "Each analysis is an item in the navigator, linked to its data: change a value and the result updates.", ""],
   ["C2", "Result tabs", "0.2.0", "Summary, details, multiple comparisons, descriptive statistics, normality and residuals.", ""],
   ["C3", "Explain panel", "0.2.0", "What the analysis asked, the answer in one sentence, and whether its assumptions hold.", ""],

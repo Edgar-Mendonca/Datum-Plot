@@ -74,7 +74,7 @@ def peaks(table, ks, o):
             found.append((float(x[i]), float(yc[i]), fw, area))
             rows.append([name, str(j + 1), g(x[i], 5), g(sign * yc[i], 4), g(y[i], 4), g(fw, 4), g(sign * area, 4)])
         ans.append(f"{name}: {len(found)} peak{'s' * (len(found) > 1)}, the largest at {g(max(found, key=lambda f: f[1])[0], 4)}")
-        marks = [[p[0], float(y[np.argmin(np.abs(x - p[0]))]), str(j + 1)] for j, p in enumerate(found)]
+        marks = [[p[0], float(y[np.argmin(np.abs(x - p[0]))]), str(j + 1), sign < 0] for j, p in enumerate(found)]
         curves.append({"set": k, "x": x.tolist(), "y": b.tolist(), "label": "", "dash": True, "marks": marks})
         if fit in ("gauss", "lorentz", "voigt"):
             from lmfit.models import GaussianModel, LorentzianModel, VoigtModel

@@ -146,8 +146,8 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 15);
-    for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1)] {
+    assert_eq!(l.len(), 17);
+    for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
         assert!(p.next_id > p.analyses[n - 1].id);

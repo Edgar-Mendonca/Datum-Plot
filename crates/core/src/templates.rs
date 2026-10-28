@@ -83,7 +83,9 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
         Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
         Tpl { id: "spectrum", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
-        Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
+        Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
+        Tpl { id: "tga", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
+        Tpl { id: "fatigue", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
     ]
 }
 
@@ -315,7 +317,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("dsc") => {
-            let xs: Vec<f64> = (0..=60).map(|i| 140.0 + i as f64).collect();
+            let xs: Vec<f64> = (0..=120).map(|i| 140.0 + 0.5 * i as f64).collect();
             let peak = |t: f64| -0.35 - 0.004 * (t - 140.0) - 2.4 * (-((t - 167.0) / 3.2).powi(2)).exp();
             let mut seed = 9u64;
             let mut t = Table { name: "DSC".into(), x_title: "Temperature".into(), x_units: "°C".into(), y_title: "Heat flow".into(), y_units: "W/g".into(), rows: xs.len(),
@@ -323,10 +325,39 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(peak(v) + jitter(&mut seed, 0.012), 4))).collect()];
             t.normalize();
             p.name = "DSC peak".into();
-            p.info = Info { title: "DSC melting peak".into(), experiment: "Heat flow of a semicrystalline polymer heated at 10 K/min (endotherm down). The area between the curve and a straight baseline from the first to the last point is the melting enthalpy (W/g × °C ÷ heating rate in K/s gives J/g).".into(), ..Default::default() };
+            p.info = Info { title: "DSC melting peak".into(), experiment: "Heat flow of a semicrystalline polymer heated at 10 K/min (endotherm down). Thermal analysis gives the extrapolated onset and the peak temperature, and the melting enthalpy: the area between the curve and a straight baseline divided by the heating rate (J/g).".into(), ..Default::default() };
             let id = p.add_table(t, Some(GraphSettings { line: true, points: "mean".into(), error: "none".into(), sets: vec![SetStyle { symbol: "none".into(), width: 1.4, ..Default::default() }], ..g }));
             let aid = p.take_id();
-            p.analyses.push(Analysis { id: aid, table: id, name: "Peak area".into(), kind: "auc".into(), sets: vec![], options: serde_json::json!({ "baseline": "line", "label": true }) });
+            p.analyses.push(Analysis { id: aid, table: id, name: "Thermal analysis".into(), kind: "thermal".into(), sets: vec![], options: serde_json::json!({ "mode": "dsc", "rate": 10, "direction": "down" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("tga") => {
+            let xs: Vec<f64> = (0..=250).map(|i| 50.0 + 2.5 * i as f64).collect();
+            let step = |t: f64, c: f64, w: f64| 1.0 / (1.0 + (-(t - c) / w).exp());
+            let mut seed = 13u64;
+            let mut t = Table { name: "TGA".into(), x_title: "Temperature".into(), x_units: "°C".into(), y_title: "Mass".into(), y_units: "mg".into(), rows: xs.len(),
+                sets: vec![DataSet { title: "Filled polymer".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+            t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(12.0 * (1.0 - 0.08 * step(v, 260.0, 9.0) - 0.55 * step(v, 445.0, 12.0)) + jitter(&mut seed, 0.004), 4))).collect()];
+            t.normalize();
+            p.name = "TGA steps".into();
+            p.info = Info { title: "TGA of a filled polymer".into(), experiment: "Mass of a 12 mg sample heated at 10 K/min in nitrogen: moisture and additives leave first, then the polymer decomposes; the filler stays as residue. Thermal analysis (TGA) gives each step's onset, the temperature of fastest loss and the mass lost.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: true, points: "mean".into(), error: "none".into(), y: Axis { auto: true, ..Axis::default() }, sets: vec![SetStyle { symbol: "none".into(), width: 1.4, ..Default::default() }], ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Thermal analysis".into(), kind: "thermal".into(), sets: vec![], options: serde_json::json!({ "mode": "tga" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("fatigue") => {
+            let mut seed = 19u64;
+            let n = [2.0e4, 4.5e4, 8.0e4, 1.5e5, 3.2e5, 6.0e5, 1.1e6, 2.4e6, 5.0e6, 1.0e7, 1.0e7];
+            let mut t = Table { name: "Fatigue".into(), x_title: "Cycles to failure".into(), y_title: "Stress amplitude".into(), y_units: "MPa".into(), rows: n.len(),
+                sets: vec![DataSet { title: "7075-T6".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+            t.cols = vec![n.iter().map(|&v| Some(v)).collect(), n.iter().enumerate().map(|(i, &v)| Some(round(if i >= 9 { 158.0 + 4.0 * (i - 9) as f64 } else { 1060.0 * v.powf(-0.122) * (1.0 + jitter(&mut seed, 0.03)) }, 0))).collect()];
+            t.normalize();
+            p.name = "S–N curve".into();
+            p.info = Info { title: "Fatigue of 7075-T6".into(), experiment: "Fully reversed stress amplitude against cycles to failure. Two specimens did not fail by 10⁷ cycles (run-outs). The Basquin fit gives the fatigue strength at any life.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { points: "each".into(), line: false, x: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "S–N curve".into(), kind: "sn".into(), sets: vec![], options: serde_json::json!({ "runout": 1.0e7, "at": "1e6, 1e7" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("arrhenius") => {

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.19 — 2026-10-28
+
+Thermal analysis (DSC and TGA) and fatigue S–N curves.
+
+**DSC and TGA**
+- Analyze › More › **DSC / TGA**, for curves with temperature in X.
+- **DSC** (heat flow): for each peak, the extrapolated onset (where the steepest tangent meets the baseline), the peak and endset temperatures, the area and the **enthalpy** (area ÷ heating rate: J/g when Y is in W/g). Endotherms down or up; a straight or polynomial baseline; a temperature range to look in.
+- **TGA** (mass): for each step, the onset, the temperature of fastest loss (the peak of the derivative), the end and the mass lost, plus the residue and the temperature at 5% loss. The derivative curve (DTG) is shown beside the results.
+- The DSC sample on the Home page now uses it, and a new **TGA steps** sample shows a filled polymer losing mass in two steps.
+
+**S–N fatigue curves**
+- Analyze › Materials › **S–N Curves**: stress amplitude against cycles to failure, fitted with Basquin's law S = A·N^b (or against reversals 2N). Gives A and b with its 95% CI, R², and the **fatigue strength** at the lives you choose (10⁶ and 10⁷ cycles by default).
+- **Run-outs** (specimens that did not fail) are marked with an arrow and left out of the fit.
+- A new **S–N curve** sample: an aluminium alloy with two run-outs at 10⁷ cycles.
+
 ## 0.2.18 — 2026-10-28
 
 Peaks and signals: find and fit peaks, Fourier spectra and filters.

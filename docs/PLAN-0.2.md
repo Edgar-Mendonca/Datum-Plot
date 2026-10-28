@@ -124,8 +124,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B27 | Tensile test analysis: modulus, 0.2 % offset yield, UTS, elongation, toughness (added session 4) | numpy, scipy | ✅ 0.2.2 |
 | B28 | Arrhenius / activation energy (added session 4) | scipy | 0.2 |
 | B29 | Weibull analysis of strength (added session 4) | scipy | ✅ 0.2.2 |
-| B30 | Fatigue S–N curves, Basquin fit (added session 4) | scipy | 0.6 |
-| B31 | DSC/TGA peak areas and onsets (added session 4) | scipy | 0.6 |
+| B30 | Fatigue S–N curves, Basquin fit (added session 4) | scipy | ✅ 0.2.19 |
+| B31 | DSC/TGA peak areas and onsets (added session 4) | scipy | ✅ 0.2.19 |
 
 ### C. Results: how answers are shown
 
@@ -357,7 +357,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.16** ✅ | Survival table (A5), analysis (B19), curves (D9) |
 | **0.2.17** ✅ | Nested table (A8) and tests (B20) |
 | **0.2.18** ✅ | Peaks (B24), signal processing (B25) |
-| 0.2.19 | DSC/TGA (B31), S–N curves (B30) |
+| **0.2.19** ✅ | DSC/TGA (B31), S–N curves (B30) |
 | 0.2.20 | Worksheet (A9), column formulas (A11) |
 | 0.2.21 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
 | 0.2.22 | Large data (D17), region tools (E5) |

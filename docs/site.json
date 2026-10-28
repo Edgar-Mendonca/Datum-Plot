@@ -28,7 +28,7 @@
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
-    "Materials testing: tensile tests, Weibull strength and Arrhenius activation energies.",
+    "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks, a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
     "Page layouts at journal sizes; export as PNG or TIFF (with CMYK), SVG, PDF or EPS.",
     "Interactive graphs: zoom, pan, drag notes and exclude points with a right-click.",
@@ -40,22 +40,21 @@
   ],
   "roadmap": [
     {
-      "v": "0.2.19",
-      "title": "Thermal and fatigue",
+      "v": "0.2.20",
+      "title": "Worksheets",
       "when": "Next",
       "items": [
-        "DSC/TGA thermal analysis: onset, peak temperature, enthalpy, mass loss",
-        "S–N fatigue curves"
+        "Worksheets: free columns with roles, long names, units and comments",
+        "Column formulas"
       ]
     },
     {
-      "v": "0.2.20 – 0.2.22",
-      "title": "Worksheets and 3D",
+      "v": "0.2.21 – 0.2.22",
+      "title": "3D and large data",
       "when": "Soon",
       "items": [
-        "Worksheets with formulas",
-        "Matrices, 3D graphs and surface fits",
-        "Large data sets and regions"
+        "Matrices, 3D, contour and polar graphs, surface fits",
+        "Large data sets and region tools"
       ]
     },
     {
