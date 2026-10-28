@@ -147,7 +147,7 @@ export const GraphView = (p: { g: Graph }) => {
       setTool(null); setDrag(null);
       if (kind !== "text" && Math.hypot(qx - px, qy - py) < 3) return toast("Drag to draw it.");
       const [x, y] = toData(px, py), [x2, y2] = toData(qx, qy);
-      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(["xy", "multi", "survival"].includes(table()?.kind ?? "") ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
+      if (kind === "zoom") return setG(p.g, s => ({ ...s, ...(["xy", "multi", "survival", "sheet"].includes(table()?.kind ?? "") ? { x: { ...s.x, auto: false, min: Math.min(x, x2), max: Math.max(x, x2) } } : {}), y: { ...s.y, auto: false, min: Math.min(y, y2), max: Math.max(y, y2) } }));
       const text = kind === "text" ? prompt("Text", "") : kind === "line" ? "" : prompt(kind === "arrow" ? "Text at the start of the arrow (optional)" : "Label (optional)", "");
       if (text === null || (kind === "text" && !text.trim())) return;
       setG(p.g, s => ({ ...s, notes: [...(s.notes ?? []), { kind, x, y, x2, y2, text, color: "", size: 0, bold: false }] }));
@@ -191,7 +191,7 @@ export const zoomOut = (g: Graph) => {
   const R = lastRender(g.id);
   if (!R) return;
   const wide = ([a, b]: [number, number], log: boolean) => log ? [a / Math.sqrt(b / a), b * Math.sqrt(b / a)] : [a - (b - a) / 2, b + (b - a) / 2];
-  const xy = ["xy", "multi", "survival"].includes(out()?.project.tables.find(t => t.id === g.table)?.kind ?? ""), [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
+  const xy = ["xy", "multi", "survival", "sheet"].includes(out()?.project.tables.find(t => t.id === g.table)?.kind ?? ""), [xa, xb] = wide(R.xlim, R.xlog), [ya, yb] = wide(R.ylim, R.ylog);
   setG(g, s => ({ ...s, ...(xy ? { x: { ...s.x, auto: false, min: xa, max: xb } } : {}), y: { ...s.y, auto: false, min: ya, max: yb } }));
 };
 export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: true }, y: { ...s.y, auto: true } }));

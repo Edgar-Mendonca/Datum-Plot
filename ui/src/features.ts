@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.19";
+export const VERSION_NOW = "0.2.20";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -24,7 +24,7 @@ export const FEATURES: Feature[] = [
   ["A6", "Parts of whole", "0.2.5", "Values that add up to a whole. For pie, donut and 100 % stacked bars.", ""],
   ["A7", "Many variables", "0.2.14", "One row per sample, one column per variable. For multiple regression and correlation matrices; graphs put the first variable on X.", "pandas"],
   ["A8", "Nested table", "0.2.17", "Sub-columns within groups, such as specimens within batches. For nested t-tests and ANOVA.", ""],
-  ["A9", "Worksheet", "0.2.20", "Free columns with roles (X, Y, Z, error, label), long names, units and comments.", "pandas"],
+  ["A9", "Worksheet", "0.2.20", "Free columns with roles (X, Y, Y error, not plotted), long names, units and comments; the X column and each Y column (with its error column) make the graph.", "pandas"],
   ["A10", "Matrix", "0.2.21", "A grid of Z values over X and Y. For heat maps, contours and 3D surfaces.", "numpy"],
   ["A11", "Column formulas", "0.2.20", "Fill a column with a formula such as log10(A) or (B - mean(B)) / sd(B).", "numpy"],
   ["A12", "Import CSV, TXT and .xlsx", "0.1.1", "Read data files with a preview: choose the sheet, the headings, the X column and the replicates.", "openpyxl"],

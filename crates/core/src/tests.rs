@@ -63,7 +63,7 @@ fn changing_replicates_keeps_values_and_exclusions_in_place() {
     d.apply(cells(id, &[(0, 1, "1"), (0, 3, "3"), (0, 4, "10"), (0, 6, "30")])).unwrap();
     d.apply(Op::Exclude { table: id, cells: vec![(0, 4)], on: true }).unwrap();
     // Set A goes from 3 to 2 replicates: its third value is dropped, set B moves one column left.
-    d.apply(Op::SetDef { table: id, k: Some(0), set: Some(DataSet { title: "A".into(), entry: Entry::Replicates, reps: 2 }) }).unwrap();
+    d.apply(Op::SetDef { table: id, k: Some(0), set: Some(DataSet { title: "A".into(), entry: Entry::Replicates, reps: 2, ..Default::default() }) }).unwrap();
     let t = &d.p.tables[0];
     assert_eq!(t.width(), 6);
     assert_eq!((t.get(0, 1), t.get(0, 2), t.get(0, 3), t.get(0, 5)), (Some(1.0), None, Some(10.0), Some(30.0)));
@@ -144,9 +144,31 @@ fn files_round_trip_and_newer_files_are_refused() {
 }
 
 #[test]
+fn worksheets_and_formulas() {
+    let mut d = Doc::new(Project::new("P"));
+    d.apply(Op::NewTable { table: Box::new(Table::sheet(3)), graph: None }).unwrap();
+    let id = d.p.tables[0].id;
+    let t = &d.p.tables[0];
+    assert_eq!((t.kind.as_str(), t.width(), t.sets[0].role.as_str(), t.sets[1].role.as_str(), t.sets[2].title.as_str()), ("sheet", 4, "x", "", "C"));
+    d.apply(Op::Cells { table: id, cells: vec![(0, 1, "2".into()), (1, 1, "4".into())] }).unwrap();
+    // Setting a formula and its values is one step; a recalculation merges into the step before it.
+    d.apply(Op::Formula { table: id, k: Some(2), formula: Some(" B*2 ".into()), sets: vec![(2, vec![Some(4.0), Some(8.0)])] }).unwrap();
+    assert_eq!((d.p.tables[0].sets[2].formula.as_str(), d.p.tables[0].get(1, 3)), ("B*2", Some(8.0)));
+    d.apply(Op::Cells { table: id, cells: vec![(1, 1, "5".into())] }).unwrap();
+    d.merge(Op::Formula { table: id, k: None, formula: None, sets: vec![(2, vec![Some(4.0), Some(10.0), Some(f64::NAN)])] }).unwrap();
+    assert_eq!((d.p.tables[0].get(1, 3), d.p.tables[0].get(2, 3)), (Some(10.0), None));
+    d.undo();
+    assert_eq!((d.p.tables[0].get(1, 1), d.p.tables[0].get(1, 3)), (Some(4.0), Some(8.0)), "undo takes back the edit and its recalculation together");
+    assert!(d.apply(Op::Formula { table: id, k: None, formula: None, sets: vec![(9, vec![])] }).is_err());
+    let json = Project::from_json(&d.json()).unwrap();
+    assert_eq!(json.tables[0].sets[2].formula, "B*2");
+    assert_eq!(Project::from_json(r#"{"name":"old","tables":[{"id":1,"name":"T","sets":[{"title":"A","entry":"rep","reps":2}]}]}"#).unwrap().tables[0].sets[0].role, "");
+}
+
+#[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 17);
+    assert_eq!(l.len(), 18);
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
@@ -162,6 +184,8 @@ fn templates_make_sense() {
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), t.row_titles[23].as_str(), p.analyses[0].kind.as_str()), ("multi", 24, 4, "S24", "multireg"));
     assert!((0..24).all(|r| t.get(r, 3).is_some()) && Table::multi(4, 0).rows == 1);
+    let t = &templates::build(Some("worksheet")).unwrap().tables[0];
+    assert_eq!((t.kind.as_str(), t.sets[0].role.as_str(), t.sets[2].role.as_str(), t.sets[3].formula.as_str(), t.get(0, 4).zip(t.get(0, 2)).map(|(k, c)| ((k - c) * 100.0).round())), ("sheet", "x", "yerr", "B + 273.15", Some(27315.0)));
     let p = templates::build(Some("batches")).unwrap();
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), t.sets[2].reps, p.analyses[0].kind.as_str()), ("nested", 5, 10, 3, "nested"));

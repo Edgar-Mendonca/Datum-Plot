@@ -8,6 +8,7 @@ import * as F from "./fmt";
 import { setG, ERRORS, SIZES, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
 import { feature } from "./features";
+import { formulaDialog } from "./datatable";
 import { soon, newTable, analyze, graphTypes, importFile, runAnalysis } from "./roadmap";
 import * as T from "./tools";
 import * as L from "./layout";
@@ -134,7 +135,7 @@ export const Ribbon = () => (
         <S><B i="cut" l="Cut" run={() => document.execCommand("cut")} /><B i="copy" l="Copy" run={() => document.execCommand("copy")} /><B i="paint" l="Format Painter" run={F.paint} on={F.painter() !== null} /></S></G>
       <Font />
       <G l="Insert" h="insert"><B big i="sheet" l="New Table" title="Choose a kind of data table" run={newTable} /><B big i="import" l="Import" title="CSV, TXT or Excel file" run={importFile} /><S><B i="addset" l="Add Data Set" run={C.addSet} /><B i="del" l="Remove Data Set" title="Delete data sets (columns) and their values" run={C.removeSets} /></S><S><B i="addrow" l="Add 10 Rows" run={() => C.rows(10)} /><B i="delrow" l="Remove Last Row" run={() => C.rows(-1)} /></S></G>
-      <G l="Transform" h="transform"><S><B i="fx" l="Transform" title="A new table of log, 1/X, normalised… values" run={() => runAnalysis("A15")} /><N i="fx" l="Column Formula" id="A11" /><B i="sort" l="Sort" run={T.sortDialog} /></S>
+      <G l="Transform" h="transform"><S><B i="fx" l="Transform" title="A new table of log, 1/X, normalised… values" run={() => runAnalysis("A15")} /><B i="fx" l="Column Formula" title="Fill a data set from the others: log10(A), (B - mean(B)) / sd(B)…" run={() => { const t = curTable(); if (t) formulaDialog(t); else toast("Open a data table first."); }} /><B i="sort" l="Sort" run={T.sortDialog} /></S>
         <S><B i="find" l="Find" title="Ctrl+F" run={T.findDialog} /><B i="filter" l="Exclude Rows" title="Exclude rows by a rule" run={T.excludeRows} /><B i="check" l="Check Data" run={() => runAnalysis("A18")} /></S><S><B i="exclude" l="Find Outliers" run={() => runAnalysis("A16")} /></S></G>
       <G l="Values" h="values"><S><B i="exclude" l="Exclude / Include" title="Leave the selected values out of graphs (Ctrl+E)" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "e", ctrlKey: true, bubbles: true }))} /><B i="opts" l="Format Data Set" run={() => C.formatSet()} /><B i="filldown" l="Fill Down" title="Ctrl+D" run={() => document.querySelector(".dgrid")?.dispatchEvent(new KeyboardEvent("keydown", { key: "d", ctrlKey: true, bubbles: true }))} /></S></G>
       <G l="Graph" h="graph"><B big i="graph" l="New Graph" run={C.newGraph} /><B big i="xy" l="Show Graph" run={() => openView("graphs")} /></G>
@@ -159,7 +160,7 @@ export const Ribbon = () => (
       <G l="Axes" h="axes"><S><B i="log" l="Log X Axis" on={gs()?.x.scale === "log"} run={() => setGS(s => { s.x.scale = s.x.scale === "log" ? "lin" : "log"; })} /><B i="log" l="Log Y Axis" on={gs()?.y.scale === "log"} run={() => setGS(s => { s.y.scale = s.y.scale === "log" ? "lin" : "log"; })} /><B i="frame" l="Framed Axes" on={gs()?.style === "frame"} run={() => setGS(s => { s.style = s.style === "frame" ? "prism" : "frame"; })} /></S>
         <B big i="axis" l="Format Axes" run={() => C.format("x")} /><S><B i="axis" l="Axis Break" title="Leave a gap in the X or Y axis (Format Graph › X Axis or Y Axis)" run={() => C.format("y")} /></S></G>
       <G l="Size" h="size"><B big i="size" l="Size" dd={e => openMenu(e, sizeMenu())} /></G>
-      <Show when={curTable() && curTable()!.kind !== "xy" && curTable()!.kind !== "multi" && curTable()!.kind !== "survival" && curTable()!.kind !== "nested"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
+      <Show when={curTable() && curTable()!.kind !== "xy" && curTable()!.kind !== "multi" && curTable()!.kind !== "survival" && curTable()!.kind !== "nested" && curTable()!.kind !== "sheet"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
       <G l="Add" h="add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={e => T.significance(e)} /><B i="note" l="Annotation" title="Text, arrows, lines and boxes on the graph" dd={e => openMenu(e, ANNOT())} /></S></G>
       <G l="Style" h="style"><B big i="style" l="Styles" dd={e => openMenu(e, T.styleMenu())} /><S><B i="paint" l="Copy Look" title="Give other graphs this graph's look" run={T.copyLook} /><B i="bucket" l="Colour Schemes" run={T.paletteDialog} /></S></G>
       <G l="Share" h="share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>

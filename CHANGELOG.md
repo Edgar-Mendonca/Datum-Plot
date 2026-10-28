@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.20 — 2026-10-28
+
+Worksheets with free columns, and column formulas.
+
+**Worksheets**
+- File › New Table › **Worksheet**: free columns, one value per row, for raw instrument data. Each column has a **role** (X, Y, Y error or not plotted), a long name, **units** and a **comment** (Format Data Set, or double-click its heading).
+- The graph uses the X column for X, and each Y column as a data set; a Y error column right after a Y column gives its error bars. Units go into the axis titles. Linear regression, curve fits and the other XY analyses work on worksheets the same way.
+- A new sample on the Home page, **Worksheet**: a cooling curve with an error column and a formula column in kelvin.
+
+**Column formulas**
+- Data › Transform › **Column Formula** (or Format Data Set › Formula): fills a data set from the others, for example `log10(A)`, `B + 273.15`, `(B - mean(B)) / sd(B)` or `if(C > 0, C, 0)`. A, B, C… are the data sets, X the X column, i the row number, `col("title")` a data set by its title; with log10, ln, exp, sqrt, abs, sin, mean, sd, sum, min, max, median, cumsum, diff and more.
+- Works on any table, for data sets with one value per row; a heading marked ƒ has a formula.
+- Formula columns **update by themselves** when their data change, left to right, and Undo takes back an edit together with its recalculation.
+
 ## 0.2.19 — 2026-10-28
 
 Thermal analysis (DSC and TGA) and fatigue S–N curves.

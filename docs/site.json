@@ -25,6 +25,7 @@
   ],
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
+    "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
@@ -40,29 +41,29 @@
   ],
   "roadmap": [
     {
-      "v": "0.2.20",
-      "title": "Worksheets",
+      "v": "0.2.21",
+      "title": "3D",
       "when": "Next",
       "items": [
-        "Worksheets: free columns with roles, long names, units and comments",
-        "Column formulas"
+        "Matrices: Z values on an X–Y grid",
+        "3D, contour and polar graphs",
+        "Surface fits"
       ]
     },
     {
-      "v": "0.2.21 – 0.2.22",
-      "title": "3D and large data",
+      "v": "0.2.22 – 0.2.23",
+      "title": "Large data and import",
       "when": "Soon",
       "items": [
-        "Matrices, 3D, contour and polar graphs, surface fits",
-        "Large data sets and region tools"
+        "Large data sets and region tools",
+        "Project and instrument file import"
       ]
     },
     {
-      "v": "0.2.23 – 0.2.26",
-      "title": "Import, reports and Python",
+      "v": "0.2.24 – 0.2.26",
+      "title": "Reports and Python",
       "when": "Later",
       "items": [
-        "Project and instrument file import",
         "Slides, reports and posters",
         "A Python console and your own analyses",
         "Templates, batch processing and notebooks"

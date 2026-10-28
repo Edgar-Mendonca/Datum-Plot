@@ -651,6 +651,11 @@ def run(kind, table, sets, options):
     if table.get("kind") == "multi" and kind not in ("multireg", "correlation", "pca", "cluster"):
         from .regress import xy_view
         table = xy_view(table)  # the first variable is X for every other analysis
+    if table.get("kind") == "sheet" and kind not in ("multireg", "correlation", "pca", "cluster"):
+        from .sheet import sheet_view
+        table = sheet_view(table)  # the worksheet's X column is X; Y columns are the data sets
+        if not sets:
+            sets = [k for k in range(len(table["sets"])) if k not in table["hidden"]]
     if table.get("fromMulti") and not sets and kind in ("linear", "fit", "arrhenius", "auc", "smooth", "tensile", "transform", "peaks", "signal", "thermal", "sn"):
         sets = list(range(1, len(table["sets"])))
     ks = chosen(table, sets)

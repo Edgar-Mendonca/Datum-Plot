@@ -80,9 +80,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A6 | Parts of whole | Values that make a whole — pie, donut, 100 % stacked | ✅ 0.2.5 |
 | A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | ✅ 0.2.14 |
 | A8 | Nested table | Sub-columns within groups (cells within animals) — nested t-test/ANOVA | ✅ 0.2.17 |
-| A9 | Worksheet (Origin) | Free columns with roles (X, Y, Z, error, label), long name, units, comments, sparklines | 0.6 |
+| A9 | Worksheet | Free columns with roles (X, Y, Z, error, label), long name, units, comments, sparklines | ✅ 0.2.20 (X, Y, Y error, not plotted; Z with matrices, text labels and sparklines later) |
 | A10 | Matrix | A Z grid for heat maps, contours, 3D surfaces | 0.6 |
-| A11 | Column formulas | "Set column values" with formulas, e.g. `log10(A)`, `(B - mean(B)) / sd(B)`, evaluated by numpy | 0.6 |
+| A11 | Column formulas | "Set column values" with formulas, e.g. `log10(A)`, `(B - mean(B)) / sd(B)`, evaluated by numpy | ✅ 0.2.20 |
 | A12 | Import CSV / TXT / XLSX | With a preview: delimiter, header rows, which columns go where | 0.1.1 |
 | A13 | Import Prism `.pzfx` | Tables, titles and replicates from Prism projects | 0.4 |
 | A14 | Instrument and plate import | Plate readers (96/384 wells) with a plate map of samples, standards and blanks; Origin ASCII; spectra folders | 0.6 |
@@ -358,7 +358,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.17** ✅ | Nested table (A8) and tests (B20) |
 | **0.2.18** ✅ | Peaks (B24), signal processing (B25) |
 | **0.2.19** ✅ | DSC/TGA (B31), S–N curves (B30) |
-| 0.2.20 | Worksheet (A9), column formulas (A11) |
+| **0.2.20** ✅ | Worksheet (A9), column formulas (A11) |
 | 0.2.21 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
 | 0.2.22 | Large data (D17), region tools (E5) |
 | 0.2.23 | Prism import (A13), instrument import (A14) |

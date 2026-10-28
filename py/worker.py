@@ -40,6 +40,9 @@ def main():
         if cmd == "excel":
             from datum import io as dio
             return dio.write_excel(q["path"], q["project"], q.get("analyses", []))
+        if cmd == "formula":
+            from datum import sheet
+            return sheet.recalc(q["table"], q.get("k"), q.get("text"))
         if cmd == "summary":
             return {"sets": stats.summarize(q["table"])}
         raise ValueError(f"Unknown request {cmd!r}")

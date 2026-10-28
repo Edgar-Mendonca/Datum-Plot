@@ -8,7 +8,7 @@ export const invoke = <T = any>(cmd: string, args?: object): Promise<T> =>
 export const listen = (e: string, f: (p: any) => void) => window.__TAURI__?.event.listen(e, x => f(x.payload));
 
 export type Entry = "rep" | "msn" | "mesn";
-export interface DataSet { title: string; entry: Entry; reps: number }
+export interface DataSet { title: string; entry: Entry; reps: number; role?: string; units?: string; comment?: string; formula?: string }
 export interface Table {
   id: number; name: string; kind: string; xTitle: string; xUnits: string; yTitle: string; yUnits: string; rows: number; rowTitles: string[];
   sets: DataSet[]; cols: (number | null)[][]; excluded: [number, number][]; style: Record<string, string>; notes: string;

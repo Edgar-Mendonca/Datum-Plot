@@ -70,11 +70,11 @@ const TABLES: Choice[] = [
   { id: "A6", name: "Parts of whole", icon: "dash", group: "Data tables", desc: "Fractions of a total, such as phase or composition fractions." },
   { id: "A7", name: "Many variables", icon: "cols", group: "Data tables", desc: "One row per sample with many measured properties. Multiple regression and a correlation matrix; graphs put the first variable on X." },
   { id: "A8", name: "Nested", icon: "group", group: "Data tables", desc: "Each group's sub-columns are its subgroups (batches, animals), with replicates down the rows. Nested t-test and one-way ANOVA." },
-  { id: "A9", name: "Worksheet", icon: "sheet", group: "Worksheets and 3D", desc: "Free columns with roles, long names and units, for raw instrument data." },
+  { id: "A9", name: "Worksheet", icon: "sheet", group: "Worksheets and 3D", desc: "Free columns, each with a role (X, Y, Y error or not plotted), a long name, units and a comment, and optional column formulas. For raw instrument data." },
   { id: "A10", name: "Matrix", icon: "grid", group: "Worksheets and 3D", desc: "Z values on an X–Y grid, for maps, contours and surfaces." },
 ];
 /** File › New table: every table type; XY is ready. */
-export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : c.id === "A7" ? "multi" : c.id === "A5" ? "survival" : c.id === "A8" ? "nested" : undefined)} />);
+export const newTable = () => openDialog(() => <Gallery title="New Data Table" help="newtable" items={TABLES} ok="Create" run={c => C.newTable(c.id === "A2" ? "column" : c.id === "A3" ? "grouped" : c.id === "A4" ? "contingency" : c.id === "A6" ? "parts" : c.id === "A7" ? "multi" : c.id === "A5" ? "survival" : c.id === "A8" ? "nested" : c.id === "A9" ? "sheet" : undefined)} />);
 
 const ANALYSES: Choice[] = [
   { id: "B1", name: "Descriptive statistics", icon: "sigma", group: "Statistics", desc: "Summarise each data set." },

@@ -207,6 +207,13 @@ def build(table, graph, overlays=(), fig=None):
     if not frame:
         for side in ("top", "right"):
             ax.spines[side].set_visible(False)
+    if table.get("kind") == "sheet":  # a worksheet: its X column on X, Y columns (with their error columns) as data sets
+        from .sheet import sheet_view
+        table, sets = sheet_view(table), list(graph.get("sets") or [])
+        sets += [{}] * (len(table["sets"]) - len(sets))
+        ys = [k for k in range(len(sets)) if k not in table["hidden"]]
+        cols = palette(graph, max(len(ys), 1))
+        graph = dict(graph, sets=[dict(s, show=False) if k in table["hidden"] else dict(s, color=s.get("color") or cols[ys.index(k) % len(cols)], symbol=s.get("symbol") or SYMBOL_ORDER[ys.index(k) % 8]) for k, s in enumerate(sets)])
     hidden_x = table.get("kind") == "multi"
     if hidden_x:  # many variables: the first one on X, the others on Y
         from .regress import xy_view

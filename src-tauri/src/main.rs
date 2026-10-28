@@ -64,7 +64,7 @@ impl Options {
     }
     fn table(&self) -> Table {
         let entry = match self.entry.as_str() { "msn" => Entry::MeanSdN, "mesn" => Entry::MeanSemN, _ => Entry::Replicates };
-        Table { sets: vec![DataSet { title: "Data set A".into(), entry, reps: self.reps.clamp(1, 50) }], ..Default::default() }
+        Table { sets: vec![DataSet { title: "Data set A".into(), entry, reps: self.reps.clamp(1, 50), ..Default::default() }], ..Default::default() }
     }
 }
 
@@ -122,7 +122,7 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
-    let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), Some("nested") => Table::nested(2, 3), _ => a.opts.table() };
+    let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), Some("nested") => Table::nested(2, 3), Some("sheet") => Table::sheet(3), _ => a.opts.table() };
     let g = match t.kind.as_str() { "column" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "grouped" => GraphSettings { column: "bars".into(), ..a.opts.graph() },
         "multi" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "survival" => GraphSettings { error: "none".into(), ..a.opts.graph() }, "nested" => GraphSettings { error: "sd".into(), ..a.opts.graph() },
         "parts" => GraphSettings { column: "pie".into(), error: "none".into(), ..a.opts.graph() },
@@ -308,6 +308,27 @@ async fn result(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
         json!({ "cmd": "analyze", "kind": x.kind, "table": t, "sets": x.sets, "options": x.options })
     };
     tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+}
+
+/// Column formulas (A11): sets data set `k`'s formula to `text` (when given) and works out every formula
+/// column of the table in Python. With `merge` the values join the last change (one undo step), as after an edit.
+#[tauri::command]
+async fn formula(app: AppHandle, st: State<'_, St>, table: u32, k: Option<usize>, text: Option<String>, merge: bool) -> R<Value> {
+    let q = {
+        let a = st.0.lock().unwrap();
+        let t = a.doc.p.table(table).ok_or("That data table no longer exists.")?;
+        if k.is_none() && t.sets.iter().all(|s| s.formula.is_empty()) {
+            return Ok(out(&a));
+        }
+        json!({ "cmd": "formula", "table": t, "k": k, "text": text })
+    };
+    let r = tauri::async_runtime::spawn_blocking({ let app = app.clone(); move || app.state::<Calc>().0.lock().unwrap().render(&app, q) }).await.map_err(|e| e.to_string())??;
+    let sets: Vec<(usize, Vec<Option<f64>>)> = serde_json::from_value(r["sets"].clone()).map_err(|e| e.to_string())?;
+    let mut a = st.0.lock().unwrap();
+    let op = Op::Formula { table, k, formula: text, sets };
+    if merge { a.doc.merge(op)? } else { a.doc.apply(op)? }
+    a.rev += 1;
+    Ok(out(&a))
 }
 
 /// The curve-fitting model library: [id, name, equation, description].
@@ -631,7 +652,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

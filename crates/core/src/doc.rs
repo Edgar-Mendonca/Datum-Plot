@@ -54,6 +54,9 @@ pub enum Op {
     ProjectName { name: String },
     /// Stores window settings under a key.
     Ui { key: String, value: serde_json::Value },
+    /// A data set's formula and the values it gave (`sets`: [(data set, values by row)]); `formula`
+    /// sets the formula of `k` first (empty clears it).
+    Formula { table: u32, k: Option<usize>, formula: Option<String>, sets: Vec<(usize, Vec<Option<f64>>)> },
     Batch(Vec<Op>),
 }
 
@@ -86,6 +89,17 @@ impl Doc {
         }
         self.redo.clear();
         self.dirty = true;
+        Ok(())
+    }
+    /// Applies `op` as part of the last change (one undo step): formulas recalculated after an edit.
+    pub fn merge(&mut self, op: Op) -> Result<(), String> {
+        let mut q = self.p.clone();
+        exec(&mut q, op)?;
+        q.normalize();
+        if q != self.p {
+            self.p = q;
+            self.dirty = true;
+        }
         Ok(())
     }
     pub fn undo(&mut self) {
@@ -266,7 +280,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
         }
         Op::Import { name, entry, reps, header, mut rows, graph } => {
             let head = if header && !rows.is_empty() { rows.remove(0) } else { vec![] };
-            let set = DataSet { title: String::new(), entry, reps: reps.clamp(1, 50) };
+            let set = DataSet { title: String::new(), entry, reps: reps.clamp(1, 50), ..Default::default() };
             let (w, ny) = (set.width(), rows.iter().map(|r| r.len()).max().unwrap_or(1).saturating_sub(1).max(1));
             let n = ny.div_ceil(w);
             let mut t = Table { name, rows: rows.len().max(1), sets: (0..n).map(|k| DataSet { title: format!("Data set {}", set_letter(k)), ..set.clone() }).collect(), ..Default::default() };
@@ -433,6 +447,22 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 p.ui = serde_json::json!({});
             }
             p.ui[key] = value;
+        }
+        Op::Formula { table, k, formula, sets } => {
+            let t = p.table_mut(table)?;
+            if let (Some(k), Some(f)) = (k, formula) {
+                t.sets.get_mut(k).ok_or("That data set no longer exists.")?.formula = f.trim().to_string();
+            }
+            let spans = t.spans();
+            for (k, vals) in sets {
+                let &(c0, w) = spans.get(k).ok_or("That data set no longer exists.")?;
+                if w != 1 {
+                    return Err("A formula fills a data set with one value per row.".into());
+                }
+                t.rows = t.rows.max(vals.len());
+                t.normalize();
+                t.cols[c0] = vals.into_iter().map(|v| v.filter(|x| x.is_finite())).chain(std::iter::repeat(None)).take(t.rows).collect();
+            }
         }
         Op::Batch(ops) => {
             for o in ops {

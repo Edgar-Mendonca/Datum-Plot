@@ -58,11 +58,17 @@ pub struct DataSet {
     pub entry: Entry,
     /// Replicate sub-columns (Replicates only; the other entries always have 3).
     pub reps: usize,
+    /// Worksheet columns: "x", "" (Y), "yerr" (the error of the Y column before it) or "skip".
+    pub role: String,
+    pub units: String,
+    pub comment: String,
+    /// A column formula (A11), worked out by Python; its values are kept in the column.
+    pub formula: String,
 }
 
 impl Default for DataSet {
     fn default() -> Self {
-        Self { title: String::new(), entry: Entry::Replicates, reps: 3 }
+        Self { title: String::new(), entry: Entry::Replicates, reps: 3, role: String::new(), units: String::new(), comment: String::new(), formula: String::new() }
     }
 }
 
@@ -75,7 +81,7 @@ impl DataSet {
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
 /// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows) or "parts"
+/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows), "sheet" (a worksheet: free columns with roles) or "parts"
 /// (parts of a whole: parts in the rows, one whole per data set);
 /// only XY and survival tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -111,14 +117,14 @@ impl Default for Table {
 impl Table {
     /// An empty column table (groups A, B, C, one value per row).
     pub fn column(groups: usize) -> Self {
-        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
+        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1, ..Default::default() }).collect();
         let mut t = Table { kind: "column".into(), x_title: String::new(), y_title: "Value".into(), sets, ..Default::default() };
         t.normalize();
         t
     }
     /// An empty grouped table: `rows` rows (named in the row titles), `groups` data sets of 3 replicates.
     pub fn grouped(rows: usize, groups: usize) -> Self {
-        let sets = (0..groups).map(|k| DataSet { title: format!("Data set {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 3 }).collect();
+        let sets = (0..groups).map(|k| DataSet { title: format!("Data set {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 3, ..Default::default() }).collect();
         let mut t = Table { kind: "grouped".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
         t.normalize();
         for r in 0..rows {
@@ -154,15 +160,22 @@ impl Table {
     /// An empty table of many variables: one row per sample (named in the row titles), one data set
     /// per variable with one value per cell. Graphs put the first variable on X.
     pub fn multi(vars: usize, rows: usize) -> Self {
-        let sets = (0..vars).map(|k| DataSet { title: format!("Variable {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
+        let sets = (0..vars).map(|k| DataSet { title: format!("Variable {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1, ..Default::default() }).collect();
         let mut t = Table { kind: "multi".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
+        t.normalize();
+        t
+    }
+    /// An empty worksheet (A9): free columns, one value per row, the first one X.
+    pub fn sheet(cols: usize) -> Self {
+        let sets = (0..cols).map(|k| DataSet { title: crate::doc::set_letter(k), entry: Entry::Replicates, reps: 1, role: if k == 0 { "x".into() } else { String::new() }, ..Default::default() }).collect();
+        let mut t = Table { kind: "sheet".into(), x_title: String::new(), y_title: String::new(), sets, rows: 12, ..Default::default() };
         t.normalize();
         t
     }
     /// An empty nested table: `groups` data sets with `subs` sub-columns each (one per subgroup:
     /// a batch, an animal), replicates down the rows.
     pub fn nested(groups: usize, subs: usize) -> Self {
-        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: subs.max(1) }).collect();
+        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: subs.max(1), ..Default::default() }).collect();
         let mut t = Table { kind: "nested".into(), x_title: String::new(), y_title: "Value".into(), sets, ..Default::default() };
         t.normalize();
         t
@@ -170,7 +183,7 @@ impl Table {
     /// An empty survival table: one row per subject, the time in X, and in its group's column 1 for an
     /// event (death, failure) or 0 for censored.
     pub fn survival(groups: usize) -> Self {
-        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
+        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1, ..Default::default() }).collect();
         let mut t = Table { kind: "survival".into(), x_title: "Time".into(), y_title: "Percent survival".into(), sets, ..Default::default() };
         t.normalize();
         t

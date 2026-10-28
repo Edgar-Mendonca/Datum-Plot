@@ -33,7 +33,7 @@ fn table(titles: [&str; 5], xs: &[f64], sets: &[(&str, &dyn Fn(f64) -> f64)], re
     }
     let mut t = Table {
         name: titles[0].into(), x_title: titles[1].into(), x_units: titles[2].into(), y_title: titles[3].into(), y_units: titles[4].into(), rows: xs.len().max(12),
-        sets: sets.iter().map(|(n, _)| DataSet { title: (*n).into(), entry: Entry::Replicates, reps }).collect(), cols, ..Default::default()
+        sets: sets.iter().map(|(n, _)| DataSet { title: (*n).into(), entry: Entry::Replicates, reps, ..Default::default() }).collect(), cols, ..Default::default()
     };
     t.normalize();
     t
@@ -83,6 +83,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
         Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
         Tpl { id: "spectrum", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
+        Tpl { id: "worksheet", name: "Worksheet", desc: "Cooling of a sample: time, temperature and its SD in free columns, with a formula column giving kelvin.", dots: dots("worksheet") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
         Tpl { id: "tga", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
         Tpl { id: "fatigue", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
@@ -109,7 +110,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
         Some("standard") => {
             let xs = [0.0, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0];
             let mut t = Table { name: "Standards".into(), x_title: "Concentration".into(), x_units: "µg/mL".into(), y_title: "Absorbance".into(), y_units: "A562".into(), rows: 12, ..Default::default() };
-            t.sets = vec![DataSet { title: "BSA standard".into(), entry: Entry::MeanSdN, reps: 3 }];
+            t.sets = vec![DataSet { title: "BSA standard".into(), entry: Entry::MeanSdN, reps: 3, ..Default::default() }];
             let mut seed = 11u64;
             t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&c| Some(round(0.095 + 0.0112 * c - 0.000021 * c * c, 3))).collect(),
                 xs.iter().map(|_| Some(round(0.012 + jitter(&mut seed, 0.006), 3))).collect(), xs.iter().map(|_| Some(3.0)).collect()];
@@ -305,7 +306,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let band = |x: f64, a: f64, c: f64, w: f64| a * (-((x - c) / w).powi(2) / 2.0).exp();
             let mut seed = 17u64;
             let mut t = Table { name: "Spectrum".into(), x_title: "Raman shift".into(), x_units: "cm⁻¹".into(), y_title: "Intensity".into(), y_units: "counts".into(), rows: xs.len(),
-                sets: vec![DataSet { title: "Sample".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+                sets: vec![DataSet { title: "Sample".into(), entry: Entry::Replicates, reps: 1, ..Default::default() }], ..Default::default() };
             let f = |x: f64| 120.0 + 0.00012 * (x - 200.0).powi(2) + band(x, 900.0, 420.0, 9.0) + band(x, 520.0, 470.0, 14.0) + band(x, 640.0, 640.0, 11.0);
             t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(f(v) + jitter(&mut seed, 12.0), 0))).collect()];
             t.normalize();
@@ -316,12 +317,35 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.analyses.push(Analysis { id: aid, table: id, name: "Peak analysis".into(), kind: "peaks".into(), sets: vec![], options: serde_json::json!({ "baseline": "poly", "order": 2, "fit": "gauss" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
+        Some("worksheet") => {
+            let mut seed = 23u64;
+            let mut t = Table::sheet(4);
+            t.name = "Cooling".into();
+            for (k, (title, role, units)) in [("Time", "x", "min"), ("Temperature", "", "°C"), ("SD", "yerr", "°C"), ("Temperature (K)", "skip", "K")].iter().enumerate() {
+                t.sets[k] = DataSet { title: (*title).into(), role: (*role).into(), units: (*units).into(), reps: 1, ..Default::default() };
+            }
+            t.sets[1].comment = "Mean of three thermocouples".into();
+            t.sets[3].formula = "B + 273.15".into();
+            t.rows = 13;
+            t.normalize();
+            for r in 0..13 {
+                let (m, temp) = (5.0 * r as f64, 22.0 + 180.0 * (-(5.0 * r as f64) / 14.0).exp());
+                let v = round(temp + jitter(&mut seed, 1.5), 1);
+                t.cols[1][r] = Some(m);
+                t.cols[2][r] = Some(v);
+                t.cols[3][r] = Some(round(1.2 + jitter(&mut seed, 0.6), 1));
+                t.cols[4][r] = Some(round(v + 273.15, 2));
+            }
+            p.name = "Worksheet".into();
+            p.info = Info { title: "Cooling curve".into(), experiment: "A hot sample cooling in air. In a worksheet each column has a role: Time is X, Temperature is Y with its SD as the error, and Temperature (K) is a formula column (B + 273.15) that is not plotted.".into(), ..Default::default() };
+            p.add_table(t, Some(GraphSettings { line: true, error: "sd".into(), ..g }));
+        }
         Some("dsc") => {
             let xs: Vec<f64> = (0..=120).map(|i| 140.0 + 0.5 * i as f64).collect();
             let peak = |t: f64| -0.35 - 0.004 * (t - 140.0) - 2.4 * (-((t - 167.0) / 3.2).powi(2)).exp();
             let mut seed = 9u64;
             let mut t = Table { name: "DSC".into(), x_title: "Temperature".into(), x_units: "°C".into(), y_title: "Heat flow".into(), y_units: "W/g".into(), rows: xs.len(),
-                sets: vec![DataSet { title: "Polymer melt".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+                sets: vec![DataSet { title: "Polymer melt".into(), entry: Entry::Replicates, reps: 1, ..Default::default() }], ..Default::default() };
             t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(peak(v) + jitter(&mut seed, 0.012), 4))).collect()];
             t.normalize();
             p.name = "DSC peak".into();
@@ -336,7 +360,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let step = |t: f64, c: f64, w: f64| 1.0 / (1.0 + (-(t - c) / w).exp());
             let mut seed = 13u64;
             let mut t = Table { name: "TGA".into(), x_title: "Temperature".into(), x_units: "°C".into(), y_title: "Mass".into(), y_units: "mg".into(), rows: xs.len(),
-                sets: vec![DataSet { title: "Filled polymer".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+                sets: vec![DataSet { title: "Filled polymer".into(), entry: Entry::Replicates, reps: 1, ..Default::default() }], ..Default::default() };
             t.cols = vec![xs.iter().map(|&v| Some(v)).collect(), xs.iter().map(|&v| Some(round(12.0 * (1.0 - 0.08 * step(v, 260.0, 9.0) - 0.55 * step(v, 445.0, 12.0)) + jitter(&mut seed, 0.004), 4))).collect()];
             t.normalize();
             p.name = "TGA steps".into();
@@ -350,7 +374,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let mut seed = 19u64;
             let n = [2.0e4, 4.5e4, 8.0e4, 1.5e5, 3.2e5, 6.0e5, 1.1e6, 2.4e6, 5.0e6, 1.0e7, 1.0e7];
             let mut t = Table { name: "Fatigue".into(), x_title: "Cycles to failure".into(), y_title: "Stress amplitude".into(), y_units: "MPa".into(), rows: n.len(),
-                sets: vec![DataSet { title: "7075-T6".into(), entry: Entry::Replicates, reps: 1 }], ..Default::default() };
+                sets: vec![DataSet { title: "7075-T6".into(), entry: Entry::Replicates, reps: 1, ..Default::default() }], ..Default::default() };
             t.cols = vec![n.iter().map(|&v| Some(v)).collect(), n.iter().enumerate().map(|(i, &v)| Some(round(if i >= 9 { 158.0 + 4.0 * (i - 9) as f64 } else { 1060.0 * v.powf(-0.122) * (1.0 + jitter(&mut seed, 0.03)) }, 0))).collect()];
             t.normalize();
             p.name = "S–N curve".into();

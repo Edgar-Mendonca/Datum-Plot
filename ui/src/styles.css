@@ -603,3 +603,5 @@ input.mono { font-family: var(--mono) !important; }
 .litem.on { border: 1.5px solid var(--blue); }
 .litem .lsize { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: var(--blue); cursor: nwse-resize; }
 .litem .lname { position: absolute; left: 0; top: -18px; font-size: 11px; background: var(--blue); color: #fff; padding: 0 5px; white-space: nowrap; }
+
+.hc.sub.subname { justify-content: flex-start; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; line-height: inherit; text-align: left; }

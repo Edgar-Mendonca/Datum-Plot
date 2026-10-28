@@ -56,8 +56,15 @@ const fixItem = () => {
 
 // ---------- editing ----------
 export const act = async (op: object, quiet = false): Promise<boolean> => {
-  try { setOut(await invoke<Out>("apply", { op })); return true; }
+  try { setOut(await invoke<Out>("apply", { op })); }
   catch (e) { if (!quiet) toast(String(e)); return false; }
+  // Column formulas follow their data: the recalculation joins this change (one undo step).
+  const [kind, body] = Object.entries(op)[0] ?? [];
+  const t = typeof (body as any)?.table === "number" ? out()?.project.tables.find(x => x.id === (body as any).table) : undefined;
+  if (t && kind !== "Formula" && t.sets.some(s => s.formula)) {
+    try { setOut(await invoke<Out>("formula", { table: t.id, k: null, text: null, merge: true })); } catch (e) { toast(`Formula: ${e}`); }
+  }
+  return true;
 };
 export const call = async <T = any>(cmd: string, args?: object): Promise<T | undefined> => {
   try { return await invoke<T>(cmd, args); } catch (e) { toast(String(e)); return undefined; }

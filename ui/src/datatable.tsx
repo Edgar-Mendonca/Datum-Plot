@@ -3,7 +3,7 @@
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, createEffect, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter } from "./api";
-import { act, call, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
+import { act, call, setOut, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
 import { sortDialog, findDialog, excludeRows } from "./tools";
 import * as F from "./fmt";
 import { parseTsv, toTsv, transpose, series, clip } from "./cells";
@@ -179,9 +179,9 @@ export const DataTable = (p: { t: Table }) => {
             <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span></div>
             <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${spans(t())[k()][1] * CW}px` }}>
               <div class="hc st" style={{ "--c": SETC[k() % 8] }} title="Double-click to change the data set" onMouseDown={e => { e.stopPropagation(); const [c0, w] = spans(t())[k()]; S.cols(c0 + 1, c0 + w, e.shiftKey, e.ctrlKey); box.focus(); }} onDblClick={e => { e.stopPropagation(); setDialog(t(), k()); }}>
-                <b>{letter(k())}</b><span>{s.title || `Data set ${letter(k())}`}</span>
+                <b>{letter(k())}{s.formula ? " ƒ" : ""}</b><span title={[s.title, s.comment, s.formula && `= ${s.formula}`].filter(Boolean).join("\n")}>{t().kind === "sheet" ? ({ x: "X", "": "Y", yerr: "Err", skip: "—" } as Record<string, string>)[s.role ?? ""] : `${s.title || `Data set ${letter(k())}`}${s.units ? ` (${s.units})` : ""}`}</span>
                 <Show when={t().sets.length > 1}><button class="hdel" title={`Delete data set ${letter(k())}`} onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); delSet(t(), k()); }}>×</button></Show></div>
-              <div class="subs"><For each={Array.from({ length: spans(t())[k()][1] }, (_, j) => j)}>{j => <div class="hc sub" style={{ width: `${CW}px` }}>{s.entry === "rep" ? `Y${j + 1}` : SUB[s.entry][j]}</div>}</For></div>
+              <div class="subs"><For each={Array.from({ length: spans(t())[k()][1] }, (_, j) => j)}>{j => <div class="hc sub" classList={{ subname: t().kind === "sheet" }} style={{ width: `${CW}px` }}>{t().kind === "sheet" ? `${s.title || letter(k())}${s.units ? ` (${s.units})` : ""}` : s.entry === "rep" ? `Y${j + 1}` : SUB[s.entry][j]}</div>}</For></div>
             </div>}</For>
             <button class="hc addset" title="Add a data set" onMouseDown={e => e.stopPropagation()} onClick={() => addSet(t())}>＋ Data set</button>
           </div>
@@ -221,7 +221,7 @@ const TableHead = (p: { t: Table }) => {
         <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label></Show>
       <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.yUnits} onChange={e => set("yUnits", e.currentTarget.value)} /></label>
-      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : p.t.kind === "multi" ? "Many variables · " : p.t.kind === "survival" ? "Survival · " : p.t.kind === "nested" ? "Nested · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
+      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : p.t.kind === "multi" ? "Many variables · " : p.t.kind === "survival" ? "Survival · " : p.t.kind === "nested" ? "Nested · " : p.t.kind === "sheet" ? "Worksheet · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
     </div>
   );
 };
@@ -260,18 +260,56 @@ export const addSet = (t: Table) => {
 };
 
 /** Format Data Set: title, how values are entered, replicates; or delete it. */
+export const ROLES: [string, string][] = [["x", "X"], ["", "Y"], ["yerr", "Y error (of the column before)"], ["skip", "Not plotted"]];
+const FORMULA_HELP = "A, B, C… are the columns (data sets), X the X column, i the row number; + − * / ^, log10, ln, exp, sqrt, abs, sin…, mean, sd, sum, min, max, median, cumsum, diff, if(test, a, b), col(\"title\").";
+/** Sets data set k's formula and works out every formula column (one undo step with `merge`). */
+export const setFormula = async (t: Table, k: number, text: string, merge = false) => {
+  const o = await call<any>("formula", { table: t.id, k, text, merge });
+  if (o) setOut(o);
+  return !!o;
+};
 export const setDialog = (t: Table, k: number) => openDialog(() => {
   const s = t.sets[k];
-  const [v, setV] = createSignal<DataSet>({ ...s });
+  const [v, setV] = createSignal<DataSet>({ role: "", units: "", comment: "", formula: "", ...s });
+  const one = () => v().entry === "rep" && Math.round(v().reps) === 1;
+  const ok = async () => {
+    const f = (v().formula ?? "").trim();
+    if (!await act({ SetDef: { table: t.id, k, set: { ...v(), formula: s.formula ?? "", reps: Math.max(1, Math.min(50, Math.round(v().reps))) } } })) return false;
+    return f === (s.formula ?? "") || setFormula(t, k, f, true);
+  };
   return (
-    <Dialog title={`Data set ${letter(k)}`} help="dataset" ok={() => act({ SetDef: { table: t.id, k, set: { ...v(), reps: Math.max(1, Math.min(50, Math.round(v().reps))) } } })}
+    <Dialog title={`Data set ${letter(k)}`} help="dataset" ok={ok}
       extra={<button class="btn" disabled={t.sets.length < 2} onClick={() => { if (confirm(`Delete data set ${letter(k)} and its values?`)) act({ SetDef: { table: t.id, k, set: null } }).then(ok => { if (ok) closeDialog(); }); }}>Delete data set</button>}>
       <div class="form">
         <label>Title</label><Text value={v().title} set={x => setV({ ...v(), title: x })} />
         <label>Enter values as</label><Pick value={v().entry} set={x => setV({ ...v(), entry: x as DataSet["entry"] })} options={[["rep", "Replicate values (Y1, Y2, …)"], ["msn", "Mean, SD and N"], ["mesn", "Mean, SEM and N"]]} />
         <Show when={v().entry === "rep"}><label>Replicates</label><input type="number" min="1" max="50" value={v().reps} onChange={e => setV({ ...v(), reps: +e.currentTarget.value })} /></Show>
+        <Show when={t.kind === "sheet"}><label>Role</label><Pick value={v().role ?? ""} set={x => setV({ ...v(), role: x })} options={ROLES} /></Show>
+        <label>Units</label><Text value={v().units ?? ""} set={x => setV({ ...v(), units: x })} />
+        <label>Comment</label><Text value={v().comment ?? ""} set={x => setV({ ...v(), comment: x })} />
+        <label>Formula</label><span class="stackr"><input class="mono" disabled={!one()} placeholder={one() ? "e.g. log10(A) or (B - mean(B)) / sd(B)" : "formulas fill data sets with one value per row"} value={v().formula ?? ""} onInput={e => setV({ ...v(), formula: e.currentTarget.value })} />
+          <span class="muted">{FORMULA_HELP} Empty: no formula. The column updates when its data change.</span></span>
       </div>
       <p class="muted">Fewer replicates drop the values in the last columns. Switching to mean/SD/N keeps the first three columns as they are.</p>
     </Dialog>
   );
 });
+
+/** Data › Column Formula: fill a data set from the others. */
+export const formulaDialog = (t: Table) => {
+  const ks = t.sets.map((_, k) => k).filter(k => t.sets[k].entry === "rep" && t.sets[k].reps === 1);
+  if (!ks.length) return toast("Formulas fill data sets with one value per row: add one (Add Data Set, then Format Data Set › 1 replicate).");
+  openDialog(() => {
+  const [k, setK] = createSignal(ks.find(j => !t.sets[j].formula && t.cols[spans(t)[j][0]]?.every(v => v === null)) ?? ks[ks.length - 1]);
+  const [f, setF] = createSignal(t.sets[k()].formula ?? "");
+  return (
+    <Dialog title="Column Formula" help="formula" ok={() => setFormula(t, k(), f().trim())}>
+      <div class="form">
+        <label>Fill</label><Pick value={String(k())} set={x => { setK(+x); setF(t.sets[+x].formula ?? ""); }} options={ks.map(j => [String(j), `${letter(j)}: ${t.sets[j].title || `Data set ${letter(j)}`}`] as [string, string])} />
+        <label>With</label><input class="mono" autofocus value={f()} placeholder="e.g. log10(A)" onInput={e => setF(e.currentTarget.value)} />
+        <label /><span class="muted">{FORMULA_HELP} Empty removes the formula and keeps the values.</span>
+      </div>
+    </Dialog>
+  );
+});
+};

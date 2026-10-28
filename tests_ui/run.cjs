@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, seventeen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 21, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, eighteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 22, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -307,6 +307,24 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(150);
   check("New Table › Nested asks the shell for a nested table", (await calls("new_table"))[0]?.kind === "nested", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.dlg nav button:has-text("Worksheets and 3D")');
+  await p.click('.galitem:has-text("Worksheet")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Worksheet asks the shell for a worksheet", (await calls("new_table"))[0]?.kind === "sheet", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("Column Formula")');
+  await p.waitForTimeout(150);
+  check("Column Formula explains that formulas fill one-value data sets", ((await p.textContent("#toast")) || "").includes("one value per row") && !(await p.$(".dlg")));
+  await p.click(".nav .nitem:nth-of-type(2)");
+  await p.waitForTimeout(200);
+  await p.click(".dhead .hc.st >> nth=0", { clickCount: 2 });
+  await p.waitForTimeout(150);
+  check("Format Data Set has units, a comment and a formula (off for replicates)", ((await p.textContent(".dlg")) || "").includes("Units") && await p.isDisabled(".dlg input.mono"));
+  await p.keyboard.press("Escape");
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);
