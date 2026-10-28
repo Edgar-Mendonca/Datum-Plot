@@ -29,6 +29,7 @@ Checks before pushing:
 - `npm run check:ui`
 - UI tests: `npm run test:ui` (Playwright against `ui/dist` with the `dump` fixture)
 - `cargo deny check` (advisories, licences, sources; `deny.toml`, also a CI job)
+- `npm audit --audit-level=high` and `pip-audit -r py/requirements.txt` (known vulnerabilities; the CI `audit` job)
 
 Releasing:
 1. Bump the version in `src-tauri/Cargo.toml` and `crates/core/Cargo.toml`.

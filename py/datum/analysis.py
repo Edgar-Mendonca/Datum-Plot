@@ -666,7 +666,12 @@ def run(kind, table, sets, options):
     ks = [k for k in ks if k not in empty]
     if not ks:
         raise ValueError("Choose at least one data set." if not empty else "The chosen data sets have no values yet.")
-    r = (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
+    try:
+        r = (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
+    except ZeroDivisionError:
+        raise ValueError("The values do not vary (they are all the same, or a group has only one value), so this cannot be worked out.")
+    except OverflowError:
+        raise ValueError("Some numbers are too large or too small to work with; try other units (for example kPa instead of Pa).")
     if empty:
         r["checks"].append([None, f"Left out because {'it is' if len(empty) == 1 else 'they are'} empty: {', '.join(name_of(table, k) for k in empty)}."])
     return r

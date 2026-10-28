@@ -144,6 +144,60 @@ fn files_round_trip_and_newer_files_are_refused() {
 }
 
 #[test]
+fn edits_with_impossible_values_are_refused_not_crashing() {
+    let mut d = Doc::new(Project::new("P"));
+    d.apply(Op::NewTable { table: Box::new(Table::column(2)), graph: Some(Box::new(GraphSettings::default())) }).unwrap();
+    let id = d.p.tables[0].id;
+    let ops = vec![
+        Op::Cells { table: id, cells: vec![(usize::MAX, 99, "1".into()), (0, -5, "x".into())] },
+        Op::Paste { table: id, row: usize::MAX / 2, col: 1, rows: vec![vec!["1".into()]] },
+        Op::Rows { table: id, at: usize::MAX, count: i64::MIN },
+        Op::Rows { table: id, at: 0, count: i64::MAX },
+        Op::Sort { table: id, col: 999, desc: true },
+        Op::Exclude { table: id, cells: vec![(usize::MAX, usize::MAX)], on: true },
+        Op::SetDef { table: id, k: Some(99), set: None },
+        Op::Formula { table: id, k: Some(99), formula: Some("A".into()), sets: vec![] },
+        Op::Formula { table: id, k: None, formula: None, sets: vec![(0, vec![Some(1.0); 5_000_000])] },
+        Op::Style { table: id, cells: vec![("99999999:99999".into(), "b".into()), ("x".into(), "y".into())] },
+        Op::Delete { id: 12345 }, Op::Rename { id: 12345, name: "x".into() }, Op::Duplicate { id: 12345 },
+        Op::Overlay { graph: 12345, analysis: 1, on: true }, Op::CopyLook { from: 12345, to: vec![1, 2] },
+        Op::AddGraph { table: 12345, settings: None },
+        Op::Batch(vec![Op::Rename { id, name: "ok".into() }, Op::Delete { id: 12345 }]),
+    ];
+    for op in ops {
+        let _ = d.apply(op); // an error is fine; a panic or a runaway table is not
+        let t = &d.p.tables[0];
+        assert!(t.rows <= MAX_ROWS && t.cols.iter().all(|c| c.len() == t.rows), "table stays well formed");
+    }
+}
+
+#[test]
+fn hostile_files_are_kept_in_bounds() {
+    // Absurd sizes in a file must not allocate without limit.
+    let p = Project::from_json(r#"{"name":"x","tables":[{"id":1,"name":"T","rows":4000000000,"sets":[{"title":"A","entry":"rep","reps":99999999}]}]}"#).unwrap();
+    let t = &p.tables[0];
+    assert_eq!((t.sets[0].reps, t.width()), (50, 51));
+    assert!(t.rows * t.width() <= MAX_CELLS && t.cols.iter().all(|c| c.len() == t.rows));
+    let many = format!(r#"{{"name":"x","tables":[{{"id":1,"name":"T","rows":5,"sets":[{}]}}]}}"#, vec![r#"{"title":"A","entry":"rep","reps":1}"#; 3000].join(","));
+    assert_eq!(Project::from_json(&many).unwrap().tables[0].sets.len(), MAX_SETS);
+    let mut d = Doc::new(Project::new("big"));
+    d.apply(Op::NewTable { table: Box::new(Table { rows: 3_000_000, ..Table::column(2) }), graph: None }).unwrap();
+    for i in 0..30 {
+        d.apply(Op::Rename { id: d.p.tables[0].id, name: format!("T{i}") }).unwrap();
+    }
+    let mut n = 0;
+    while d.can_undo() {
+        d.undo();
+        n += 1;
+    }
+    assert_eq!(n, 20, "a 3-million-cell project keeps 60M / 3M = 20 undo steps");
+    let big = Table { rows: 2_000_000, ..Table::column(1) };
+    let mut b = big;
+    b.normalize();
+    assert_eq!(b.rows, MAX_ROWS);
+}
+
+#[test]
 fn worksheets_and_formulas() {
     let mut d = Doc::new(Project::new("P"));
     d.apply(Op::NewTable { table: Box::new(Table::sheet(3)), graph: None }).unwrap();

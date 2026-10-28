@@ -216,8 +216,14 @@ impl Table {
     }
     /// Makes every column `rows` long and matches the columns to the data sets.
     pub fn normalize(&mut self) {
-        self.rows = self.rows.clamp(1, 100_000);
+        // Limits that keep a damaged or hostile file from exhausting memory: 1000 data sets of at most
+        // 50 replicates, a million rows, and no more than 20 million cells in all.
+        self.sets.truncate(MAX_SETS);
+        for s in &mut self.sets {
+            s.reps = s.reps.clamp(1, 50);
+        }
         let w = self.width();
+        self.rows = self.rows.clamp(1, (MAX_CELLS / w.max(1)).clamp(1, MAX_ROWS));
         self.cols.resize(w, vec![]);
         for c in &mut self.cols {
             c.resize(self.rows, None);
@@ -229,6 +235,10 @@ impl Table {
         self.excluded.dedup();
     }
 }
+
+pub const MAX_ROWS: usize = 1_000_000;
+pub const MAX_SETS: usize = 1000;
+pub const MAX_CELLS: usize = 20_000_000;
 
 /// A page layout (F1): items placed in millimetres from the top-left of a `width` × `height` page.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -502,6 +512,10 @@ impl Project {
         }
         let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).chain(self.layouts.iter().map(|l| l.id)).max().unwrap_or(0);
         self.next_id = self.next_id.max(top + 1);
+    }
+    /// Cells in all the tables (for the undo budget).
+    pub fn cells(&self) -> usize {
+        self.tables.iter().map(|t| t.rows * t.width()).sum()
     }
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut p: Project = serde_json::from_str(text).map_err(|e| e.to_string())?;

@@ -32,6 +32,19 @@ TRT1 = [4.81, 4.17, 4.41, 3.59, 5.87, 3.83, 6.03, 4.89, 4.32, 4.69]
 TRT2 = [6.31, 5.12, 5.54, 5.50, 5.37, 5.29, 4.92, 6.15, 5.80, 5.26]
 
 
+class Robustness(unittest.TestCase):
+    def test_awkward_data_gives_messages_not_crashes(self):
+        # Every analysis on identical values, one value, NaN, gaps and huge numbers: results or a ValueError.
+        kinds = list(A.more_kinds())
+        for cols in ([[2.0] * 5, [2.0] * 5], [[1.0], [2.0]], [[1.0, float("nan"), 3.0], [1.0, 2.0, 3.0]], [[1e300, 2e300, 3e300], [1e-300, 2e-300, 3e-300]]):
+            for t in (col(*cols), xy(list(range(len(cols[0]))), *cols)):
+                for k in kinds:
+                    try:
+                        A.run(k, t, [], {})
+                    except ValueError:
+                        pass
+
+
 class TTests(unittest.TestCase):
     def test_welch_student_and_paired_match_r(self):
         # R: t.test(extra ~ group, sleep): t = -1.8608, df = 17.776, p = 0.07939; var.equal: p = 0.07919

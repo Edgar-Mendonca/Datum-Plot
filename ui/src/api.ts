@@ -48,6 +48,7 @@ export interface Options {
   theme: string; autosave: number; beta: boolean; openLast: boolean; decimals: number; reps: number; entry: string; error: string; width: number; height: number;
   font: string; fontSize: number; style: string; dpi: number; paper: string; landscape: boolean; company: string; logo: string;
   /** Graph styles the user saved: name → settings. */ styles: Record<string, Partial<GraphSettings>>;
+  /** My Analyses: console code the user saved (name → code); kept with the app, never in projects. */ snippets?: Record<string, string>;
 }
 
 /** Spreadsheet-style column letters: A, B, … Z, AA. */

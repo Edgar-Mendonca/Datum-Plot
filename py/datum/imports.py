@@ -35,7 +35,10 @@ def _text(e, name):
 
 def read_pzfx(path):
     """Tables, titles, replicates, row titles and excluded values from a .pzfx project (its XML)."""
-    root = ET.parse(path).getroot()
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as e:
+        raise ValueError(f"That .pzfx file is damaged or not a .pzfx project ({e}).")
     tables = []
     for t in root.iter():
         if _tag(t) not in ("Table", "HugeTable"):
@@ -109,7 +112,7 @@ def numeric_table(rows):
     return ([head[j] if head and j < len(head) else "" for j in keep] if head else None), [cols[j] for j in keep]
 
 
-def read_many(paths):
+def read_many(paths, separate=False):
     """Several files: one data set per file (per Y column) in one XY table when they share their X values,
     otherwise one table per file."""
     runs = []
@@ -127,7 +130,7 @@ def read_many(paths):
         runs.append((name, head, cols))
     if not runs:
         raise ValueError("None of those files has numbers in it.")
-    same = len(runs) > 1 and all(len(r[2][0]) == len(runs[0][2][0]) and all(a == b for a, b in zip(r[2][0], runs[0][2][0])) for r in runs)
+    same = not separate and len(runs) > 1 and all(len(r[2][0]) == len(runs[0][2][0]) and all(a == b for a, b in zip(r[2][0], runs[0][2][0])) for r in runs)
     title = lambda name, head, j, ny: name if ny == 1 else f"{name} {(head[j] if head and head[j] else f'Y{j}')}"
     if same:
         x = runs[0][2][0]

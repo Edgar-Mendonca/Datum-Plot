@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.2.23 — 2026-10-28
+
+The Python console, your own analyses, templates, batch processing and notebooks; and a full security, robustness and hardening review.
+
+**Python console**
+- Tools › **Python Console**: write Python in the box, press ▶ Run (or Ctrl+Enter), and see what you print, the value of the last line and any figure you draw. Your tables are ready as pandas DataFrames (`tables`, `table(0)`, `tables['Name']`), with numpy, pandas, SciPy and matplotlib loaded. `new_table(...)` puts results back into the project and `result(...)` reads an analysis's numbers. Variables last between runs.
+- **How to use** is built in: the ⓘ How to use button in the console and the ? beside it in the ribbon explain where to write, how to run, how to reach your data and how to put results back; Examples ▾ fills in working code to start from.
+
+**Your own analyses, templates, batches, notebooks**
+- **My Analyses**: save console code under a name and run it again from Tools › My Analyses on any project. It is kept with the app, never inside projects.
+- **Analysis Template**: repeat one table's analyses (with their options) and its graph's look on other tables.
+- **Batch Process**: choose a template table and many files; each file becomes a table with those analyses and a graph, and the answers are listed together.
+- **Notebook**: save the project as a Jupyter notebook (.ipynb): its tables, each analysis's answer and the Python behind it.
+- Every command in the ribbon now works: none are left “coming soon”.
+
+**Security and hardening**
+- Updates are installed only when the release's checksum file is there and matches the download exactly; links open only on this project's own pages.
+- Project files with impossible sizes, and files larger than 1 GB, are refused or kept within limits (a million rows, 1000 data sets, 50 replicates) instead of exhausting memory; imported files are limited to 300 MB.
+- Code never runs from a project: the console runs only what you type when you press Run, and My Analyses stay with the app.
+- Every change is now also checked for known vulnerabilities in the window's packages and the bundled Python packages, as it already was for the Rust ones.
+
+**Robustness**
+- Every analysis was run on awkward data (identical values, a single value, gaps, empty cells, numbers near the limits) on every kind of table: where something cannot be worked out, it now says why in plain words instead of failing. Editing with impossible values (rows beyond the end, columns that do not exist) is refused safely.
+- Tables can now hold up to a million rows (before: 100 000, and larger imports were cut off). Undo keeps fewer steps for very large projects, so memory stays bounded.
+- A damaged .pzfx file, or an unexpected number in a result, gives a message instead of stopping the engine.
+
 ## 0.2.22 — 2026-10-28
 
 Large data, region statistics, importing projects, plates and many runs, and slides, reports and posters.

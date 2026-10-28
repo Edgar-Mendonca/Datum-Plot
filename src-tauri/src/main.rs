@@ -46,13 +46,16 @@ struct Options {
     logo: String,
     /// Graph styles the user saved (name → settings), for Graph › Styles.
     styles: Value,
+    /// My Analyses (H2): console code the user saved (name → code). Kept with the app, never in projects,
+    /// so opening someone else's project never runs code.
+    snippets: Value,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
             theme: "auto".into(), autosave: 5, beta: false, open_last: false, decimals: -1, reps: 3, entry: "rep".into(), error: "sd".into(), width: 80.0, height: 60.0,
-            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}),
+            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}), snippets: json!({}),
         }
     }
 }
@@ -144,16 +147,44 @@ fn import_tables(st: State<St>, tables: Vec<Table>) -> R<Value> {
     Ok(out(&a))
 }
 
-/// File › Import Several Files: one run per file, joined when they share X (A14).
+/// File › Import Several Files: one run per file, joined when they share X (A14); with `separate`, one table
+/// per file (Tools › Batch Process).
 #[tauri::command]
-async fn import_files(app: AppHandle, st: State<'_, St>) -> R<Option<Value>> {
+async fn import_files(app: AppHandle, st: State<'_, St>, separate: Option<bool>) -> R<Option<Value>> {
     let Some(files) = app.dialog().file().add_filter("Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm"]).blocking_pick_files() else { return Ok(None) };
     let paths: Vec<String> = files.into_iter().filter_map(|f| f.into_path().ok()).map(|p| p.display().to_string()).collect();
-    let q = json!({ "cmd": "read_many", "paths": paths });
+    let q = json!({ "cmd": "read_many", "paths": paths, "separate": separate.unwrap_or(false) });
     let h = app.clone();
     let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
     let tables: Vec<Table> = serde_json::from_value(r["tables"].clone()).map_err(|e| e.to_string())?;
     import_tables(st, tables).map(Some)
+}
+
+/// Tools › Python Console (H1): runs the user's code on the project's tables; tables it makes are added
+/// (one undo step). `reset` clears the console's variables.
+#[tauri::command]
+async fn console(app: AppHandle, st: State<'_, St>, code: String, reset: Option<bool>) -> R<Value> {
+    let q = { let a = st.0.lock().unwrap(); json!({ "cmd": "console", "project": a.doc.p, "code": code, "reset": reset.unwrap_or(false) }) };
+    let h = app.clone();
+    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())?
+        .map_err(|e| if e.contains("longer than") { format!("The code ran for more than a minute, so the engine was restarted and the console's variables were cleared ({e}).") } else { e })?;
+    let tables: Vec<Table> = serde_json::from_value(r["tables"].take()).unwrap_or_default();
+    if !tables.is_empty() {
+        import_tables(st, tables)?;
+    }
+    r["state"] = state(app.state::<St>());
+    Ok(r)
+}
+
+/// Tools › Notebook: the project as a Jupyter notebook (.ipynb) (H5).
+#[tauri::command]
+async fn export_notebook(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
+    let (name, project) = { let a = st.0.lock().unwrap(); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
+    let Some(path) = app.dialog().file().add_filter("Jupyter notebook", &["ipynb"]).set_file_name(format!("{name}.ipynb")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let q = json!({ "cmd": "notebook", "project": project, "path": path.display().to_string() });
+    let h = app.clone();
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    Ok(Some(path.display().to_string()))
 }
 
 /// The region tool (E5): statistics of each curve between two X values (and Y values, for a box).
@@ -289,10 +320,10 @@ fn base64(bytes: &[u8]) -> String {
 #[tauri::command]
 async fn pick_logo(app: AppHandle) -> R<Option<String>> {
     let Some(path) = pick(&app, "Pictures", &["png", "jpg", "jpeg", "svg", "gif"]) else { return Ok(None) };
-    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
-    if bytes.len() > 1_500_000 {
+    if std::fs::metadata(&path).map_err(|e| e.to_string())?.len() > 1_500_000 {
         return Err("Choose a picture smaller than 1.5 MB.".into());
     }
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
     let mime = match path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase().as_str() { "svg" => "image/svg+xml", "jpg" | "jpeg" => "image/jpeg", "gif" => "image/gif", _ => "image/png" };
     Ok(Some(format!("data:{mime};base64,{}", base64(&bytes))))
 }
@@ -641,7 +672,8 @@ fn startup_file(app: AppHandle, st: State<St>) -> Option<String> {
 /// Opens one of the project's GitHub pages in the browser (only those).
 #[tauri::command]
 fn open_url(url: String) -> R<()> {
-    if !url.starts_with("https://github.com/Edgar-Mendonca/Datum-Plot") {
+    let base = "https://github.com/Edgar-Mendonca/Datum-Plot";
+    if !(url == base || url.starts_with(&format!("{base}/"))) || url.chars().any(|c| c.is_whitespace() || c.is_control() || "\"'<>^`{|}".contains(c)) {
         return Err("Only the Datum Plot GitHub pages can be opened.".into());
     }
     #[cfg(windows)]
@@ -708,7 +740,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

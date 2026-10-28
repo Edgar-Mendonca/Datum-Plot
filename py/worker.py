@@ -10,6 +10,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
+def clean(v):
+    """The reply with every NaN or infinity made None (JSON has no such numbers)."""
+    if isinstance(v, float):
+        return v if v == v and v not in (float("inf"), float("-inf")) else None
+    if isinstance(v, dict):
+        return {k: clean(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [clean(x) for x in v]
+    return v
+
+
 def main():
     out = sys.stdout
     sys.stdout = sys.stderr  # stray prints from libraries must not break the protocol
@@ -40,12 +51,18 @@ def main():
         if cmd == "excel":
             from datum import io as dio
             return dio.write_excel(q["path"], q["project"], q.get("analyses", []))
+        if cmd == "console":
+            from datum import console
+            return console.reset() if q.get("reset") else console.run(q["project"], q.get("code", ""))
+        if cmd == "notebook":
+            from datum import console
+            return console.notebook(q["project"], q["path"])
         if cmd == "report":
             from datum import report
             return (report.slides if q.get("kind") == "slides" else report.word)(q["project"], q["path"])
         if cmd == "read_many":
             from datum import imports
-            return {"tables": imports.read_many(q["paths"])}
+            return {"tables": imports.read_many(q["paths"], q.get("separate", False))}
         if cmd == "region":
             from datum import region
             return region.region(q["table"], q["x0"], q["x1"], q.get("y0"), q.get("y1"))
@@ -68,7 +85,11 @@ def main():
             r = {"ok": True, **handle(q)}
         except Exception as e:  # report every failure to the app instead of dying
             r = {"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc(limit=4)}
-        out.write(json.dumps(r, allow_nan=False, default=str) + "\n")
+        try:
+            line = json.dumps(r, allow_nan=False, default=str)
+        except ValueError:  # a NaN or infinity slipped into a result: send it as empty rather than die
+            line = json.dumps(clean(r), allow_nan=False, default=str)
+        out.write(line + "\n")
         out.flush()
 
 

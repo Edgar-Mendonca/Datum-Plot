@@ -26,7 +26,8 @@ def value(table, r, c, ex=frozenset()):
     v = col[r] if r < len(col) else None
     if v is None or (r, c) in ex:
         return None
-    return float(v)
+    v = float(v)
+    return v if math.isfinite(v) else None  # NaN or infinity counts as empty
 
 
 def describe(vals):

@@ -47,17 +47,36 @@ Everything stays on your computer. The only network call is the update check to 
 
 Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Mendonca/Datum-Plot/releases/latest) and run it. It installs for your user account, with its own Python, and updates itself from the Home page.
 
+## The Python console
+
+Tools › **Python Console** runs your own Python on the project's data, inside the app (nothing else to install):
+
+1. **Write** code in the box at the top. Your tables are ready as pandas DataFrames: `tables` lists them, `table(0)` is the first, `tables['Name']` one by its name. Columns are named after the data sets (replicates as `Control 1`, `Control 2`), X first.
+2. **Run** it with ▶ Run or **Ctrl+Enter**. What you `print`, the value of the last line and any `plt` figure appear underneath; an error names the line.
+3. **Keep going**: variables last between runs (Reset clears them). `np`, `pd`, `stats` (scipy.stats), `scipy` and `plt` are ready.
+4. **Put results back**: `new_table('Name', data)` adds a table to the project; `result('Analysis name')` gives an analysis's numbers.
+5. **Save** code you reuse with Save As My Analysis, and run it again from Tools › My Analyses.
+
+```python
+df = table(0)
+fit = stats.linregress(df.iloc[:, 0], df.iloc[:, 1])
+print(f"slope {fit.slope:.4g}, R² {fit.rvalue**2:.4f}")
+new_table("Log values", {"X": df.iloc[:, 0], "log10 Y": np.log10(df.iloc[:, 1])})
+```
+
+The ⓘ How to use button in the console and the ? beside it in the ribbon show the same guide. Code runs only when you press Run; projects never contain code, so opening someone else's project never runs anything.
+
 ## How to cite
 
 If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
 
-> Mendonca, E. (2026). *Datum Plot* (Version 0.2.22) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+> Mendonca, E. (2026). *Datum Plot* (Version 0.2.23) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
 
 ```bibtex
 @software{datum_plot,
   author  = {Mendonca, Edgar},
   title   = {Datum Plot},
-  version = {0.2.22},
+  version = {0.2.23},
   year    = {2026},
   url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
   license = {MIT}

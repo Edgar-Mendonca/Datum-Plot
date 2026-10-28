@@ -82,11 +82,18 @@ pub fn check(beta: bool) -> Result<Info, String> {
 
 /// Downloads `url` to `dest` with progress events, checking its SHA-256 against `sums` (a
 /// SHA256SUMS.txt from the same release). Only this repo's release files are accepted.
+/// True when SHA256SUMS lists exactly `name` (as `sha256sum` writes it: "hash  name" or "hash *name") with hash `got`.
+fn matches(list: &str, name: &str, got: &str) -> bool {
+    list.lines().filter_map(|l| l.split_once(char::is_whitespace)).any(|(h, n)| n.trim().trim_start_matches('*') == name && h.len() == 64 && h.eq_ignore_ascii_case(got))
+}
+
 pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path::Path, event: &str) -> Result<(), String> {
     let base = format!("https://github.com/{REPO}/releases/download/");
     if !url.starts_with(&base) || sums.is_some_and(|s| !s.starts_with(&base)) {
         return Err("Files are only downloaded from the Datum Plot releases page.".into());
     }
+    // Every release publishes SHA256SUMS.txt: an installer that cannot be checked is not run.
+    let Some(sums) = sums else { return Err("This release has no checksum file, so the download cannot be checked. Download it from the releases page instead.".into()) };
     let name = url.rsplit('/').next().unwrap_or("download").to_string();
     let resp = agent().get(url).call().map_err(|e| format!("Download failed: {e}"))?;
     let total: u64 = resp.header("Content-Length").and_then(|v| v.parse().ok()).unwrap_or(0);
@@ -106,15 +113,12 @@ pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path
         }
     }
     drop(file);
-    if let Some(s) = sums {
-        let fail = |e: String| format!("Could not fetch checksums: {e}");
-        let list = agent().get(s).call().map_err(|e| fail(e.to_string()))?.into_string().map_err(|e| fail(e.to_string()))?;
-        let want = list.lines().find(|l| l.trim_end().ends_with(&name)).and_then(|l| l.split_whitespace().next()).unwrap_or("");
-        let got: String = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
-        if !want.eq_ignore_ascii_case(&got) {
-            let _ = std::fs::remove_file(dest);
-            return Err("The download did not match its checksum and was deleted. Try again.".into());
-        }
+    let fail = |e: String| format!("Could not fetch checksums: {e}");
+    let list = agent().get(sums).call().map_err(|e| fail(e.to_string()))?.into_string().map_err(|e| fail(e.to_string()))?;
+    let got: String = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
+    if !matches(&list, &name, &got) {
+        let _ = std::fs::remove_file(dest);
+        return Err("The download did not match its checksum and was deleted. Try again.".into());
     }
     let _ = app.emit(event, 100u64);
     Ok(())
@@ -153,4 +157,17 @@ fn launch(installer: &std::path::Path) -> Result<(), String> {
 #[cfg(not(windows))]
 fn launch(_: &std::path::Path) -> Result<(), String> {
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::matches;
+    #[test]
+    fn checksums_match_the_exact_file_only() {
+        let h = "a".repeat(64);
+        let list = format!("{h}  DatumPlot-0.2.23-setup.exe\n{}  evil-DatumPlot-0.2.23-setup.exe\n", "b".repeat(64));
+        assert!(matches(&list, "DatumPlot-0.2.23-setup.exe", &h.to_uppercase()));
+        assert!(!matches(&list, "DatumPlot-0.2.23-setup.exe", &"b".repeat(64)), "another file's line must not count");
+        assert!(matches(&format!("{h} *x.exe"), "x.exe", &h) && !matches("short  x.exe", "x.exe", "short"));
+    }
 }

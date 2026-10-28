@@ -1,14 +1,14 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.22";
+export const VERSION_NOW = "0.2.23";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
   "0.2.6": "ROC, Bland-Altman and special graphs", "0.2.7": "Axis breaks and a second Y axis", "0.2.8": "Annotations", "0.2.9": "Click, drag, zoom and exclude on the graph", "0.2.10": "Users' requests: open new tables, remove data sets, choose the test, X axis gaps", "0.2.11": "Page layouts and journal figures",
   "0.2.12": "Multi-panel figures", "0.2.13": "Security: the library that unpacks the Python engine, licence checks", "0.2.14": "Many variables and multiple regression", "0.2.15": "PCA and clustering", "0.2.16": "Survival analysis", "0.2.17": "Nested data",
   "0.2.18": "Peaks and signal processing", "0.2.19": "DSC/TGA and S–N curves", "0.2.20": "Worksheets and column formulas", "0.2.21": "Matrices, 3D and surface fits", "0.2.22": "Large data, regions, import, slides, reports and posters",
-  "0.2.23": "Python console, your own analyses, templates, batch and notebooks", "1.0": "Stable, signed, validated",
+  "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "1.0": "Stable, signed, validated",
 };
 export const AREAS: Record<string, string> = {
   A: "Data tables and entry", B: "Analyses", C: "Results", D: "Graphs", E: "Working on the graph", F: "Layouts", G: "Export and sharing", H: "Python inside", I: "Speed and reliability", J: "Learning and help",
@@ -107,11 +107,11 @@ export const FEATURES: Feature[] = [
   ["G4", "Batch export", "0.2.2", "Export every graph in the project at once.", "matplotlib"],
   ["G5", "Slides and reports", "0.2.22", "One slide per graph (.pptx); a report (.docx) with graphs, results and methods text.", "python-pptx, python-docx"],
   ["G6", "Spreadsheet export", "0.2.2", "Data tables and results as an .xlsx workbook.", "openpyxl"],
-  ["H1", "Python console", "0.2.23", "Run Python on your tables and results inside the app.", ""],
-  ["H2", "Your own analyses", "0.2.23", "Write analyses and fit equations in Python and keep them as plugins.", ""],
-  ["H3", "Analysis templates", "0.2.23", "Run the same analyses and graphs on new data with one click.", ""],
-  ["H4", "Batch processing", "0.2.23", "A folder of files becomes tables, analyses, graphs and a summary.", "pandas"],
-  ["H5", "Notebook export", "0.2.23", "Save a project's analyses as a Jupyter notebook.", ""],
+  ["H1", "Python console", "0.2.23", "Run Python on your tables (as pandas DataFrames) inside the app: output, figures and new tables, with a guide and examples.", ""],
+  ["H2", "Your own analyses", "0.2.23", "Save console code as named analyses with the app and run them again on any project (projects never carry code).", ""],
+  ["H3", "Analysis templates", "0.2.23", "Repeat one table's analyses, with their options and graph look, on other tables.", ""],
+  ["H4", "Batch processing", "0.2.23", "Many files, each a table with a template's analyses and graph, and a summary of the answers.", "pandas"],
+  ["H5", "Notebook export", "0.2.23", "The project as a Jupyter notebook: its tables, each analysis's answer and the Python behind it.", ""],
   ["I1", "One installer, quick start", "0.1.1", "One file installs and updates Datum Plot; Python is unpacked once and again only when its libraries change.", ""],
   ["I2", "Engine timeout and restart", "0.1.1", "A request that takes too long restarts the Python engine instead of freezing.", ""],
   ["I3", "Second engine for long work", "0.2.2", "A second Python engine calculates results, so a long fit never holds up the graphs.", ""],

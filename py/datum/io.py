@@ -6,7 +6,8 @@ import io
 import os
 import re
 
-MAX_ROWS, MAX_COLS = 200_000, 500
+MAX_ROWS, MAX_COLS = 1_000_000, 500
+MAX_BYTES = 300 << 20  # a file read into memory at once
 DECIMAL_COMMA = re.compile(r"^-?\d+,\d+$")
 
 
@@ -70,6 +71,8 @@ def read_excel(path):
 def read_file(path):
     """{"sheets": [{"name", "rows": [[text]]}]} for a CSV, TSV, TXT or XLSX file."""
     ext = os.path.splitext(path)[1].lower()
+    if ext in (".pzfx", ".xlsx", ".xlsm", ".csv", ".tsv", ".txt", ".dat", ".prn") and os.path.getsize(path) > MAX_BYTES:
+        raise ValueError(f"{os.path.basename(path)} is larger than {MAX_BYTES >> 20} MB; split it into smaller files.")
     if ext == ".pzfx":
         from .imports import read_pzfx
         return {"sheets": [], "tables": read_pzfx(path)}

@@ -7,9 +7,9 @@ import { Icon } from "./ui";
 import * as F from "./fmt";
 import { setG, ERRORS, SIZES, MATRIX, FONTS as GFONTS } from "./format";
 import { GraphSettings } from "./api";
-import { feature } from "./features";
 import { formulaDialog } from "./datatable";
-import { soon, newTable, analyze, graphTypes, importFile, importFiles, runAnalysis } from "./roadmap";
+import { openConsole, myAnalyses } from "./console";
+import { newTable, analyze, graphTypes, importFile, importFiles, runAnalysis } from "./roadmap";
 import * as T from "./tools";
 import * as L from "./layout";
 import { Layout } from "./api";
@@ -54,8 +54,6 @@ const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boole
 );
 const G = (p: { l: string; h?: string; children: JSX.Element }) => <div class="grp"><div class="items">{p.children}</div><div class="cap">{p.l}{p.h && <Help k={p.h} />}</div></div>;
 const S = (p: { children: JSX.Element }) => <div class="stack">{p.children}</div>;
-/** A planned command: it has its place now and says when it arrives (feature catalogue id). */
-const N = (p: { i: string; l: string; id: string; big?: boolean }) => { const f = feature(p.id); return <B i={p.i} l={p.l} big={p.big} soon title={`${p.l}: arrives in ${f?.[2]} (${p.id})`} run={() => soon(p.id)} />; };
 
 /** Tell Me / command search (Ctrl+K, Alt+Q). */
 export const palette = () => openDialog(() => {
@@ -183,8 +181,8 @@ export const Ribbon = () => (
       <G l="Export" h="exportall"><B big i="export" l="Export Layout" title="PDF, TIFF, PNG, SVG or EPS at the page's real size" run={() => lay(l => L.exportLayout(l))} /><B big i="image" l="TIFF for Journals" title="CMYK, LZW, 600 dpi" run={() => lay(l => L.exportLayout(l, true))} /></G>
     </Show>
     <Show when={tab() === "tools"}>
-      <G l="Python"><N big i="fx" l="Python Console" id="H1" /><S><N i="fx" l="My Analyses" id="H2" /><N i="report" l="Notebook" id="H5" /></S></G>
-      <G l="Automate"><N big i="repeat" l="Analysis Template" id="H3" /><N big i="folder" l="Batch Process" id="H4" /></G>
+      <G l="Python" h="console"><B big i="fx" l="Python Console" title="Run your own Python on the tables (press ? for how to use it)" run={openConsole} /><S><B i="fx" l="My Analyses" title="Run code you saved from the console" dd={myAnalyses} /><B i="report" l="Notebook" title="The project as a Jupyter notebook (.ipynb)" run={T.exportNotebook} /></S></G>
+      <G l="Automate" h="automate"><B big i="repeat" l="Analysis Template" title="Repeat one table's analyses on other tables" run={T.templateDialog} /><B big i="folder" l="Batch Process" title="Many files analysed the same way, with a summary" run={T.batchProcess} /></G>
       <G l="Export" h="exportall"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Excel Workbook" title="Data tables and results as an Excel workbook" run={T.exportExcel} /><S><B i="report" l="PowerPoint" title="Every graph on its own slide, and the results (.pptx)" run={() => T.exportReport("slides")} /><B i="report" l="Word Report" title="A report with the graphs, the results and the methods text (.docx)" run={() => T.exportReport("word")} /></S></G>
       <G l="Engine" h="engine"><B big i="update" l="Restart Engine" title="Restart the Python engine" run={() => call("restart_engine").then(() => toast("The Python engine restarted.", true))} /></G>
     </Show>

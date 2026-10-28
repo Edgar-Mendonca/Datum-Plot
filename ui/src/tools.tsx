@@ -2,7 +2,7 @@
 // styles, colour schemes and Copy Look, and exporting every graph or the whole project to Excel.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { Graph, GraphSettings, Table, letter, num, spans, invoke } from "./api";
-import { act, call, curTable, graph, opts, setOpts, toast, openDialog, closeDialog, P, setGoto, openMenu } from "./store";
+import { act, call, curTable, graph, opts, setOpts, setOut, toast, openDialog, closeDialog, P, setGoto, openMenu } from "./store";
 import { setG } from "./format";
 import { analysisDialog } from "./results";
 import { Dialog, Pick, Check } from "./ui";
@@ -271,3 +271,67 @@ export const significance = (e?: MouseEvent) => {
   const order = full.length === 2 ? items : [items[1], items[0], items[2]];
   openMenu(e ?? { x: 400, y: 160 }, order.map(([l, kind, pre]) => ({ label: l, run: () => analysisDialog(kind, t, undefined, pre, kind === "ttest" ? full.slice(0, 2) : sets) })));
 };
+
+/** Tools › Analysis Template (H3): the analyses (and the graph's look) of one table, repeated on others. */
+const repeat = (src: Table, targets: Table[], look: boolean) => {
+  const p = P(), as = p.analyses.filter(a => a.table === src.id), g0 = p.graphs.find(g => g.table === src.id);
+  const ops: object[] = targets.flatMap(t => as.map(a => ({ AddAnalysis: { analysis: { ...a, id: 0, table: t.id, name: `${a.name.split(" · ")[0]} · ${t.name}` }, overlay: !!g0?.settings.overlays.includes(a.id) } })));
+  const to = p.graphs.filter(g => targets.some(t => t.id === g.table)).map(g => g.id);
+  if (look && g0 && to.length) ops.push({ CopyLook: { from: g0.id, to } });
+  return ops.length ? act({ Batch: ops }) : Promise.resolve(false);
+};
+export const templateDialog = () => {
+  const p = P(), srcs = p.tables.filter(t => p.analyses.some(a => a.table === t.id));
+  if (!srcs.length) return toast("First analyse one table: its analyses become the template for the others.");
+  openDialog(() => {
+    const [src, setSrc] = createSignal(curTable() && srcs.some(t => t.id === curTable()!.id) ? curTable()!.id : srcs[0].id);
+    const [to, setTo] = createSignal<number[]>([]), [look, setLook] = createSignal(true);
+    const others = () => P().tables.filter(t => t.id !== src());
+    const s = () => P().tables.find(t => t.id === src())!;
+    return (
+      <Dialog title="Analysis Template" help="automate" okText="Apply" ok={() => !to().length ? (toast("Tick the tables to analyse."), false) : repeat(s(), others().filter(t => to().includes(t.id)), look()).then(ok => { if (ok) toast(`Analyses repeated on ${to().length} table${to().length > 1 ? "s" : ""}: see Results.`, true); return ok; })}>
+        <div class="form">
+          <label>Template</label><Pick value={String(src())} set={v => { setSrc(+v); setTo([]); }} options={srcs.map(t => [String(t.id), `${t.name} (${P().analyses.filter(a => a.table === t.id).length} analyses)`] as [string, string])} />
+          <label>Apply to</label><span class="stackr"><For each={others()}>{t => <Check label={`${t.name}${t.kind !== s().kind ? ` (a ${t.kind} table)` : ""}`} value={to().includes(t.id)} set={v => setTo(v ? [...to(), t.id] : to().filter(x => x !== t.id))} />}</For></span>
+          <label>Graphs</label><Check label="Give their graphs the template graph's look" value={look()} set={setLook} />
+        </div>
+        <p class="muted">Each ticked table gets the same analyses with the same options ({P().analyses.filter(a => a.table === src()).map(a => a.name.split(" · ")[0]).join(", ")}), linked to its own data.</p>
+      </Dialog>
+    );
+  });
+};
+
+/** Tools › Batch Process (H4): many files become tables with the template's analyses, then a summary. */
+export const batchProcess = () => {
+  const p = P(), srcs = p.tables.filter(t => p.analyses.some(a => a.table === t.id));
+  if (!srcs.length) return toast("First analyse one table the way you want every file analysed: it becomes the template.");
+  openDialog(() => {
+    const [src, setSrc] = createSignal(curTable() && srcs.some(t => t.id === curTable()!.id) ? curTable()!.id : srcs[0].id);
+    const go = async () => {
+      const before = new Set(P().tables.map(t => t.id));
+      const o = await call<any>("import_files", { separate: true });
+      if (!o) return false;
+      setOut(o);
+      const fresh = P().tables.filter(t => !before.has(t.id)), s = P().tables.find(t => t.id === src())!;
+      if (!fresh.length || !await repeat(s, fresh, true)) return false;
+      const made = P().analyses.filter(a => fresh.some(t => t.id === a.table));
+      const rows: [string, string, string][] = [];
+      for (const a of made) { const r = await call<{ answer: string }>("result", { id: a.id }); rows.push([P().tables.find(t => t.id === a.table)?.name ?? "", a.name.split(" · ")[0], r?.answer ?? "—"]); }
+      openDialog(() => (
+        <Dialog title={`Batch · ${fresh.length} files`} help="automate" wide cancel="Close" extra={<button class="btn" onClick={() => call("copy_text", { text: rows.map(r => r.join("\t")).join("\n") }).then(() => toast("Copied.", true))}>Copy</button>}>
+          <table class="tbl"><thead><tr><th>File</th><th>Analysis</th><th>Answer</th></tr></thead><tbody><For each={rows}>{r => <tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td></tr>}</For></tbody></table>
+        </Dialog>
+      ));
+      return true;
+    };
+    return (
+      <Dialog title="Batch Process" help="automate" okText="Choose Files…" ok={go}>
+        <div class="form"><label>Analyse like</label><Pick value={String(src())} set={v => setSrc(+v)} options={srcs.map(t => [String(t.id), `${t.name} (${P().analyses.filter(a => a.table === t.id).map(a => a.name.split(" · ")[0]).join(", ")})`] as [string, string])} /></div>
+        <p class="muted">Choose the files next: each becomes a table (first column X), gets these analyses and a graph with the same look, and the answers are listed together at the end.</p>
+      </Dialog>
+    );
+  });
+};
+
+/** Tools › Notebook (H5): the project as a Jupyter notebook. */
+export const exportNotebook = async () => { const p = await call<string | null>("export_notebook"); if (p) toast(`Saved ${p}`, true); };

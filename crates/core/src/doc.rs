@@ -4,6 +4,8 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 const UNDO_LIMIT: usize = 200;
+/// Cells kept across all undo steps (about 1 GB of values at most).
+const UNDO_CELLS: usize = 60_000_000;
 
 #[derive(Debug, Clone, Deserialize)]
 pub enum Op {
@@ -84,8 +86,10 @@ impl Doc {
             return Ok(());
         }
         self.undo.push(std::mem::replace(&mut self.p, q));
-        if self.undo.len() > UNDO_LIMIT {
-            self.undo.remove(0);
+        // Each undo step is a whole copy: big projects keep fewer (at least 10), so memory stays bounded.
+        let keep = (UNDO_CELLS / self.p.cells().max(1)).clamp(10, UNDO_LIMIT);
+        if self.undo.len() > keep {
+            self.undo.drain(..self.undo.len() - keep);
         }
         self.redo.clear();
         self.dirty = true;
@@ -115,6 +119,10 @@ impl Doc {
         }
     }
     pub fn open(path: &Path) -> Result<Self, String> {
+        // A project is text; more than 1 GB is not one of ours (and would not fit in memory twice).
+        if std::fs::metadata(path).map_err(|e| format!("Could not open {}: {e}", path.display()))?.len() > 1 << 30 {
+            return Err(format!("{} is larger than 1 GB, too large to be a Datum Plot project.", path.display()));
+        }
         let text = std::fs::read_to_string(path).map_err(|e| format!("Could not open {}: {e}", path.display()))?;
         let p = Project::from_json(&text).map_err(|e| format!("This is not a Datum Plot file ({e})."))?;
         let mut d = Self::new(p);
@@ -182,6 +190,9 @@ pub fn set_letter(k: usize) -> String {
 
 /// Puts text into a cell: a number, nothing, or (row titles) any text.
 fn put(t: &mut Table, r: usize, c: i64, text: &str) -> bool {
+    if r >= MAX_ROWS || c > MAX_SETS as i64 {
+        return false; // beyond what a table can hold
+    }
     if r >= t.rows {
         t.rows = r + 1;
         t.normalize();
@@ -267,7 +278,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                     let (c, h) = (col + j as i64, h.trim());
                     if c == 0 && !h.is_empty() { t.x_title = h.into(); }
                     if c > 0 && !h.is_empty() {
-                        if c as usize >= t.width() { widen(t, c as usize + 1); }
+                        if c as usize >= t.width() && c <= MAX_SETS as i64 { widen(t, c as usize + 1); }
                         if let Some((k, 0)) = t.set_of(c as usize) { t.sets[k].title = h.into(); }
                     }
                 }
@@ -349,9 +360,9 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             let n = t.rows;
             let at = at.min(n);
             let map: Vec<Option<usize>> = if count >= 0 {
-                (0..at).map(Some).chain((0..count as usize).map(|_| None)).chain((at..n).map(Some)).collect()
+                (0..at).map(Some).chain((0..(count as usize).min(MAX_ROWS.saturating_sub(n))).map(|_| None)).chain((at..n).map(Some)).collect()
             } else {
-                let end = (at + count.unsigned_abs() as usize).min(n);
+                let end = at.saturating_add(count.unsigned_abs() as usize).min(n);
                 (0..at).chain(end..n).map(Some).collect()
             };
             if map.is_empty() {

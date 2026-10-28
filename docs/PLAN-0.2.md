@@ -198,11 +198,11 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 
 | ID | Feature | Release |
 | --- | --- | --- |
-| H1 | **Python console** in the app: tables are numpy/pandas objects (`T["Growth"]`), results and graphs too; run code, plot with matplotlib into the project | 0.7 |
-| H2 | Your own analyses and fit equations written in Python, saved with the project or as plugins | 0.7 |
-| H3 | Analysis templates: run the same analyses and graphs on new data with one click | 0.7 |
-| H4 | Batch processing: a folder of files → one table, analysis and graph each, plus a summary | 0.7 |
-| H5 | Notebook export (`.ipynb`) of a project's analyses | 0.7 |
+| H1 | **Python console** in the app: tables are numpy/pandas objects (`T["Growth"]`), results and graphs too; run code, plot with matplotlib into the project | ✅ 0.2.23 |
+| H2 | Your own analyses written in Python, kept with the app (never in projects) | ✅ 0.2.23 |
+| H3 | Analysis templates: run the same analyses and graphs on new data with one click | ✅ 0.2.23 |
+| H4 | Batch processing: a folder of files → one table, analysis and graph each, plus a summary | ✅ 0.2.23 |
+| H5 | Notebook export (`.ipynb`) of a project's analyses | ✅ 0.2.23 |
 
 ### I. Speed, size and reliability
 
@@ -361,5 +361,5 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.20** ✅ | Worksheet (A9), column formulas (A11) |
 | **0.2.21** ✅ | Users' requests (session 8, second round): axis breaks on column/grouped/nested graphs, no × in headings, resizable columns saved in the project, empty data sets dimmed and unticked in dialogs; Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
 | **0.2.22** ✅ | Large data (D17), region tools (E5), .pzfx import (A13), instrument import (A14), slides and reports (G5), posters (F3) — combined at the user's request |
-| 0.2.23 | Python console (H1), own analyses (H2), templates (H3), batch (H4), notebooks (H5) |
+| **0.2.23** ✅ | Python console (H1), own analyses (H2), templates (H3), batch (H4), notebooks (H5); security, robustness and hardening review |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

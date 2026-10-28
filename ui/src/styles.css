@@ -605,3 +605,21 @@ input.mono { font-family: var(--mono) !important; }
 .hc .rsz { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 2; }
 .hc .rsz:hover { background: var(--blue); opacity: 0.35; }
 .dimset { opacity: 0.5; }
+
+/* Python console (H1) */
+.console { display: flex; flex-direction: column; gap: 8px; min-width: min(900px, 80vw); }
+.conbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.conbar .btn.on { background: var(--sel); }
+.concode { width: 100%; min-height: 180px; height: 30vh; resize: vertical; padding: 8px; font: 13px/1.45 var(--mono); tab-size: 4; border: 1px solid var(--line); background: var(--bg); color: var(--text); white-space: pre; }
+.conlog { max-height: 38vh; overflow: auto; border: 1px solid var(--line); background: var(--panel); padding: 6px 8px; }
+.conrun + .conrun { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
+.conin { margin: 0; color: var(--muted); font-size: 12px; white-space: pre-wrap; }
+.conin::before { content: ">>> "; color: var(--blue); }
+.conout { margin: 4px 0 0; font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+.conout.err { color: #C0392B; }
+.config { display: block; max-width: 100%; background: white; margin-top: 6px; }
+.conguide { border: 1px solid var(--line); background: var(--pale, var(--panel)); padding: 8px 12px; font-size: 13px; }
+.conguide h4 { margin: 0 0 6px; }
+.conguide ol { margin: 0 0 6px 18px; padding: 0; }
+.conguide li { margin-bottom: 4px; }
+.conguide code, .conguide kbd { font: 12px var(--mono); background: var(--panel); padding: 0 3px; border: 1px solid var(--line); }

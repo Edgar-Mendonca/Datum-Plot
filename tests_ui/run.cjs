@@ -32,7 +32,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
     f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
-    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
+    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
@@ -144,11 +144,28 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("ribbon tabs fit at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Tools")');
+  check("every ribbon command is ready (none planned any more)", (await p.$$(".ribbon .rb.soonb")).length === 0);
+  await reset();
   await p.click('.ribbon .rb:has-text("Python Console")');
   await p.waitForTimeout(150);
-  check("a planned command opens its card with its ID and release", ((await p.textContent(".dlg")) || "").includes("H1") && (await p.textContent(".dlg")).includes("0.2.23"));
+  check("Python Console opens with its code box, Run and a How to use guide", ((await p.textContent(".dlg header")) || "").includes("Python Console") && !!(await p.$(".dlg textarea.concode")) && !!(await p.$('.conbar .btn:has-text("How to use")')));
+  await p.click('.conbar .btn:has-text("How to use")');
+  check("How to use explains where to write, how to run and how to reach the tables", ((await p.textContent(".conguide")) || "").includes("new_table") && (await p.textContent(".conguide")).includes("Ctrl"));
+  await p.fill(".dlg textarea.concode", "6 * 7");
+  await p.press(".dlg textarea.concode", "Control+Enter");
+  await p.waitForTimeout(250);
+  check("Ctrl+Enter runs the code and shows the output", (await calls("console"))[0]?.code === "6 * 7" && ((await p.textContent(".conlog")) || "").includes("42"), JSON.stringify(await calls("console")));
+  await p.click('.conbar .btn:has-text("Examples")');
+  await p.click('.menu button:has-text("Fit a straight line")');
+  check("Examples fill the code box", ((await p.inputValue(".dlg textarea.concode")) || "").includes("linregress"));
+  await p.click('.dlg footer .btn:has-text("Close")');
+  await p.locator(".ribbon .cap", { hasText: "Python" }).locator(".help").click({ force: true });
+  await p.waitForTimeout(150);
+  check("? beside Python opens the console's guide card", ((await p.textContent(".dlg")) || "").includes("How to run") && (await p.textContent(".dlg")).includes("Your data"));
   await p.keyboard.press("Escape");
-  check("planned commands are marked in the ribbon", (await p.$$(".ribbon .rb.soonb")).length >= 4);
+  await reset();
+  await p.click('.ribbon .rb:has-text("Notebook")'); await p.waitForTimeout(100);
+  check("Notebook asks the shell for a Jupyter notebook", (await calls("export_notebook")).length === 1);
   await reset();
   await p.click('.ribbon .rb:has-text("PowerPoint")'); await p.waitForTimeout(100);
   await p.click('.ribbon .rb:has-text("Word Report")'); await p.waitForTimeout(100);
