@@ -587,9 +587,6 @@ input.mono { font-family: var(--mono) !important; }
 .gdrag line, .gdrag rect { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
 .gpaper.pan { cursor: grab; }
 .gdrag rect.nsel { stroke: var(--blue); stroke-dasharray: none; fill: rgba(14, 140, 127, 0.12); }
-.hc.st .hdel { margin-left: auto; width: 16px; height: 16px; padding: 0; border: none; background: none; color: var(--text2); font-size: 13px; line-height: 14px; visibility: hidden; cursor: pointer; }
-.hc.st:hover .hdel { visibility: visible; }
-.hc.st .hdel:hover { color: #C0392B; }
 
 /* 0.2.11: page layouts */
 .lview { display: flex; flex-direction: column; height: 100%; width: 100%; flex: 1; min-height: 0; min-width: 0; outline: none; }
@@ -605,3 +602,6 @@ input.mono { font-family: var(--mono) !important; }
 .litem .lname { position: absolute; left: 0; top: -18px; font-size: 11px; background: var(--blue); color: #fff; padding: 0 5px; white-space: nowrap; }
 
 .hc.sub.subname { justify-content: flex-start; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; line-height: inherit; text-align: left; }
+.hc .rsz { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 2; }
+.hc .rsz:hover { background: var(--blue); opacity: 0.35; }
+.dimset { opacity: 0.5; }

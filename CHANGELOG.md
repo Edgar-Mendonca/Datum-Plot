@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.21 — 2026-10-28
+
+Testers' requests (axis breaks on column graphs, wider columns, empty columns left alone), and matrices with contour maps, 3D surfaces, polar graphs and surface fits.
+
+**Your requests**
+- **Axis breaks on column, grouped and nested graphs**: Graph › Axis Break now works on dot plots, bars, box plots and grouped bars, not only on XY graphs (Format Graph › Y Axis › Axis break). Where a break cannot apply, the page says why instead of showing nothing.
+- **Wider columns**: drag the right edge of any column heading to widen it, or double-click the edge to fit its name and values. Widths are saved with the project.
+- **More room for names**: the × that deleted a data set from its heading is gone, so the name has the whole heading. Delete a data set from its right-click menu, or with Data › Remove Data Set.
+- **Empty columns stay out of the way**: graphs and analyses already left out data sets without values; now the analysis dialogs leave them unticked and dim them, and Format Graph marks them “(empty)”, so 3 or 20 columns make no difference.
+
+**Matrices and 3D**
+- File › New Table › **Matrix**: Z values on an X–Y grid. X runs down the first column, the Y values are the column titles, and each cell is a Z value (Z title in the bar above the table).
+- Its graph is a **contour map** (with contour lines), a **heat map**, a **3D surface** or a **3D wireframe** (Graph › Column Graph, or Format Graph), with a colour bar, a choice of colour maps, the number of contour levels and the 3D viewing angle.
+- **Polar graphs**: Format Graph › Data Sets › Polar draws an XY graph with X as the angle in degrees and Y as the radius.
+
+**Surface fits**
+- Analyze › Regression › **Surface Fit**: fits Z = f(X, Y) to a matrix, or to three columns (X, Y, Z) of a table of many variables or a worksheet: a plane, a quadratic surface (with its maximum, minimum or saddle point), a cubic surface or a 2D Gaussian peak (centre, height and widths). Coefficients with standard errors and 95% CIs, R², and residual plots; on a matrix graph the fit is drawn as dashed contours or a wireframe.
+- A new sample on the Home page, **Hardness map**: hardness across a weld on a 21 × 9 grid, with a 2D Gaussian fit of the hard zone.
+
 ## 0.2.20 — 2026-10-28
 
 Worksheets with free columns, and column formulas.

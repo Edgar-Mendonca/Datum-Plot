@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.20";
+export const VERSION_NOW = "0.2.21";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -25,7 +25,7 @@ export const FEATURES: Feature[] = [
   ["A7", "Many variables", "0.2.14", "One row per sample, one column per variable. For multiple regression and correlation matrices; graphs put the first variable on X.", "pandas"],
   ["A8", "Nested table", "0.2.17", "Sub-columns within groups, such as specimens within batches. For nested t-tests and ANOVA.", ""],
   ["A9", "Worksheet", "0.2.20", "Free columns with roles (X, Y, Y error, not plotted), long names, units and comments; the X column and each Y column (with its error column) make the graph.", "pandas"],
-  ["A10", "Matrix", "0.2.21", "A grid of Z values over X and Y. For heat maps, contours and 3D surfaces.", "numpy"],
+  ["A10", "Matrix", "0.2.21", "A grid of Z values: X down the first column, Y values as the column titles. For contour maps, heat maps and 3D surfaces.", "numpy"],
   ["A11", "Column formulas", "0.2.20", "Fill a column with a formula such as log10(A) or (B - mean(B)) / sd(B).", "numpy"],
   ["A12", "Import CSV, TXT and .xlsx", "0.1.1", "Read data files with a preview: choose the sheet, the headings, the X column and the replicates.", "openpyxl"],
   ["A13", "Import .pzfx files", "0.2.23", "Bring tables over from .pzfx project files.", ""],
@@ -59,7 +59,7 @@ export const FEATURES: Feature[] = [
   ["B23", "Power and sample size", "0.2.2", "How many samples you need, or the power you have, for t-tests, ANOVA and proportions.", "statsmodels"],
   ["B24", "Peak analysis", "0.2.18", "Baseline (line or polynomial), find peaks, positions, heights, widths and areas, fit many peaks at once as Gaussian, Lorentzian or Voigt (XRD, spectra, chromatograms).", "scipy, lmfit"],
   ["B25", "Signal processing", "0.2.18", "Fourier spectrum, low-, high- and band-pass Butterworth filters, resampling onto even X.", "numpy, scipy"],
-  ["B26", "Surface fitting", "0.2.21", "Fit Z = f(X, Y) and implicit equations.", "lmfit"],
+  ["B26", "Surface fitting", "0.2.21", "Fit Z = f(X, Y): plane, quadratic (with its stationary point), cubic or a 2D Gaussian peak.", "statsmodels, scipy"],
   ["B27", "Tensile test analysis", "0.2.2", "From stress–strain data: Young's modulus, 0.2 % offset yield, ultimate strength, elongation at break and toughness, per specimen and as mean ± SD.", "numpy, scipy"],
   ["B28", "Arrhenius and activation energy", "0.2.0", "ln(k) against 1/T: activation energy and pre-factor with confidence intervals, in kJ/mol or eV.", "scipy"],
   ["B29", "Weibull analysis", "0.2.2", "Weibull modulus and characteristic strength from fracture data, with the Weibull plot and bounds.", "scipy"],
@@ -84,7 +84,7 @@ export const FEATURES: Feature[] = [
   ["D8", "Axis breaks and double Y", "0.2.7", "Broken axes, a second Y axis, top and right axes, reversed and probability scales.", "matplotlib"],
   ["D9", "Survival curves", "0.2.16", "Staircase curves with censor ticks and an optional 95% confidence band.", "matplotlib"],
   ["D10", "Special graphs", "0.2.6", "Bland-Altman and ROC plots, and forest plots of the differences after ANOVA. Volcano and bubble plots come later.", "matplotlib"],
-  ["D11", "3D, contour and polar", "0.2.21", "Contours, 3D surfaces and scatter, polar, ternary, waterfall, vector and radar plots.", "matplotlib"],
+  ["D11", "3D, contour and polar", "0.2.21", "Contour and heat maps, 3D surfaces and wireframes of a matrix; polar graphs of XY data (ternary, waterfall, vector and radar later).", "matplotlib"],
   ["D12", "Multi-panel graphs and insets", "0.2.12", "Graphs whose plot frames line up across a layout, stacked panels sharing one X axis, and insets (a small graph on a white card over another).", "matplotlib"],
   ["D13", "Graph styles", "0.2.2", "Open axes, framed box, Nature, Science, ACS, IEEE, presentation and greyscale styles; save your own.", "matplotlib"],
   ["D14", "Copy look", "0.2.2", "Apply one graph's formatting to other graphs.", ""],

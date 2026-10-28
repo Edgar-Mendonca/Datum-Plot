@@ -81,9 +81,9 @@ impl DataSet {
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
 /// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows), "sheet" (a worksheet: free columns with roles) or "parts"
+/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows), "sheet" (a worksheet: free columns with roles), "matrix" (Z on an X–Y grid: X down the rows, Y values as the data sets' titles) or "parts"
 /// (parts of a whole: parts in the rows, one whole per data set);
-/// only XY and survival tables use the X column (the others keep it hidden).
+/// only XY, survival and matrix tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Table {
@@ -169,6 +169,14 @@ impl Table {
     pub fn sheet(cols: usize) -> Self {
         let sets = (0..cols).map(|k| DataSet { title: crate::doc::set_letter(k), entry: Entry::Replicates, reps: 1, role: if k == 0 { "x".into() } else { String::new() }, ..Default::default() }).collect();
         let mut t = Table { kind: "sheet".into(), x_title: String::new(), y_title: String::new(), sets, rows: 12, ..Default::default() };
+        t.normalize();
+        t
+    }
+    /// An empty matrix (A10): Z values on an X–Y grid. X runs down the rows (the X column), Y across:
+    /// each data set is one Y value, its title the number.
+    pub fn matrix(rows: usize, cols: usize) -> Self {
+        let sets = (0..cols).map(|k| DataSet { title: format!("{}", k + 1), entry: Entry::Replicates, reps: 1, ..Default::default() }).collect();
+        let mut t = Table { kind: "matrix".into(), x_title: "X".into(), y_title: "Z".into(), sets, rows: rows.max(2), ..Default::default() };
         t.normalize();
         t
     }
@@ -335,6 +343,12 @@ pub struct GraphSettings {
     pub y2: Axis,
     /// Colour scheme: okabe, tableau, bright, muted, dark, pastel, viridis, cividis, magma, grey, or "#hex, #hex…".
     pub palette: String,
+    /// XY graphs drawn on polar axes (X is the angle in degrees).
+    pub polar: bool,
+    /// Matrix graphs: contour levels (0 = automatic) and the 3D view (elevation and azimuth in degrees).
+    pub levels: u32,
+    pub elev: f64,
+    pub azim: f64,
 }
 
 impl Default for GraphSettings {
@@ -342,7 +356,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
-            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![],
+            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0,
         }
     }
 }

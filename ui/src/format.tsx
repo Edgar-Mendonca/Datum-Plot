@@ -1,7 +1,7 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
 import { For, Show, createSignal } from "solid-js";
-import { Graph, GraphSettings, Axis, SetStyle, Note, letter } from "./api";
+import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty } from "./api";
 import { act, out, openDialog } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES } from "./tools";
@@ -9,6 +9,7 @@ import { PALETTES } from "./tools";
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
 export const FONTS = ["Arial", "Helvetica", "Calibri", "Segoe UI", "Verdana", "Times New Roman", "Georgia", "Cambria"];
+export const MATRIX: [string, string][] = [["contour", "Contour map"], ["heatmap", "Heat map"], ["surface", "3D surface"], ["wireframe", "3D wireframe"]];
 export const ERRORS: [string, string][] = [["sd", "Mean ± SD"], ["sem", "Mean ± SEM"], ["ci", "Mean ± 95% CI"], ["range", "Mean and range"], ["none", "Mean only"]];
 /** Journal column widths in mm. */
 export const SIZES: [string, number, number][] = [["Single column (85 mm)", 85, 64], ["1.5 columns (114 mm)", 114, 80], ["Double column (174 mm)", 174, 110], ["Square (80 mm)", 80, 80], ["Slide (240 × 135 mm)", 240, 135]];
@@ -31,6 +32,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
   const AxisPage = (p: { k: "x" | "y" | "y2" }) => {
     const a = () => s()[p.k] ?? { title: "", scale: "lin", auto: true, min: null, max: null, step: null, minor: false, grid: false }, put = (patch: Partial<Axis>) => set(x => { x[p.k] = { ...a(), ...patch } as Axis; });
     const auto = () => p.k === "y2" ? "the titles of the right-axis data sets" : `${p.k === "x" ? t()?.xTitle : t()?.yTitle}${(p.k === "x" ? t()?.xUnits : t()?.yUnits) ? ` (${p.k === "x" ? t()?.xUnits : t()?.yUnits})` : ""}`;
+    const breaks = () => p.k !== "y2" && a().scale === "lin" && !s().polar && (["xy", "sheet"].includes(t()?.kind ?? "") || (p.k === "y" && ["column", "grouped", "contingency", "nested"].includes(t()?.kind ?? "") && !["heatmap", "percent"].includes(s().column)));
     return <div class="form">
       <label>Title</label><input value={a().title} placeholder={`From the table: ${auto()}`} onChange={e => put({ title: e.currentTarget.value })} />
       <label>Scale</label><Pick value={a().scale} set={v => put({ scale: v as Axis["scale"] })} options={[["lin", "Linear"], ["log", "Logarithmic (log10)"]]} />
@@ -38,7 +40,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
         <Show when={!a().auto}><span class="muted">from</span><input type="number" style={{ width: "90px" }} value={a().min ?? ""} onChange={e => put({ min: num(e.currentTarget.value) })} /><span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().max ?? ""} onChange={e => put({ max: num(e.currentTarget.value) })} /></Show></span>
       <Show when={a().scale === "lin"}><label>Major ticks every</label><input type="number" placeholder="Automatic" value={a().step ?? ""} onChange={e => put({ step: num(e.currentTarget.value) && num(e.currentTarget.value)! > 0 ? num(e.currentTarget.value) : null })} /></Show>
       <label>Ticks and grid</label><span class="inline"><Check label="Minor ticks" value={a().minor} set={v => put({ minor: v })} /><Check label="Gridlines" value={a().grid} set={v => put({ grid: v })} /></span>
-      <Show when={p.k !== "y2" && t()?.kind === "xy" && a().scale === "lin"}><label>Axis break</label><span class="inline"><span class="muted">leave out from</span><input type="number" style={{ width: "90px" }} value={a().breakFrom ?? ""} onChange={e => put({ breakFrom: num(e.currentTarget.value) })} />
+      <Show when={breaks()} fallback={<Show when={p.k !== "y2"}><label>Axis break</label><span class="muted">{a().scale !== "lin" ? "Breaks need a linear axis." : "Breaks are for the Y axis of XY, column, grouped and nested graphs, and the X axis of XY graphs."}</span></Show>}><label>Axis break</label><span class="inline"><span class="muted">leave out from</span><input type="number" style={{ width: "90px" }} value={a().breakFrom ?? ""} onChange={e => put({ breakFrom: num(e.currentTarget.value) })} />
         <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span></Show>
     </div>;
   };
@@ -50,7 +52,15 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
           <div class="form">
             <Show when={t()?.kind === "survival"}><label>Confidence band</label><Check label="Shade the 95% CI of each curve" value={s().error === "ci"} set={v => set(x => { x.error = v ? "ci" : "none"; })} /></Show>
             <Show when={t()?.kind === "nested"}><label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
-            <Show when={!["xy", "multi", "survival", "nested", "sheet"].includes(t()?.kind ?? "")}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
+            <Show when={t()?.kind === "matrix"}>
+              <label>Graph</label><Pick value={["contour", "heatmap", "surface", "wireframe"].includes(s().column) ? s().column : "contour"} set={v => set(x => { x.column = v; })} options={MATRIX} />
+              <Show when={s().column === "contour" || !["heatmap", "surface", "wireframe"].includes(s().column)}><label>Contour levels</label><span class="inline"><input type="number" min="0" max="60" style={{ width: "70px" }} value={s().levels || ""} placeholder="12" onChange={e => set(x => { x.levels = Math.max(0, Math.round(+e.currentTarget.value)); })} /><span class="muted">empty = 12</span></span></Show>
+              <Show when={s().column === "surface" || s().column === "wireframe"}><label>View</label><span class="inline"><span class="muted">tilt</span><input type="number" min="-90" max="90" style={{ width: "70px" }} value={s().elev ?? 28} onChange={e => set(x => { x.elev = +e.currentTarget.value; })} />
+                <span class="muted">turn</span><input type="number" min="-180" max="180" style={{ width: "70px" }} value={s().azim ?? -60} onChange={e => set(x => { x.azim = +e.currentTarget.value; })} /><span class="muted">degrees</span></span></Show>
+              <label>Colours</label><Pick value={["viridis", "cividis", "magma", "grey"].includes(s().palette) ? s().palette : "viridis"} set={v => set(x => { x.palette = v; })} options={[["viridis", "Viridis"], ["cividis", "Cividis (colour-blind safe)"], ["magma", "Magma"], ["grey", "Greys"]]} />
+            </Show>
+            <Show when={["xy", "sheet"].includes(t()?.kind ?? "")}><label>Axes</label><Check label="Polar: X is the angle in degrees, Y the radius" value={!!s().polar} set={v => set(x => { x.polar = v; })} /></Show>
+            <Show when={!["xy", "multi", "survival", "nested", "sheet", "matrix"].includes(t()?.kind ?? "")}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
                 ? [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
               <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
@@ -65,8 +75,8 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
             <Show when={t()?.kind === "xy"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
           </div>
           <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th><th>Line</th><th>Width</th><Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
-            <For each={t()?.sets ?? []}>{(d, k) => <tr>
-              <td><b>{letter(k())}</b></td><td>{d.title || `Data set ${letter(k())}`}</td>
+            <For each={t()?.sets ?? []}>{(d, k) => <tr classList={{ dimset: !!t() && isEmpty(t()!, k()) }}>
+              <td><b>{letter(k())}</b></td><td>{d.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
               <td><input type="checkbox" checked={st(k()).show} onChange={e => setStyle(k(), { show: e.currentTarget.checked })} /></td>
               <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
               <td><span class="inline"><input type="color" value={st(k()).color || OKABE_ITO[k() % 8]} onChange={e => setStyle(k(), { color: e.currentTarget.value })} />

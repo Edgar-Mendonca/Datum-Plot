@@ -19,6 +19,7 @@ export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
   style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
   /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis; /** Annotations. */ notes: Note[];
+  /** XY: polar axes. Matrix: contour levels and the 3D view. */ polar?: boolean; levels?: number; elev?: number; azim?: number;
 }
 /** An annotation in data coordinates: text at (x, y); an arrow from (x, y) to (x2, y2); a line; a box with those corners. */
 export interface Note { kind: string; x: number; y: number; x2: number; y2: number; text: string; color: string; size: number; bold: boolean }
@@ -53,6 +54,8 @@ export interface Options {
 export const letter = (k: number): string => (k < 26 ? String.fromCharCode(65 + k) : letter(Math.floor(k / 26) - 1) + letter(k % 26));
 /** Grid columns of each data set: [first column, width]. */
 export const spans = (t: Table) => { let c = 1; return t.sets.map(s => { const w = s.entry === "rep" ? Math.max(1, s.reps) : 3; const v: [number, number] = [c, w]; c += w; return v; }); };
+/** A data set with no values yet (left out of graphs and analyses). */
+export const isEmpty = (t: Table, k: number) => { const [c0, w] = spans(t)[k] ?? [0, 0]; return t.cols.slice(c0, c0 + w).every(c => !c || c.every(v => v === null)); };
 export const width = (t: Table) => 1 + t.sets.reduce((a, s) => a + (s.entry === "rep" ? Math.max(1, s.reps) : 3), 0);
 /** A number for a table cell: as typed (up to 10 significant digits) or with fixed decimals. */
 export const num = (v: number | null | undefined, decimals = -1) => v === null || v === undefined ? "" : decimals >= 0 ? v.toFixed(decimals) : String(+v.toPrecision(10));

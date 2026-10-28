@@ -3,7 +3,7 @@
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, createEffect, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter } from "./api";
-import { act, call, setOut, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
+import { act, call, setOut, P, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
 import { sortDialog, findDialog, excludeRows } from "./tools";
 import * as F from "./fmt";
 import { parseTsv, toTsv, transpose, series, clip } from "./cells";
@@ -20,8 +20,28 @@ export const DataTable = (p: { t: Table }) => {
   const t = () => p.t, W = () => width(t());
   const ncols = () => W() + 1, nrows = () => t().rows + 10;
   /** Column tables have no X: its grid column is kept but hidden. */
-  const hideX = () => t().kind !== "xy" && t().kind !== "survival";
-  const colW = (k: number) => (k === 0 ? TW : k === 1 ? (hideX() ? 0 : XW) : CW);
+  const hideX = () => !["xy", "survival", "matrix"].includes(t().kind);
+  /** Widths dragged at a heading's right edge, saved in the project (ui["colw.<table>"]: display column → px). */
+  const [drag, setDrag] = createSignal<[number, number] | null>(null);
+  const saved = (): Record<string, number> => P().ui?.[`colw.${t().id}`] ?? {};
+  const colW = (k: number) => (k === 1 && hideX() ? 0 : drag()?.[0] === k ? drag()![1] : saved()[k] ?? (k === 0 ? TW : k === 1 ? XW : CW));
+  const keepW = (k: number, w: number) => act({ Ui: { key: `colw.${t().id}`, value: { ...saved(), [k]: Math.round(w) } } }, true);
+  const resize = (k: number) => (e: MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const x0 = e.clientX, w0 = colW(k);
+    const move = (m: MouseEvent) => setDrag([k, Math.max(36, Math.min(600, w0 + m.clientX - x0))]);
+    const up = () => { removeEventListener("mousemove", move); removeEventListener("mouseup", up); const d = drag(); setDrag(null); if (d && d[1] !== w0) keepW(k, d[1]); };
+    addEventListener("mousemove", move); addEventListener("mouseup", up);
+  };
+  /** Double-click a heading's edge: wide enough for its title and values. */
+  const fit = (k: number, title: string) => (e: MouseEvent) => {
+    e.stopPropagation();
+    const c = document.createElement("canvas").getContext("2d")!;
+    c.font = "13px 'IBM Plex Sans', sans-serif";
+    const vals = Array.from({ length: Math.min(t().rows, 500) }, (_, r) => text(r, k));
+    keepW(k, Math.min(600, Math.max(48, ...[title, ...vals].map(s => c.measureText(s).width + 22))));
+  };
+  const Rsz = (q: { k: number; title: string }) => <i class="rsz" title="Drag to widen; double-click to fit" onMouseDown={resize(q.k)} onDblClick={fit(q.k, q.title)} />;
   const lefts = createMemo(() => { let x = HW; return Array.from({ length: ncols() }, (_, k) => { const l = x; x += colW(k); return l; }); });
   const total = () => lefts()[ncols() - 1] + colW(ncols() - 1);
   const ex = createMemo(() => new Set(t().excluded.map(([r, c]) => `${r}:${c}`)));
@@ -175,13 +195,12 @@ export const DataTable = (p: { t: Table }) => {
         <div class="gsheet" style={{ width: `${total() + 40}px`, height: `${(nrows() + 2) * RH}px` }}>
           <div class="ghead dhead" style={{ height: `${HEAD}px` }}>
             <div class="hc idc" style={{ width: `${HW}px`, left: "0" }} />
-            <div class="hc two" style={{ width: `${TW}px` }}>Row title</div>
-            <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span></div>
-            <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${spans(t())[k()][1] * CW}px` }}>
+            <div class="hc two" style={{ width: `${colW(0)}px` }}>Row title<Rsz k={0} title="Row title" /></div>
+            <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span><Rsz k={1} title={`X ${t().xTitle}`} /></div>
+            <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${Array.from({ length: spans(t())[k()][1] }, (_, j) => colW(spans(t())[k()][0] + 1 + j)).reduce((a, b) => a + b, 0)}px` }}>
               <div class="hc st" style={{ "--c": SETC[k() % 8] }} title="Double-click to change the data set" onMouseDown={e => { e.stopPropagation(); const [c0, w] = spans(t())[k()]; S.cols(c0 + 1, c0 + w, e.shiftKey, e.ctrlKey); box.focus(); }} onDblClick={e => { e.stopPropagation(); setDialog(t(), k()); }}>
-                <b>{letter(k())}{s.formula ? " ƒ" : ""}</b><span title={[s.title, s.comment, s.formula && `= ${s.formula}`].filter(Boolean).join("\n")}>{t().kind === "sheet" ? ({ x: "X", "": "Y", yerr: "Err", skip: "—" } as Record<string, string>)[s.role ?? ""] : `${s.title || `Data set ${letter(k())}`}${s.units ? ` (${s.units})` : ""}`}</span>
-                <Show when={t().sets.length > 1}><button class="hdel" title={`Delete data set ${letter(k())}`} onMouseDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); delSet(t(), k()); }}>×</button></Show></div>
-              <div class="subs"><For each={Array.from({ length: spans(t())[k()][1] }, (_, j) => j)}>{j => <div class="hc sub" classList={{ subname: t().kind === "sheet" }} style={{ width: `${CW}px` }}>{t().kind === "sheet" ? `${s.title || letter(k())}${s.units ? ` (${s.units})` : ""}` : s.entry === "rep" ? `Y${j + 1}` : SUB[s.entry][j]}</div>}</For></div>
+                <b>{letter(k())}{s.formula ? " ƒ" : ""}</b><span title={[s.title, s.comment, s.formula && `= ${s.formula}`].filter(Boolean).join("\n")}>{t().kind === "sheet" ? ({ x: "X", "": "Y", yerr: "Err", skip: "—" } as Record<string, string>)[s.role ?? ""] : `${s.title || `Data set ${letter(k())}`}${s.units ? ` (${s.units})` : ""}`}</span></div>
+              <div class="subs"><For each={Array.from({ length: spans(t())[k()][1] }, (_, j) => j)}>{j => <div class="hc sub" classList={{ subname: t().kind === "sheet" }} style={{ width: `${colW(spans(t())[k()][0] + 1 + j)}px` }}><Rsz k={spans(t())[k()][0] + 1 + j} title={s.title || letter(k())} />{t().kind === "sheet" ? `${s.title || letter(k())}${s.units ? ` (${s.units})` : ""}` : s.entry === "rep" ? `Y${j + 1}` : SUB[s.entry][j]}</div>}</For></div>
             </div>}</For>
             <button class="hc addset" title="Add a data set" onMouseDown={e => e.stopPropagation()} onClick={() => addSet(t())}>＋ Data set</button>
           </div>
@@ -219,9 +238,9 @@ const TableHead = (p: { t: Table }) => {
       <Icon n="sheet" /><b class="tname" title="Double-click to rename" onDblClick={() => rename(p.t, "name", "Table name")}>{p.t.name}</b><Help k="table" />
       <Show when={p.t.kind === "xy" || p.t.kind === "survival"}><label>X title<input value={p.t.xTitle} onChange={e => set("xTitle", e.currentTarget.value)} /></label>
         <label>units<input class="u" value={p.t.xUnits} onChange={e => set("xUnits", e.currentTarget.value)} /></label></Show>
-      <label>Y title<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
+      <label>{p.t.kind === "matrix" ? "Z title" : "Y title"}<input value={p.t.yTitle} onChange={e => set("yTitle", e.currentTarget.value)} /></label>
       <label>units<input class="u" value={p.t.yUnits} onChange={e => set("yUnits", e.currentTarget.value)} /></label>
-      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : p.t.kind === "multi" ? "Many variables · " : p.t.kind === "survival" ? "Survival · " : p.t.kind === "nested" ? "Nested · " : p.t.kind === "sheet" ? "Worksheet · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
+      <span class="grow" /><span class="muted">{p.t.kind === "column" ? "Column table · " : p.t.kind === "grouped" ? "Grouped table · " : p.t.kind === "contingency" ? "Contingency table · " : p.t.kind === "parts" ? "Parts of whole · " : p.t.kind === "multi" ? "Many variables · " : p.t.kind === "survival" ? "Survival · " : p.t.kind === "nested" ? "Nested · " : p.t.kind === "sheet" ? "Worksheet · " : p.t.kind === "matrix" ? "Matrix · " : ""}{p.t.rows} rows · {p.t.sets.length} {p.t.kind === "column" ? (p.t.sets.length === 1 ? "group" : "groups") : `data ${p.t.sets.length === 1 ? "set" : "sets"}`}{p.t.excluded.length ? ` · ${p.t.excluded.length} excluded` : ""}</span>
     </div>
   );
 };

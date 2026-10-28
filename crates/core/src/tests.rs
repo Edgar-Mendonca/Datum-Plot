@@ -168,7 +168,7 @@ fn worksheets_and_formulas() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 18);
+    assert_eq!(l.len(), 19);
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
@@ -186,6 +186,10 @@ fn templates_make_sense() {
     assert!((0..24).all(|r| t.get(r, 3).is_some()) && Table::multi(4, 0).rows == 1);
     let t = &templates::build(Some("worksheet")).unwrap().tables[0];
     assert_eq!((t.kind.as_str(), t.sets[0].role.as_str(), t.sets[2].role.as_str(), t.sets[3].formula.as_str(), t.get(0, 4).zip(t.get(0, 2)).map(|(k, c)| ((k - c) * 100.0).round())), ("sheet", "x", "yerr", "B + 273.15", Some(27315.0)));
+    let p = templates::build(Some("hardmap")).unwrap();
+    let t = &p.tables[0];
+    assert_eq!((t.kind.as_str(), t.rows, t.sets.len(), t.sets[2].title.as_str(), p.analyses[0].kind.as_str(), p.graphs[0].settings.column.as_str()), ("matrix", 21, 9, "3", "surface", "contour"));
+    assert_eq!((Table::matrix(0, 3).rows, Table::matrix(4, 3).sets[1].title.as_str()), (2, "2"));
     let p = templates::build(Some("batches")).unwrap();
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), t.sets[2].reps, p.analyses[0].kind.as_str()), ("nested", 5, 10, 3, "nested"));

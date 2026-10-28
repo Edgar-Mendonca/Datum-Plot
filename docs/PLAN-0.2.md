@@ -81,7 +81,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | A7 | Multiple variables | One row per subject, many columns (numbers and text) — multiple/logistic regression, correlation matrix, PCA | ✅ 0.2.14 |
 | A8 | Nested table | Sub-columns within groups (cells within animals) — nested t-test/ANOVA | ✅ 0.2.17 |
 | A9 | Worksheet | Free columns with roles (X, Y, Z, error, label), long name, units, comments, sparklines | ✅ 0.2.20 (X, Y, Y error, not plotted; Z with matrices, text labels and sparklines later) |
-| A10 | Matrix | A Z grid for heat maps, contours, 3D surfaces | 0.6 |
+| A10 | Matrix | A Z grid for heat maps, contours, 3D surfaces | ✅ 0.2.21 |
 | A11 | Column formulas | "Set column values" with formulas, e.g. `log10(A)`, `(B - mean(B)) / sd(B)`, evaluated by numpy | ✅ 0.2.20 |
 | A12 | Import CSV / TXT / XLSX | With a preview: delimiter, header rows, which columns go where | 0.1.1 |
 | A13 | Import Prism `.pzfx` | Tables, titles and replicates from Prism projects | 0.4 |
@@ -120,7 +120,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B23 | Power and sample size (t-tests, ANOVA, proportions) | statsmodels.stats.power | ✅ 0.2.2 |
 | B24 | Peak analysis: baseline, find peaks, areas, multi-peak fit | scipy.signal, lmfit | ✅ 0.2.18 |
 | B25 | Signal processing: FFT, filters, convolution, resampling, interpolation | numpy.fft, scipy.signal | ✅ 0.2.18 (spectrum, Butterworth filters, resampling; convolution later) |
-| B26 | Surface fitting (Z = f(X, Y)), implicit fits | lmfit | 0.6 |
+| B26 | Surface fitting (Z = f(X, Y)), implicit fits | statsmodels, scipy | ✅ 0.2.21 (plane, quadratic, cubic, 2D Gaussian; implicit fits later) |
 | B27 | Tensile test analysis: modulus, 0.2 % offset yield, UTS, elongation, toughness (added session 4) | numpy, scipy | ✅ 0.2.2 |
 | B28 | Arrhenius / activation energy (added session 4) | scipy | 0.2 |
 | B29 | Weibull analysis of strength (added session 4) | scipy | ✅ 0.2.2 |
@@ -155,7 +155,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D8 | Axis breaks (one or more), double Y axis, top/right axes, reverse, probability and reciprocal scales | ✅ 0.2.7 |
 | D9 | Survival curves with censor ticks and the number-at-risk table | ✅ 0.2.16 (curves, censor ticks, CI band; the number-at-risk table later) |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
-| D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | 0.6 |
+| D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | ✅ 0.2.21 (contour, heat map, 3D surface and wireframe, polar; 3D scatter, ternary, waterfall, vector field and radar later) |
 | D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | ✅ 0.2.12 |
 | D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
 | D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
@@ -359,7 +359,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.18** ✅ | Peaks (B24), signal processing (B25) |
 | **0.2.19** ✅ | DSC/TGA (B31), S–N curves (B30) |
 | **0.2.20** ✅ | Worksheet (A9), column formulas (A11) |
-| 0.2.21 | Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
+| **0.2.21** ✅ | Users' requests (session 8, second round): axis breaks on column/grouped/nested graphs, no × in headings, resizable columns saved in the project, empty data sets dimmed and unticked in dialogs; Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
 | 0.2.22 | Large data (D17), region tools (E5) |
 | 0.2.23 | Prism import (A13), instrument import (A14) |
 | 0.2.24 | PowerPoint and Word (G5), posters (F3) |

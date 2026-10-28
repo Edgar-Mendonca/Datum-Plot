@@ -1,6 +1,6 @@
 [package]
 name = "datum-core"
-version = "0.2.20"
+version = "0.2.21"
 edition = "2021"
 description = "Datum Plot engine: projects, data tables, graphs, edit operations and .dplot files."
 license = "MIT"

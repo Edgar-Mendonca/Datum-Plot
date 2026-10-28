@@ -637,8 +637,8 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
-    from . import groups, nested, regress, signal, survival, thermal, tools
-    KINDS.update({"thermal": thermal.thermal, "sn": thermal.sn, "peaks": signal.peaks, "signal": signal.signal, "nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
+    from . import groups, nested, regress, signal, surface, survival, thermal, tools
+    KINDS.update({"surface": surface.surface, "thermal": thermal.thermal, "sn": thermal.sn, "peaks": signal.peaks, "signal": signal.signal, "nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 
@@ -648,10 +648,10 @@ COMPARE = {"nested", "pca", "cluster", "ttest", "nonparam", "anova", "correlatio
 
 
 def run(kind, table, sets, options):
-    if table.get("kind") == "multi" and kind not in ("multireg", "correlation", "pca", "cluster"):
+    if table.get("kind") == "multi" and kind not in ("multireg", "correlation", "pca", "cluster", "surface"):
         from .regress import xy_view
         table = xy_view(table)  # the first variable is X for every other analysis
-    if table.get("kind") == "sheet" and kind not in ("multireg", "correlation", "pca", "cluster"):
+    if table.get("kind") == "sheet" and kind not in ("multireg", "correlation", "pca", "cluster", "surface"):
         from .sheet import sheet_view
         table = sheet_view(table)  # the worksheet's X column is X; Y columns are the data sets
         if not sets:

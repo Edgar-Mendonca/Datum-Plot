@@ -195,6 +195,38 @@ def figure(table, graph, overlays=(), fig=None):
     return fig, ax, leg, points
 
 
+def with_break(fig, ax, graph, frame, size, draw):
+    """`draw(ax)` with a break in the Y axis when one is set: the graph drawn twice, a short panel above
+    the gap and a tall one below (column, grouped and nested graphs; XY graphs have their own)."""
+    ya = graph.get("y") or {}
+    bf, bt = ya.get("breakFrom"), ya.get("breakTo")
+    if bf is None or bt is None or bt <= bf or ya.get("scale") == "log" or graph.get("column") in ("heatmap", "percent"):
+        return draw(ax)
+    fig.clear()
+    gs = fig.add_gridspec(2, 1, height_ratios=[1, 2.2], hspace=0.04)
+    top = fig.add_subplot(gs[0])
+    ax = fig.add_subplot(gs[1], sharex=top)
+    for a_ in (top, ax):
+        a_.patch.set_alpha(0)
+        for side in ("top", "right"):
+            a_.spines[side].set_visible(frame)
+    draw(top)
+    fig, ax, leg, points = draw(ax)
+    if top.get_legend():
+        top.get_legend().remove()
+    ax.set_title("")
+    lo = ax.get_ylim()[0]
+    ax.set_ylim(lo, bf)
+    top.set_ylim(bt, max(top.get_ylim()[1], bt + (bf - lo) * 0.2))
+    top.set_xlabel(""); top.set_ylabel("")
+    top.spines["bottom"].set_visible(False); ax.spines["top"].set_visible(False)
+    top.tick_params(axis="x", which="both", bottom=False, labelbottom=False, top=False)
+    d = dict(marker=[(-1, -0.6), (1, 0.6)], markersize=7, linestyle="none", color="#222222", mec="#222222", mew=1, clip_on=False)
+    top.plot([0], [0], transform=top.transAxes, **d)
+    ax.plot([0], [1], transform=ax.transAxes, **d)
+    return fig, ax, leg, points
+
+
 def build(table, graph, overlays=(), fig=None):
     size = float(graph.get("fontSize") or 10)
     frame = graph.get("style") == "frame"
@@ -223,16 +255,20 @@ def build(table, graph, overlays=(), fig=None):
     if hidden_x:
         colors = colors[-1:] + colors[:-1]  # the first Y variable takes the first colour
     if table.get("kind") == "column":
-        return column_figure(fig, ax, table, graph, overlays, colors, size)
+        return with_break(fig, ax, graph, frame, size, lambda a: column_figure(fig, a, table, graph, overlays, colors, size))
+    if table.get("kind") == "matrix":
+        return matrix_figure(fig, ax, table, graph, overlays, size)
     if table.get("kind") == "parts":
         return parts_figure(fig, ax, table, graph, size)
     if table.get("kind") == "nested":
-        return nested_figure(fig, ax, table, graph, colors, size)
+        return with_break(fig, ax, graph, frame, size, lambda a: nested_figure(fig, a, table, graph, colors, size))
     if table.get("kind") == "survival":
         return survival_figure(fig, ax, table, graph, colors, size)
     if table.get("kind") in ("grouped", "contingency"):
-        return grouped_figure(fig, ax, table, graph, overlays, colors, size)
+        return with_break(fig, ax, graph, frame, size, lambda a: grouped_figure(fig, a, table, graph, overlays, colors, size))
     summary = stats.summarize(table)
+    if graph.get("polar"):
+        return polar_figure(fig, ax, table, graph, colors, size, summary)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
     direction = graph.get("errorDir", "both")
     right = {k for k, x in enumerate(graph.get("sets") or []) if x.get("right")}
@@ -580,6 +616,116 @@ def nested_figure(fig, ax, table, graph, colors, size):
     if not points:
         ax.text(0.5, 0.5, "Enter each group's subgroups in its sub-columns, replicates down the rows", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
     return fig, ax, None, points
+
+
+def polar_figure(fig, ax, table, graph, colors, size, summary):
+    """A polar graph (D11) of an XY table: X is the angle in degrees, Y the radius."""
+    ax.remove()
+    ax = fig.add_subplot(projection="polar")
+    ax.patch.set_alpha(0)
+    for k, (s, pts) in enumerate(zip(table["sets"], summary)):
+        st = style_of(graph, k, colors)
+        if not st["show"] or not pts:
+            continue
+        th, r = np.radians([p["x"] for p in pts]), [p["mean"] for p in pts]
+        line = st["line"] if st["line"] is not None else graph.get("line", False)
+        ax.plot(th, r, linestyle="-" if line else "none", linewidth=st["width"], marker=SYMBOLS.get(st["symbol"], "o") or None, markersize=st["size"] * 0.8,
+                color=st["color"], markerfacecolor=st["color"] if st["filled"] else "white", label=s.get("title") or f"Data set {chr(65 + k)}", zorder=3)
+    ya = graph.get("y") or {}
+    if not ya.get("auto", True) and ya.get("min") is not None and ya.get("max") is not None and ya["max"] > ya["min"]:
+        ax.set_ylim(ya["min"], ya["max"])
+    ax.grid(True, color="#D9DDE1", linewidth=0.6)
+    ax.tick_params(labelsize=size * 0.85)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    lg = graph.get("legend") or {}
+    leg = ax.legend(loc="upper left", bbox_to_anchor=(1.05, 1), frameon=False, borderaxespad=0) if lg.get("show", True) and len(ax.get_lines()) > 1 else None
+    return fig, ax, leg, []
+
+
+def matrix_grid(table):
+    """A matrix table as (x, y, Z): X down the rows (the X column), Y across (the data sets' titles, or 1, 2, 3…), Z[y, x]."""
+    rows = [r for r in range(table["rows"]) if stats.value(table, r, 0) is not None]
+    x = np.array([stats.value(table, r, 0) for r in rows], float)
+    def num(s, k):
+        try:
+            return float(str(s.get("title", "")).replace(",", "."))
+        except ValueError:
+            return float(k + 1)
+    y = np.array([num(s, k) for k, s in enumerate(table["sets"])], float)
+    cols = stats.set_columns(table)
+    ex = {tuple(e) for e in table.get("excluded", [])}
+    Z = np.array([[np.nan if (v := stats.value(table, r, cols[k][0], ex)) is None else v for r in rows] for k in range(len(table["sets"]))], float).reshape(len(y), len(x))
+    ix, iy = np.argsort(x), np.argsort(y)
+    return x[ix], y[iy], Z[np.ix_(iy, ix)]
+
+
+def matrix_figure(fig, ax, table, graph, overlays, size):
+    """A matrix (A10, D11): a filled contour map (with lines), a heat map, or a 3D surface or wireframe, with a colour bar for Z."""
+    from matplotlib import colormaps
+    kind = graph.get("column") if graph.get("column") in ("contour", "heatmap", "surface", "wireframe") else "contour"
+    x, y, Z = matrix_grid(table)
+    name = (graph.get("palette") or "").strip()
+    cmap = colormaps["Greys_r" if name == "grey" else name if name in ("viridis", "cividis", "magma", "plasma") else "viridis"]
+    ztitle = axis_title({}, table.get("yTitle") or "Z", table.get("yUnits") or "")
+    bold = "bold" if graph.get("boldTitles", True) else "normal"
+    xa, ya = graph.get("x") or {}, graph.get("y") or {}
+    if len(x) < 2 or len(y) < 2 or not np.isfinite(Z).any():
+        ax.text(0.5, 0.5, "Enter X down the first column, Y values as the column titles, and Z in the cells", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB", wrap=True)
+        return fig, ax, None, []
+    X, Y = np.meshgrid(x, y)
+    fits = []
+    if overlays:
+        from . import analysis
+        for ov in overlays:
+            try:
+                fits += [analysis.run(ov["kind"], table, ov.get("sets", []), ov.get("options", {})).get("surface")]
+            except Exception:
+                pass
+    fits = [f for f in fits if f]
+    if kind in ("surface", "wireframe"):
+        ax.remove()
+        ax = fig.add_subplot(projection="3d")
+        ax.patch.set_alpha(0)
+        Zm = np.ma.masked_invalid(Z)
+        if kind == "surface":
+            m = ax.plot_surface(X, Y, Zm, cmap=cmap, linewidth=0.2, edgecolor="#FFFFFF55", antialiased=True)
+            fig.colorbar(m, ax=ax, shrink=0.6, pad=0.12).set_label(ztitle, fontweight=bold)
+        else:
+            ax.plot_wireframe(X, Y, Zm, color=(graph.get("sets") or [{}])[0].get("color") or "#0072B2", linewidth=0.8)
+        for f in fits:
+            ax.plot_wireframe(*np.meshgrid(f["x"], f["y"]), np.array(f["z"]), color="#D55E00", linewidth=0.6, alpha=0.8)
+        ax.view_init(elev=float(graph["elev"]) if graph.get("elev") is not None else 28.0, azim=float(graph["azim"]) if graph.get("azim") is not None else -60.0)
+        if kind == "wireframe":  # the surface's colour bar carries the Z title
+            ax.set_zlabel(ztitle, fontweight=bold, labelpad=2)
+        for a in (ax.xaxis, ax.yaxis, ax.zaxis):
+            a.pane.set_alpha(0)
+    else:
+        if kind == "heatmap":
+            m = ax.pcolormesh(X, Y, np.ma.masked_invalid(Z), cmap=cmap, shading="nearest")
+        else:
+            lv = int(graph.get("levels") or 12)
+            m = ax.contourf(X, Y, Z, levels=lv, cmap=cmap)
+            ax.contour(X, Y, Z, levels=m.levels, colors="#FFFFFF", linewidths=0.4, alpha=0.6)
+        for f in fits:
+            cs = ax.contour(*np.meshgrid(f["x"], f["y"]), np.array(f["z"]), levels=8, colors="#222222", linewidths=0.8, linestyles="--")
+            ax.clabel(cs, fontsize=size * 0.6, fmt="%.3g")
+        fig.colorbar(m, ax=ax).set_label(ztitle, fontweight=bold)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(True)
+    three = kind in ("surface", "wireframe")  # 3D titles a little smaller and closer, so they fit
+    lab = {"fontweight": bold, **({"fontsize": size * 0.85, "labelpad": -1} if three else {})}
+    ax.set_xlabel(axis_title(xa, table.get("xTitle") or "X", table.get("xUnits") or ""), **lab)
+    ax.set_ylabel(axis_title(ya, "Y", ""), **lab)
+    if three:
+        ax.tick_params(labelsize=size * 0.8, pad=0)
+        ax.set_box_aspect(None, zoom=0.76)
+    for a, lim in ((xa, ax.set_xlim), (ya, ax.set_ylim)):
+        if not a.get("auto", True) and a.get("min") is not None and a.get("max") is not None and a["max"] > a["min"]:
+            lim(a["min"], a["max"])
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    return fig, ax, None, []
 
 
 def survival_figure(fig, ax, table, graph, colors, size):

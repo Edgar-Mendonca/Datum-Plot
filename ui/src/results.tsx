@@ -1,7 +1,7 @@
 // Results: the options dialog of each analysis, and the results sheet (tabs of tables, small
 // plots, and the Explain panel with the answer, checks, methods text and Python code).
 import { For, Show, createSignal, createEffect, on, createResource } from "solid-js";
-import { Analysis, Result, Table, invoke, letter } from "./api";
+import { Analysis, Result, Table, invoke, letter, isEmpty } from "./api";
 import { act, call, out, P, open, openDialog, toast, item } from "./store";
 import { Dialog, Pick, Check, Tabs, Icon } from "./ui";
 import { Empty } from "./nav";
@@ -11,17 +11,17 @@ import { Help } from "./help";
 export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   describe: ["Descriptive statistics", "B1", false], normality: ["Normality tests", "B2", false], outliers: ["Outliers", "B3", false],
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
-  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
+  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
   tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
 };
 /** Does this analysis draw on the graphs of table `t`? */
-export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && (t?.kind === "xy" || t?.kind === "multi"); };
+export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && ["xy", "multi", "sheet", "matrix"].includes(t?.kind ?? ""); };
 /** Catalogue id → analysis kind (and preset options), for the Analyze gallery and ribbon. */
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
   B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
-  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B31: ["thermal", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
+  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
 const DEFAULTS: Record<string, Record<string, any>> = {
@@ -31,7 +31,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
-  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
+  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
@@ -50,7 +50,9 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
   if (!t) return toast("Open a data table or its graph first.");
   openDialog(() => {
     const [o, setO] = createSignal<Record<string, any>>({ ...DEFAULTS[kind], ...preset, ...(existing?.options ?? {}) });
-    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? sets0);
+    // Empty data sets start unticked: only columns with values take part.
+    const filled = t.sets.map((_, k) => k).filter(k => !isEmpty(t, k));
+    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? (sets0.length || !filled.length || filled.length === t.sets.length ? sets0 : filled));
     const [name, setName] = createSignal(existing?.name ?? `${KINDS[kind][0]} · ${t.name}`);
     const put = (k: string, v: unknown) => setO({ ...o(), [k]: v });
     const on = (k: number) => !sets().length || sets().includes(k);
@@ -76,7 +78,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
       <Dialog title={existing ? `Change · ${existing.name}` : KINDS[kind][0]} wide help="options" okText={existing ? "OK" : "Analyze"} ok={ok}>
         <div class="form">
           <label>Name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
-          <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}`} value={on(k())} set={() => toggle(k())} />}</For></span>
+          <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <span classList={{ dimset: isEmpty(t, k()) }}><Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}${isEmpty(t, k()) ? " (empty)" : ""}`} value={on(k())} set={() => toggle(k())} /></span>}</For></span>
           <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "contingency", "power", "multireg", "survival", "nested"].includes(kind)}><Alpha /></Show>
           <Show when={kind === "ttest"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["unpaired", "Unpaired (two independent groups)"], ["paired", "Paired (the same items twice, row by row)"], ["ratio", "Ratio paired (ratios, not differences)"], ["one", "One sample against a value"]]} />
@@ -123,6 +125,10 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
               <label>Heating rate</label><span class="inline"><N k="rate" w={70} /><span class="muted">K/min, for the enthalpy (Y in W/g gives J/g)</span></span>
             </Show>
             <label>Range</label><Range />
+          </Show>
+          <Show when={kind === "surface"}>
+            <label>Model</label><Pick value={o().model} set={v => put("model", v)} options={[["plane", "Plane: z = b0 + b1·x + b2·y"], ["quad", "Quadratic surface (with its maximum, minimum or saddle)"], ["cubic", "Cubic surface"], ["gauss", "2D Gaussian peak (centre, height, widths)"]]} />
+            <label /><span class="muted">{t.kind === "matrix" ? "Fits every Z of the matrix; the fit is drawn as dashed contours or a wireframe." : "Uses the first three ticked data sets as X, Y and Z, one point per row."}</span>
           </Show>
           <Show when={kind === "sn"}>
             <label>Run-outs</label><span class="inline"><span class="muted">cycles at or above</span><N k="runout" w={110} ph="none" /><span class="muted">did not fail: shown, not fitted</span></span>

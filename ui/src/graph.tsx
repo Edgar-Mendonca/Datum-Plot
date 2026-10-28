@@ -49,9 +49,10 @@ export const GraphView = (p: { g: Graph }) => {
   const move = (e: MouseEvent) => {
     if (!r()) return;
     const [px, py] = at(e), R = r()!;
-    if (!inside(px, py, R.plot)) { setCross(null); setTip(null); return; }
+    const tb = out()!.project.tables.find(x => x.id === p.g.table), gs = p.g.settings;
+    // No crosshair where the picture has no flat X–Y plane to read (polar, 3D).
+    if (!inside(px, py, R.plot) || gs.polar || (tb?.kind === "matrix" && ["surface", "wireframe"].includes(gs.column))) { setCross(null); setTip(null); return; }
     setCross([px, py]);
-    const tb = out()!.project.tables.find(x => x.id === p.g.table);
     const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![6] ?? q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
     if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;

@@ -55,6 +55,12 @@ pub fn list() -> Vec<Tpl> {
             }
             return out;
         }
+        if t.kind == "matrix" {
+            let mid = t.sets.len() / 2;
+            let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, 1 + mid)).collect();
+            let (lo, hi) = v.iter().fold((f64::MAX, f64::MIN), |a, &b| (a.0.min(b), a.1.max(b)));
+            return v.iter().enumerate().map(|(i, &z)| (i as f64 / (v.len() - 1).max(1) as f64, (z - lo) / (hi - lo).max(1e-9))).collect();
+        }
         if t.kind != "xy" && t.kind != "multi" {
             let means: Vec<f64> = t.spans().iter().map(|&(c, _)| { let v: Vec<f64> = (0..t.rows).filter_map(|r| t.get(r, c)).collect(); v.iter().sum::<f64>() / v.len().max(1) as f64 }).collect();
             let top = means.iter().fold(0f64, |a, b| a.max(*b));
@@ -84,6 +90,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
         Tpl { id: "spectrum", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
         Tpl { id: "worksheet", name: "Worksheet", desc: "Cooling of a sample: time, temperature and its SD in free columns, with a formula column giving kelvin.", dots: dots("worksheet") },
+        Tpl { id: "hardmap", name: "Hardness map", desc: "Hardness measured on a grid across a weld: a contour map, a 3D surface and a 2D Gaussian surface fit.", dots: dots("hardmap") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
         Tpl { id: "tga", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
         Tpl { id: "fatigue", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
@@ -339,6 +346,32 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.name = "Worksheet".into();
             p.info = Info { title: "Cooling curve".into(), experiment: "A hot sample cooling in air. In a worksheet each column has a role: Time is X, Temperature is Y with its SD as the error, and Temperature (K) is a formula column (B + 273.15) that is not plotted.".into(), ..Default::default() };
             p.add_table(t, Some(GraphSettings { line: true, error: "sd".into(), ..g }));
+        }
+        Some("hardmap") => {
+            let mut seed = 29u64;
+            let mut t = Table::matrix(21, 9);
+            t.name = "Hardness map".into();
+            t.x_title = "Distance across the weld".into();
+            t.x_units = "mm".into();
+            t.y_title = "Hardness".into();
+            t.y_units = "HV".into();
+            for (k, s) in t.sets.iter_mut().enumerate() {
+                s.title = format!("{}", k as f64 * 1.5);
+            }
+            for r in 0..21 {
+                let x = -10.0 + r as f64;
+                t.cols[0][r] = Some(x);
+                for k in 0..9 {
+                    let y = k as f64 * 1.5;
+                    t.cols[k + 1][r] = Some(round(210.0 + 95.0 * (-(x * x) / (2.0 * 3.2 * 3.2) - (y - 4.0).powi(2) / (2.0 * 4.5 * 4.5)).exp() + jitter(&mut seed, 4.0), 0));
+                }
+            }
+            p.name = "Hardness map".into();
+            p.info = Info { title: "Hardness across a weld".into(), experiment: "Vickers hardness on a 21 × 9 grid across a weld bead (X: distance from the weld centre line, Y: depth below the surface). The contour map shows the hard zone; a 2D Gaussian surface fit gives its centre, peak hardness and width.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "contour".into(), palette: "viridis".into(), width: 100.0, y: Axis { title: "Depth (mm)".into(), ..Axis::default() }, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Surface fit".into(), kind: "surface".into(), sets: vec![], options: serde_json::json!({ "model": "gauss" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("dsc") => {
             let xs: Vec<f64> = (0..=120).map(|i| 140.0 + 0.5 * i as f64).collect();

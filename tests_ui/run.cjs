@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, eighteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 22, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, nineteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 23, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -261,6 +261,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const sn = (await ops()).find(o => o.AddAnalysis);
   check("S–N Curves adds a Basquin fit with run-outs", sn && sn.AddAnalysis.analysis.kind === "sn" && sn.AddAnalysis.analysis.options.runout === 10000000, JSON.stringify(sn));
+  await reset();
+  await p.click('.ribbon .rb[title^="Fit Z = f(X, Y)"]');
+  await p.waitForTimeout(200);
+  await p.selectOption('.dlg select:has(option[value="gauss"])', "gauss");
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const sf = (await ops()).find(o => o.AddAnalysis);
+  check("Surface Fit adds a 2D Gaussian surface fit", sf && sf.AddAnalysis.analysis.kind === "surface" && sf.AddAnalysis.analysis.options.model === "gauss", JSON.stringify(sf));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
@@ -316,6 +324,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(150);
   check("New Table › Worksheet asks the shell for a worksheet", (await calls("new_table"))[0]?.kind === "sheet", JSON.stringify(await calls("new_table")));
   await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.dlg nav button:has-text("Worksheets and 3D")');
+  await p.click('.galitem:has-text("Matrix")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Matrix asks the shell for a matrix", (await calls("new_table"))[0]?.kind === "matrix", JSON.stringify(await calls("new_table")));
+  await reset();
   await p.click('.ribbon .rb:has-text("Column Formula")');
   await p.waitForTimeout(150);
   check("Column Formula explains that formulas fill one-value data sets", ((await p.textContent("#toast")) || "").includes("one value per row") && !(await p.$(".dlg")));
@@ -324,6 +340,15 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dhead .hc.st >> nth=0", { clickCount: 2 });
   await p.waitForTimeout(150);
   check("Format Data Set has units, a comment and a formula (off for replicates)", ((await p.textContent(".dlg")) || "").includes("Units") && await p.isDisabled(".dlg input.mono"));
+  await p.keyboard.press("Escape");
+  check("column headings have no delete cross (deleting is in the right-click menu)", !(await p.$(".dhead .hdel")));
+  await reset();
+  const rz = await p.$(".dhead .hc.sub .rsz");
+  const rb = await rz.boundingBox();
+  await p.mouse.move(rb.x + 3, rb.y + 5); await p.mouse.down(); await p.mouse.move(rb.x + 63, rb.y + 5, { steps: 4 }); await p.mouse.up();
+  await p.waitForTimeout(150);
+  const ui = (await ops()).find(o => o.Ui);
+  check("dragging a heading's edge saves the column's width in the project", ui && ui.Ui.key.startsWith("colw.") && Object.values(ui.Ui.value)[0] >= 120, JSON.stringify(ui));
   await p.keyboard.press("Escape");
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
