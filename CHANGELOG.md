@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.17 — 2026-10-28
+
+Nested data: subgroups within groups, the nested t-test and the nested one-way ANOVA.
+
+**Nested tables**
+- File › New Table › **Nested**: for measurements that come in subgroups, such as specimens from batches or cells from animals. Each group is a data set; its sub-columns are its subgroups, with the replicates down the rows.
+- The graph shows each group's subgroups side by side as small columns of dots with their means, and the group mean with an error bar across the subgroup means (Format Graph › Error bars).
+- A new sample on the Home page, **Batches**: specimens from three batches of each of three suppliers.
+
+**Nested t-test and ANOVA**
+- Analyze › Compare Groups › **Nested** (or Significance on a nested graph): tests the groups against the spread between subgroups, because replicates from one subgroup are not independent. Two groups give the nested t-test, more give the nested one-way ANOVA.
+- The full table (between groups, between subgroups within groups, residual), each group's subgroup means, and the variance components from a mixed model: how much of the variation lies between subgroups (intraclass correlation).
+
 ## 0.2.16 — 2026-10-28
 
 Survival: time-to-event tables, Kaplan-Meier curves, the log-rank test and hazard ratios.

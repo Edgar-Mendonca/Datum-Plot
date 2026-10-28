@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, thirteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 17, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, fourteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 18, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -220,6 +220,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(200);
   const sv = (await ops()).find(o => o.AddAnalysis);
   check("Survival adds a survival analysis", sv && sv.AddAnalysis.analysis.kind === "survival" && sv.AddAnalysis.overlay === false, JSON.stringify(sv));
+  await reset();
+  await p.click('.ribbon .rb[title^="Nested t-test"]');
+  await p.waitForTimeout(200);
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(200);
+  const ne = (await ops()).find(o => o.AddAnalysis);
+  check("Nested adds a nested t-test or ANOVA", ne && ne.AddAnalysis.analysis.kind === "nested" && ne.AddAnalysis.overlay === false, JSON.stringify(ne));
 
   // 5b. Import: the file comes back from Python; headings with gaps mean replicates; one Import op.
   await p.click('.tabs button:text-is("Data")');
@@ -259,6 +266,13 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(150);
   check("New Table › Survival asks the shell for a survival table", (await calls("new_table"))[0]?.kind === "survival", JSON.stringify(await calls("new_table")));
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Table")');
+  await p.waitForTimeout(150);
+  await p.click('.galitem:has-text("Nested")');
+  await p.click(".dlg .btn.pri");
+  await p.waitForTimeout(150);
+  check("New Table › Nested asks the shell for a nested table", (await calls("new_table"))[0]?.kind === "nested", JSON.stringify(await calls("new_table")));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);

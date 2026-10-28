@@ -146,7 +146,7 @@ fn files_round_trip_and_newer_files_are_refused() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 13);
+    assert_eq!(l.len(), 14);
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
@@ -162,6 +162,10 @@ fn templates_make_sense() {
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), t.row_titles[23].as_str(), p.analyses[0].kind.as_str()), ("multi", 24, 4, "S24", "multireg"));
     assert!((0..24).all(|r| t.get(r, 3).is_some()) && Table::multi(4, 0).rows == 1);
+    let p = templates::build(Some("batches")).unwrap();
+    let t = &p.tables[0];
+    assert_eq!((t.kind.as_str(), t.rows, t.width(), t.sets[2].reps, p.analyses[0].kind.as_str()), ("nested", 5, 10, 3, "nested"));
+    assert!((1..10).all(|c| (0..5).all(|r| t.get(r, c).is_some())) && Table::nested(2, 0).sets[0].reps == 1);
     let p = templates::build(Some("corrosion")).unwrap();
     let t = &p.tables[0];
     assert_eq!((t.kind.as_str(), t.rows, t.width(), p.analyses[0].kind.as_str()), ("survival", 28, 3, "survival"));

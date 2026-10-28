@@ -81,6 +81,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "phases", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
         Tpl { id: "hardness", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
         Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
+        Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: the area gives the enthalpy.", dots: dots("dsc") },
     ]
 }
@@ -256,6 +257,27 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { error: "none".into(), ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Survival analysis".into(), kind: "survival".into(), sets: vec![], options: serde_json::json!({}) });
+        }
+        Some("batches") => {
+            let mut seed = 21u64;
+            let mut t = Table::nested(3, 3);
+            t.name = "Specimens".into();
+            t.y_title = "Tensile strength".into();
+            t.y_units = "MPa".into();
+            t.rows = 5;
+            t.normalize();
+            for (k, (name, mean)) in [("Supplier A", 512.0), ("Supplier B", 548.0), ("Supplier C", 520.0)].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                for b in 0..3 {
+                    let batch = mean + jitter(&mut seed, 9.0);
+                    t.cols[1 + 3 * k + b] = (0..5).map(|_| Some(round(batch + jitter(&mut seed, 6.0), 0))).collect();
+                }
+            }
+            p.name = "Batches".into();
+            p.info = Info { title: "Strength by supplier".into(), experiment: "Five specimens from each of three batches from each of three suppliers. Specimens from one batch are not independent, so the nested ANOVA tests the suppliers against the spread between batches.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { error: "sd".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Nested ANOVA".into(), kind: "nested".into(), sets: vec![], options: serde_json::json!({}) });
         }
         Some("weibull") => {
             let mut seed = 3u64;

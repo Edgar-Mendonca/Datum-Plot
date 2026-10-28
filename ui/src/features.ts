@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.2.16";
+export const VERSION_NOW = "0.2.17";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -53,7 +53,7 @@ export const FEATURES: Feature[] = [
   ["B17", "Contingency tests", "0.2.4", "Chi-square, Fisher's exact test, relative risk, odds ratio, sensitivity and specificity.", "scipy, statsmodels"],
   ["B18", "ROC and Bland-Altman", "0.2.6", "ROC curves with AUC, its CI and the best cut-off; Bland-Altman bias and limits of agreement with CIs.", "numpy"],
   ["B19", "Survival analysis", "0.2.16", "Kaplan-Meier, median survival with its 95% CI, the log-rank test and hazard ratios (Cox).", "statsmodels"],
-  ["B20", "Nested t-test and ANOVA", "0.2.17", "Mixed models for data with sub-groups.", "statsmodels"],
+  ["B20", "Nested t-test and ANOVA", "0.2.17", "Groups tested against the spread between their subgroups, with variance components from a mixed model (REML).", "statsmodels"],
   ["B21", "Multiple and logistic regression", "0.2.14", "Many predictors: linear, logistic (0/1 outcomes) and Poisson (counts) regression, with odds or rate ratios.", "statsmodels"],
   ["B22", "PCA and clustering", "0.2.15", "Principal components (scree plot, biplot, loadings, scores) and hierarchical or k-means clustering (dendrogram, cluster means).", "numpy, scipy"],
   ["B23", "Power and sample size", "0.2.2", "How many samples you need, or the power you have, for t-tests, ANOVA and proportions.", "statsmodels"],

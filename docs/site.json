@@ -25,7 +25,7 @@
   ],
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
-    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
+    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Materials testing: tensile tests, Weibull strength and Arrhenius activation energies.",
     "Publication graphs: error bars, axis breaks, a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
@@ -39,21 +39,21 @@
   ],
   "roadmap": [
     {
-      "v": "0.2.17",
-      "title": "Nested data",
+      "v": "0.2.18",
+      "title": "Signals",
       "when": "Next",
       "items": [
-        "A nested table (replicates within sub-groups)",
-        "Nested t-test and one-way ANOVA"
+        "Peak finding and fitting",
+        "Signal processing: baseline, filters, Fourier transform"
       ]
     },
     {
-      "v": "0.2.18 – 0.2.19",
-      "title": "Signals and materials",
+      "v": "0.2.19",
+      "title": "Thermal and fatigue",
       "when": "Soon",
       "items": [
-        "Peaks and signal processing",
-        "DSC/TGA thermal analysis and S–N fatigue curves"
+        "DSC/TGA thermal analysis",
+        "S–N fatigue curves"
       ]
     },
     {

@@ -75,7 +75,7 @@ impl DataSet {
 /// A data table: an X column, then each data set's sub-columns. `cols` is that flat list
 /// (column 0 is X); every column has `rows` cells. `kind` is "xy", "column" (one group per data
 /// set, values down the rows) "grouped" (rows are one factor, named by the row titles, data sets
-/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group) or "parts"
+/// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows) or "parts"
 /// (parts of a whole: parts in the rows, one whole per data set);
 /// only XY and survival tables use the X column (the others keep it hidden).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -156,6 +156,14 @@ impl Table {
     pub fn multi(vars: usize, rows: usize) -> Self {
         let sets = (0..vars).map(|k| DataSet { title: format!("Variable {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 1 }).collect();
         let mut t = Table { kind: "multi".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
+        t.normalize();
+        t
+    }
+    /// An empty nested table: `groups` data sets with `subs` sub-columns each (one per subgroup:
+    /// a batch, an animal), replicates down the rows.
+    pub fn nested(groups: usize, subs: usize) -> Self {
+        let sets = (0..groups).map(|k| DataSet { title: format!("Group {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: subs.max(1) }).collect();
+        let mut t = Table { kind: "nested".into(), x_title: String::new(), y_title: "Value".into(), sets, ..Default::default() };
         t.normalize();
         t
     }

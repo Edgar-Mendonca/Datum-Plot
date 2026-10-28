@@ -127,3 +127,47 @@ class Survival(unittest.TestCase):
         out = graph.render(surv(AML), {"error": "ci"})
         self.assertIn("<svg", out["svg"])
         self.assertTrue(any(p and p[1] == 31 and abs(p[2] - 49.09) < 0.01 for p in out["points"]))
+
+
+def nest(*groups):
+    """A nested table: each group a data set whose sub-columns are its subgroups, replicates down the rows."""
+    n = max(len(v) for gr in groups for v in gr)
+    cols = [[None] * n] + [list(v) + [None] * (n - len(v)) for gr in groups for v in gr]
+    return {"name": "N", "kind": "nested", "rows": n, "sets": [{"title": f"G{i}", "entry": "rep", "reps": len(gr)} for i, gr in enumerate(groups)], "cols": cols, "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+
+G1 = [[50.1, 51.3, 49.8, 50.6], [52.4, 53.1, 51.9, 52.8], [49.2, 48.7, 50.0, 49.5]]
+G2 = [[54.0, 55.2, 53.7, 54.4], [51.8, 52.6, 52.1, 51.5], [55.9, 56.3, 55.1, 56.0]]
+G3 = [[50.5, 49.9, 51.2, 50.8], [53.3, 52.7, 53.9, 53.0], [51.1, 51.6, 50.4, 51.0]]
+
+
+class Nested(unittest.TestCase):
+    def test_balanced_nested_anova_is_anova_of_subgroup_means(self):
+        # Balanced design: the nested F for groups equals one-way ANOVA on the subgroup means (as R aov(y ~ g + Error(sub))),
+        # and the REML variance components equal the ANOVA estimators (MS_sub − MS_res) / n and MS_res.
+        from scipy import stats as st
+        import numpy as np
+        r = A.run("nested", nest(G1, G2, G3), [], {})
+        f, p = st.f_oneway(*[[np.mean(v) for v in gr] for gr in (G1, G2, G3)])
+        rows = r["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual(rows[0][4], f"F = {A.g(f, 4)} (DFn 2, DFd 6)")
+        self.assertEqual(rows[0][5], A.pv(p))
+        ms = {row[0]: float(row[3]) for row in rows if row[3]}
+        vc = r["tabs"][0]["tables"][2]["rows"]
+        self.assertAlmostEqual(float(vc[0][1]), (ms["Between subgroups within groups"] - ms["Residual (within subgroups)"]) / 4, 2)
+        self.assertAlmostEqual(float(vc[1][1]), ms["Residual (within subgroups)"], 3)
+
+    def test_two_groups_give_a_nested_t_test(self):
+        from scipy import stats as st
+        import numpy as np
+        r = A.run("nested", nest(G1, G2), [], {})
+        t, p = st.ttest_ind([np.mean(v) for v in G2], [np.mean(v) for v in G1])
+        row = r["tabs"][0]["tables"][0]["rows"][0]
+        self.assertEqual((r["title"], row[4], row[5]), ("Nested t-test", f"t = {A.g(t, 4)}", A.pv(p)))
+        with self.assertRaises(ValueError):
+            A.run("nested", nest([[1, 2]], [[3, 4]]), [], {})
+
+    def test_nested_graph(self):
+        out = graph.render(nest(G1, G2, G3), {})
+        self.assertIn("<svg", out["svg"])
+        self.assertEqual(len([p for p in out["points"] if p]), 9)  # one hover point per subgroup

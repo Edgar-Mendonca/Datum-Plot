@@ -217,6 +217,8 @@ def build(table, graph, overlays=(), fig=None):
         return column_figure(fig, ax, table, graph, overlays, colors, size)
     if table.get("kind") == "parts":
         return parts_figure(fig, ax, table, graph, size)
+    if table.get("kind") == "nested":
+        return nested_figure(fig, ax, table, graph, colors, size)
     if table.get("kind") == "survival":
         return survival_figure(fig, ax, table, graph, colors, size)
     if table.get("kind") in ("grouped", "contingency"):
@@ -531,6 +533,44 @@ def parts_figure(fig, ax, table, graph, size):
     if (graph.get("legend") or {}).get("show", True):
         leg = ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
     return fig, ax, leg, []
+
+
+def nested_figure(fig, ax, table, graph, colors, size):
+    """A nested graph: each group's subgroups side by side as small columns of dots with their means, the group mean ± error across the subgroup means."""
+    from scipy import stats as sst
+    from .nested import subgroups
+    err = graph.get("error", "sd")
+    points, labels = [], []
+    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    for i, k in enumerate(shown):
+        st, subs = style_of(graph, k, colors), subgroups(table, k)
+        labels.append(table["sets"][k].get("title") or f"Data set {chr(65 + k)}")
+        m = len(subs)
+        for j, v in enumerate(subs):
+            x = i + (j - (m - 1) / 2) * min(0.8 / max(m, 1), 0.22)
+            ax.plot(np.full(len(v), x), v, linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"] * 0.7, markerfacecolor=st["color"] if st["filled"] else "white",
+                    markeredgecolor=st["color"], alpha=0.85, zorder=3)
+            ax.hlines(v.mean(), x - 0.06, x + 0.06, color="#222222", linewidth=1.0, zorder=4)
+            points.append([k, float(x), float(v.mean()), len(v), float(v.std(ddof=1)) if len(v) > 1 else 0.0, float(v.std(ddof=1) / math.sqrt(len(v))) if len(v) > 1 else 0.0])
+        if m:
+            mm = np.array([v.mean() for v in subs])
+            gm = mm.mean()
+            ax.hlines(gm, i - 0.4, i + 0.4, color=st["color"], linewidth=1.8, zorder=2)
+            if err != "none" and m > 1:
+                sd = mm.std(ddof=1)
+                e = {"sd": sd, "sem": sd / math.sqrt(m), "ci": sd / math.sqrt(m) * float(sst.t.ppf(0.975, m - 1))}.get(err, 0.0)
+                if err == "range":
+                    ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["color"], linewidth=1.0)
+                elif e:
+                    ax.errorbar(i + 0.42, gm, yerr=e, fmt="none", ecolor=st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+    ax.set_xticks(range(len(shown)), labels); ax.tick_params(axis="x", length=0)
+    ax.set_xlim(-0.6, len(shown) - 0.4)
+    axes(ax, table, graph, points, x=False)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    if not points:
+        ax.text(0.5, 0.5, "Enter each group's subgroups in its sub-columns, replicates down the rows", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
+    return fig, ax, None, points
 
 
 def survival_figure(fig, ax, table, graph, colors, size):

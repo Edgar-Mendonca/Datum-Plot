@@ -256,6 +256,7 @@ export const significance = (e?: MouseEvent) => {
   const t = curTable();
   if (!t) return toast("Open a column graph first.");
   if (t.kind === "grouped") return analysisDialog("twoway", t, undefined, {});
+  if (t.kind === "nested") return analysisDialog("nested", t, undefined, {});
   if (t.kind === "parts") return toast("Pie charts have no significance brackets; Analyze › Fractions gives each part with its 95% CI.");
   if (t.kind === "contingency") return toast("Contingency tables test counts: Analyze › Contingency.");
   if (t.kind !== "column") return toast("Significance brackets go on column and grouped graphs. Make a column table (New Table › Column) for groups.");

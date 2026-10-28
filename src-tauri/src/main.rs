@@ -122,9 +122,9 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
-    let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), _ => a.opts.table() };
+    let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), Some("nested") => Table::nested(2, 3), _ => a.opts.table() };
     let g = match t.kind.as_str() { "column" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "grouped" => GraphSettings { column: "bars".into(), ..a.opts.graph() },
-        "multi" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "survival" => GraphSettings { error: "none".into(), ..a.opts.graph() },
+        "multi" => GraphSettings { points: "each".into(), ..a.opts.graph() }, "survival" => GraphSettings { error: "none".into(), ..a.opts.graph() }, "nested" => GraphSettings { error: "sd".into(), ..a.opts.graph() },
         "parts" => GraphSettings { column: "pie".into(), error: "none".into(), ..a.opts.graph() },
         "contingency" => GraphSettings { column: "percent".into(), error: "none".into(), ..a.opts.graph() }, _ => a.opts.graph() };
     let (table, graph) = (Box::new(Table { name: String::new(), ..t }), Some(Box::new(g)));
