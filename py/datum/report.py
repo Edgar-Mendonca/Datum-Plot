@@ -5,6 +5,7 @@ import datetime
 import io
 
 from . import analysis, graph
+from .files import atomic
 
 
 def parts(project):
@@ -69,7 +70,8 @@ def slides(project, path):
         tf.text = r.get("answer", "")
         for para in tf.paragraphs:
             para.font.size = Pt(20)
-    p.save(path)
+    with atomic(path) as tmp:
+        p.save(tmp)
     return {"path": path, "slides": len(p.slides)}
 
 
@@ -119,5 +121,6 @@ def word(project, path):
         if methods:
             d.add_heading("Methods", 1)
             d.add_paragraph(" ".join(dict.fromkeys(methods)))
-    d.save(path)
+    with atomic(path) as tmp:
+        d.save(tmp)
     return {"path": path, "figures": len(figs), "results": len(res)}

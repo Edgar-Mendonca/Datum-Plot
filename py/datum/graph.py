@@ -17,6 +17,7 @@ from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator, LogLocator, NullLocator  # noqa: E402
 
 from . import stats  # noqa: E402
+from .files import write_bytes  # noqa: E402
 
 OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"]
 SYMBOLS = {"circle": "o", "square": "s", "triangle": "^", "down": "v", "diamond": "D", "pentagon": "p", "hexagon": "h", "star": "*", "none": ""}
@@ -1003,8 +1004,7 @@ def page(layout, panels, fmt="svg", path=None, dpi=300, cmyk=False):
     if fmt == "tiff" and cmyk:
         data = cmyk_tiff(data, dpi)
     if path:
-        with open(path, "wb") as f:
-            f.write(data)
+        write_bytes(path, data)
         return {"path": path, "bytes": len(data)}
     return {"data": base64.b64encode(data).decode()}
 
@@ -1032,7 +1032,6 @@ def export(table, graph, fmt, path=None, dpi=300, transparent=False, overlays=()
     if fmt == "tiff" and cmyk:
         data = cmyk_tiff(data, dpi)
     if path:
-        with open(path, "wb") as f:
-            f.write(data)
+        write_bytes(path, data)
         return {"path": path, "bytes": len(data)}
     return {"data": base64.b64encode(data).decode()}

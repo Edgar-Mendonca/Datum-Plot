@@ -11,5 +11,5 @@ serde_json = "1"
 opt-level = "s"
 lto = true
 codegen-units = 1
-panic = "abort"
+panic = "unwind"  # guard() turns a panic into a message (FAMILY §11)
 strip = true

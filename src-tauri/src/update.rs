@@ -82,6 +82,11 @@ pub fn check(beta: bool) -> Result<Info, String> {
 
 /// Downloads `url` to `dest` with progress events, checking its SHA-256 against `sums` (a
 /// SHA256SUMS.txt from the same release). Only this repo's release files are accepted.
+/// An installer name as the release workflow makes it: `DatumPlot-x.y.z-setup.exe`, plain characters only.
+fn safe_name(name: &str) -> bool {
+    name.ends_with("-setup.exe") && name.len() < 80 && name.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c)) && !name.starts_with('.')
+}
+
 /// True when SHA256SUMS lists exactly `name` (as `sha256sum` writes it: "hash  name" or "hash *name") with hash `got`.
 fn matches(list: &str, name: &str, got: &str) -> bool {
     list.lines().filter_map(|l| l.split_once(char::is_whitespace)).any(|(h, n)| n.trim().trim_start_matches('*') == name && h.len() == 64 && h.eq_ignore_ascii_case(got))
@@ -95,6 +100,7 @@ pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path
     // Every release publishes SHA256SUMS.txt: an installer that cannot be checked is not run.
     let Some(sums) = sums else { return Err("This release has no checksum file, so the download cannot be checked. Download it from the releases page instead.".into()) };
     let name = url.rsplit('/').next().unwrap_or("download").to_string();
+    const CAP: u64 = 600 << 20; // far above an installer (about 90 MB); a bigger answer is not ours
     let resp = agent().get(url).call().map_err(|e| format!("Download failed: {e}"))?;
     let total: u64 = resp.header("Content-Length").and_then(|v| v.parse().ok()).unwrap_or(0);
     let (mut src, mut file) = (resp.into_reader(), std::fs::File::create(dest).map_err(|e| e.to_string())?);
@@ -103,6 +109,11 @@ pub fn download(app: &AppHandle, url: &str, sums: Option<&str>, dest: &std::path
         let n = src.read(&mut buf).map_err(|e| format!("Download failed: {e}"))?;
         if n == 0 {
             break;
+        }
+        if done + n as u64 > CAP {
+            drop(file);
+            let _ = std::fs::remove_file(dest);
+            return Err("The download is far larger than an installer, so it was stopped.".into());
         }
         file.write_all(&buf[..n]).map_err(|e| e.to_string())?;
         hash.update(&buf[..n]);
@@ -128,8 +139,14 @@ pub fn install(app: &AppHandle, url: &str, sums: Option<&str>) -> Result<(), Str
     if !cfg!(windows) {
         return Err("Automatic install is for Windows. Download the new version from the releases page.".into());
     }
-    let name = url.rsplit('/').next().unwrap_or("DatumPlot-setup.exe").to_string();
-    let dest = std::env::temp_dir().join(&name);
+    let name = url.rsplit('/').next().unwrap_or_default().to_string();
+    if !safe_name(&name) {
+        return Err("That is not a Datum Plot installer.".into());
+    }
+    // A new folder of our own for each download, so nothing else can have put a file in its place.
+    let dir = std::env::temp_dir().join(format!("datumplot-update-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos())));
+    std::fs::create_dir(&dir).map_err(|e| format!("Could not prepare the download: {e}"))?;
+    let dest = dir.join(&name);
     download(app, url, sums, &dest, "update-progress")?;
     launch(&dest)?;
     app.exit(0);
@@ -169,5 +186,9 @@ mod tests {
         assert!(matches(&list, "DatumPlot-0.2.23-setup.exe", &h.to_uppercase()));
         assert!(!matches(&list, "DatumPlot-0.2.23-setup.exe", &"b".repeat(64)), "another file's line must not count");
         assert!(matches(&format!("{h} *x.exe"), "x.exe", &h) && !matches("short  x.exe", "x.exe", "short"));
+        assert!(super::safe_name("DatumPlot-0.3.0-setup.exe"));
+        for bad in ["evil.exe", "a b-setup.exe", "..\\x-setup.exe", "x-setup.exe.bat", ".-setup.exe", "%TEMP%-setup.exe"] {
+            assert!(!super::safe_name(bad), "{bad}");
+        }
     }
 }

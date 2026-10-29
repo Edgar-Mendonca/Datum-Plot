@@ -3,8 +3,11 @@ as text (numbers without trailing zeros, dates as ISO), the Rust engine parses t
 import csv
 import datetime
 import io
+import itertools
 import os
 import re
+
+from .files import atomic
 
 MAX_ROWS, MAX_COLS = 1_000_000, 500
 MAX_BYTES = 300 << 20  # a file read into memory at once
@@ -25,7 +28,8 @@ def cell(v):
 
 def read_text(path):
     """A delimited text file: the delimiter is guessed; 1,5 becomes 1.5 when ; separates columns."""
-    raw = open(path, "rb").read()
+    with open(path, "rb") as f:
+        raw = f.read()
     for enc in ("utf-8-sig", "cp1252", "latin-1"):
         try:
             text = raw.decode(enc)
@@ -38,7 +42,11 @@ def read_text(path):
     except csv.Error:
         delim = "\t" if "\t" in sample else ","
     rows = []
-    for r in csv.reader(io.StringIO(text), delimiter=delim, skipinitialspace=delim == " "):
+    try:
+        lines = list(itertools.islice(csv.reader(io.StringIO(text.replace("\x00", ""), newline=""), delimiter=delim, skipinitialspace=delim == " "), MAX_ROWS))
+    except csv.Error as e:
+        raise ValueError(f"That file could not be read as text columns ({e}).")
+    for r in lines:
         if len(rows) >= MAX_ROWS:
             break
         r = [c.strip() for c in r[:MAX_COLS]]
@@ -77,7 +85,14 @@ def read_file(path):
         from .imports import read_pzfx
         return {"sheets": [], "tables": read_pzfx(path)}
     if ext in (".xlsx", ".xlsm"):
-        sheets = read_excel(path)
+        try:
+            sheets = read_excel(path)
+        except (OSError, ValueError, KeyError, EOFError) as e:  # BadZipFile is an OSError's cousin: catch it by name below
+            raise ValueError(f"That .xlsx file is damaged or not a workbook ({type(e).__name__}).")
+        except Exception as e:
+            if type(e).__name__ in ("BadZipFile", "InvalidFileException", "LargeZipFile"):
+                raise ValueError(f"That .xlsx file is damaged or not a workbook ({type(e).__name__}).")
+            raise
     elif ext in (".csv", ".tsv", ".txt", ".dat", ".prn"):
         sheets = read_text(path)
     else:
@@ -149,7 +164,13 @@ def write_excel(path, project, analyses):
         ws.append(["Methods"]); ws.cell(ws.max_row, 1).font = bold
         ws.append([res["methods"]])
         ws.column_dimensions["A"].width = 34
-    wb.save(path)
+    for ws in wb.worksheets:  # text such as "=HYPERLINK(…)" in a title must stay text, never become a live formula
+        for row in ws.iter_rows():
+            for c in row:
+                if c.data_type == "f":
+                    c.data_type = "s"
+    with atomic(path) as tmp:
+        wb.save(tmp)
     return {"path": path, "sheets": len(wb.sheetnames)}
 
 

@@ -15,6 +15,7 @@ from collections.abc import Mapping
 import numpy as np
 
 from . import analysis, stats
+from .files import atomic, safe_text
 
 NS = {}
 LIMIT = 100_000  # characters of output sent back
@@ -174,7 +175,9 @@ def notebook(project, path):
         md(f"## {t.get('name') or var}")
         if df.size > 5000:
             csv = f"{base}-{var}.csv"
-            df.to_csv(csv, index=not isinstance(df.index, pd.RangeIndex))
+            out = df.rename(columns=safe_text, index=safe_text)  # titles a spreadsheet would run as formulas
+            with atomic(csv) as tmp:
+                out.to_csv(tmp, index=not isinstance(df.index, pd.RangeIndex))
             code(f"{var} = pd.read_csv({os.path.basename(csv)!r})\n{var}.head()")
         else:
             code(f"{var} = pd.DataFrame({json.dumps({c: [None if v != v else v for v in df[c].tolist()] for c in df.columns})})\n{var}")
@@ -193,6 +196,7 @@ def notebook(project, path):
         if r.get("code"):
             code(f"# Data: {var}; x is its first column, y the next (adapt as needed)\nx, y = {var}.iloc[:, 0].to_numpy(), {var}.iloc[:, 1].to_numpy()\n" + "\n".join(l for l in r["code"].splitlines() if "[...]" not in l))  # the snippets' placeholders would overwrite the data
     nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}, "language_info": {"name": "python"}}, "nbformat": 4, "nbformat_minor": 5}
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(nb, f, indent=1, ensure_ascii=False)
+    with atomic(path) as tmp:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(nb, f, indent=1, ensure_ascii=False)
     return {"path": path, "cells": len(cells)}

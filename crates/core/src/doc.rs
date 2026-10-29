@@ -130,7 +130,7 @@ impl Doc {
         Ok(d)
     }
     pub fn save(&mut self, path: &Path) -> Result<(), String> {
-        std::fs::write(path, self.json()).map_err(|e| format!("Could not save {}: {e}", path.display()))?;
+        write_atomic(path, self.json().as_bytes())?;
         self.path = Some(path.into());
         self.dirty = false;
         Ok(())
@@ -138,6 +138,26 @@ impl Doc {
     pub fn json(&self) -> String {
         serde_json::to_string_pretty(&self.p).unwrap_or_default()
     }
+}
+
+/// Writes a file so that a crash or a full disk never leaves it half written: a temporary file next to
+/// it, flushed to disk, then renamed over it.
+pub fn write_atomic(path: &Path, data: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    let fail = |e: std::io::Error| format!("Could not save {}: {e}", path.display());
+    let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let tmp = path.with_file_name(format!(".{name}.{}.tmp", std::process::id()));
+    let r = (|| {
+        let mut f = std::fs::File::create(&tmp)?;
+        f.write_all(data)?;
+        f.sync_all()?;
+        drop(f);
+        std::fs::rename(&tmp, path)
+    })();
+    if r.is_err() {
+        let _ = std::fs::remove_file(&tmp);
+    }
+    r.map_err(fail)
 }
 
 /// A number as people type or paste it: 1.5, -2, 1e-3, 1,234.5, −4 (Unicode minus), 12%.
@@ -275,7 +295,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             if row == 0 && rows.len() > 1 && words(&rows[0]) {
                 let head = rows.remove(0);
                 for (j, h) in head.iter().enumerate() {
-                    let (c, h) = (col + j as i64, h.trim());
+                    let (c, h) = (col.saturating_add(j as i64), h.trim());
                     if c == 0 && !h.is_empty() { t.x_title = h.into(); }
                     if c > 0 && !h.is_empty() {
                         if c as usize >= t.width() && c <= MAX_SETS as i64 { widen(t, c as usize + 1); }
@@ -285,7 +305,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             }
             for (i, l) in rows.iter().enumerate() {
                 for (j, s) in l.iter().enumerate() {
-                    put(t, row + i, col + j as i64, s);
+                    put(t, row.saturating_add(i), col.saturating_add(j as i64), s);
                 }
             }
         }

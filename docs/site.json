@@ -36,6 +36,7 @@
     "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx) or a report with graphs, results and methods (.docx).",
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
+    "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
     "Free and open source (MIT), Windows first, installs in seconds with Python inside, and updates itself."
   ],
   "screenshots": [

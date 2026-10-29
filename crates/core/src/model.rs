@@ -84,7 +84,7 @@ impl DataSet {
 /// the other, replicates side by side) "contingency" (counts: rows × outcomes, one value per cell), "multi" (many variables: one row per sample), "survival" (time in X, 1 = event or 0 = censored in the subject's group), "nested" (sub-columns are subgroups, replicates down the rows), "sheet" (a worksheet: free columns with roles), "matrix" (Z on an X–Y grid: X down the rows, Y values as the data sets' titles) or "parts"
 /// (parts of a whole: parts in the rows, one whole per data set);
 /// only XY, survival and matrix tables use the X column (the others keep it hidden).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Table {
     pub id: u32,
@@ -103,6 +103,17 @@ pub struct Table {
     /// Text formatting of cells ("row:col" → style string, as in Datum Plan's fmt.ts).
     pub style: BTreeMap<String, String>,
     pub notes: String,
+}
+
+// By hand: comparing a million empty row titles one String at a time took most of an edit's time.
+impl PartialEq for Table {
+    fn eq(&self, o: &Self) -> bool {
+        // Listing every field: a new one fails to compile here until it is compared.
+        let Table { id, name, kind, x_title, x_units, y_title, y_units, rows, row_titles, sets, cols, excluded, style, notes } = self;
+        let titles = row_titles.len() == o.row_titles.len() && row_titles.iter().zip(&o.row_titles).all(|(a, b)| a.len() == b.len() && (a.is_empty() || a == b));
+        (*id, name, kind, x_title, x_units, y_title, y_units, *rows) == (o.id, &o.name, &o.kind, &o.x_title, &o.x_units, &o.y_title, &o.y_units, o.rows)
+            && titles && *sets == o.sets && *cols == o.cols && *excluded == o.excluded && *style == o.style && *notes == o.notes
+    }
 }
 
 impl Default for Table {
@@ -237,6 +248,8 @@ impl Table {
 }
 
 pub const MAX_ROWS: usize = 1_000_000;
+/// Ids above this are renumbered from 1 (a file can never push the counter past the end of u32).
+pub const ID_LIMIT: u32 = 1 << 30;
 pub const MAX_SETS: usize = 1000;
 pub const MAX_CELLS: usize = 20_000_000;
 
@@ -472,9 +485,36 @@ impl Project {
         self.graphs.iter().find(|g| g.id == id)
     }
     pub fn take_id(&mut self) -> u32 {
+        if self.next_id >= ID_LIMIT {
+            self.renumber();
+        }
         let id = self.next_id.max(1);
         self.next_id = id + 1;
         id
+    }
+    /// Gives every table, graph, analysis and layout a fresh id from 1 (links kept): for files whose ids
+    /// are repeated or near the top of the range.
+    fn renumber(&mut self) {
+        let mut map = std::collections::HashMap::new();
+        let mut n = 0u32;
+        let mut next = |old: u32, kind: u8| { n += 1; map.insert((kind, old), n); n };
+        for t in &mut self.tables { t.id = next(t.id, 0); }
+        let tid = |m: &std::collections::HashMap<(u8, u32), u32>, old| m.get(&(0, old)).copied().unwrap_or(0);
+        for a in &mut self.analyses { a.id = next(a.id, 2); }
+        for g in &mut self.graphs { g.id = next(g.id, 1); }
+        for l in &mut self.layouts { l.id = next(l.id, 3); }
+        let total = n;
+        for a in &mut self.analyses { a.table = tid(&map, a.table); }
+        for g in &mut self.graphs {
+            g.table = tid(&map, g.table);
+            g.settings.overlays = g.settings.overlays.iter().filter_map(|o| map.get(&(2, *o)).copied()).collect();
+        }
+        for l in &mut self.layouts {
+            for i in &mut l.items {
+                if i.kind == "graph" { i.graph = map.get(&(1, i.graph)).copied().unwrap_or(0); }
+            }
+        }
+        self.next_id = total + 1;
     }
     /// Adds a table (and a graph of it, as Prism does); returns the table's id.
     pub fn add_table(&mut self, mut t: Table, g: Option<GraphSettings>) -> u32 {
@@ -492,6 +532,13 @@ impl Project {
         id
     }
     pub fn normalize(&mut self) {
+        let mut ids: Vec<u32> = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).chain(self.layouts.iter().map(|l| l.id)).collect();
+        let n = ids.len();
+        ids.sort_unstable();
+        ids.dedup();
+        if ids.len() < n || ids.last().is_some_and(|&m| m >= ID_LIMIT) || ids.first() == Some(&0) {
+            self.renumber(); // repeated, zero or near-maximum ids (a damaged or hand-made file)
+        }
         self.tables.iter_mut().for_each(Table::normalize);
         let ids: Vec<u32> = self.tables.iter().map(|t| t.id).collect();
         self.graphs.retain(|g| ids.contains(&g.table));
@@ -505,13 +552,23 @@ impl Project {
         for g in &mut self.graphs {
             g.settings.overlays.retain(|o| an.contains(&(*o, g.table)));
         }
+        for g in &mut self.graphs {
+            let s = &mut g.settings;
+            let fit = |v: f64, lo: f64, hi: f64, d: f64| if v.is_finite() { v.clamp(lo, hi) } else { d };
+            (s.width, s.height, s.font_size, s.cap) = (fit(s.width, 10.0, 1000.0, 80.0), fit(s.height, 10.0, 1000.0, 60.0), fit(s.font_size, 4.0, 96.0, 10.0), fit(s.cap, 0.0, 20.0, 3.0));
+            (s.elev, s.azim, s.levels) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200));
+            s.notes.truncate(500);
+            for st in &mut s.sets {
+                (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
+            }
+        }
         let gids: Vec<u32> = self.graphs.iter().map(|g| g.id).collect();
         for l in &mut self.layouts {
             l.items.retain(|i| i.kind != "graph" || gids.contains(&i.graph));
             (l.width, l.height) = (l.width.clamp(20.0, 2000.0), l.height.clamp(20.0, 2000.0));
         }
         let top = self.tables.iter().map(|t| t.id).chain(self.graphs.iter().map(|g| g.id)).chain(self.analyses.iter().map(|a| a.id)).chain(self.layouts.iter().map(|l| l.id)).max().unwrap_or(0);
-        self.next_id = self.next_id.max(top + 1);
+        self.next_id = self.next_id.max(top.saturating_add(1)).min(ID_LIMIT);
     }
     /// Cells in all the tables (for the undo budget).
     pub fn cells(&self) -> usize {

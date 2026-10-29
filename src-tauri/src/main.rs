@@ -5,11 +5,11 @@ mod py;
 mod runtime;
 mod update;
 
-use datum_core::{doc::{Doc, Op}, templates, DataSet, Entry, GraphSettings, Project, Table};
+use datum_core::{doc::{write_atomic, Doc, Op}, templates, DataSet, Entry, GraphSettings, Project, Table};
 use py::{Calc, Engine, Py};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{path::{Path, PathBuf}, sync::Mutex};
+use std::{path::{Path, PathBuf}, sync::{Mutex, PoisonError}};
 use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_dialog::DialogExt;
@@ -104,21 +104,32 @@ fn dir(app: &AppHandle, data: bool) -> Option<PathBuf> {
 
 #[tauri::command]
 fn state(st: State<St>) -> Value {
-    out(&st.0.lock().unwrap())
+    out(&st.0.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
 #[tauri::command]
 fn apply(st: State<St>, op: Op) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     // New tables and graphs without settings follow the options.
     let op = match op {
         Op::AddGraph { table, settings: None } => Op::AddGraph { table, settings: Some(Box::new(a.opts.graph())) },
         Op::Import { name, entry, reps, header, rows, graph: None } => Op::Import { name, entry, reps, header, rows, graph: Some(Box::new(a.opts.graph())) },
         o => o,
     };
-    a.doc.apply(op)?;
+    guard(|| a.doc.apply(op))?;
     a.rev += 1;
     Ok(out(&a))
+}
+
+/// A small settings file (options, recent files, recovery details): read only if under 8 MB.
+fn read_small(f: &Path) -> Option<String> {
+    (std::fs::metadata(f).ok()?.len() < 8 << 20).then(|| std::fs::read_to_string(f).ok()).flatten()
+}
+
+/// Runs `f`, turning a panic into an error message (the document is untouched: edits work on a copy);
+/// the panic hook has written the details to crash.log.
+fn guard<T>(f: impl FnOnce() -> R<T>) -> R<T> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).unwrap_or_else(|_| Err("Something went wrong inside Datum Plot, so that step was not done; your project is as it was. Details are in crash.log in the app's data folder.".into()))
 }
 
 /// A new, empty data table (XY from the options, a column or a grouped table) with its graph.
@@ -139,10 +150,10 @@ fn graph_for(kind: &str, g: GraphSettings) -> GraphSettings {
 /// Adds imported tables (a .pzfx project, a plate, several runs), each with its graph, as one step (A13, A14).
 #[tauri::command]
 fn import_tables(st: State<St>, tables: Vec<Table>) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let g = a.opts.graph();
     let ops = tables.into_iter().map(|t| Op::NewTable { graph: Some(Box::new(graph_for(&t.kind, g.clone()))), table: Box::new(t) }).collect();
-    a.doc.apply(Op::Batch(ops))?;
+    guard(|| a.doc.apply(Op::Batch(ops)))?;
     a.rev += 1;
     Ok(out(&a))
 }
@@ -155,7 +166,7 @@ async fn import_files(app: AppHandle, st: State<'_, St>, separate: Option<bool>)
     let paths: Vec<String> = files.into_iter().filter_map(|f| f.into_path().ok()).map(|p| p.display().to_string()).collect();
     let q = json!({ "cmd": "read_many", "paths": paths, "separate": separate.unwrap_or(false) });
     let h = app.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     let tables: Vec<Table> = serde_json::from_value(r["tables"].clone()).map_err(|e| e.to_string())?;
     import_tables(st, tables).map(Some)
 }
@@ -164,9 +175,9 @@ async fn import_files(app: AppHandle, st: State<'_, St>, separate: Option<bool>)
 /// (one undo step). `reset` clears the console's variables.
 #[tauri::command]
 async fn console(app: AppHandle, st: State<'_, St>, code: String, reset: Option<bool>) -> R<Value> {
-    let q = { let a = st.0.lock().unwrap(); json!({ "cmd": "console", "project": a.doc.p, "code": code, "reset": reset.unwrap_or(false) }) };
+    let q = { let a = st.0.lock().unwrap_or_else(PoisonError::into_inner); json!({ "cmd": "console", "project": a.doc.p, "code": code, "reset": reset.unwrap_or(false) }) };
     let h = app.clone();
-    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())?
+    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())?
         .map_err(|e| if e.contains("longer than") { format!("The code ran for more than a minute, so the engine was restarted and the console's variables were cleared ({e}).") } else { e })?;
     let tables: Vec<Table> = serde_json::from_value(r["tables"].take()).unwrap_or_default();
     if !tables.is_empty() {
@@ -179,11 +190,11 @@ async fn console(app: AppHandle, st: State<'_, St>, code: String, reset: Option<
 /// Tools › Notebook: the project as a Jupyter notebook (.ipynb) (H5).
 #[tauri::command]
 async fn export_notebook(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
-    let (name, project) = { let a = st.0.lock().unwrap(); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
+    let (name, project) = { let a = st.0.lock().unwrap_or_else(PoisonError::into_inner); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
     let Some(path) = app.dialog().file().add_filter("Jupyter notebook", &["ipynb"]).set_file_name(format!("{name}.ipynb")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
     let q = json!({ "cmd": "notebook", "project": project, "path": path.display().to_string() });
     let h = app.clone();
-    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     Ok(Some(path.display().to_string()))
 }
 
@@ -191,27 +202,27 @@ async fn export_notebook(app: AppHandle, st: State<'_, St>) -> R<Option<String>>
 #[tauri::command]
 async fn region(app: AppHandle, st: State<'_, St>, table: u32, x0: f64, x1: f64, y0: Option<f64>, y1: Option<f64>) -> R<Value> {
     let q = {
-        let a = st.0.lock().unwrap();
+        let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         json!({ "cmd": "region", "table": a.doc.p.table(table).ok_or("That data table no longer exists.")?, "x0": x0, "x1": x1, "y0": y0, "y1": y1 })
     };
-    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().ask(&app, &q)).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&app, &q)).await.map_err(|e| e.to_string())?
 }
 
 /// Tools › Slides (.pptx, one graph per slide) or Word Report (.docx: graphs, results, methods) (G5).
 #[tauri::command]
 async fn export_report(app: AppHandle, st: State<'_, St>, kind: String) -> R<Option<String>> {
-    let (name, project) = { let a = st.0.lock().unwrap(); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
+    let (name, project) = { let a = st.0.lock().unwrap_or_else(PoisonError::into_inner); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
     let (label, ext) = if kind == "slides" { ("Slides", "pptx") } else { ("Report", "docx") };
     let Some(path) = app.dialog().file().add_filter(label, &[ext]).set_file_name(format!("{name}.{ext}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
     let q = json!({ "cmd": "report", "kind": kind, "project": project, "path": path.display().to_string() });
     let h = app.clone();
-    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     Ok(Some(path.display().to_string()))
 }
 
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let t = match kind.as_deref() { Some("column") => Table::column(3), Some("grouped") => Table::grouped(3, 2), Some("contingency") => Table::contingency(2, 2), Some("parts") => Table::parts(4, 1), Some("multi") => Table::multi(3, 12), Some("survival") => Table::survival(2), Some("nested") => Table::nested(2, 3), Some("sheet") => Table::sheet(3), Some("matrix") => Table::matrix(10, 5), _ => a.opts.table() };
     let g = graph_for(&t.kind, a.opts.graph());
     let (table, graph) = (Box::new(Table { name: String::new(), ..t }), Some(Box::new(g)));
@@ -222,7 +233,7 @@ fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
 
 #[tauri::command]
 fn history(st: State<St>, redo: bool) -> Value {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     if redo { a.doc.redo() } else { a.doc.undo() }
     a.rev += 1;
     out(&a)
@@ -235,7 +246,7 @@ fn templates() -> Vec<templates::Tpl> {
 
 #[tauri::command]
 fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let mut p = if template.is_none() {
         let mut p = Project::new("Project1");
         p.add_table(a.opts.table(), Some(a.opts.graph()));
@@ -262,9 +273,9 @@ fn pick(app: &AppHandle, name: &str, exts: &[&str]) -> Option<PathBuf> {
 #[tauri::command]
 async fn open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<Value>> {
     let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Datum Plot", &["dplot"])) else { return Ok(None) };
-    let d = Doc::open(&path)?;
+    let d = guard(|| Doc::open(&path))?;
     remember(&app, &path);
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     a.doc = d;
     a.rev += 1;
     Ok(Some(out(&a)))
@@ -273,7 +284,7 @@ async fn open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Opti
 #[tauri::command]
 async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value>> {
     let (known, name) = {
-        let a = st.0.lock().unwrap();
+        let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         (a.doc.path.clone().filter(|_| !as_new), a.doc.p.name.clone())
     };
     let path = match known {
@@ -283,7 +294,7 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
             None => return Ok(None),
         },
     };
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     if a.doc.path.is_none() || as_new {
         if let Some(stem) = path.file_stem() {
             a.doc.p.name = stem.to_string_lossy().into_owned();
@@ -300,7 +311,7 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
 async fn save_file(app: AppHandle, name: String, data: String) -> R<Option<String>> {
     let ext = name.rsplit('.').next().unwrap_or("txt").to_string();
     let Some(path) = app.dialog().file().add_filter(ext.to_uppercase(), &[&ext]).set_file_name(&name).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
-    std::fs::write(&path, data).map_err(|e| format!("Could not save {}: {e}", path.display()))?;
+    write_atomic(&path, data.as_bytes())?;
     Ok(Some(path.display().to_string()))
 }
 
@@ -332,7 +343,7 @@ async fn pick_logo(app: AppHandle) -> R<Option<String>> {
 
 /// The engine's request for a graph: its settings and its table's data.
 fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
-    let a = st.0.lock().unwrap();
+    let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let g = a.doc.p.graph(id).ok_or("That graph no longer exists.")?;
     let t = a.doc.p.table(g.table).ok_or("The graph's data table no longer exists.")?;
     let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| a.doc.p.analysis(*o)).map(|x| json!({ "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
@@ -342,7 +353,7 @@ fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
 /// The engine's request for a page layout: the layout and, for each of its graphs, the graph's
 /// settings, table and fitted curves.
 fn page_req(st: &State<St>, id: u32) -> R<Value> {
-    let a = st.0.lock().unwrap();
+    let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let p = &a.doc.p;
     let l = p.layouts.iter().find(|l| l.id == id).ok_or("That layout no longer exists.")?;
     let mut panels = serde_json::Map::new();
@@ -359,7 +370,7 @@ fn page_req(st: &State<St>, id: u32) -> R<Value> {
 #[tauri::command]
 async fn render_page(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
     let q = page_req(&st, id)?;
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, q)).await.map_err(|e| e.to_string())?
 }
 
 /// Saves a page layout at its real size: PDF, SVG, EPS, PNG or TIFF (CMYK if asked) (F2, G3).
@@ -369,32 +380,32 @@ async fn export_page(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, dp
         return Err("Unknown picture format.".into());
     }
     let mut q = page_req(&st, id)?;
-    let name = st.0.lock().unwrap().doc.p.layouts.iter().find(|l| l.id == id).map(|l| l.name.clone()).unwrap_or_default();
+    let name = st.0.lock().unwrap_or_else(PoisonError::into_inner).doc.p.layouts.iter().find(|l| l.id == id).map(|l| l.name.clone()).unwrap_or_default();
     let Some(path) = app.dialog().file().add_filter(fmt.to_uppercase(), &[&fmt]).set_file_name(format!("{name}.{fmt}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
     q["fmt"] = json!(fmt);
     q["dpi"] = json!(dpi.clamp(72, 2400));
     q["cmyk"] = json!(cmyk && fmt == "tiff");
     q["path"] = json!(path.display().to_string());
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 async fn render(app: AppHandle, st: State<'_, St>, eng: State<'_, Engine>, id: u32) -> R<Value> {
     let q = graph_req(&st, id, "render")?;
     let _ = &eng;
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, q)).await.map_err(|e| e.to_string())?
 }
 
 /// An analysis's results, computed by Python (cached while nothing changes).
 #[tauri::command]
 async fn result(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
     let q = {
-        let a = st.0.lock().unwrap();
+        let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         let x = a.doc.p.analysis(id).ok_or("That analysis no longer exists.")?;
         let t = a.doc.p.table(x.table).ok_or("The analysis's data table no longer exists.")?;
         json!({ "cmd": "analyze", "kind": x.kind, "table": t, "sets": x.sets, "options": x.options })
     };
-    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().render(&app, q)).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, q)).await.map_err(|e| e.to_string())?
 }
 
 /// Column formulas (A11): sets data set `k`'s formula to `text` (when given) and works out every formula
@@ -402,18 +413,18 @@ async fn result(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
 #[tauri::command]
 async fn formula(app: AppHandle, st: State<'_, St>, table: u32, k: Option<usize>, text: Option<String>, merge: bool) -> R<Value> {
     let q = {
-        let a = st.0.lock().unwrap();
+        let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         let t = a.doc.p.table(table).ok_or("That data table no longer exists.")?;
         if k.is_none() && t.sets.iter().all(|s| s.formula.is_empty()) {
             return Ok(out(&a));
         }
         json!({ "cmd": "formula", "table": t, "k": k, "text": text })
     };
-    let r = tauri::async_runtime::spawn_blocking({ let app = app.clone(); move || app.state::<Calc>().0.lock().unwrap().render(&app, q) }).await.map_err(|e| e.to_string())??;
+    let r = tauri::async_runtime::spawn_blocking({ let app = app.clone(); move || app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, q) }).await.map_err(|e| e.to_string())??;
     let sets: Vec<(usize, Vec<Option<f64>>)> = serde_json::from_value(r["sets"].clone()).map_err(|e| e.to_string())?;
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let op = Op::Formula { table, k, formula: text, sets };
-    if merge { a.doc.merge(op)? } else { a.doc.apply(op)? }
+    guard(|| if merge { a.doc.merge(op) } else { a.doc.apply(op) })?;
     a.rev += 1;
     Ok(out(&a))
 }
@@ -421,7 +432,7 @@ async fn formula(app: AppHandle, st: State<'_, St>, table: u32, k: Option<usize>
 /// The curve-fitting model library: [id, name, equation, description].
 #[tauri::command]
 async fn models(app: AppHandle) -> R<Value> {
-    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap().render(&app, json!({ "cmd": "models" }))).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, json!({ "cmd": "models" }))).await.map_err(|e| e.to_string())?
 }
 
 /// Tools › Export All Graphs: every graph of the project into a chosen folder (G4).
@@ -431,7 +442,7 @@ async fn export_all(app: AppHandle, st: State<'_, St>, fmt: String, dpi: u32) ->
         return Err("Unknown picture format.".into());
     }
     let Some(dir) = app.dialog().file().blocking_pick_folder().and_then(|f| f.into_path().ok()) else { return Ok(None) };
-    let ids: Vec<(u32, String)> = st.0.lock().unwrap().doc.p.graphs.iter().map(|g| (g.id, g.name.clone())).collect();
+    let ids: Vec<(u32, String)> = st.0.lock().unwrap_or_else(PoisonError::into_inner).doc.p.graphs.iter().map(|g| (g.id, g.name.clone())).collect();
     let mut used = std::collections::HashSet::new();
     let mut qs = vec![];
     for (id, name) in ids {
@@ -450,7 +461,7 @@ async fn export_all(app: AppHandle, st: State<'_, St>, fmt: String, dpi: u32) ->
     }
     let n = qs.len();
     let h = app.clone();
-    tauri::async_runtime::spawn_blocking(move || qs.iter().try_for_each(|q| h.state::<Engine>().0.lock().unwrap().ask(&h, q).map(|_| ()))).await.map_err(|e| e.to_string())??;
+    tauri::async_runtime::spawn_blocking(move || qs.iter().try_for_each(|q| h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, q).map(|_| ()))).await.map_err(|e| e.to_string())??;
     Ok(Some(format!("{n} graph{} saved in {}", if n == 1 { "" } else { "s" }, dir.display())))
 }
 
@@ -458,14 +469,14 @@ async fn export_all(app: AppHandle, st: State<'_, St>, fmt: String, dpi: u32) ->
 #[tauri::command]
 async fn export_excel(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
     let (name, q) = {
-        let a = st.0.lock().unwrap();
+        let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         (a.doc.p.name.clone(), json!({ "cmd": "excel", "project": a.doc.p, "analyses": a.doc.p.analyses }))
     };
     let Some(path) = app.dialog().file().add_filter("Excel workbook", &["xlsx"]).set_file_name(format!("{name}.xlsx")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
     let mut q = q;
     q["path"] = json!(path.display().to_string());
     let h = app.clone();
-    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     Ok(Some(path.display().to_string()))
 }
 
@@ -476,7 +487,7 @@ async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, d
         return Err("Unknown picture format.".into());
     }
     let mut q = graph_req(&st, id, "export")?;
-    let name = st.0.lock().unwrap().doc.p.graph(id).map(|g| g.name.clone()).unwrap_or_default();
+    let name = st.0.lock().unwrap_or_else(PoisonError::into_inner).doc.p.graph(id).map(|g| g.name.clone()).unwrap_or_default();
     let label = match fmt.as_str() { "png" => "PNG picture", "svg" => "SVG vector", "pdf" => "PDF", "tiff" => "TIFF picture", _ => "EPS vector" };
     let Some(path) = app.dialog().file().add_filter(label, &[&fmt]).set_file_name(format!("{name}.{fmt}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
     q["fmt"] = json!(fmt);
@@ -484,7 +495,7 @@ async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, d
     q["transparent"] = json!(transparent);
     q["cmyk"] = json!(cmyk.unwrap_or(false) && fmt == "tiff");
     q["path"] = json!(path.display().to_string());
-    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap().ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
 }
 
 /// Puts a PNG of a graph on the Windows clipboard (Word and PowerPoint paste it as a picture).
@@ -494,7 +505,7 @@ async fn copy_graph(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<(
     q["fmt"] = json!("png");
     q["dpi"] = json!(dpi.clamp(72, 1200));
     let h = app.clone();
-    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     let png = base64_decode(r["data"].as_str().unwrap_or(""))?;
     let img = tauri::image::Image::from_bytes(&png).map_err(|e| format!("Could not read the picture: {e}"))?;
     app.clipboard().write_image(&img).map_err(|e| format!("Could not copy the picture: {e}"))
@@ -516,7 +527,7 @@ async fn import_file(app: AppHandle) -> R<Option<Value>> {
     let Some(path) = pick(&app, "Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm", "pzfx"]) else { return Ok(None) };
     let q = json!({ "cmd": "read", "path": path.display().to_string() });
     let h = app.clone();
-    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap().ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let mut r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
     r["name"] = json!(path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default());
     Ok(Some(r))
 }
@@ -539,8 +550,8 @@ fn base64_decode(s: &str) -> R<Vec<u8>> {
 #[tauri::command]
 async fn restart_engine(app: AppHandle) -> R<()> {
     tauri::async_runtime::spawn_blocking(move || {
-        app.state::<Calc>().0.lock().unwrap().restart(&app)?;
-        app.state::<Engine>().0.lock().unwrap().restart(&app).map(|_| ())
+        app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).restart(&app)?;
+        app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).restart(&app).map(|_| ())
     })
     .await
     .map_err(|e| e.to_string())?
@@ -551,7 +562,7 @@ async fn restart_engine(app: AppHandle) -> R<()> {
 async fn engine(app: AppHandle) -> Value {
     tauri::async_runtime::spawn_blocking(move || {
         let e = app.state::<Engine>();
-        let mut p = e.0.lock().unwrap();
+        let mut p = e.0.lock().unwrap_or_else(PoisonError::into_inner);
         if p.versions.is_none() {
             let _ = p.ask(&app, &json!({ "cmd": "ping" }));
         }
@@ -569,15 +580,15 @@ fn options_file(app: &AppHandle) -> Option<PathBuf> {
 
 #[tauri::command]
 fn options(st: State<St>) -> Options {
-    st.0.lock().unwrap().opts.clone()
+    st.0.lock().unwrap_or_else(PoisonError::into_inner).opts.clone()
 }
 
 #[tauri::command]
 fn set_options(app: AppHandle, st: State<St>, opts: Options) -> Value {
     if let Some(f) = options_file(&app) {
-        let _ = std::fs::write(f, serde_json::to_string(&opts).unwrap_or_default());
+        let _ = write_atomic(&f, serde_json::to_string(&opts).unwrap_or_default().as_bytes());
     }
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     a.opts = opts;
     out(&a)
 }
@@ -598,11 +609,11 @@ fn clear_recovery(app: &AppHandle) {
 
 #[tauri::command]
 fn autosave(app: AppHandle, st: State<St>) {
-    let a = st.0.lock().unwrap();
+    let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     if let (true, Some((file, meta))) = (a.doc.dirty, recovery_files(&app)) {
         let info = Recovery { name: a.doc.p.name.clone(), path: a.doc.path.as_ref().map(|p| p.display().to_string()), saved: chrono::Local::now().format("%d-%b-%y %H:%M").to_string() };
-        let _ = std::fs::write(file, a.doc.json());
-        let _ = std::fs::write(meta, serde_json::to_string(&info).unwrap_or_default());
+        let _ = write_atomic(&file, a.doc.json().as_bytes());
+        let _ = write_atomic(&meta, serde_json::to_string(&info).unwrap_or_default().as_bytes());
     }
 }
 
@@ -610,7 +621,7 @@ fn autosave(app: AppHandle, st: State<St>) {
 fn recovery(app: AppHandle) -> Option<Recovery> {
     let (file, meta) = recovery_files(&app)?;
     file.exists().then_some(())?;
-    serde_json::from_str(&std::fs::read_to_string(meta).ok()?).ok()
+    serde_json::from_str(&read_small(&meta)?).ok()
 }
 
 #[tauri::command]
@@ -622,10 +633,10 @@ fn recover(app: AppHandle, st: State<St>, keep: bool) -> R<Option<Value>> {
         return Ok(None);
     }
     let (file, _) = files.ok_or("No recovered project was found.")?;
-    let mut d = Doc::open(&file)?;
+    let mut d = guard(|| Doc::open(&file))?;
     d.path = info.and_then(|i| i.path).map(PathBuf::from);
     d.dirty = true;
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     a.doc = d;
     a.rev += 1;
     Ok(Some(out(&a)))
@@ -635,7 +646,7 @@ fn recover(app: AppHandle, st: State<St>, keep: bool) -> R<Option<Value>> {
 struct Recent { path: String, name: String, modified: String }
 
 fn recent_paths(app: &AppHandle) -> Vec<String> {
-    options_file(app).map(|f| f.with_file_name("recent.json")).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
+    options_file(app).map(|f| f.with_file_name("recent.json")).and_then(|f| read_small(&f)).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
 }
 
 fn remember(app: &AppHandle, path: &Path) {
@@ -645,7 +656,7 @@ fn remember(app: &AppHandle, path: &Path) {
     v.insert(0, p);
     v.truncate(15);
     if let Some(f) = options_file(app).map(|f| f.with_file_name("recent.json")) {
-        let _ = std::fs::write(f, serde_json::to_string(&v).unwrap());
+        let _ = write_atomic(&f, serde_json::to_string(&v).unwrap_or_default().as_bytes());
     }
 }
 
@@ -665,7 +676,7 @@ fn recent(app: AppHandle) -> Vec<Recent> {
 /// A .dplot path passed on the command line (double-clicked in Explorer), or the last project.
 #[tauri::command]
 fn startup_file(app: AppHandle, st: State<St>) -> Option<String> {
-    let last = || if st.0.lock().unwrap().opts.open_last { recent_paths(&app).into_iter().find(|p| Path::new(p).exists()) } else { None };
+    let last = || if st.0.lock().unwrap_or_else(PoisonError::into_inner).opts.open_last { recent_paths(&app).into_iter().find(|p| Path::new(p).exists()) } else { None };
     std::env::args().skip(1).find(|a| a.to_lowercase().ends_with(".dplot")).or_else(last)
 }
 
@@ -696,7 +707,7 @@ fn quit(app: AppHandle) {
 
 #[tauri::command]
 async fn check_update(st: State<'_, St>) -> R<update::Info> {
-    let beta = st.0.lock().unwrap().opts.beta;
+    let beta = st.0.lock().unwrap_or_else(PoisonError::into_inner).opts.beta;
     tauri::async_runtime::spawn_blocking(move || update::check(beta)).await.map_err(|e| e.to_string())?
 }
 
@@ -710,7 +721,18 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
-            let opts: Options = options_file(app.handle()).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+            // A panic is written to crash.log in the app's data folder before guard() turns it into a message.
+            if let Ok(dir) = app.path().app_data_dir() {
+                let log = dir.join("crash.log");
+                std::panic::set_hook(Box::new(move |info| {
+                    let _ = std::fs::create_dir_all(log.parent().unwrap_or(&log));
+                    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&log) {
+                        use std::io::Write;
+                        let _ = writeln!(f, "{} Datum Plot {}: {info}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"), env!("CARGO_PKG_VERSION"));
+                    }
+                }));
+            }
+            let opts: Options = options_file(app.handle()).and_then(|f| read_small(&f)).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             let mut p = Project::new("Project1");
             p.add_table(opts.table(), Some(opts.graph()));
             app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
@@ -720,18 +742,18 @@ fn main() {
             let h = app.handle().clone();
             std::thread::spawn(move || {
                 let e = h.state::<Engine>();
-                let mut p = e.0.lock().unwrap();
+                let mut p = e.0.lock().unwrap_or_else(PoisonError::into_inner);
                 let _ = p.ask(&h, &json!({ "cmd": "ping" }));
                 let _ = h.emit("engine", json!({ "versions": p.versions, "error": p.error }));
                 drop(p);
                 // The second engine (results, Excel) starts once the graphs' engine is ready.
-                let _ = h.state::<Calc>().0.lock().unwrap().ask(&h, &json!({ "cmd": "ping" }));
+                let _ = h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &json!({ "cmd": "ping" }));
             });
             Ok(())
         })
         .on_window_event(|w, e| {
             if let WindowEvent::CloseRequested { api, .. } = e {
-                if w.state::<St>().0.lock().unwrap().doc.dirty {
+                if w.state::<St>().0.lock().unwrap_or_else(PoisonError::into_inner).doc.dirty {
                     api.prevent_close();
                     let _ = w.emit("close-requested", ());
                 } else {

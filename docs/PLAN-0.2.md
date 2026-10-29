@@ -362,4 +362,5 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.2.21** ✅ | Users' requests (session 8, second round): axis breaks on column/grouped/nested graphs, no × in headings, resizable columns saved in the project, empty data sets dimmed and unticked in dialogs; Matrix (A10), 3D/contour/polar (D11), surface fits (B26) |
 | **0.2.22** ✅ | Large data (D17), region tools (E5), .pzfx import (A13), instrument import (A14), slides and reports (G5), posters (F3) — combined at the user's request |
 | **0.2.23** ✅ | Python console (H1), own analyses (H2), templates (H3), batch (H4), notebooks (H5); security, robustness and hardening review |
+| **0.3.0** ✅ | The full check: security, robustness, reliability, hardening tests and speed (no new features; FAMILY §11) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

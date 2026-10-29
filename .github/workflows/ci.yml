@@ -30,12 +30,34 @@ jobs:
       - run: npm run build:ui
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      - name: Engine smoke test (every template through the real Python worker)
+        run: |
+          cargo run -q -p datum-core --example dump all > all.json
+          python py/tests/smoke.py all.json
       - name: UI tests (Playwright)
         run: |
           npm i -g playwright@1.63.0
           npx -y playwright@1.63.0 install --with-deps chromium
           cargo run -q -p datum-core --example dump > tests_ui/fixture.json
           NODE_PATH=$(npm root -g) PYTHON=python node tests_ui/run.cjs
+
+  # The engine and the Python engine on the systems people run it on (the shell is checked above and built on Windows by the release).
+  platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p datum-core --release
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r py/requirements.txt
+      - run: python -m unittest discover -s py/tests
 
   deny:
     runs-on: ubuntu-latest
@@ -52,6 +74,7 @@ jobs:
         with:
           node-version: 22
       - run: npm audit --audit-level=high
+      - run: npm audit --omit=dev --audit-level=high
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"

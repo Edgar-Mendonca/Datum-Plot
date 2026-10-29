@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0 — 2026-10-29
+
+A full check of the whole application: security, robustness, reliability and speed. No new features; everything that was there works more safely.
+
+**Nothing is lost**
+- Saving a project, the options and every export (pictures, pages, .xlsx, .pptx, .docx, notebooks) now writes a temporary file first and swaps it in only when it is complete: a crash, a full disk or a power cut never leaves a half-written file.
+- If something unexpected goes wrong inside the app during an edit, that one step is refused, your project stays exactly as it was, and the details go to `crash.log` in the app's data folder instead of closing the app.
+- A project whose internal numbers were damaged (repeated or impossible identifiers) is repaired on opening, with every graph, result and layout still linked to its data.
+
+**Safe files**
+- Graph settings out of range in a project file (sizes, fonts, angles, contour levels, marker sizes) are brought back within limits when it opens.
+- Damaged or unreadable data files (broken workbooks, garbled text, cut-off .pzfx files) give a clear message instead of an engine error.
+- Spreadsheet exports never contain live formulas: text that looks like one (starting with `=`) is written as text. Notebook CSV files mark text starting with `=`, `+`, `-` or `@` so a spreadsheet will not run it.
+
+**Safe updates and window**
+- The updater accepts only an installer with the expected name, requires the release's checksum file, limits the download size and saves it in a new private folder.
+- The window refuses frames, plug-ins, forms and remote scripts (a stricter content security policy).
+
+**Tested to break**
+- New robustness tests feed the engine hundreds of random and hostile projects and edit sequences, damaged and truncated files, and impossible values; they found and fixed one crash (pasting at an impossible position).
+- An engine check runs every sample project through the real Python engine: every analysis, every graph type on every kind of table, every export format, layouts, slides, reports, notebooks and the console (532 requests, no failures).
+- The checks now also run on Windows and macOS on every change.
+
+**Faster**
+- Typing a value in a very large table (a million rows) is about seven times quicker (0.05 s instead of 0.4 s): checking whether an edit changed anything no longer compares a million empty row titles one by one.
+
 ## 0.2.23 — 2026-10-28
 
 The Python console, your own analyses, templates, batch processing and notebooks; and a full security, robustness and hardening review.
