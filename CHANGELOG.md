@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 — 2026-10-29
+
+The family publisher name.
+
+**Installer**
+- Windows now lists the publisher as Datum.
+
 ## 0.3.0 — 2026-10-29
 
 A full check of the whole application: security, robustness, reliability and speed. No new features; everything that was there works more safely.

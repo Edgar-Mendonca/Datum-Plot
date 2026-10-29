@@ -70,13 +70,13 @@ The ⓘ How to use button in the console and the ? beside it in the ribbon show 
 
 If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
 
-> Mendonca, E. (2026). *Datum Plot* (Version 0.3.0) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+> Mendonca, E. (2026). *Datum Plot* (Version 0.3.1) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
 
 ```bibtex
 @software{datum_plot,
   author  = {Mendonca, Edgar},
   title   = {Datum Plot},
-  version = {0.3.0},
+  version = {0.3.1},
   year    = {2026},
   url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
   license = {MIT}
