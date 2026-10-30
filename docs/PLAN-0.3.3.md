@@ -75,3 +75,16 @@ in their own format.
 2. Copy and edit again: C (linked pictures) now, B later; or another choice?
 3. Generic names everywhere (including the guide): go? Should the buttons show the extensions ("Slides (.pptx/.odp)") or just "Slides"?
 4. OpenDocument: all three formats, and in 0.3.4 or together with 0.3.3?
+
+## 7. Answers (2026-10-30)
+
+1. Colours 1a–1c: yes. Root cause of 1a found while building: the swatches used the CSS class `pal`, which is also
+   the Tell Me box (620 px wide), so every swatch strip was 620 px.
+2. Copy and edit again: **not at all** (neither A, B nor C, nor vector copy).
+3. Generic names: yes: **Slides**, **Document**, **Workbook** (not "Report").
+4. OpenDocument: **export only** (.ods, .odt, .odp), no import. odfpy could not be built (source-only package), so
+   Datum Plot writes the formats itself (`py/datum/odf.py`), checked by opening them in LibreOffice.
+5. Colour-blindness (the user asked whether it was checked): CIEDE2000 between the closest two colours of each scheme
+   under simulated protanopia, deuteranopia and tritanopia (Machado 2009): Okabe-Ito ≥ 10.9, Muted ≥ 11.5, Bright
+   ≥ 8.6 (tritan), Cividis by design; Classic 0.7, Dark 2.1, Pastel 2.9. The user: only a small "colour-blind
+   safe" label on the safe schemes, nothing on the others. "Tableau" was renamed "Classic".

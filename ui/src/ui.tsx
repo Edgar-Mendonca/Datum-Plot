@@ -50,11 +50,20 @@ export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element
     if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); done(); }
   };
   let el!: HTMLDivElement;
+  /** Drag the dialog by its title bar, to see what is behind it. */
+  const drag = (e: MouseEvent) => {
+    if (e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
+    const m = new DOMMatrix(getComputedStyle(el).transform === "none" ? undefined : getComputedStyle(el).transform), x0 = e.clientX - m.e, y0 = e.clientY - m.f;
+    const move = (ev: MouseEvent) => { el.style.transform = `translate(${ev.clientX - x0}px, ${Math.max(-el.offsetTop, ev.clientY - y0)}px)`; };
+    const up = () => { removeEventListener("mousemove", move); removeEventListener("mouseup", up); };
+    addEventListener("mousemove", move); addEventListener("mouseup", up);
+    e.preventDefault();
+  };
   onMount(() => ((el.querySelector("input:not([type=checkbox]),textarea") ?? el.querySelector(".btn.pri") ?? el.querySelector("footer .btn")) as HTMLElement | null)?.focus());
   return (
     <div class="ov" classList={{ dock: p.side }} onKeyDown={key}>
       <div class="dlg" classList={{ wide: p.wide }} ref={el}>
-        <header>{p.title}{p.help && <Help k={p.help} />}<button class="x" onClick={closeDialog}>×</button></header>
+        <header onMouseDown={drag}>{p.title}{p.help && <Help k={p.help} />}<button class="x" onClick={closeDialog}>×</button></header>
         <div class="bd">{p.children}</div>
         <footer>{p.extra}<span class="grow" />{p.ok && <button class="btn pri" onClick={done}>{p.okText ?? "OK"}</button>}<button class="btn" onClick={closeDialog}>{p.cancel ?? (p.ok ? "Cancel" : "Close")}</button></footer>
       </div>

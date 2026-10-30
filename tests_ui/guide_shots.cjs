@@ -99,6 +99,9 @@ const srv = http.createServer((q, r) => {
   await p.click('.ribbon .rb.big:has-text("Format Axes")'); await wait(400);
   await shot("format", [[".dlg .dtabs", 1], [".dlg .fmtpage", 2], [".gpaper", 3]]);
   await p.keyboard.press("Escape"); await wait(200);
+  await p.click('.ribbon .rb:has-text("Colour Schemes")'); await wait(500);
+  await shot("colours", [[".paltbl tbody tr", 1, 1, "right"], [".paltbl thead th", 2, 2]]);
+  await p.keyboard.press("Escape"); await wait(200);
   // 2. The data table.
   await nav(1);
   await tab("Data"); await shot("table", [["grp:Insert", 1], [".dhead", 2], [".dgrid", 3, 0, "in"]], { x: 0, y: 0, width: 1440, height: 640 });

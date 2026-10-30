@@ -42,7 +42,7 @@ export interface Out { project: Project; path: string | null; dirty: boolean; un
 /** A graph drawn by the Python engine: SVG and where things are, in points from the top-left. */
 export interface Render {
   svg: string; w: number; h: number; plot: [number, number, number, number]; all: [number, number, number, number]; legend: [number, number, number, number] | null;
-  xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; points: ([number, number, number, number, number, number, number?] | null)[];
+  xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; /** Each data set's colour as drawn. */ colors?: string[]; points: ([number, number, number, number, number, number, number?] | null)[];
 }
 export interface Options {
   theme: string; autosave: number; beta: boolean; openLast: boolean; decimals: number; reps: number; entry: string; error: string; width: number; height: number;

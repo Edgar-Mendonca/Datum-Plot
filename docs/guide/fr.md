@@ -96,7 +96,7 @@ Choisissez le type de tableau qui correspond à votre expérience : **Data › 
 
 1. **Data › Insert** (Données › Insérer). **New Table** (Nouveau tableau), **Import** (Importer), **Several Files** (Plusieurs fichiers), **Add Data Set** (Ajouter une série), **Remove Data Set** (Supprimer une série) et les lignes.
 2. **En-têtes.** Le titre et les unités de X, et le titre de chaque série de données. Double-cliquez sur un en-tête pour le modifier, ainsi que les réplicats ou le mode de saisie des valeurs.
-3. **Cellules.** Tapez une valeur et appuyez sur [[Enter]]. Le copier-coller fonctionne avec Excel ([[Ctrl+C]], [[Ctrl+V]]) ; [[Ctrl+D]] recopie vers le bas.
+3. **Cellules.** Tapez une valeur et appuyez sur [[Enter]]. Le copier-coller fonctionne avec les tableurs ([[Ctrl+C]], [[Ctrl+V]]) ; [[Ctrl+D]] recopie vers le bas.
 
 Une série de données peut être saisie sous forme de réplicats (chaque valeur dans sa propre colonne) ou sous forme de **mean, SD and N** (moyenne, écart-type et N) ou de **mean, SEM and N** (moyenne, erreur-type de la moyenne et N) tirés d’un article ou d’un autre logiciel : choisissez-le dans l’en-tête de la série.
 
@@ -110,7 +110,7 @@ Pour exclure une valeur des graphiques et des analyses sans la supprimer, sélec
 
 ### Importer
 
-**Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs Excel (.xlsx) et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
+**Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs .xlsx et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
 
 ## Analyses et résultats
 
@@ -131,7 +131,7 @@ Les autres groupes de l’onglet **Analyze** (Analyser) lancent directement une 
 
 ![Une feuille de résultats : ajustement d’une courbe logistique.](img/results.png)
 
-1. **Tableaux de résultats.** Les valeurs, avec leurs erreurs-types et leurs intervalles de confiance à 95 %. **Copy** (Copier) copie un tableau pour Excel ou Word.
+1. **Tableaux de résultats.** Les valeurs, avec leurs erreurs-types et leurs intervalles de confiance à 95 %. **Copy** (Copier) copie un tableau pour un tableur ou un document.
 2. **La réponse.** Ce que l’analyse a trouvé, en termes simples.
 3. **Vérifications.** Si les hypothèses sont respectées (par exemple, si les résidus se dispersent au hasard), avec une coche ou un avertissement.
 
@@ -160,7 +160,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 1. **Graph** (Graphique). **New Graph** (Nouveau graphique), **Graph Type** (Type de graphique : nuage de points, barres, boîte à moustaches, violon, avant–après, courbes et d’autres) et **Data Table** (Tableau de données, pour revenir aux données).
 2. **Axes** (Axes). Axes logarithmiques, axes encadrés, **Format Axes** (Mettre en forme les axes) et **Axis Break** (Coupure d’axe).
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
-4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans Word ou PowerPoint) et **Print** (Imprimer).
+4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives) et **Print** (Imprimer).
 
 Les autres groupes règlent les **Error Bars** (Barres d’erreur), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
 
@@ -173,6 +173,15 @@ Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une séri
 1. **Pages.** **Data Sets** (Séries de données : symboles, couleurs, lignes, barres d’erreur, axe Y de droite), **X Axis** (Axe X), **Y Axis** (Axe Y), **Graph** (Graphique : taille et polices) et les notes.
 2. **Réglages.** Les modifications s’appliquent immédiatement.
 3. **Le graphique** reste visible pendant que vous travaillez.
+
+### Couleurs
+
+![Graph › Colour Schemes (Graphique › Jeux de couleurs), à côté du graphique.](img/colours.png)
+
+1. **Jeux de couleurs.** Cliquez sur l’un d’eux : le graphique change aussitôt, car la fenêtre se place à côté du graphique. Les jeux marqués **colour-blind safe** (adapté aux daltoniens) restent faciles à distinguer pour les personnes atteintes de l’un des trois types courants de daltonisme ; le jeu par défaut, Okabe-Ito, en fait partie.
+2. **Ce que voient les lecteurs daltoniens.** Les trois colonnes montrent chaque jeu tel que le voient les personnes atteintes de protanopie, de deutéranopie et de tritanopie.
+
+Vos propres couleurs se saisissent dans la dernière ligne (#hex, séparées par des virgules). Dans **Format Graph › Data Sets** (Mettre en forme le graphique › Séries de données), la case de couleur de chaque série montre la couleur avec laquelle elle est tracée, et les couleurs rapides à côté sont celles du jeu choisi. Toute fenêtre se déplace en faisant glisser sa barre de titre.
 
 ### Travailler sur le graphique
 
@@ -214,9 +223,11 @@ Le groupe **Templates** (Modèles) crée un **Poster** (Poster) ou une **Slide**
 Autres façons de partager, dans **Tools** (Outils) :
 
 - **Export All Graphs** (Exporter tous les graphiques) en une fois.
-- **Excel Workbook** (Classeur Excel) : tous les tableaux et résultats dans un fichier .xlsx.
-- **PowerPoint** : chaque graphique sur sa propre diapositive (.pptx).
-- **Word Report** (Rapport Word) : les informations du projet, chaque graphique avec sa légende, chaque résultat et le texte des méthodes (.docx).
+- **Workbook** (Classeur) : tous les tableaux et résultats, en feuilles d’un fichier .xlsx ou .ods.
+- **Slides** (Diapositives) : chaque graphique sur sa propre diapositive, et une diapositive par résultat (.pptx ou .odp).
+- **Document** : les informations du projet, chaque graphique avec sa légende, chaque résultat et le texte des méthodes (.docx ou .odt).
+
+Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .ods, .odt et .odp sont au format OpenDocument, la norme ouverte.
 
 ### Impression
 
@@ -306,7 +317,7 @@ Prêts à l’emploi : `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `sci
 | [[Ctrl+S]] / [[Ctrl+Shift+S]] | Enregistrer / Enregistrer sous |
 | [[Ctrl+O]] / [[Ctrl+N]] | Ouvrir / Nouveau |
 | [[Ctrl+Z]] / [[Ctrl+Y]] | Annuler / Rétablir |
-| [[Ctrl+C]] / [[Ctrl+V]] | Copier / coller (fonctionne avec Excel) |
+| [[Ctrl+C]] / [[Ctrl+V]] | Copier / coller (fonctionne avec les tableurs) |
 | [[Ctrl+E]] | Exclure ou inclure des valeurs |
 | [[Ctrl+D]] | Recopier vers le bas |
 | [[Ctrl+C]] sur un graphique | Copier le graphique comme image |

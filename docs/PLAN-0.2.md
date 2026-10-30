@@ -224,6 +224,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J3 | Statistics guide: which test when, what P values and CIs mean, common mistakes | ✅ 0.2.2 |
 | J4 | Validation page: every statistic checked against R and NIST reference data, with the numbers | 1.0 |
 | J5 | ? help: a small ? beside each tool opens a card saying what it is for and how to use it; Help › What Is This Tool? lists every card (all Datum apps; ✅ 0.2.1) | 0.2.1 |
+| G7 | OpenDocument export: workbooks (.ods), documents (.odt), slides (.odp) | ✅ 0.3.3 |
 | J6 | The Datum Plot Guide: PDF in English, Simplified Chinese and French, numbered screenshots, Help › Guide downloads and checks it | ✅ 0.3.2 |
 | J7 | Medical and engineering samples: survival study, method comparison, diagnostic test, response surface, polar pattern | ✅ 0.3.2 |
 
@@ -367,4 +368,5 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.0** ✅ | The full check: security, robustness, reliability, hardening tests and speed (no new features; FAMILY §11) |
 | **0.3.1** ✅ | Publisher "Datum" (family rule) |
 | **0.3.2** ✅ | The guide in three languages (J6), five new samples (J7), the installer keeps a custom install folder after the publisher change |
+| **0.3.3** ✅ | Testers' requests: colour schemes beside the graph with colour-blind-safe labels, OpenDocument export (G7), plain names for file types |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

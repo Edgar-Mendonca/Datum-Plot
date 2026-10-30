@@ -4,7 +4,8 @@ import { For, Show, createSignal } from "solid-js";
 import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty } from "./api";
 import { act, out, openDialog } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
-import { PALETTES } from "./tools";
+import { PALETTES, ORDERED, paletteName } from "./tools";
+import { lastRender } from "./graph";
 
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
@@ -29,6 +30,9 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
   const set = (f: (s: GraphSettings) => void) => setG(g(), x => { f(x); return x; });
   const setStyle = (k: number, patch: Partial<SetStyle>) => set(x => { while (x.sets.length <= k) x.sets.push({ ...DEF_SET }); x.sets[k] = { ...x.sets[k], ...patch }; });
   const st = (k: number) => ({ ...DEF_SET, ...(s().sets[k] ?? {}) });
+  /** The colour each data set is drawn in (the engine's answer), and the scheme's colours to pick from. */
+  const drawn = (k: number) => st(k).color || lastRender(g().id)?.colors?.[k] || OKABE_ITO[k % 8];
+  const scheme = () => { const p = s().palette || "okabe"; return p.includes("#") ? p.split(",").map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{6}$/.test(c)) : (!ORDERED.includes(p) && PALETTES.find(x => x[0] === p)?.[2]) || (lastRender(g().id)?.colors ?? OKABE_ITO); };
   const AxisPage = (p: { k: "x" | "y" | "y2" }) => {
     const a = () => s()[p.k] ?? { title: "", scale: "lin", auto: true, min: null, max: null, step: null, minor: false, grid: false }, put = (patch: Partial<Axis>) => set(x => { x[p.k] = { ...a(), ...patch } as Axis; });
     const auto = () => p.k === "y2" ? "the titles of the right-axis data sets" : `${p.k === "x" ? t()?.xTitle : t()?.yTitle}${(p.k === "x" ? t()?.xUnits : t()?.yUnits) ? ` (${p.k === "x" ? t()?.xUnits : t()?.yUnits})` : ""}`;
@@ -65,7 +69,7 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
               <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
             <Show when={t()?.kind === "xy"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
-            <label>Colours</label><span class="inline"><Pick value={s().palette.includes("#") ? "own" : s().palette || "okabe"} set={v => v !== "own" && set(x => { x.palette = v; x.sets = x.sets.map(q => ({ ...q, color: "" })); })} options={[...PALETTES.map(p => [p[0], p[1]] as [string, string]), ...(s().palette.includes("#") ? [["own", "Your colours"] as [string, string]] : [])]} />
+            <label>Colours</label><span class="inline"><Pick value={s().palette.includes("#") ? "own" : s().palette || "okabe"} set={v => v !== "own" && set(x => { x.palette = v; x.sets = x.sets.map(q => ({ ...q, color: "" })); })} options={[...PALETTES.map(p => [p[0], paletteName(p)] as [string, string]), ...(s().palette.includes("#") ? [["own", "Your colours"] as [string, string]] : [])]} />
               <button class="btn sm" onClick={() => import("./tools").then(m => m.paletteDialog())}>Colour schemes…</button></span>
             <Show when={s().points === "mean" && (t()?.kind === "xy" || t()?.kind === "sheet")}>
               <label>Error bars</label><span class="inline"><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} />
@@ -79,8 +83,8 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
               <td><b>{letter(k())}</b></td><td>{d.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
               <td><input type="checkbox" checked={st(k()).show} onChange={e => setStyle(k(), { show: e.currentTarget.checked })} /></td>
               <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
-              <td><span class="inline"><input type="color" value={st(k()).color || OKABE_ITO[k() % 8]} onChange={e => setStyle(k(), { color: e.currentTarget.value })} />
-                <span class="swset"><For each={OKABE_ITO}>{c => <button style={{ background: c }} title={c} onClick={() => setStyle(k(), { color: c })} />}</For></span></span></td>
+              <td><span class="inline"><input type="color" value={drawn(k())} onChange={e => setStyle(k(), { color: e.currentTarget.value })} />
+                <span class="swset"><For each={scheme()}>{c => <button style={{ background: c }} title={c} onClick={() => setStyle(k(), { color: c })} />}</For></span></span></td>
               <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
               <td><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
               <td><Pick value={st(k()).line === null ? "" : st(k()).line ? "1" : "0"} set={v => setStyle(k(), { line: v === "" ? null : v === "1" })} options={[["", "As the graph"], ["1", "Line"], ["0", "No line"]]} /></td>

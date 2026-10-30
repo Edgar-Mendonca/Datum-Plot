@@ -14,7 +14,9 @@ export const [tool, setTool] = createSignal<string | null>(null);
 export const annotate = (kind: string) => { setTool(kind); toast(kind === "text" ? "Click on the graph where the text goes (Esc cancels)." : `Drag on the graph to draw the ${kind} (Esc cancels).`, true); };
 /** The last render of each graph, by id (also used by File › Print). */
 const renders = new Map<number, Render>();
-export const lastRender = (id: number) => renders.get(id);
+const [renderTick, setRenderTick] = createSignal(0);
+/** Reactive: Format Graph follows the colours of each new render. */
+export const lastRender = (id: number) => (renderTick(), renders.get(id));
 const svgUrl = (r: Render) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(r.svg)}`;
 export const GraphImg = (p: { r: Render; scale: number }) => <img class="gimg" src={svgUrl(p.r)} width={p.r.w * p.scale} height={p.r.h * p.scale} alt="" draggable={false} />;
 
@@ -25,7 +27,7 @@ export const useRender = (id: () => number | undefined) => {
   createEffect(on([id, () => out()?.rev], ([g]) => {
     if (!g) return;
     const k = ++n;
-    invoke<Render>("render", { id: g }).then(x => { if (k === n) { renders.set(g, x); setR(x); setErr(""); } }).catch(e => { if (k === n) setErr(String(e)); });
+    invoke<Render>("render", { id: g }).then(x => { if (k === n) { renders.set(g, x); setRenderTick(t => t + 1); setR(x); setErr(""); } }).catch(e => { if (k === n) setErr(String(e)); });
   }));
   return [r, err] as const;
 };
@@ -218,7 +220,7 @@ export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: 
 /** Copies the graph to the Windows clipboard as a picture (through Rust; WebView2 blocks the
  *  browser clipboard), for Word and PowerPoint. */
 export const copyGraph = async (id: number) => {
-  try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into Word, PowerPoint or an email.", true); }
+  try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into a document, slides or an email.", true); }
   catch (e) { toast(`Could not copy the picture: ${e}`); }
 };
 
@@ -235,7 +237,7 @@ export const exportGraph = (g: Graph, fmt0 = "png") => openDialog(() => {
         <label>Background</label><Check label="Transparent" value={tr()} set={setTr} />
         <Show when={fmt() === "tiff"}><label>Colour</label><Check label="CMYK for print (journals; LZW compressed)" value={cmyk()} set={setCmyk} /></Show>
       </div>
-      <p class="muted">The size is the graph's size ({g.settings.width} × {g.settings.height} mm). Vector files keep text as text, so it stays editable in Illustrator or Inkscape.</p>
+      <p class="muted">The size is the graph's size ({g.settings.width} × {g.settings.height} mm). Vector files keep text as text, so it stays editable in drawing programs.</p>
     </Dialog>
   );
 });

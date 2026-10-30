@@ -1,6 +1,6 @@
 """Engine smoke test: every template project through the real worker, as the app sends it. Every graph is drawn
 and exported in every format, every analysis worked out, every layout drawn, and each project exported to
-.xlsx, .pptx, .docx and a notebook. Any failed request fails the test.
+.xlsx/.ods, .pptx/.odp, .docx/.odt and a notebook. Any failed request fails the test.
   cargo run -q -p datum-core --example dump all > all.json && python py/tests/smoke.py all.json"""
 import json
 import os
@@ -57,6 +57,9 @@ def main(fixture):
             ask(f"{name} › console", {"cmd": "console", "project": p, "code": "len(tables)"})
         ask("slides", {"cmd": "report", "kind": "slides", "project": projects[0], "path": os.path.join(d, "r.pptx")})
         ask("report", {"cmd": "report", "kind": "word", "project": projects[0], "path": os.path.join(d, "r.docx")})
+        ask("slides .odp", {"cmd": "report", "kind": "slides", "project": projects[0], "path": os.path.join(d, "r.odp")})
+        ask("document .odt", {"cmd": "report", "kind": "word", "project": projects[0], "path": os.path.join(d, "r.odt")})
+        ask("workbook .ods", {"cmd": "excel", "project": projects[0], "analyses": projects[0]["analyses"], "path": os.path.join(d, "p0.ods")})
         ask("read back", {"cmd": "read", "path": os.path.join(d, "p0.xlsx")})
         left = [f for f in os.listdir(d) if f.endswith(".tmp")]
     w.stdin.close()

@@ -1,5 +1,6 @@
-"""Slides and reports (G5): every graph of a project on its own slide (.pptx), or a report (.docx) with the
-project's details, every graph with a caption, and every result: its answer, main table and methods text."""
+"""Slides and documents (G5): every graph of a project on its own slide (.pptx or .odp), or a document (.docx or
+.odt) with the project's details, every graph with a caption, and every result: its answer, main table and methods
+text. The file type follows the extension of the chosen path."""
 import base64
 import datetime
 import io
@@ -42,7 +43,17 @@ def title_of(project):
     return info.get("title") or project.get("name") or "Datum Plot project"
 
 
+def byline(project):
+    info = project.get("info") or {}
+    return " · ".join(x for x in (info.get("researcher"), info.get("organisation"), info.get("date") or datetime.date.today().isoformat()) if x)
+
+
 def slides(project, path):
+    if path.lower().endswith(".odp"):
+        from . import odf
+        figs = [(name, png, (s.get("width") or 80) / (s.get("height") or 60)) for name, png, s in parts(project)]
+        n = odf.write_odp(path, title_of(project), byline(project), figs, [(name, r.get("answer", "")) for name, r in results(project)])
+        return {"path": path, "slides": n}
     from pptx import Presentation
     from pptx.util import Emu, Pt
     p = Presentation()
@@ -75,7 +86,37 @@ def slides(project, path):
     return {"path": path, "slides": len(p.slides)}
 
 
+def document_odt(project, path):
+    """The document as .odt: the same parts as the .docx."""
+    from . import odf
+    info = project.get("info") or {}
+    blocks = [("title", title_of(project)), ("info", byline(project))] + ([("p", info["experiment"])] if info.get("experiment") else [])
+    figs = parts(project)
+    if figs:
+        blocks.append(("h1", "Figures"))
+        for i, (name, png, s) in enumerate(figs):
+            w = min(16.0, (s.get("width") or 80) / 10 * 1.6)
+            blocks.append(("figure", png, w, w * (s.get("height") or 60) / (s.get("width") or 80), i + 1, name))
+    res = results(project)
+    if res:
+        blocks.append(("h1", "Results"))
+        for name, r in res:
+            blocks += [("h2", name), ("p", r.get("answer", ""))]
+            for tab in (r.get("tabs") or [])[:1]:
+                for tb in tab.get("tables", [])[:2]:
+                    if tb.get("rows"):
+                        n = len(tb["columns"])
+                        blocks.append(("table", tb.get("title", ""), [str(c) for c in tb["columns"]], [[str(v) for v in (row[:n] + [""] * n)[:n]] for row in tb["rows"][:40]]))
+        methods = [r.get("methods") for _, r in res if r.get("methods")]
+        if methods:
+            blocks += [("h1", "Methods"), ("p", " ".join(dict.fromkeys(methods)))]
+    odf.write_odt(path, blocks)
+    return {"path": path, "figures": len(figs), "results": len(res)}
+
+
 def word(project, path):
+    if path.lower().endswith(".odt"):
+        return document_odt(project, path)
     from docx import Document
     from docx.shared import Cm, Pt
     d = Document()

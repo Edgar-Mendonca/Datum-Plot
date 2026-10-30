@@ -83,3 +83,33 @@ class RandomTables(unittest.TestCase):
                 except ValueError:
                     pass
             graph.render(t, {"column": rnd.choice(["scatter", "bars", "box", "contour", "surface", "pie"]), "y": {"breakFrom": 1, "breakTo": 2}})
+
+
+class OpenDocument(unittest.TestCase):
+    def test_workbook_document_and_slides_are_valid_packages(self):
+        import zipfile
+        import xml.dom.minidom
+        from datum import report
+        t = {"id": 1, "name": "=cmd|' /C calc'!A0", "kind": "xy", "xTitle": "Time", "rows": 3, "rowTitles": [], "excluded": [[1, 1]],
+             "sets": [{"title": "=1+1", "entry": "rep", "reps": 1}], "cols": [[1, 2, 3], [2.5, 4, None]]}
+        a = {"id": 2, "table": 1, "name": "Fit <&>", "kind": "linear", "sets": [], "options": {}}
+        p = {"name": "P", "info": {"title": "Test & check"}, "tables": [t], "analyses": [a], "graphs": [{"id": 3, "table": 1, "name": "G", "settings": {}}], "layouts": []}
+        with tempfile.TemporaryDirectory() as d:
+            dio.write_excel(os.path.join(d, "b.ods"), p, [a])
+            report.word(p, os.path.join(d, "d.odt"))
+            report.slides(p, os.path.join(d, "s.odp"))
+            for f, mime in (("b.ods", "spreadsheet"), ("d.odt", "text"), ("s.odp", "presentation")):
+                with zipfile.ZipFile(os.path.join(d, f)) as z:
+                    first = z.infolist()[0]
+                    self.assertEqual((first.filename, first.compress_type), ("mimetype", zipfile.ZIP_STORED), f)
+                    self.assertEqual(z.read("mimetype").decode(), f"application/vnd.oasis.opendocument.{mime}")
+                    for part in ("content.xml", "styles.xml", "META-INF/manifest.xml"):
+                        xml.dom.minidom.parseString(z.read(part))  # well-formed
+                    manifest = z.read("META-INF/manifest.xml").decode()
+                    for n in z.namelist():
+                        if n.startswith("Pictures/"):
+                            self.assertIn(n, manifest)
+                    content = z.read("content.xml").decode()
+                    self.assertNotIn("table:formula", content, "text that looks like a formula stays text")
+            self.assertIn("=1+1", zipfile.ZipFile(os.path.join(d, "b.ods")).read("content.xml").decode())
+            self.assertEqual(sorted(os.listdir(d)), ["b.ods", "d.odt", "s.odp"], "no temporary files left")

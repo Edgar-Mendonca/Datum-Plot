@@ -209,11 +209,19 @@ async fn region(app: AppHandle, st: State<'_, St>, table: u32, x0: f64, x1: f64,
 }
 
 /// Tools › Slides (.pptx, one graph per slide) or Word Report (.docx: graphs, results, methods) (G5).
+/// A Save dialog offering each file type; a name typed without one of their extensions gets the first.
+fn save_as(app: &AppHandle, name: &str, types: &[(&str, &str)]) -> Option<PathBuf> {
+    let d = types.iter().fold(app.dialog().file(), |d, (l, e)| d.add_filter(format!("{l} (.{e})"), &[*e]));
+    let path = d.set_file_name(format!("{name}.{}", types[0].1)).blocking_save_file()?.into_path().ok()?;
+    let ok = path.extension().and_then(|e| e.to_str()).is_some_and(|e| types.iter().any(|(_, x)| x.eq_ignore_ascii_case(e)));
+    Some(if ok { path } else { path.with_extension(types[0].1) })
+}
+
 #[tauri::command]
 async fn export_report(app: AppHandle, st: State<'_, St>, kind: String) -> R<Option<String>> {
     let (name, project) = { let a = st.0.lock().unwrap_or_else(PoisonError::into_inner); (a.doc.p.name.clone(), serde_json::to_value(&a.doc.p).map_err(|e| e.to_string())?) };
-    let (label, ext) = if kind == "slides" { ("Slides", "pptx") } else { ("Report", "docx") };
-    let Some(path) = app.dialog().file().add_filter(label, &[ext]).set_file_name(format!("{name}.{ext}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let types: [(&str, &str); 2] = if kind == "slides" { [("Slides", "pptx"), ("OpenDocument slides", "odp")] } else { [("Document", "docx"), ("OpenDocument text", "odt")] };
+    let Some(path) = save_as(&app, &name, &types) else { return Ok(None) };
     let q = json!({ "cmd": "report", "kind": kind, "project": project, "path": path.display().to_string() });
     let h = app.clone();
     tauri::async_runtime::spawn_blocking(move || h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
@@ -472,7 +480,7 @@ async fn export_excel(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
         let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
         (a.doc.p.name.clone(), json!({ "cmd": "excel", "project": a.doc.p, "analyses": a.doc.p.analyses }))
     };
-    let Some(path) = app.dialog().file().add_filter("Excel workbook", &["xlsx"]).set_file_name(format!("{name}.xlsx")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    let Some(path) = save_as(&app, &name, &[("Workbook", "xlsx"), ("OpenDocument spreadsheet", "ods")]) else { return Ok(None) };
     let mut q = q;
     q["path"] = json!(path.display().to_string());
     let h = app.clone();

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.3 — 2026-10-30
+
+Testers' requests: colour schemes beside the graph, OpenDocument export, and plain names for file types.
+
+**Colours**
+- **Graph › Colour Schemes** now sits beside the graph, so each scheme you click shows on the graph at once. Its table is compact again (the colour columns were far too wide).
+- Schemes whose colours stay easy to tell apart for colour-blind readers carry a small **colour-blind safe** label: Okabe-Ito (the default), Bright, Muted and Cividis. We checked them by simulating the three common kinds of colour-blindness.
+- **Format Graph › Data Sets** shows each data set's colour as it is drawn in the chosen scheme, and its quick colours are that scheme's colours.
+- Every window can be moved by dragging its title bar.
+
+**OpenDocument**
+- **Tools › Workbook** saves .xlsx or .ods, **Tools › Slides** .pptx or .odp, and **Tools › Document** .docx or .odt: choose the type in the Save dialog. Datum Plot writes the OpenDocument files itself.
+
+**Plain names**
+- Buttons and texts name the file type, not another company's product: **Workbook**, **Slides** and **Document**; texts say "a spreadsheet", "a document" or "slides". The "Classic" colour scheme and the "Open axes" and "Framed box" graph styles have plain names too.
+
 ## 0.3.2 — 2026-10-30
 
 The Datum Plot Guide in English, Chinese and French, and five new samples.
@@ -92,8 +108,8 @@ Large data, region statistics, importing projects, plates and many runs, and sli
 - **Several files at once**: Data › Several Files reads many runs (tensile tests, spectra): one data set per file, in one table when they share their X values.
 
 **Slides, reports and posters**
-- Tools › **PowerPoint**: a 16:9 deck with a title slide, every graph on its own slide and a slide per result (.pptx).
-- Tools › **Word Report**: the project's details, every graph with a numbered caption, every result with its answer and main table, and the methods text (.docx).
+- Tools › **Slides**: a 16:9 deck with a title slide, every graph on its own slide and a slide per result (.pptx).
+- Tools › **Document**: the project's details, every graph with a numbered caption, every result with its answer and main table, and the methods text (.docx).
 - Layout › **Poster** (A0) and **Slide** (16:9): a page with a large title and your graphs in a grid; graph text grows to suit the page. New page sizes: poster A0 and A1, slide 4:3.
 
 **Behind the scenes**
@@ -407,7 +423,7 @@ A big update: comparing groups, materials testing, data tools, graph styles and 
 
 **Graphs and export**
 - **Styles**: open axes, framed box, Nature, Science, ACS, IEEE, presentation and greyscale; save your own.
-- **Colour schemes**: Okabe-Ito, Tol bright and muted, Tableau, viridis, cividis, magma, greyscale or your own colours, each previewed as people with colour-blindness see it.
+- **Colour schemes**: Okabe-Ito, Tol bright and muted, classic, viridis, cividis, magma, greyscale or your own colours, each previewed as people with colour-blindness see it.
 - **Copy Look** gives other graphs a graph's fonts, sizes, colours and symbols.
 - **Thumbnails** of the graphs in the navigator (View › Thumbnails).
 - **Export All Graphs** into a folder, and a **spreadsheet workbook (.xlsx)** with every data table and result (Tools tab).
@@ -534,7 +550,7 @@ The first version of Datum Plot: the application, automatic updates, an XY data 
 - Hover over a point to see its mean, n, SD and SEM; elsewhere the crosshair shows the X and Y values.
 
 **Export and print**
-- Export as PNG or TIFF at 150 to 1200 dpi, or as SVG, PDF or EPS with the text kept as text (editable in Illustrator or Inkscape). Transparent backgrounds too.
+- Export as PNG or TIFF at 150 to 1200 dpi, or as SVG, PDF or EPS with the text kept as text (editable in drawing programs). Transparent backgrounds too.
 - Copy a graph (Ctrl+C on the graph) and paste it into a document, a slide or an email.
 - File › Print with a live preview: the graph at its real size or fitted to the page, a caption saying what the points show, headers and footers with your logo, page numbers and Info fields. Choose "Save as PDF" to make a PDF. Data tables and the Info sheet print too.
 

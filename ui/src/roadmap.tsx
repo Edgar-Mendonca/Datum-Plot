@@ -32,7 +32,7 @@ export const RoadmapPage = () => {
   return (
     <div class="roadmap"><h1>Roadmap</h1>
       <p class="muted">Everything Datum Plot will do, in the order it is being built. {done} of {FEATURES.length} features are ready in {VERSION_NOW}. Planned commands already have their place in the ribbon; clicking one tells you when it arrives.</p>
-      <div class="rmbar"><input class="find" placeholder="Search features (e.g. regression, peaks, Excel)" value={q()} onInput={e => setQ(e.currentTarget.value)} />
+      <div class="rmbar"><input class="find" placeholder="Search features (e.g. regression, peaks, import)" value={q()} onInput={e => setQ(e.currentTarget.value)} />
         <Pick value={r()} set={setR} options={[["all", "All releases"], ["ready", "Ready now"], ...Object.entries(RELEASES).filter(([k]) => k !== "0.1").map(([k, v]) => [k, `${rel(k)} · ${v}`] as [string, string])]} /></div>
       <div class="rmrel"><For each={Object.entries(RELEASES)}>{([k, v]) => <div classList={{ now: k === VERSION_NOW || k === "0.1" }}><b>{rel(k)}</b><span>{v}</span><small>{FEATURES.filter(f => f[2] === k).length} features</small></div>}</For></div>
       <For each={Object.entries(AREAS)}>{([a, name]) => { const fs = () => list().filter(f => f[0].replace(/\d+/, "") === a); return <Show when={fs().length}>

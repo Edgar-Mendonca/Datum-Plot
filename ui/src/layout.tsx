@@ -41,7 +41,7 @@ export const templateLayout = async (kind: "poster" | "slide") => {
   if (await act({ AddLayout: { layout: l } })) {
     const ls = out()!.project.layouts;
     open("layouts", ls[ls.length - 1].id);
-    toast(poster ? "An A0 poster with your graphs: click the title to change it; File › Export Page saves it as PDF." : "A 16:9 slide with your graphs: Tools › PowerPoint makes a deck of every graph.", true);
+    toast(poster ? "An A0 poster with your graphs: click the title to change it; File › Export Page saves it as PDF." : "A 16:9 slide with your graphs: Tools › Slides makes a deck of every graph.", true);
   }
 };
 

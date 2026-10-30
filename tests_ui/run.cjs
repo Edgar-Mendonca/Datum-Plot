@@ -67,6 +67,9 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("Format Graph › Y Axis offers an axis break", ((await p.textContent(".dlg .fmtpage")) || "").includes("Axis break"));
   await p.click('.dlg .dtabs button:has-text("Data Sets")');
   await p.waitForTimeout(100);
+  check("each data set's colour box shows the colour the engine drew, and the quick colours are the graph's scheme",
+    JSON.stringify(await p.$$eval('.dlg .setfmt input[type="color"]', is => is.map(i => i.value.toUpperCase()))) === JSON.stringify(render.colors.map(c => c.toUpperCase()))
+    && (await p.$$eval(".dlg .setfmt tbody tr:first-child .swset button", bs => bs.map(b => b.title))).join() === "#0072B2,#E69F00,#009E73,#D55E00,#CC79A7,#56B4E9,#F0E442,#000000", JSON.stringify(render.colors));
   check("Data Sets can go on a right Y axis", ((await p.textContent(".dlg .setfmt thead")) || "").includes("Right Y"));
   check("Format Graph is docked so the graph stays visible", await p.evaluate(() => { const d = document.querySelector(".dlg").getBoundingClientRect(), g = document.querySelector(".gpaper").getBoundingClientRect(); return g.right <= d.left + 1; }));
   await p.keyboard.press("Escape");
@@ -167,9 +170,9 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.ribbon .rb:has-text("Notebook")'); await p.waitForTimeout(100);
   check("Notebook asks the shell for a Jupyter notebook", (await calls("export_notebook")).length === 1);
   await reset();
-  await p.click('.ribbon .rb:has-text("PowerPoint")'); await p.waitForTimeout(100);
-  await p.click('.ribbon .rb:has-text("Word Report")'); await p.waitForTimeout(100);
-  check("PowerPoint and Word Report ask the shell for slides and a report", JSON.stringify((await calls("export_report")).map(c => c.kind)) === '["slides","word"]', JSON.stringify(await calls("export_report")));
+  await p.click('.ribbon .rb:has-text("Slides")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb:has-text("Document")'); await p.waitForTimeout(100);
+  check("Slides and Document ask the shell for slides and a document", JSON.stringify((await calls("export_report")).map(c => c.kind)) === '["slides","word"]', JSON.stringify(await calls("export_report")));
   await p.click('.tabs button:text-is("Analyze")');
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
@@ -401,7 +404,12 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("Styles › Nature sets 7 pt Arial at 89 mm", sty && sty.GraphSet.settings.fontSize === 7 && sty.GraphSet.settings.width === 89, JSON.stringify(sty?.GraphSet?.settings));
   await p.click('.ribbon .rb:has-text("Colour Schemes")');
   await p.waitForTimeout(150);
-  check("Colour Schemes shows each scheme as colour-blind people see it", (await p.$$(".paltbl tbody tr")).length >= 10 && (await p.$$(".paltbl .pal i")).length > 100);
+  check("Colour Schemes shows each scheme as colour-blind people see it", (await p.$$(".paltbl tbody tr")).length >= 10 && (await p.$$(".paltbl .swatches i")).length > 100);
+  check("Colour Schemes sits beside the graph, fits without scrolling and labels the four colour-blind-safe schemes", !!(await p.$(".ov.dock .paltbl")) && (await p.$$(".paltbl .cbsafe")).length === 4
+    && await p.evaluate(() => { const b = document.querySelector(".ov.dock .bd"); return b.scrollWidth <= b.clientWidth + 1; }));
+  const hb = await p.evaluate(() => { const r = document.querySelector(".dlg header").getBoundingClientRect(); return [r.x + 60, r.y + 10]; });
+  await p.mouse.move(hb[0], hb[1]); await p.mouse.down(); await p.mouse.move(hb[0] - 120, hb[1] + 40, { steps: 4 }); await p.mouse.up();
+  check("a dialog moves by its title bar", await p.evaluate(() => document.querySelector(".dlg").style.transform.includes("translate(-120px")));
   await reset();
   await p.click('.paltbl tr:has-text("Viridis")');
   await p.waitForTimeout(150);
@@ -527,6 +535,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(300);
   check("creating a table from the File page closes it and shows the table", !(await p.$(".bs")) && !!(await p.$(".dgrid")));
+  // 0.3.3: the window names file types, never other companies' products.
+  const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
+  let named = [];
+  for (const t of ["Data", "Analyze", "Graph", "Layout", "Tools", "View", "Help"]) {
+    await p.click(`.tabs button:text-is("${t}")`); await p.waitForTimeout(60);
+    named = named.concat(await p.$$eval(".ribbon .rb", (bs, re) => bs.map(b => `${b.textContent} ${b.title}`).filter(x => new RegExp(re).test(x)), brands.source));
+  }
+  check("no ribbon button names another company's product", named.length === 0, named.join(" | "));
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();
   console.log(failed ? `\n${failed} failed` : "\nall passed");

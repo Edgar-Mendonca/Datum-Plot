@@ -144,8 +144,8 @@ export const statsGuide = () => openDialog(() => (
 // ---------- graph styles (D13), colour schemes (D16), copy look (D14) ----------
 type Look = Partial<GraphSettings> & { xa?: Partial<GraphSettings["x"]>; ya?: Partial<GraphSettings["y"]> };
 export const STYLES: [string, Look][] = [
-  ["Prism", { font: "Arial", fontSize: 10, style: "prism", boldTitles: true, palette: "okabe", cap: 3, xa: { minor: false, grid: false }, ya: { minor: false, grid: false } }],
-  ["Origin", { font: "Arial", fontSize: 10, style: "frame", boldTitles: false, palette: "bright", cap: 3, xa: { minor: true }, ya: { minor: true } }],
+  ["Open axes", { font: "Arial", fontSize: 10, style: "prism", boldTitles: true, palette: "okabe", cap: 3, xa: { minor: false, grid: false }, ya: { minor: false, grid: false } }],
+  ["Framed box", { font: "Arial", fontSize: 10, style: "frame", boldTitles: false, palette: "bright", cap: 3, xa: { minor: true }, ya: { minor: true } }],
   ["Nature (89 mm)", { font: "Arial", fontSize: 7, width: 89, height: 66, style: "prism", boldTitles: false, palette: "okabe", cap: 2 }],
   ["Science (57 mm)", { font: "Helvetica", fontSize: 7, width: 57, height: 45, style: "prism", boldTitles: false, palette: "okabe", cap: 2 }],
   ["ACS (82.5 mm)", { font: "Arial", fontSize: 8, width: 82.5, height: 62, style: "frame", boldTitles: false, palette: "okabe", cap: 2 }],
@@ -175,18 +175,24 @@ export const styleMenu = () => {
     .concat([{ label: "Save This Graph's Style…", run: saveStyle } as any, ...(saved.length ? [{ label: "Delete Saved Styles", run: () => { const o = { ...opts(), styles: {} }; setOpts(o); invoke("set_options", { opts: o }); } } as any] : [])]);
 };
 
-export const PALETTES: [string, string, string[]][] = [
-  ["okabe", "Okabe-Ito (colour-blind safe)", ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"]],
-  ["bright", "Bright (Tol, colour-blind safe)", ["#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE", "#AA3377", "#BBBBBB"]],
-  ["muted", "Muted (Tol, colour-blind safe)", ["#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255"]],
-  ["tableau", "Tableau", ["#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1", "#FF9DA7"]],
-  ["dark", "Dark (ColorBrewer)", ["#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666"]],
-  ["pastel", "Paired pastel", ["#A6CEE3", "#B2DF8A", "#FB9A99", "#FDBF6F", "#CAB2D6", "#FFFF99", "#1F78B4", "#33A02C"]],
-  ["viridis", "Viridis (ordered)", ["#440154", "#414487", "#2A788E", "#22A884", "#7AD151", "#FDE725"]],
-  ["cividis", "Cividis (ordered, colour-blind safe)", ["#00224E", "#35456C", "#666970", "#948E77", "#C8B866", "#FEE838"]],
-  ["magma", "Magma (ordered)", ["#000004", "#3B0F70", "#8C2981", "#DE4968", "#FE9F6D", "#FCFDBF"]],
-  ["grey", "Greyscale", ["#000000", "#333333", "#555555", "#777777", "#999999"]],
+/** Colour schemes: key, name, colours, and whether colour-blind readers can tell the colours apart (checked with
+ * the simulation below and CIEDE2000: the closest pair stays clearly apart for all three kinds of colour-blindness). */
+export const PALETTES: [string, string, string[], boolean][] = [
+  ["okabe", "Okabe-Ito", ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"], true],
+  ["bright", "Bright (Tol)", ["#4477AA", "#EE6677", "#228833", "#CCBB44", "#66CCEE", "#AA3377", "#BBBBBB"], true],
+  ["muted", "Muted (Tol)", ["#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255"], true],
+  ["tableau", "Classic", ["#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1", "#FF9DA7"], false],
+  ["dark", "Dark (ColorBrewer)", ["#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666"], false],
+  ["pastel", "Paired pastel", ["#A6CEE3", "#B2DF8A", "#FB9A99", "#FDBF6F", "#CAB2D6", "#FFFF99", "#1F78B4", "#33A02C"], false],
+  ["viridis", "Viridis (ordered)", ["#440154", "#414487", "#2A788E", "#22A884", "#7AD151", "#FDE725"], false],
+  ["cividis", "Cividis (ordered)", ["#00224E", "#35456C", "#666970", "#948E77", "#C8B866", "#FEE838"], true],
+  ["magma", "Magma (ordered)", ["#000004", "#3B0F70", "#8C2981", "#DE4968", "#FE9F6D", "#FCFDBF"], false],
+  ["grey", "Greyscale", ["#000000", "#333333", "#555555", "#777777", "#999999"], false],
 ];
+/** Ordered schemes are spread over the data sets by the engine. */
+export const ORDERED = ["viridis", "cividis", "magma", "grey"];
+/** A scheme's name for lists, with its colour-blind-safe label. */
+export const paletteName = (p: (typeof PALETTES)[number]) => p[3] ? `${p[1]} · colour-blind safe` : p[1];
 /** Simulated colour-vision deficiency (Machado 2009, full severity, applied in linear RGB). */
 const CVD: Record<string, number[]> = {
   deutan: [0.367, 0.861, -0.228, 0.280, 0.673, 0.047, -0.012, 0.043, 0.969], protan: [0.152, 1.053, -0.205, 0.115, 0.786, 0.099, -0.004, -0.048, 1.052], tritan: [1.256, -0.077, -0.179, -0.078, 0.931, 0.148, 0.005, 0.691, 0.304],
@@ -203,14 +209,14 @@ export const paletteDialog = () => {
     const cur = () => P().graphs.find(x => x.id === g.id)?.settings.palette || "okabe";
     const [own, setOwn] = createSignal(cur().includes("#") ? cur() : "#0E8C7F, #F2B233, #C0392B, #3A4655");
     const cols = (p: string) => PALETTES.find(x => x[0] === p)?.[2] ?? p.split(",").map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{6}$/.test(c));
-    const Sw = (p: { c: string[]; m?: number[] }) => <span class="pal">{p.c.map(c => <i style={{ background: p.m ? simulate(c, p.m) : c }} />)}</span>;
+    const Sw = (p: { c: string[]; m?: number[] }) => <span class="swatches">{p.c.map(c => <i style={{ background: p.m ? simulate(c, p.m) : c }} />)}</span>;
     return (
-      <Dialog title="Colour Schemes" wide cancel="Close">
-        <table class="tbl paltbl"><thead><tr><th>Scheme</th><th>Colours</th><th>Red-blind (protan)</th><th>Green-blind (deutan)</th><th>Blue-blind (tritan)</th></tr></thead><tbody>
-          <For each={PALETTES}>{([k, l, c]) => <tr classList={{ on: cur() === k }} onClick={() => setG(g, s => ({ ...s, palette: k, sets: s.sets.map(x => ({ ...x, color: "" })) }))}><td>{l}</td><td><Sw c={c} /></td><td><Sw c={c} m={CVD.protan} /></td><td><Sw c={c} m={CVD.deutan} /></td><td><Sw c={c} m={CVD.tritan} /></td></tr>}</For>
-          <tr classList={{ on: cur().includes("#") }}><td><input class="mono" value={own()} onInput={e => setOwn(e.currentTarget.value)} /></td><td><Sw c={cols(own())} /></td><td><Sw c={cols(own())} m={CVD.protan} /></td><td><Sw c={cols(own())} m={CVD.deutan} /></td>
-            <td><button class="btn sm" disabled={!cols(own()).length} onClick={() => setG(g, s => ({ ...s, palette: cols(own()).join(", "), sets: s.sets.map(x => ({ ...x, color: "" })) }))}>Use my colours</button></td></tr>
+      <Dialog title="Colour Schemes" side cancel="Close" help="palette">
+        <table class="tbl paltbl"><thead><tr><th>Scheme</th><th>Colours</th><th title="How people with red-blindness (protanopia) see the colours">Red-blind</th><th title="How people with green-blindness (deuteranopia) see the colours">Green-blind</th><th title="How people with blue-blindness (tritanopia) see the colours">Blue-blind</th></tr></thead><tbody>
+          <For each={PALETTES}>{([k, l, c, safe]) => <tr classList={{ on: cur() === k }} onClick={() => setG(g, s => ({ ...s, palette: k, sets: s.sets.map(x => ({ ...x, color: "" })) }))}><td>{l}{safe && <span class="cbsafe" title="Colour-blind readers can tell these colours apart">colour-blind safe</span>}</td><td><Sw c={c} /></td><td><Sw c={c} m={CVD.protan} /></td><td><Sw c={c} m={CVD.deutan} /></td><td><Sw c={c} m={CVD.tritan} /></td></tr>}</For>
+          <tr classList={{ on: cur().includes("#") }}><td><input class="mono" value={own()} onInput={e => setOwn(e.currentTarget.value)} /></td><td><Sw c={cols(own())} /></td><td><Sw c={cols(own())} m={CVD.protan} /></td><td><Sw c={cols(own())} m={CVD.deutan} /></td><td><Sw c={cols(own())} m={CVD.tritan} /></td></tr>
         </tbody></table>
+        <p><button class="btn sm" disabled={!cols(own()).length} onClick={() => setG(g, s => ({ ...s, palette: cols(own()).join(", "), sets: s.sets.map(x => ({ ...x, color: "" })) }))}>Use my colours</button> <span class="muted">Type your own colours (#hex, separated by commas) in the last row.</span></p>
         <p class="muted">Click a scheme to use it on “{g.name}”; colours set by hand for single data sets are reset. The three columns on the right show how people with colour-blindness see the colours: pick a scheme whose colours stay apart.</p>
       </Dialog>
     );
@@ -250,8 +256,8 @@ export const exportAll = () => {
   });
 };
 export const exportExcel = async () => { const p = await call<string | null>("export_excel"); if (p) toast(`Saved ${p}`, true); };
-/** Tools › PowerPoint (one graph per slide) or Word Report (graphs, results and methods) (G5). */
-export const exportReport = async (kind: "slides" | "word") => { toast(kind === "slides" ? "Making the slides…" : "Writing the report…", true); const p = await call<string | null>("export_report", { kind }); if (p) toast(`Saved ${p}`, true); };
+/** Tools › Slides (one graph per slide) or Document (graphs, results and methods) (G5). */
+export const exportReport = async (kind: "slides" | "word") => { toast(kind === "slides" ? "Making the slides…" : "Writing the document…", true); const p = await call<string | null>("export_report", { kind }); if (p) toast(`Saved ${p}`, true); };
 
 /** Graph › Significance: brackets come from a t-test (two groups) or a one-way ANOVA. */
 export const significance = (e?: MouseEvent) => {

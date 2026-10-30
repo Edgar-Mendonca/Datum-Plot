@@ -96,7 +96,7 @@ Choose the kind of table that matches your experiment: **Data › New Table**.
 
 1. **Data › Insert.** **New Table**, **Import**, **Several Files**, **Add Data Set**, **Remove Data Set** and rows.
 2. **Headings.** The X title and units, and each data set's title. Double-click a heading to change it, the replicates or the way values are entered.
-3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with Excel ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down.
+3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with spreadsheets ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down.
 
 A data set can be entered as replicates (each value in its own column) or as **mean, SD and N** or **mean, SEM and N** from a paper or another program: choose it in the data set's heading.
 
@@ -110,7 +110,7 @@ To leave a value out of graphs and analyses without deleting it, select it and p
 
 ### Import
 
-**Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, Excel workbooks (.xlsx) and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
+**Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, .xlsx workbooks and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
 
 ## Analyses and results
 
@@ -131,7 +131,7 @@ The other groups of the Analyze tab start an analysis directly: **Statistics**, 
 
 ![A results sheet: a logistic curve fit.](img/results.png)
 
-1. **Result tables.** The numbers, with standard errors and 95% confidence intervals. **Copy** copies a table for Excel or Word.
+1. **Result tables.** The numbers, with standard errors and 95% confidence intervals. **Copy** copies a table for a spreadsheet or a document.
 2. **The answer.** What the analysis found, in plain words.
 3. **Checks.** Whether the assumptions hold (for example, whether residuals scatter randomly), with a tick or a warning.
 
@@ -160,7 +160,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 1. **Graph.** **New Graph**, **Graph Type** (scatter, bars, box, violin, before–after, lines and more) and **Data Table** (back to the data).
 2. **Axes.** Logarithmic axes, framed axes, **Format Axes** and **Axis Break**.
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
-4. **Share.** **Export**, **Copy Picture** (paste straight into Word or PowerPoint) and **Print**.
+4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides) and **Print**.
 
 The other groups set the **Error Bars**, show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
 
@@ -173,6 +173,15 @@ Double-click any part of a graph (an axis, a data set, the title) to format it, 
 1. **Pages.** **Data Sets** (symbols, colours, lines, error bars, the right Y axis), **X Axis**, **Y Axis**, **Graph** (size and fonts) and notes.
 2. **Settings.** Changes apply at once.
 3. **The graph** stays visible while you work.
+
+### Colours
+
+![Graph › Colour Schemes, beside the graph.](img/colours.png)
+
+1. **Schemes.** Click one: the graph changes at once, because the window sits beside the graph. Schemes labelled **colour-blind safe** stay easy to tell apart for people with any of the three common kinds of colour-blindness; the default, Okabe-Ito, is one of them.
+2. **How colour-blind readers see it.** The three columns show each scheme as people with red-, green- and blue-blindness see it.
+
+Your own colours go in the last row (#hex, separated by commas). In **Format Graph › Data Sets**, each data set's colour box shows the colour it is drawn in, and the quick colours beside it are the chosen scheme's. Any window can be moved by dragging its title bar.
 
 ### Working on the graph
 
@@ -214,9 +223,11 @@ The **Templates** group starts a **Poster** or a **Slide**. The **Export** group
 Other ways to share, under **Tools**:
 
 - **Export All Graphs** at once.
-- **Excel Workbook**: every table and result in a .xlsx file.
-- **PowerPoint**: every graph on its own slide (.pptx).
-- **Word Report**: the project's details, every graph with a caption, every result and the methods text (.docx).
+- **Workbook**: every table and result as sheets of a .xlsx or .ods file.
+- **Slides**: every graph on its own slide, and a slide per result (.pptx or .odp).
+- **Document**: the project's details, every graph with a caption, every result and the methods text (.docx or .odt).
+
+Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenDocument, the open standard.
 
 ### Print
 
@@ -306,7 +317,7 @@ Ready to use: `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `scipy` and `p
 | [[Ctrl+S]] / [[Ctrl+Shift+S]] | Save / Save As |
 | [[Ctrl+O]] / [[Ctrl+N]] | Open / New |
 | [[Ctrl+Z]] / [[Ctrl+Y]] | Undo / Redo |
-| [[Ctrl+C]] / [[Ctrl+V]] | Copy / paste (works with Excel) |
+| [[Ctrl+C]] / [[Ctrl+V]] | Copy / paste (works with spreadsheets) |
 | [[Ctrl+E]] | Exclude or include values |
 | [[Ctrl+D]] | Fill down |
 | [[Ctrl+C]] on a graph | Copy the graph as a picture |

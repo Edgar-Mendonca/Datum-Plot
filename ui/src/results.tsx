@@ -252,7 +252,7 @@ export const ResultsView = (p: { a: Analysis }) => {
           <div class="rmain">
             <Tabs tabs={res().tabs.map(x => [x.name, x.name] as [string, string])} on={tab()} set={setTab} />
             <For each={res().tabs.find(x => x.name === tab())?.tables ?? []}>{tb => (
-              <div class="rtable"><div class="rtt"><b>{tb.title}</b><button class="btn sm" title="Copy as a table for Excel or Word" onClick={() => copy(tsv(tb), "Table")}>Copy</button></div>
+              <div class="rtable"><div class="rtt"><b>{tb.title}</b><button class="btn sm" title="Copy as a table for a spreadsheet or a document" onClick={() => copy(tsv(tb), "Table")}>Copy</button></div>
                 <table class="tbl"><thead><tr><For each={tb.columns}>{c => <th>{c}</th>}</For></tr></thead>
                   <tbody><For each={tb.rows}>{row => <tr><For each={row}>{(c, i) => <td classList={{ r: i() > 0, sub: i() === 0 && c.startsWith("  ") }}>{c}</td>}</For></tr>}</For></tbody></table></div>
             )}</For>

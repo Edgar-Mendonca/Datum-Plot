@@ -56,7 +56,7 @@ const Home = () => {
           <button class="tile" onClick={() => neu(null)}><div class="pic"><svg class="ic"><use href="#i-xy" /></svg></div><b>Blank XY table</b><span>An X column and data sets with replicates, and its graph.</span></button>
           <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><Mini t={t} /><small>sample</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
           <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Plot project (.dplot).</span></button>
-          <button class="tile" onClick={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }}><div class="pic"><svg class="ic"><use href="#i-import" /></svg></div><b>Import data</b><span>A CSV, TXT or Excel file into a new XY table.</span></button>
+          <button class="tile" onClick={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }}><div class="pic"><svg class="ic"><use href="#i-import" /></svg></div><b>Import data</b><span>A CSV, TXT or .xlsx file into a new XY table.</span></button>
           <button class="tile" onClick={() => D.guide()}><div class="pic"><svg class="ic"><use href="#i-pdf" /></svg></div><b>Guide</b><span>The step-by-step guide (PDF), in English, 中文 or Français.</span></button>
           <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Plot will do, and when.</span></button>
         </div>
@@ -101,7 +101,7 @@ const Export = () => (
         <For each={[["png", "PNG picture", "For slides, documents and the web. 300 dpi by default."], ["tiff", "TIFF picture", "What many journals ask for, at 300–1200 dpi."], ["svg", "SVG vector", "Sharp at any size; text stays editable in Illustrator or Inkscape."],
           ["pdf", "PDF vector", "For LaTeX, print shops and archiving."], ["eps", "EPS vector", "For older publishing tools."]]}>{([k, n, d]) =>
           <button class="tile" onClick={() => C.exportG(k)}><div class="pic"><svg class="ic"><use href="#i-image" /></svg><small>.{k}</small></div><b>{n}</b><span>{d}</span></button>}</For>
-        <button class="tile" onClick={() => { setBackstage(null); C.copyG(); }}><div class="pic"><svg class="ic"><use href="#i-copy" /></svg></div><b>Copy picture</b><span>Paste the graph straight into Word, PowerPoint or an email.</span></button>
+        <button class="tile" onClick={() => { setBackstage(null); C.copyG(); }}><div class="pic"><svg class="ic"><use href="#i-copy" /></svg></div><b>Copy picture</b><span>Paste the graph straight into a document, slides or an email.</span></button>
         <button class="tile" onClick={() => setBackstage("print")}><div class="pic"><svg class="ic"><use href="#i-print" /></svg></div><b>Print or save as PDF</b><span>A page with the graph, headers and footers.</span></button>
       </div>
     </>}</Show>
@@ -136,7 +136,7 @@ const OptionsPage = () => {
         <Opt l="Size" hint="Width and height in millimetres; 85 mm is a journal's single column."><span class="inline"><input type="number" min="10" max="1000" style={{ width: "80px" }} value={o().width} onChange={e => put("width", +e.currentTarget.value)} /> × <input type="number" min="10" max="1000" style={{ width: "80px" }} value={o().height} onChange={e => put("height", +e.currentTarget.value)} /> mm
           <Pick value="" set={v => { const z = SIZES.find(q => q[0] === v); if (z) setO({ ...o(), width: z[1], height: z[2] }); }} options={[["", "Journal sizes…"], ...SIZES.map(z => [z[0], z[0]] as [string, string])]} /></span></Opt>
         <Opt l="Font" hint="One font and size for the whole graph."><span class="inline"><Pick value={o().font} set={v => put("font", v)} options={FONTS} /><input type="number" min="5" max="36" step="0.5" style={{ width: "64px" }} value={o().fontSize} onChange={e => put("fontSize", +e.currentTarget.value)} /> pt</span></Opt>
-        <Opt l="Axes" hint="Open axes (Prism) or a framed box (Origin)."><Pick value={o().style} set={v => put("style", v)} options={[["prism", "Open, ticks out"], ["frame", "Framed box, ticks in"]]} /></Opt>
+        <Opt l="Axes" hint="Open axes, or a framed box."><Pick value={o().style} set={v => put("style", v)} options={[["prism", "Open, ticks out"], ["frame", "Framed box, ticks in"]]} /></Opt>
         <Opt l="Picture resolution" hint="For PNG and TIFF export and copied pictures."><Pick value={String(o().dpi)} set={v => put("dpi", +v)} options={[["150", "150 dpi"], ["300", "300 dpi"], ["600", "600 dpi"], ["1200", "1200 dpi"]]} /></Opt>
       </Sec>
       <Sec t="Printing and branding" about="Your organisation and logo can go in page headers (File › Print).">

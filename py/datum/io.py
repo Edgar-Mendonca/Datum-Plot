@@ -101,69 +101,81 @@ def read_file(path):
     return {"sheets": sheets, "plates": plates(sheets)}
 
 
-def write_excel(path, project, analyses):
-    """File › Export › Excel workbook: a sheet per data table and one per result (G6)."""
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill
+def sheets(project, analyses):
+    """The workbook's sheets, whatever the file type: [(name, rows, wide first column)], each cell a value or
+    (value, style) with style head, bold, title or excl (an excluded value)."""
     from . import analysis, stats
-    wb = Workbook()
-    wb.remove(wb.active)
-    bold, head = Font(bold=True), PatternFill("solid", fgColor="E3F5F2")
-    used = set()
+    out, used = [], set()
 
-    def sheet(name):
+    def name_of(name):
         base = re.sub(r"[\[\]:*?/\\]", " ", name).strip()[:28] or "Sheet"
         n, k = base, 2
         while n.lower() in used:
             n, k = f"{base[:25]} ({k})", k + 1
         used.add(n.lower())
-        return wb.create_sheet(n)
+        return n
 
     for t in project.get("tables", []):
-        ws = sheet(t["name"])
         xy = t.get("kind", "xy") in ("xy", "survival", "matrix")
         grouped = t.get("kind") in ("grouped", "contingency", "parts", "multi", "sheet")
         heads = ([f"{t.get('xTitle') or 'X'}{' (' + t['xUnits'] + ')' if t.get('xUnits') else ''}"] if xy else ["Row"] if grouped else [])
         sub = {"msn": ["Mean", "SD", "N"], "mesn": ["Mean", "SEM", "N"]}
         for s, (c0, w) in zip(t["sets"], stats.set_columns(t)):
             heads += [f"{s['title']}" + (f" {sub[s['entry']][j]}" if s["entry"] != "rep" else f" Y{j + 1}" if w > 1 else "") for j in range(w)]
-        ws.append(heads)
-        for c in ws[1]:
-            c.font, c.fill = bold, head
+        rows = [[(h, "head") for h in heads]]
         ex = {tuple(e) for e in t.get("excluded", [])}
         first = 0 if xy else 1
         for r in range(t["rows"]):
             row = [t["cols"][c][r] if c < len(t["cols"]) and r < len(t["cols"][c]) else None for c in range(first, len(t["cols"]))]
             if any(v is not None for v in row):
                 lead = [(t.get("rowTitles") or [""] * t["rows"])[r] or f"Row {r + 1}"] if grouped else []
-                ws.append(lead + row)
-                for j, c in enumerate(ws[ws.max_row][len(lead):]):
-                    if (r, j + first) in ex:
-                        c.font = Font(italic=True, color="1F6FD0")
-        ws.freeze_panes = "A2"
+                rows.append(lead + [(v, "excl") if (r, j + first) in ex else v for j, v in enumerate(row)])
+        out.append((name_of(t["name"]), rows, False))
     for a in analyses:
         t = next((x for x in project.get("tables", []) if x["id"] == a["table"]), None)
         if t is None:
             continue
-        ws = sheet(a["name"])
+        name = name_of(a["name"])
         try:
             res = analysis.run(a["kind"], t, a.get("sets", []), a.get("options", {}))
         except Exception as e:
-            ws.append([a["name"]]); ws.append([f"Could not calculate: {e}"]); continue
-        ws.append([res["title"]]); ws["A1"].font = Font(bold=True, size=13)
-        ws.append([res["answer"]]); ws.append([])
+            out.append((name, [[a["name"]], [f"Could not calculate: {e}"]], True))
+            continue
+        rows = [[(res["title"], "title")], [res["answer"]], []]
         for tab in res["tabs"]:
             for tb in tab["tables"]:
-                ws.append([f"{tab['name']} · {tb['title']}" if tb["title"] else tab["name"]]); ws.cell(ws.max_row, 1).font = bold
-                ws.append(tb["columns"])
-                for c in ws[ws.max_row]:
-                    c.font, c.fill = bold, head
-                for row in tb["rows"]:
-                    ws.append([num(v) for v in row])
-                ws.append([])
-        ws.append(["Methods"]); ws.cell(ws.max_row, 1).font = bold
-        ws.append([res["methods"]])
-        ws.column_dimensions["A"].width = 34
+                rows.append([(f"{tab['name']} · {tb['title']}" if tb["title"] else tab["name"], "bold")])
+                rows.append([(c, "head") for c in tb["columns"]])
+                rows += [[num(v) for v in row] for row in tb["rows"]]
+                rows.append([])
+        rows += [[("Methods", "bold")], [res["methods"]]]
+        out.append((name, rows, True))
+    return out
+
+
+def write_excel(path, project, analyses):
+    """File › Export › Workbook (G6): a sheet per data table and one per result, as .xlsx or .ods by the extension."""
+    if path.lower().endswith(".ods"):
+        from . import odf
+        return odf.write_ods(path, sheets(project, analyses))
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    wb = Workbook()
+    wb.remove(wb.active)
+    look = {"head": {"font": Font(bold=True), "fill": PatternFill("solid", fgColor="E3F5F2")}, "bold": {"font": Font(bold=True)},
+            "title": {"font": Font(bold=True, size=13)}, "excl": {"font": Font(italic=True, color="1F6FD0")}}
+    for name, rows, wide in sheets(project, analyses):
+        ws = wb.create_sheet(name)
+        for row in rows:
+            ws.append([c[0] if isinstance(c, tuple) else c for c in row])
+            for j, c in enumerate(row):
+                if isinstance(c, tuple):
+                    for k, v in look[c[1]].items():
+                        setattr(ws.cell(ws.max_row, j + 1), k, v)
+        if wide:
+            ws.column_dimensions["A"].width = 34
+        else:
+            ws.freeze_panes = "A2"
     for ws in wb.worksheets:  # text such as "=HYPERLINK(…)" in a title must stay text, never become a live formula
         for row in ws.iter_rows():
             for c in row:

@@ -573,11 +573,17 @@ input.mono { font-family: var(--mono) !important; }
 .chooser { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
 .cq b { display: block; margin-bottom: 4px; }
 .cans { margin-top: 14px; padding: 10px 12px; background: var(--pale); border-left: 3px solid var(--blue); }
-.pal { display: inline-flex; gap: 2px; }
-.pal i { width: 16px; height: 14px; display: inline-block; border: 1px solid rgba(0, 0, 0, 0.08); }
+.swatches { display: inline-flex; gap: 1px; }
+.swatches i { width: 10px; height: 12px; display: inline-block; border: 1px solid rgba(0, 0, 0, 0.08); }
+.paltbl { width: auto; }
+.paltbl td, .paltbl th { padding: 3px 8px 3px 4px; }
 .paltbl tr { cursor: pointer; }
 .paltbl tr.on { background: var(--sel); }
-.paltbl input { width: 210px; }
+.paltbl input { width: 130px; }
+.paltbl td:first-child { white-space: nowrap; }
+.cbsafe { display: inline-block; margin-left: 6px; padding: 0 4px; font-size: 10px; line-height: 15px; color: var(--blue2); border: 1px solid var(--sky); background: var(--pale); white-space: nowrap; }
+/* 0.3.3: dialogs move by their title bar */
+.dlg > header { cursor: move; user-select: none; }
 .nthumbs { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
 .nthumb { width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--line); }
 .nthumb.on { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }

@@ -1,14 +1,14 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.2";
+export const VERSION_NOW = "0.3.3";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
   "0.2.6": "ROC, Bland-Altman and special graphs", "0.2.7": "Axis breaks and a second Y axis", "0.2.8": "Annotations", "0.2.9": "Click, drag, zoom and exclude on the graph", "0.2.10": "Users' requests: open new tables, remove data sets, choose the test, X axis gaps", "0.2.11": "Page layouts and journal figures",
   "0.2.12": "Multi-panel figures", "0.2.13": "Security: the library that unpacks the Python engine, licence checks", "0.2.14": "Many variables and multiple regression", "0.2.15": "PCA and clustering", "0.2.16": "Survival analysis", "0.2.17": "Nested data",
   "0.2.18": "Peaks and signal processing", "0.2.19": "DSC/TGA and S–N curves", "0.2.20": "Worksheets and column formulas", "0.2.21": "Matrices, 3D and surface fits", "0.2.22": "Large data, regions, import, slides, reports and posters",
-  "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "0.3.0": "A full check: security, robustness, hardening and speed", "0.3.1": "Publisher shown as Datum", "0.3.2": "The guide in English, Chinese and French; five new samples",
+  "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "0.3.0": "A full check: security, robustness, hardening and speed", "0.3.1": "Publisher shown as Datum", "0.3.2": "The guide in English, Chinese and French; five new samples", "0.3.3": "Colour schemes beside the graph, OpenDocument export, plain names",
   "1.0": "Stable, signed, validated",
 };
 export const AREAS: Record<string, string> = {
@@ -90,7 +90,7 @@ export const FEATURES: Feature[] = [
   ["D13", "Graph styles", "0.2.2", "Open axes, framed box, Nature, Science, ACS, IEEE, presentation and greyscale styles; save your own.", "matplotlib"],
   ["D14", "Copy look", "0.2.2", "Apply one graph's formatting to other graphs.", ""],
   ["D15", "Annotations", "0.2.8", "Text, arrows, lines and boxes; Greek letters, sub- and superscripts, simple equations.", "matplotlib"],
-  ["D16", "Colour schemes", "0.2.2", "Okabe-Ito, Tableau, bright, muted, viridis, cividis, greyscale and your own colours, with a colour-blind preview.", "matplotlib"],
+  ["D16", "Colour schemes", "0.2.2", "Okabe-Ito, classic, bright, muted, viridis, cividis, greyscale and your own colours, with a colour-blind preview.", "matplotlib"],
   ["D17", "Large data", "0.2.22", "Hundreds of thousands of points drawn quickly: lines thinned to what the screen shows, dense points drawn as a picture inside vector files.", "numpy"],
   ["E1", "Hover values and double-click formatting", "0.1", "Values under the mouse; double-click a part of the graph to format it.", ""],
   ["E2", "Select parts of the graph", "0.2.9", "Click a note to select it (Delete removes it); double-click an axis, the legend, a title or the data to format it; right-click a point for its data set.", "matplotlib"],
@@ -108,6 +108,7 @@ export const FEATURES: Feature[] = [
   ["G4", "Batch export", "0.2.2", "Export every graph in the project at once.", "matplotlib"],
   ["G5", "Slides and reports", "0.2.22", "One slide per graph (.pptx); a report (.docx) with graphs, results and methods text.", "python-pptx, python-docx"],
   ["G6", "Spreadsheet export", "0.2.2", "Data tables and results as an .xlsx workbook.", "openpyxl"],
+  ["G7", "OpenDocument export", "0.3.3", "Workbooks as .ods, documents as .odt and slides as .odp, written by Datum Plot itself (no extra library).", ""],
   ["H1", "Python console", "0.2.23", "Run Python on your tables (as pandas DataFrames) inside the app: output, figures and new tables, with a guide and examples.", ""],
   ["H2", "Your own analyses", "0.2.23", "Save console code as named analyses with the app and run them again on any project (projects never carry code).", ""],
   ["H3", "Analysis templates", "0.2.23", "Repeat one table's analyses, with their options and graph look, on other tables.", ""],

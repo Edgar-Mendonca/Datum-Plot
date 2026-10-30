@@ -902,7 +902,9 @@ def render(table, graph, overlays=()):
         g = geometry(fig, ax, leg)
         buf = io.StringIO()
         fig.savefig(buf, format="svg", metadata={"Date": None, "Creator": "Datum Plot"})
-    return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], **g}
+    n = len(table.get("sets") or [])
+    cols = palette(graph, n)  # each data set's colour as drawn, for Format Graph
+    return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], "colors": [style_of(graph, k, cols)["color"] for k in range(n)], **g}
 
 
 LETTERS = {"A": lambda i: chr(65 + i), "a": lambda i: chr(97 + i), "(a)": lambda i: f"({chr(97 + i)})", "none": lambda i: ""}
