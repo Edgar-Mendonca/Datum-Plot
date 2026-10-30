@@ -22,6 +22,35 @@ export const pasteSpecial = () => {
   });
 };
 
+// ---------- the guide (PDF in English, Chinese or French) ----------
+/** Help › Guide: downloads the guide for this version from GitHub, checks it, saves it in Downloads and opens it. */
+export const guide = () => openDialog(() => {
+  const [busy, setBusy] = createSignal("");
+  const get = async (lang: string) => {
+    setBusy(lang);
+    try {
+      const path = await call<string>("guide", { lang });
+      if (path) { toast(`Saved in Downloads and opened: ${path}`, true); closeDialog(); }
+    } finally { setBusy(""); }
+  };
+  const Card = (p: { lang: string; title: string; sub: string }) => (
+    <button class="guidecard" disabled={!!busy()} onClick={() => get(p.lang)}>
+      <svg class="ic"><use href="#i-pdf" /></svg><b>{p.title}</b><span>{busy() === p.lang ? "Downloading…" : p.sub}</span>
+    </button>
+  );
+  return (
+    <Dialog title="Datum Plot Guide" help="guide">
+      <p>A step-by-step guide to Datum Plot, with pictures: from your first table to analyses, graphs, layouts and the Python console. Choose a language; it downloads from GitHub, is checked, saved in your Downloads folder and opened.</p>
+      <div class="guidecards">
+        <Card lang="en" title="English" sub="Datum Plot Guide (PDF)" />
+        <Card lang="zh" title="中文" sub="Datum Plot 使用指南 (PDF)" />
+        <Card lang="fr" title="Français" sub="Guide Datum Plot (PDF)" />
+      </div>
+      <p class="muted">The guide matches this version of Datum Plot. You need an internet connection the first time.</p>
+    </Dialog>
+  );
+});
+
 export const gettingStarted = () => openDialog(() => (
   <Dialog title="Getting Started" wide>
     <div class="guide">

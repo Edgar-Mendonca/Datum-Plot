@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, nineteen samples, open, import and roadmap", (await p.$$(".home .tile")).length === 23, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, twenty-four samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 29, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -439,6 +439,17 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.fill(".roadmap .find", "regression");
   await p.waitForTimeout(100);
   check("the Roadmap can be searched", (await p.$$(".rmtbl tr")).length >= 2 && (await p.$$(".rmtbl tr")).length < 10);
+  // 0.3.2: the guide in three languages, downloaded by the shell.
+  await p.click(".bs aside .back"); await p.waitForTimeout(200);
+  await p.click('.tabs button:text-is("Help")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb.big:has-text("Guide")'); await p.waitForTimeout(200);
+  check("Help › Guide offers English, 中文 and Français", (await p.$$eval(".guidecard b", bs => bs.map(b => b.textContent).join(","))) === "English,中文,Français");
+  await reset();
+  await p.click('.guidecard:has-text("Français")'); await p.waitForTimeout(200);
+  check("choosing Français asks the shell for the French guide", JSON.stringify(await calls("guide")) === JSON.stringify([{ lang: "fr" }]), JSON.stringify(await calls("guide")));
+  await p.keyboard.press("Escape");
+  await p.click(".tabs .file"); await p.waitForTimeout(200);
+  await p.click('.bs aside button:has-text("Roadmap")'); await p.waitForTimeout(200);
   await p.click('.bs aside button:has-text("Options")');
   await p.waitForTimeout(200);
   const optRows = await p.evaluate(() => [...document.querySelectorAll(".options .opt")].map(o => o.children.length));

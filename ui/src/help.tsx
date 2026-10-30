@@ -56,6 +56,8 @@ export const HELP: Record<string, Topic> = {
   glayout: { t: "Graph layout", what: "The graph's size, the legend, framed or open axes, and Graph Options (the Graph page of Format Graph)." },
   // Tools and View tabs
   exportall: { t: "Export", what: "Everything at once: Export All Graphs saves every graph of the project into a folder (PNG, TIFF, SVG, PDF or EPS); Excel Workbook saves the data tables and every result as sheets of one .xlsx file; PowerPoint makes a 16:9 deck with every graph on its own slide and a slide per result; Word Report writes the project's details, every graph with a caption, every result with its main table, and the methods text (.docx)." },
+  guide: { t: "Guide", what: "The Datum Plot Guide: a step-by-step PDF with pictures, in English, Simplified Chinese (中文) or French (Français).",
+    how: ["Help › Guide, or the Guide tile on the File page.", "Choose a language: the guide downloads from GitHub, is checked against its checksum, is saved in your Downloads folder and opens."] },
   console: { t: "Python console", what: "Run your own Python code on the project's data: tables arrive as pandas DataFrames, and what you print, the last line's value and the figures you draw appear below the code. Open it from Tools › Python Console.",
     how: ["Where to write: the large box at the top of the console. Start from Examples ▾ if you are new to it.",
       "How to run: press ▶ Run or Ctrl+Enter. The output (print, the last line's value) and figures (plt) appear underneath; an error says which line failed.",

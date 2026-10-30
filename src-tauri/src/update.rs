@@ -176,6 +176,63 @@ fn launch(_: &std::path::Path) -> Result<(), String> {
     Ok(())
 }
 
+/// The guides are a few megabytes.
+const MAX_GUIDE: u64 = 60 << 20;
+
+/// The guide's release file and the name it is saved under, by language.
+fn guide_file(lang: &str) -> Option<(&'static str, &'static str)> {
+    match lang {
+        "en" => Some(("DatumPlot-Guide-en.pdf", "Datum Plot Guide.pdf")),
+        "zh" => Some(("DatumPlot-Guide-zh.pdf", "Datum Plot 使用指南.pdf")),
+        "fr" => Some(("DatumPlot-Guide-fr.pdf", "Guide Datum Plot.pdf")),
+        _ => None,
+    }
+}
+
+/// Downloads the guide (PDF) in `lang` from this version's release (or the newest one), checks it
+/// against the release's SHA256SUMS.txt, saves it in Downloads and opens it (as in Datum Plan).
+pub fn guide(app: &AppHandle, lang: &str) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    let (file, title) = guide_file(lang).ok_or("The guide is in English (en), Chinese (zh) or French (fr).")?;
+    let get = |url: &str| -> Result<Option<Vec<u8>>, String> {
+        match agent().get(url).call() {
+            Ok(r) => {
+                let mut b = vec![];
+                r.into_reader().take(MAX_GUIDE + 1).read_to_end(&mut b).map_err(|e| format!("Download failed: {e}"))?;
+                if b.len() as u64 > MAX_GUIDE { return Err("The guide is far larger than expected, so it was not saved.".into()) }
+                Ok(Some(b))
+            }
+            Err(ureq::Error::Status(404, _)) => Ok(None),
+            Err(ureq::Error::Status(c, _)) => Err(format!("GitHub answered {c}. Try again later.")),
+            Err(_) => Err("Could not reach GitHub. Check your internet connection.".into()),
+        }
+    };
+    // This version's guide first; a version released without one uses the newest.
+    let mut found = None;
+    for base in [format!("https://github.com/{REPO}/releases/download/v{}/", env!("CARGO_PKG_VERSION")), format!("https://github.com/{REPO}/releases/latest/download/")] {
+        if let Some(pdf) = get(&format!("{base}{file}"))? {
+            found = Some((pdf, base));
+            break;
+        }
+    }
+    let (pdf, base) = found.ok_or("The guide is not on the releases page yet. Try again after the next update.")?;
+    let sums = get(&format!("{base}SHA256SUMS.txt"))?.ok_or("The release has no checksum file, so the guide was not saved.")?;
+    let got: String = Sha256::digest(&pdf).iter().map(|b| format!("{b:02x}")).collect();
+    if !matches(&String::from_utf8_lossy(&sums), file, &got) || !pdf.starts_with(b"%PDF") {
+        return Err("The download did not match its checksum, so it was not saved. Try again.".into());
+    }
+    // Downloads; where a system has none set up, ~/Downloads (made if needed), Documents, then the temporary folder.
+    let home_dl = || app.path().home_dir().ok().map(|h| h.join("Downloads")).filter(|d| std::fs::create_dir_all(d).is_ok());
+    let dir = app.path().download_dir().ok().filter(|d| d.is_dir()).or_else(home_dl).or_else(|| app.path().document_dir().ok().filter(|d| d.is_dir())).unwrap_or_else(std::env::temp_dir);
+    let path = dir.join(title);
+    datum_core::doc::write_atomic(&path, &pdf)?;
+    #[cfg(windows)]
+    let _ = std::process::Command::new("explorer").arg(&path).spawn();
+    #[cfg(not(windows))]
+    let _ = std::process::Command::new("xdg-open").arg(&path).spawn();
+    Ok(path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::matches;
@@ -187,6 +244,7 @@ mod tests {
         assert!(!matches(&list, "DatumPlot-0.2.23-setup.exe", &"b".repeat(64)), "another file's line must not count");
         assert!(matches(&format!("{h} *x.exe"), "x.exe", &h) && !matches("short  x.exe", "x.exe", "short"));
         assert!(super::safe_name("DatumPlot-0.3.0-setup.exe"));
+        assert!(super::guide_file("fr").is_some_and(|(f, _)| f == "DatumPlot-Guide-fr.pdf") && super::guide_file("../x").is_none());
         for bad in ["evil.exe", "a b-setup.exe", "..\\x-setup.exe", "x-setup.exe.bat", ".-setup.exe", "%TEMP%-setup.exe"] {
             assert!(!super::safe_name(bad), "{bad}");
         }

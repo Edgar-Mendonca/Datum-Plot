@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.2 — 2026-10-30
+
+The Datum Plot Guide in English, Chinese and French, and five new samples.
+
+**Guide**
+- **Help › Guide** (and the Guide tile on the File page): a step-by-step guide with numbered pictures, from your first table to analyses, graphs, layouts, export and the Python console, with a "which test when" table, a glossary and shortcuts. Choose English, 中文 or Français: the PDF downloads from this release, is checked against its checksum, is saved in your Downloads folder and opens. The installer stays the same size.
+
+**New samples**
+- **Survival study**: months to relapse on two treatments, with Kaplan-Meier curves, the log-rank test and the hazard ratio.
+- **Method comparison**: a bedside glucose meter against the lab, with Bland-Altman bias and limits of agreement.
+- **Diagnostic test**: a biomarker in healthy people and patients, with the ROC curve, its AUC and the best cut-off.
+- **Response surface**: process yield over temperature and time, with a contour map and a quadratic surface fit that finds the best settings.
+- **Polar pattern**: the radiation pattern of two antennas on a polar graph.
+
+**Installer**
+- An installation in a folder of your own choosing is updated in place after last version's publisher change.
+
 ## 0.3.1 — 2026-10-29
 
 The family publisher name.

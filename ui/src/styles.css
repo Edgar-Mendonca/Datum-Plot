@@ -623,3 +623,11 @@ input.mono { font-family: var(--mono) !important; }
 .conguide ol { margin: 0 0 6px 18px; padding: 0; }
 .conguide li { margin-bottom: 4px; }
 .conguide code, .conguide kbd { font: 12px var(--mono); background: var(--panel); padding: 0 3px; border: 1px solid var(--line); }
+
+/* 0.3.2: the guide */
+.guidecards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 14px 0; }
+.guidecard { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; text-align: left; padding: 14px; border: 1px solid var(--line); background: var(--bg2); cursor: pointer; }
+.guidecard:hover:not(:disabled) { border-color: var(--blue); background: var(--pale); }
+.guidecard .ic { grid-row: span 2; width: 36px; height: 36px; color: var(--navy); }
+.guidecard b { font-size: 16px; }
+.guidecard span { color: var(--muted); font-size: 12px; }

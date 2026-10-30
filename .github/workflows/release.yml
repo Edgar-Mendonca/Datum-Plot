@@ -63,7 +63,8 @@ jobs:
         run: |
           npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
           cp target/release/bundle/nsis/*-setup.exe "out/DatumPlot-$V-setup.exe"
-          cd out && sha256sum "DatumPlot-$V-setup.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
+          cp docs/guide/pdf/DatumPlot-Guide-en.pdf docs/guide/pdf/DatumPlot-Guide-zh.pdf docs/guide/pdf/DatumPlot-Guide-fr.pdf out/
+          cd out && sha256sum "DatumPlot-$V-setup.exe" DatumPlot-Guide-en.pdf DatumPlot-Guide-zh.pdf DatumPlot-Guide-fr.pdf > SHA256SUMS.txt && cat SHA256SUMS.txt && ls -la
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -79,4 +80,7 @@ jobs:
           make_latest: true
           files: |
             out/DatumPlot-${{ env.V }}-setup.exe
+            out/DatumPlot-Guide-en.pdf
+            out/DatumPlot-Guide-zh.pdf
+            out/DatumPlot-Guide-fr.pdf
             out/SHA256SUMS.txt

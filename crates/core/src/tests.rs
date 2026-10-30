@@ -222,8 +222,9 @@ fn worksheets_and_formulas() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 19);
-    for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1)] {
+    assert_eq!(l.len(), 24);
+    assert!(l.iter().all(|t| t.dots.len() >= 2 && t.dots.iter().all(|d| d.0.is_finite() && d.1.is_finite())), "every tile has a picture");
+    for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1), ("trial", 1), ("surface", 1)] {
         let p = templates::build(Some(id)).unwrap();
         assert_eq!((p.analyses.len(), p.graphs[0].settings.overlays.clone()), (n, vec![p.analyses[0].id]), "{id}");
         assert!(p.next_id > p.analyses[n - 1].id);

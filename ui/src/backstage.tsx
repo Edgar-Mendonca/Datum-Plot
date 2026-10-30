@@ -57,6 +57,7 @@ const Home = () => {
           <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><Mini t={t} /><small>sample</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
           <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Plot project (.dplot).</span></button>
           <button class="tile" onClick={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }}><div class="pic"><svg class="ic"><use href="#i-import" /></svg></div><b>Import data</b><span>A CSV, TXT or Excel file into a new XY table.</span></button>
+          <button class="tile" onClick={() => D.guide()}><div class="pic"><svg class="ic"><use href="#i-pdf" /></svg></div><b>Guide</b><span>The step-by-step guide (PDF), in English, 中文 or Français.</span></button>
           <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Plot will do, and when.</span></button>
         </div>
         <h2>Recent</h2>
@@ -146,7 +147,7 @@ const OptionsPage = () => {
       <Sec t="Updates" about="Datum Plot checks GitHub for new versions when it starts. Updates install from File › Updates.">
         <Opt l="Beta versions" hint="Get new features early. They may have bugs."><Check label="Get beta versions" value={o().beta} set={v => put("beta", v)} /></Opt>
       </Sec>
-      <p class="osave"><button class="btn pri" onClick={save}>Save options</button><span class="muted">Datum Plot keeps everything on this computer. Its only connection is the update check to GitHub.</span></p>
+      <p class="osave"><button class="btn pri" onClick={save}>Save options</button><span class="muted">Datum Plot keeps everything on this computer. It connects only to GitHub: to check for updates and to download the guide.</span></p>
     </div>
   );
 };

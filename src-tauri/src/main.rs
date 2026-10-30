@@ -712,6 +712,11 @@ async fn check_update(st: State<'_, St>) -> R<update::Info> {
 }
 
 #[tauri::command]
+async fn guide(app: AppHandle, lang: String) -> R<String> {
+    tauri::async_runtime::spawn_blocking(move || update::guide(&app, &lang).map(|p| p.display().to_string())).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 async fn install_update(app: AppHandle, url: String, sums: Option<String>) -> R<()> {
     tauri::async_runtime::spawn_blocking(move || update::install(&app, &url, sums.as_deref())).await.map_err(|e| e.to_string())?
 }
@@ -763,7 +768,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
-            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
+            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())
         .expect("Datum Plot failed to start");

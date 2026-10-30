@@ -37,6 +37,7 @@
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
     "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
+    "A step-by-step guide with pictures in English, Chinese and French (Help › Guide), and over twenty sample projects to start from.",
     "Free and open source (MIT), Windows first, installs in seconds with Python inside, and updates itself."
   ],
   "screenshots": [

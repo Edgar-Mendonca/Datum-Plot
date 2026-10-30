@@ -52,6 +52,8 @@ const App = () => {
         </Dialog>
       ));
       checkUpdate(true);
+      // Once, on the first start: point new users to the guide.
+      try { if (!localStorage.getItem("guide-hint")) { localStorage.setItem("guide-hint", "1"); setTimeout(() => toast("New to Datum Plot? Help › Guide has a step-by-step guide (PDF) in English, 中文 and Français."), 1500); } } catch { /* no storage: no hint */ }
       setInterval(() => { if (opts().autosave > 0) invoke("autosave").catch(() => {}); }, Math.max(1, opts().autosave) * 60000);
       listen("close-requested", () => D.confirmClose(() => invoke("quit")));
     } catch (e) { toast(String(e)); }

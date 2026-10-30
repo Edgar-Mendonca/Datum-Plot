@@ -6,3 +6,5 @@
 /src-tauri/runtime.zip
 /tests_ui/fixture.json
 __pycache__/
+/tests_ui/guide_fixture.json
+/docs/guide/.*.html

@@ -94,6 +94,11 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
         Tpl { id: "tga", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
         Tpl { id: "fatigue", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
+        Tpl { id: "trial", name: "Survival study", desc: "Months to relapse of 20 patients on each of two treatments, followed for up to 36 months: Kaplan-Meier curves, log-rank test and hazard ratio.", dots: dots("trial") },
+        Tpl { id: "agreement", name: "Method comparison", desc: "Blood glucose of 30 patients by a lab analyser and a bedside meter: Bland-Altman bias and limits of agreement.", dots: dots("agreement") },
+        Tpl { id: "diagnostic", name: "Diagnostic test", desc: "A biomarker in 30 healthy people and 30 patients: the ROC curve, its AUC and the best cut-off.", dots: dots("diagnostic") },
+        Tpl { id: "surface", name: "Response surface", desc: "Process yield over a grid of temperatures and times: a contour map and a quadratic surface fit locating the best settings.", dots: dots("surface") },
+        Tpl { id: "polar", name: "Polar pattern", desc: "The radiation pattern of two antennas, gain against angle, on a polar graph.", dots: dots("polar") },
     ]
 }
 
@@ -429,6 +434,107 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.analyses.push(Analysis { id: aid, table: id, name: "Activation energy".into(), kind: "arrhenius".into(), sets: vec![],
                 options: serde_json::json!({ "tunit": "C", "eunit": "kJ/mol", "points": "each", "label": true }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("trial") => {
+            let mut seed = 41u64;
+            let mut t = Table::survival(2);
+            t.name = "Patients".into();
+            t.x_title = "Time to relapse".into();
+            t.x_units = "months".into();
+            t.rows = 40;
+            t.normalize();
+            for (k, (name, scale)) in [("Standard care", 16.0), ("New treatment", 34.0)].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                for i in 0..20 {
+                    let u: f64 = 0.5 + jitter(&mut seed, 0.48);
+                    let m = round(scale * (-(1.0 - u).ln()).powf(1.0 / 1.3), 1);
+                    let follow = 36.0 - (i % 5) as f64 * 3.0; // patients who joined later are followed for less time
+                    let r = k * 20 + i;
+                    t.cols[0][r] = Some(m.min(follow));
+                    t.cols[k + 1][r] = Some(if m < follow { 1.0 } else { 0.0 });
+                }
+            }
+            p.name = "Survival study".into();
+            p.info = Info { title: "Relapse-free survival".into(), experiment: "Months to relapse of 20 patients on standard care and 20 on a new treatment. Patients still free of relapse at their last visit are censored (0). Kaplan-Meier curves, the log-rank test and the hazard ratio compare the two arms.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { error: "none".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Survival analysis".into(), kind: "survival".into(), sets: vec![], options: serde_json::json!({}) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("agreement") => {
+            let mut seed = 43u64;
+            let mut t = Table::column(2);
+            t.name = "Glucose".into();
+            t.y_title = "Blood glucose".into();
+            t.y_units = "mmol/L".into();
+            t.rows = 30;
+            t.normalize();
+            t.sets[0].title = "Lab analyser".into();
+            t.sets[1].title = "Bedside meter".into();
+            for r in 0..30 {
+                let v = round(4.0 + 12.0 * (0.5 + jitter(&mut seed, 0.5)), 1);
+                t.cols[1][r] = Some(v);
+                t.cols[2][r] = Some(round(v * 1.03 + 0.15 + jitter(&mut seed, 0.45), 1));
+                t.row_titles[r] = format!("P{}", r + 1);
+            }
+            p.name = "Method comparison".into();
+            p.info = Info { title: "Glucose meter against the lab".into(), experiment: "Blood glucose of 30 patients measured on the same sample by the laboratory analyser and by a bedside meter (paired by row). Bland-Altman analysis gives the bias, the 95% limits of agreement and a test for proportional bias; the plot is on the results sheet.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "paired".into(), points: "each".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Bland-Altman".into(), kind: "blandaltman".into(), sets: vec![], options: serde_json::json!({}) });
+        }
+        Some("diagnostic") => {
+            let mut seed = 47u64;
+            let mut t = Table::column(2);
+            t.name = "Biomarker".into();
+            t.y_title = "Biomarker".into();
+            t.y_units = "ng/mL".into();
+            t.rows = 30;
+            t.normalize();
+            for (k, (name, mean)) in [("Healthy (controls)", 2.2), ("Patients (cases)", 4.1)].iter().enumerate() {
+                t.sets[k].title = (*name).into();
+                t.cols[k + 1] = (0..30).map(|_| Some(round(mean * (jitter(&mut seed, 0.42) + jitter(&mut seed, 0.42)).exp(), 2))).collect();
+            }
+            p.name = "Diagnostic test".into();
+            p.info = Info { title: "Biomarker for diagnosis".into(), experiment: "A blood biomarker in 30 healthy people (controls) and 30 patients (cases). The ROC analysis gives the area under the curve with its 95% CI and the cut-off with the best sensitivity and specificity (Youden); the curve is on the results sheet.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "scatter".into(), points: "each".into(), ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "ROC curve".into(), kind: "roc".into(), sets: vec![], options: serde_json::json!({}) });
+        }
+        Some("surface") => {
+            let mut seed = 53u64;
+            let mut t = Table::matrix(9, 7);
+            t.name = "Yield".into();
+            t.x_title = "Temperature".into();
+            t.x_units = "°C".into();
+            t.y_title = "Yield".into();
+            t.y_units = "%".into();
+            for (k, s) in t.sets.iter_mut().enumerate() {
+                s.title = format!("{}", 30 + 15 * k);
+            }
+            for r in 0..9 {
+                let x = 60.0 + 5.0 * r as f64;
+                t.cols[0][r] = Some(x);
+                for k in 0..7 {
+                    let y = 30.0 + 15.0 * k as f64;
+                    t.cols[k + 1][r] = Some(round(88.0 - 0.045 * (x - 78.0).powi(2) - 0.004 * (y - 95.0).powi(2) + 0.002 * (x - 78.0) * (y - 95.0) + jitter(&mut seed, 0.8), 1));
+                }
+            }
+            p.name = "Response surface".into();
+            p.info = Info { title: "Process optimisation".into(), experiment: "Yield of a reaction run on a 9 × 7 grid of temperatures (X) and reaction times (Y, minutes). The contour map shows the best region; a quadratic surface fit gives its equation, from which the temperature and time of highest yield follow.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { column: "contour".into(), palette: "viridis".into(), width: 100.0, y: Axis { title: "Time (min)".into(), ..Axis::default() }, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Surface fit".into(), kind: "surface".into(), sets: vec![], options: serde_json::json!({ "model": "quad" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("polar") => {
+            let xs: Vec<f64> = (0..=72).map(|i| i as f64 * 5.0).collect();
+            let dipole = |a: f64| 0.3 + 9.7 * a.to_radians().sin().abs(); // a figure of eight
+            let yagi = |a: f64| { let c = a.to_radians().cos(); 0.2 + 9.8 * ((1.0 + c) / 2.0).powi(6) + 1.6 * ((1.0 - c) / 2.0).powi(8) }; // a main lobe forward, a small one back
+            let t = table(["Pattern", "Angle", "°", "Relative gain", ""], &xs, &[("Dipole", &dipole), ("Yagi", &yagi)], 1, 0.03, 2);
+            p.name = "Polar pattern".into();
+            p.info = Info { title: "Antenna radiation pattern".into(), experiment: "Relative gain of a dipole and a Yagi antenna measured every 5° around them. On the polar graph the Yagi's narrow main lobe and small back lobe stand out.".into(), ..Default::default() };
+            p.add_table(t, Some(GraphSettings { polar: true, line: true, error: "none".into(), sets: vec![SetStyle { symbol: "none".into(), width: 1.6, ..Default::default() }; 2], ..g }));
         }
         _ => return None,
     }
