@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.8 — 2026-10-31
+
+Vector fields and 3D scatter graphs.
+
+**New graph styles** for tables of many variables (Graph › Graph Style, or Format Graph › Graph)
+- **3D scatter**: the first three variables as X, Y and Z, coloured by a fourth when there is one. Tilt and turn the view in Format Graph.
+- **Vector field**: an arrow at each X, Y with its two components from the next two variables, coloured by its length. Arrows are scaled so the longest is about the distance between neighbouring arrows.
+
 ## 0.3.7 — 2026-10-31
 
 Ternary, waterfall, radar and bubble graphs.

@@ -3,7 +3,9 @@ figures in graph.py, whose helpers it uses.
   ternary   — a many-variables table: the first three variables of each row, as shares of their sum, on a triangle;
   bubble    — a many-variables table: X, Y, then the bubble's area (and a fourth variable as its colour);
   waterfall — an XY table: each data set's curve lifted above the previous one, labelled at its right end;
-  radar     — a grouped table: the rows are the spokes, each data set a closed outline through its means."""
+  radar     — a grouped table: the rows are the spokes, each data set a closed outline through its means;
+  scatter3d — a many-variables table: X, Y, Z (and a fourth variable as colour), seen from the graph's view;
+  vector    — a many-variables table: arrows at (X, Y) with components (U, V), coloured by length."""
 import math
 
 import numpy as np
@@ -158,3 +160,55 @@ def radar_figure(fig, ax, table, graph, colors, size):
     lg = graph.get("legend") or {}
     leg = ax.legend(loc="upper left", bbox_to_anchor=(1.1, 1.05), frameon=False, borderaxespad=0, fontsize=size * 0.85) if lg.get("show", True) and len(ax.get_lines()) > 1 else None
     return fig, ax, leg, []
+
+
+def scatter3d_figure(fig, ax, table, graph, colors, size):
+    """D20: the first three variables as X, Y and Z (a fourth, if any, colours the points), seen from the graph's view."""
+    from .graph import SYMBOLS, style_of
+    n = 4 if len(table["sets"]) >= 4 else 3
+    V, names = variables(table, n)
+    ax.remove()
+    ax = fig.add_subplot(projection="3d")
+    ax.patch.set_alpha(0)
+    st = style_of(graph, 0, colors)
+    kw = dict(s=(st["size"] * 0.9) ** 2, marker=SYMBOLS.get(st["symbol"], "o") or "o", depthshade=True, edgecolors="white", linewidths=0.3)
+    if n == 4:
+        from matplotlib import colormaps
+        sc = ax.scatter(V[:, 0], V[:, 1], V[:, 2], c=V[:, 3], cmap=colormaps["viridis"], **kw)
+        cb = fig.colorbar(sc, ax=ax, shrink=0.6, pad=0.2)  # clear of the Z axis title
+        cb.set_label(names[3], fontsize=size * 0.85)
+        cb.ax.tick_params(labelsize=size * 0.75)
+    else:
+        ax.scatter(V[:, 0], V[:, 1], V[:, 2], color=st["color"], **kw)
+    for set_label, name in zip((ax.set_xlabel, ax.set_ylabel, ax.set_zlabel), names):
+        set_label(name, fontsize=size * 0.9, labelpad=2)
+    ax.tick_params(labelsize=size * 0.7, pad=0)
+    ax.view_init(elev=float(graph.get("elev", 28) if graph.get("elev") is not None else 28), azim=float(graph.get("azim", -60) if graph.get("azim") is not None else -60))
+    title(ax, graph, size)
+    return fig, ax, None, []
+
+
+def vector_figure(fig, ax, table, graph, colors, size):
+    """D20: arrows at (X, Y) with components (U, V) from the first four variables; the colour bar gives their length."""
+    from .graph import axis_title
+    V, names = variables(table, 4)
+    x, y, u, v = V.T
+    mag = np.hypot(u, v)
+    from matplotlib import colormaps
+    ref = float(np.nanmax(mag)) if len(mag) else 1.0
+    # The longest arrow is about as long as the typical distance between arrows.
+    P = np.c_[x, y]
+    gap = float(np.median([np.sort(np.hypot(*(P - p).T))[1] for p in P[:400]])) if len(P) > 1 else 1.0
+    scale = ref / (0.9 * gap) if ref > 0 and gap > 0 else None
+    q = ax.quiver(x, y, u, v, mag, cmap=colormaps["viridis"], angles="xy", scale_units="xy", scale=scale, pivot="tail", width=0.005, zorder=3)
+    cb = fig.colorbar(q, ax=ax, pad=0.02, fraction=0.05)
+    cb.set_label(f"Length of ({names[2]}, {names[3]})", fontsize=size * 0.8)
+    cb.ax.tick_params(labelsize=size * 0.75)
+    bold = "bold" if graph.get("boldTitles", True) else "normal"
+    ax.set_xlabel(axis_title(graph.get("x") or {}, names[0], ""), fontsize=size, fontweight=bold)
+    ax.set_ylabel(axis_title(graph.get("y") or {}, names[1], ""), fontsize=size, fontweight=bold)
+    ax.tick_params(labelsize=size * 0.85)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.margins(0.08)
+    title(ax, graph, size)
+    return fig, ax, None, [[k, float(a), float(b), 0, 0, 0, 0] for k, (a, b) in enumerate(zip(x, y))]

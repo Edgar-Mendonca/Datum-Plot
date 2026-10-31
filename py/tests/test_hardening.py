@@ -83,7 +83,7 @@ class RandomTables(unittest.TestCase):
                 except ValueError:
                     pass
             try:
-                graph.render(t, {"column": rnd.choice(["scatter", "bars", "box", "contour", "surface", "pie", "waterfall", "ternary", "bubble", "radar"]), "y": {"breakFrom": 1, "breakTo": 2}})
+                graph.render(t, {"column": rnd.choice(["scatter", "bars", "box", "contour", "surface", "pie", "waterfall", "ternary", "bubble", "radar", "scatter3d", "vector"]), "y": {"breakFrom": 1, "breakTo": 2}})
             except ValueError:  # a graph this table cannot make says why (a radar needs three rows…)
                 pass
 

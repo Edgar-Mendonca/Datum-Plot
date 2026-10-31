@@ -29,7 +29,7 @@
     "Import CSV, TXT, .xlsx and .pzfx files, plate readers and many runs at once; large data sets stay quick.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
-    "Matrices and 3D: contour maps, heat maps and 3D surfaces, polar, ternary, bubble, radar and waterfall graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
+    "Matrices and 3D: contour maps, heat maps, 3D surfaces and 3D scatter, vector fields, polar, ternary, bubble, radar and waterfall graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
@@ -46,29 +46,29 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.8",
-      "title": "Vectors and 3D points",
-      "when": "Next",
-      "items": [
-        "Vector fields",
-        "3D scatter graphs"
-      ]
-    },
-    {
       "v": "0.3.9",
       "title": "More statistics",
-      "when": "Soon",
+      "when": "Next",
       "items": [
-        "Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits"
+        "Three-way ANOVA",
+        "ANCOVA, kappa, McNemar",
+        "Bootstrap confidence intervals, spline fits"
       ]
     },
     {
-      "v": "0.3.10–0.3.14",
-      "title": "Specialist tools, Mac and Linux",
-      "when": "Later",
+      "v": "0.3.10–0.3.11",
+      "title": "Quality and signals",
+      "when": "Soon",
       "items": [
         "Control charts and design of experiments",
-        "Wavelets and short-time spectra",
+        "Wavelets and short-time spectra"
+      ]
+    },
+    {
+      "v": "0.3.12–0.3.14",
+      "title": "Images, Bayes, Mac and Linux",
+      "when": "Later",
+      "items": [
         "Graph digitizer and image tools",
         "Bayesian tests",
         "Mac and Linux versions"

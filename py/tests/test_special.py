@@ -60,3 +60,18 @@ class SpecialGraphs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VectorsAnd3D(unittest.TestCase):
+    def test_vector_field_arrows_and_3d_points(self):
+        t = multi([[0, 0, 1, 0], [1, 0, 0, 2], [0, 1, -1, -1]], ["x", "y", "u", "v"])
+        f, ax, _, _ = graph.figure(t, {"column": "vector"})
+        q = [c for c in ax.collections if hasattr(c, "U")][0]
+        self.assertEqual((list(q.U), list(q.V)), ([1, 0, -1], [0, 2, -1]))
+        self.assertAlmostEqual(2 / q.scale, 0.9, places=6, msg="the longest arrow is 0.9 of the gap between arrows")
+        with self.assertRaises(ValueError):
+            graph.render(multi([[1, 2, 3]], ["x", "y", "u"]), {"column": "vector"})
+        m = multi([[1, 2, 3], [4, 5, 6], [7, 8, 10]], ["X", "Y", "Z"])
+        f, ax, _, _ = graph.figure(m, {"column": "scatter3d", "elev": 10, "azim": 30})
+        self.assertEqual((ax.name, ax.elev, ax.azim), ("3d", 10, 30))
+        self.assertTrue(np.allclose(ax.collections[0]._offsets3d[2], [3, 6, 10]))

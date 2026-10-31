@@ -198,7 +198,7 @@ Vos propres couleurs se saisissent dans la dernière ligne (#hex, séparées par
 
 ![Une étude de survie : courbes de Kaplan-Meier avec les sujets censurés marqués.](img/survival.png)
 
-Les graphiques XY peuvent aussi être des graphiques polaires (**Format Graph › Graph › Polar**, Mettre en forme le graphique › Graphique › Polaire) ou en cascade, chaque courbe décalée au-dessus de la précédente (**Graph › Graph Style › Waterfall**, Graphique › Style de graphique › Cascade). Les tableaux à plusieurs variables peuvent être des diagrammes ternaires (les trois premières variables en parts de 100 %) ou des graphiques à bulles (X, Y, taille et couleur des bulles) ; les tableaux groupés peuvent être des diagrammes en radar (les lignes sont les rayons) ; les tableaux matrices peuvent être tracés en cartes de contours, cartes de chaleur, surfaces 3D ou maillages filaires.
+Les graphiques XY peuvent aussi être des graphiques polaires (**Format Graph › Graph › Polar**, Mettre en forme le graphique › Graphique › Polaire) ou en cascade, chaque courbe décalée au-dessus de la précédente (**Graph › Graph Style › Waterfall**, Graphique › Style de graphique › Cascade). Les tableaux à plusieurs variables peuvent être des diagrammes ternaires (les trois premières variables en parts de 100 %) des graphiques à bulles (X, Y, taille et couleur des bulles), des nuages de points 3D (X, Y, Z et couleur) ou des champs de vecteurs (flèches en X, Y avec leurs deux composantes) ; les tableaux groupés peuvent être des diagrammes en radar (les lignes sont les rayons) ; les tableaux matrices peuvent être tracés en cartes de contours, cartes de chaleur, surfaces 3D ou maillages filaires.
 
 ## Mises en page et export
 

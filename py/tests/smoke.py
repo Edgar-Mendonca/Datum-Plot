@@ -9,7 +9,7 @@ import sys
 import tempfile
 import time
 
-KINDS = ["scatter", "line", "bars", "box", "violin", "mean", "paired", "stacked", "percent", "pie", "donut", "contour", "heatmap", "surface", "wireframe", "arrow", "range", "waterfall", "ternary", "bubble", "radar"]
+KINDS = ["scatter", "line", "bars", "box", "violin", "mean", "paired", "stacked", "percent", "pie", "donut", "contour", "heatmap", "surface", "wireframe", "arrow", "range", "waterfall", "ternary", "bubble", "radar", "scatter3d", "vector"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 

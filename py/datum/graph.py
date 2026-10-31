@@ -265,10 +265,11 @@ def build(table, graph, overlays=(), fig=None):
         cols = palette(graph, max(len(ys), 1))
         graph = dict(graph, sets=[dict(s, show=False) if k in table["hidden"] else dict(s, color=s.get("color") or cols[ys.index(k) % len(cols)], symbol=s.get("symbol") or SYMBOL_ORDER[ys.index(k) % 8]) for k, s in enumerate(sets)])
     kind = graph.get("column")
-    if table.get("kind") == "multi" and kind in ("ternary", "bubble"):  # D19: the variables themselves
+    if table.get("kind") == "multi" and kind in ("ternary", "bubble", "scatter3d", "vector"):  # D19, D20: the variables themselves
         from . import special
         cols = palette(graph, len(table["sets"]))
-        return (special.ternary_figure if kind == "ternary" else special.bubble_figure)(fig, ax, table, graph, cols, size)
+        draw = {"ternary": special.ternary_figure, "bubble": special.bubble_figure, "scatter3d": special.scatter3d_figure, "vector": special.vector_figure}[kind]
+        return draw(fig, ax, table, graph, cols, size)
     if table.get("kind") in ("grouped", "contingency") and kind == "radar":
         from . import special
         return special.radar_figure(fig, ax, table, graph, palette(graph, len(table["sets"])), size)
