@@ -160,7 +160,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 1. **Graph.** **New Graph**, **Graph Type** (scatter, bars, box, violin, before–after, lines and more) and **Data Table** (back to the data).
 2. **Axes.** Logarithmic axes, framed axes, **Format Axes** and **Axis Break**.
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
-4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides) and **Print**.
+4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides), **Copy Linked** (see Linked pictures) and **Print**.
 
 The other groups set the **Error Bars**, show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
 
@@ -228,6 +228,18 @@ Other ways to share, under **Tools**:
 - **Document**: the project's details, every graph with a caption, every result and the methods text (.docx or .odt).
 
 Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenDocument, the open standard.
+
+### Linked pictures
+
+**Graph › Copy Linked** keeps a graph as a picture in a folder beside the project (for `Strain study.dplot`, the folder `Strain study pictures`). Every time you save the project, the picture is redrawn. Slides and documents that insert it *as a link* show the new graph when their links are updated, in any program.
+
+![Graph › Copy Linked: the picture and the first steps.](img/linked.png)
+
+1. **The picture.** Its path is already on the clipboard.
+2. **The first time.** In your slides or document, insert a picture from a file, paste the path into the file name box ([[Ctrl+V]]) and insert it as a link, not as a copy (the linking option of the Insert button, or a **Link** tick box).
+3. **Open Pictures Folder** shows the pictures; **Stop Linking** ends the link for this graph.
+
+From then on: change the graph in Datum Plot and save ([[Ctrl+S]]). When you next open the slides, accept updating the links, or use their Edit Links › Update command. **Tools › Update Linked Pictures** redraws every linked picture at once. Save the project before the first Copy Linked, and keep the pictures folder beside the project when you move it.
 
 ### Print
 

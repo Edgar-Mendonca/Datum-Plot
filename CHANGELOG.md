@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.4 — 2026-10-31
+
+Copy Linked: slides and documents follow your graph.
+
+**Copy Linked**
+- **Graph › Copy Linked** (also on the graph's right-click menu) keeps the graph as a picture in a folder beside the project, and redraws it every time you save. Insert that picture into your slides or document *as a link* once: from then on they show the new graph whenever their links are updated, in any program. The Linked Picture window gives the steps; its path is already on the clipboard.
+- **Tools › Update Linked Pictures** redraws every linked picture at once; **Stop Linking** ends it for one graph.
+- A project file can only name pictures inside its own pictures folder.
+
+**Roadmap**
+- The next releases are planned in Help › Roadmap: repeated measures and mixed-effects ANOVA, multiple t-tests and volcano plots, ternary, waterfall, radar, bubble, vector and 3D scatter graphs, more statistics, control charts and design of experiments, wavelets, a graph digitizer, Bayesian tests, and then Mac and Linux versions.
+- The roadmap now says plainly that two-way ANOVA is ordinary only for now; repeated measures and mixed models for two and three factors come next.
+
 ## 0.3.3 — 2026-10-30
 
 Testers' requests: colour schemes beside the graph, OpenDocument export, and plain names for file types.

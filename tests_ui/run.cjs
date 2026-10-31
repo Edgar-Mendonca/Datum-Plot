@@ -32,7 +32,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
     f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
-    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
+    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, copy_linked: { path: "C:\\Users\\you\\Documents\\Growth study pictures\\Growth.png", state: f.state }, update_pictures: 1,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
@@ -535,6 +535,21 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(300);
   check("creating a table from the File page closes it and shows the table", !(await p.$(".bs")) && !!(await p.$(".dgrid")));
+  // 0.3.4: Copy Linked keeps the graph as a picture beside the project and explains the two first steps.
+  await p.click('.nav .nitem:has-text("Growth") >> nth=-1'); await p.waitForTimeout(300);
+  await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(100);
+  await reset();
+  await p.click('.ribbon .rb:has-text("Copy Linked")'); await p.waitForTimeout(300);
+  check("Copy Linked asks the shell to link this graph", JSON.stringify(await calls("copy_linked")) === JSON.stringify([{ id: P.graphs[0].id }]), JSON.stringify(await calls("copy_linked")));
+  check("the Linked Picture window shows the picture's path and how to insert it as a link", ((await p.textContent(".dlg").catch(() => "")) || "").includes("Growth study pictures") && ((await p.textContent(".dlg")) || "").includes("as a link"));
+  await reset();
+  await p.click('.dlg .btn:has-text("Stop Linking")'); await p.waitForTimeout(200);
+  const ul = (await ops()).find(o => o.GraphSet);
+  check("Stop Linking clears the link", ul && ul.GraphSet.settings.linked === "", JSON.stringify(ul?.GraphSet?.settings?.linked));
+  await p.click('.tabs button:text-is("Tools")'); await p.waitForTimeout(100);
+  await reset();
+  await p.click('.ribbon .rb:has-text("Update Linked Pictures")'); await p.waitForTimeout(200);
+  check("Tools › Update Linked Pictures redraws them", (await calls("update_pictures")).length === 1);
   // 0.3.3: the window names file types, never other companies' products.
   const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
   let named = [];

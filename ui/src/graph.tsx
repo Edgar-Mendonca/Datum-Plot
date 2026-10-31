@@ -2,8 +2,8 @@
 // axes and legend are, so the window can show values under the mouse and open the right page of
 // Format Graph on a double-click.
 import { Show, For, createSignal, createEffect, on, onCleanup } from "solid-js";
-import { Graph, Render, Note, num, invoke, spans } from "./api";
-import { act, call, engine, openMenu, out, toast, open, openDialog, opts } from "./store";
+import { Graph, Render, Note, Out, num, invoke, spans } from "./api";
+import { act, call, closeDialog, engine, openMenu, out, setOut, toast, open, openDialog, opts } from "./store";
 import { formatGraph, setG } from "./format";
 import { Dialog, Pick, Check, Icon } from "./ui";
 import { Help } from "./help";
@@ -117,7 +117,7 @@ export const GraphView = (p: { g: Graph }) => {
       ...(q ? [...(t?.kind === "xy" || t?.kind === "multi" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
       { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, "x") },
       { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Statistics of a Region…", icon: "sigma", run: () => zoomTool("region") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
-      { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
+      { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Copy Linked", icon: "link", run: () => copyLinked(p.g) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
       { label: "Go to Data Table", icon: "sheet", run: () => open("data", p.g.table) },
     ]);
   };
@@ -218,7 +218,33 @@ export const zoomOut = (g: Graph) => {
 export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: true }, y: { ...s.y, auto: true } }));
 
 /** Copies the graph to the Windows clipboard as a picture (through Rust; WebView2 blocks the
- *  browser clipboard), for Word and PowerPoint. */
+ *  browser clipboard), for documents and slides. */
+/** Copy Linked (G8): the graph is kept as a picture beside the project, redrawn at every save; slides and documents
+ *  insert it as a linked picture and show the new version when their links are updated. */
+export const copyLinked = async (g: Graph) => {
+  const r = await call<{ path: string; state: Out }>("copy_linked", { id: g.id });
+  if (!r) return;
+  setOut(r.state);
+  openDialog(() => (
+    <Dialog title="Linked Picture" help="linked" cancel="Close"
+      extra={<><button class="btn" onClick={() => call("open_pictures")}>Open Pictures Folder</button><button class="btn" onClick={() => { unlink(g); closeDialog(); }}>Stop Linking</button></>}>
+      <p>“{g.name}” is kept as a picture in the folder beside the project, and its path is on the clipboard:</p>
+      <p class="mono linkpath">{r.path}</p>
+      <h4>The first time, in your slides or document</h4>
+      <ol>
+        <li>Insert a picture from a file (usually <b>Insert › Picture</b>), and paste the path into the file name box (<kbd>Ctrl</kbd>+<kbd>V</kbd>).</li>
+        <li>Insert it <b>as a link</b>, not as a copy: choose the linking option of the Insert button (often its small arrow), or tick <b>Link</b> in the dialog.</li>
+      </ol>
+      <h4>From then on</h4>
+      <p>Change the graph in Datum Plot and <b>save the project</b> (<kbd>Ctrl</kbd>+<kbd>S</kbd>): the picture is redrawn. Your slides or document show the new graph when their links are updated: when you open the file again (accept updating the links), or with their Edit Links › Update command.</p>
+      <p class="muted">Keep the pictures folder beside the project; if you move the project, move the folder with it. Tools › Update Linked Pictures redraws them all at once.</p>
+    </Dialog>
+  ));
+};
+const unlink = (g: Graph) => setG(g, s => ({ ...s, linked: "" }));
+/** Tools › Update Linked Pictures. */
+export const updatePictures = async () => { const n = await call<number>("update_pictures"); if (n !== undefined && n !== null) toast(n ? `${n} linked picture${n > 1 ? "s" : ""} redrawn. Update the links in your slides or documents to see them.` : "This project has no linked pictures yet: Graph › Copy Linked makes one.", true); };
+
 export const copyGraph = async (id: number) => {
   try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into a document, slides or an email.", true); }
   catch (e) { toast(`Could not copy the picture: ${e}`); }

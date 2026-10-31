@@ -637,3 +637,6 @@ input.mono { font-family: var(--mono) !important; }
 .guidecard .ic { grid-row: span 2; width: 36px; height: 36px; color: var(--navy); }
 .guidecard b { font-size: 16px; }
 .guidecard span { color: var(--muted); font-size: 12px; }
+
+/* 0.3.4: Copy Linked */
+.linkpath { padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); word-break: break-all; user-select: text; }

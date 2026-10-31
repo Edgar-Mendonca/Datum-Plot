@@ -160,7 +160,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 1. **Graph** (Graphique). **New Graph** (Nouveau graphique), **Graph Type** (Type de graphique : nuage de points, barres, boîte à moustaches, violon, avant–après, courbes et d’autres) et **Data Table** (Tableau de données, pour revenir aux données).
 2. **Axes** (Axes). Axes logarithmiques, axes encadrés, **Format Axes** (Mettre en forme les axes) et **Axis Break** (Coupure d’axe).
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
-4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives) et **Print** (Imprimer).
+4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives), **Copy Linked** (Copier avec lien, voir Images liées) et **Print** (Imprimer).
 
 Les autres groupes règlent les **Error Bars** (Barres d’erreur), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
 
@@ -228,6 +228,18 @@ Autres façons de partager, dans **Tools** (Outils) :
 - **Document** : les informations du projet, chaque graphique avec sa légende, chaque résultat et le texte des méthodes (.docx ou .odt).
 
 Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .ods, .odt et .odp sont au format OpenDocument, la norme ouverte.
+
+### Images liées
+
+**Graph › Copy Linked** (Graphique › Copier avec lien) conserve un graphique sous forme d’image dans un dossier à côté du projet (pour `Strain study.dplot`, le dossier `Strain study pictures`). À chaque enregistrement du projet, l’image est redessinée. Les diapositives et les documents qui l’insèrent *sous forme de lien* affichent le nouveau graphique lorsque leurs liens sont mis à jour, quel que soit le logiciel.
+
+![Graph › Copy Linked (Graphique › Copier avec lien) : l’image et les premières étapes.](img/linked.png)
+
+1. **L’image.** Son chemin est déjà dans le presse-papiers.
+2. **La première fois.** Dans vos diapositives ou votre document, insérez une image à partir d’un fichier, collez le chemin dans la zone du nom de fichier ([[Ctrl+V]]) et insérez-la sous forme de lien, et non de copie (l’option de liaison du bouton Insérer, ou une case **Link** (Lier)).
+3. **Open Pictures Folder** (Ouvrir le dossier des images) montre les images ; **Stop Linking** (Arrêter le lien) met fin au lien de ce graphique.
+
+Ensuite : modifiez le graphique dans Datum Plot et enregistrez ([[Ctrl+S]]). À la prochaine ouverture des diapositives, acceptez la mise à jour des liens, ou utilisez leur commande Modifier les liens › Mettre à jour. **Tools › Update Linked Pictures** (Outils › Mettre à jour les images liées) redessine toutes les images liées en une fois. Enregistrez le projet avant le premier Copy Linked, et gardez le dossier des images à côté du projet si vous le déplacez.
 
 ### Impression
 

@@ -33,7 +33,7 @@
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
-    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
+    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods); Copy Linked keeps a graph as a picture that linked slides and documents update from.",
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
     "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
@@ -46,13 +46,44 @@
   ],
   "roadmap": [
     {
-      "v": "1.0.0",
-      "title": "Stable",
+      "v": "0.3.5",
+      "title": "Repeated measures",
       "when": "Next",
       "items": [
+        "Two- and three-way repeated measures ANOVA",
+        "Mixed-effects models when values are missing"
+      ]
+    },
+    {
+      "v": "0.3.6–0.3.9",
+      "title": "More tests and graphs",
+      "when": "Soon",
+      "items": [
+        "Multiple t-tests and volcano plots",
+        "Ternary, waterfall, radar and bubble graphs",
+        "Vector fields and 3D scatter",
+        "ANCOVA, kappa, McNemar, bootstrap CIs, spline fits"
+      ]
+    },
+    {
+      "v": "0.3.10–0.3.14",
+      "title": "Specialist tools, Mac and Linux",
+      "when": "Later",
+      "items": [
+        "Control charts and design of experiments",
+        "Wavelets and short-time spectra",
+        "Graph digitizer and image tools",
+        "Bayesian tests",
+        "Mac and Linux versions"
+      ]
+    },
+    {
+      "v": "1.0.0",
+      "title": "Stable",
+      "when": "Goal",
+      "items": [
         "Signed installer",
-        "Validation report against reference values",
-        "User guide"
+        "Validation report against reference values"
       ]
     }
   ]
