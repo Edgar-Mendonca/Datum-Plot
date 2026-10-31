@@ -142,7 +142,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 ### Ce que Datum Plot sait analyser
 
 - **Statistiques :** statistiques descriptives, tests de normalité, valeurs aberrantes, distributions de fréquences, fractions d’un total.
-- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, mesures répétées et modèles à effets mixtes, tests t et ANOVA imbriqués, tailles d’effet, puissance.
+- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, mesures répétées et modèles à effets mixtes, tests t multiples avec taux de fausses découvertes et graphiques en volcan, tests t et ANOVA imbriqués, tailles d’effet, puissance.
 - **Relations :** corrélation, comparaison de méthodes de Bland-Altman, courbes ROC, tableaux de contingence (khi-deux, Fisher, risque relatif, rapport des cotes).
 - **Régression et ajustement :** régression linéaire, ajustement de courbe à partir d’une bibliothèque de modèles ou de votre propre équation, ajustements globaux et comparaison de modèles, interpolation, aire sous la courbe, lissage, régression multiple, logistique et de Poisson, analyse en composantes principales et classification, ajustements de surface.
 - **Survie :** courbes de Kaplan-Meier, test du log-rank et rapports de risques instantanés (hazard ratios).
@@ -288,6 +288,7 @@ Prêts à l’emploi : `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `sci
 | Les proportions sont-elles différentes ? | des effectifs | khi-deux ou test exact de Fisher |
 | Quelle relation entre X et Y ? | XY | régression linéaire ou ajustement de courbe |
 | Deux variables varient-elles ensemble ? | deux colonnes | corrélation |
+| Lesquels de nombreux gènes ou protéines ont changé ? | tableau groupé, une ligne chacun, deux séries | tests t multiples et graphique en volcan |
 | Deux méthodes concordent-elles ? | valeurs appariées | Bland-Altman |
 | Un test détecte-t-il bien une affection ? | valeurs des témoins et des cas | courbe ROC |
 | Combien de temps avant un événement ? | temps avec événements et sujets censurés | Kaplan-Meier et test du log-rank |

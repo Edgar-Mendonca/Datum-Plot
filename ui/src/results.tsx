@@ -11,7 +11,7 @@ import { Help } from "./help";
 export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   describe: ["Descriptive statistics", "B1", false], normality: ["Normality tests", "B2", false], outliers: ["Outliers", "B3", false],
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
-  ttest: ["t-test", "B4", "brackets"], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
+  ttest: ["t-test", "B4", "brackets"], multit: ["Multiple t-tests", "B33", false], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
   tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
 };
@@ -20,7 +20,7 @@ export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; 
 /** Catalogue id → analysis kind (and preset options), for the Analyze gallery and ribbon. */
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
-  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
+  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
   B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
@@ -31,6 +31,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
+  multit: { test: "welch", method: "fdr_bh", q: 0.05, x: "log2", label: 10 },
   parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
@@ -94,6 +95,13 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Compare</label><Pick value={o().compare} set={v => put("compare", v)} options={[["rows", "The data sets within each row"], ["sets", "The rows within each data set"]]} />
             <label>Correction</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["sidak", "Šidák"], ["holm", "Holm-Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]]} />
             <Brackets />
+          </Show>
+          <Show when={kind === "multit"}>
+            <label>Test for each row</label><Pick value={o().test} set={v => put("test", v)} options={[["welch", "Unpaired t-test with Welch's correction"], ["student", "Unpaired t-test (equal SDs)"], ["paired", "Paired t-test (sub-column j matches sub-column j)"], ["mw", "Mann-Whitney test"]]} />
+            <label>Correct for many rows</label><Pick value={o().method} set={v => put("method", v)} options={[["fdr_bh", "False discovery rate (Benjamini-Hochberg)"], ["fdr_tsbky", "False discovery rate (two-stage, Benjamini-Krieger-Yekutieli)"], ["holm-sidak", "Holm-Šidák (family-wise)"], ["bonferroni", "Bonferroni (family-wise)"], ["none", "No correction"]]} />
+            <label>Discovery when below</label><input type="number" min="0.001" max="0.5" step="0.01" style={{ width: "80px" }} value={o().q} onChange={e => put("q", +e.currentTarget.value)} />
+            <label>Volcano X axis</label><Pick value={o().x} set={v => put("x", v)} options={[["log2", "log₂ fold change"], ["diff", "Difference of the means"]]} />
+            <label>Label</label><span class="inline"><input type="number" min="0" max="100" style={{ width: "60px" }} value={o().label} onChange={e => put("label", +e.currentTarget.value)} /> discoveries with the smallest P values</span>
           </Show>
           <Show when={kind === "blandaltman"}><label>Plot</label><Pick value={o().diff} set={v => put("diff", v)} options={[["diff", "Differences (B − A)"], ["pct", "Differences as % of the mean"], ["ratio", "Ratios (B / A)"]]} />
             <label /><p class="muted">The first two data sets are the two methods; each row is one item measured by both.</p></Show>
@@ -245,7 +253,7 @@ export const ResultsView = (p: { a: Analysis }) => {
     <section class="rview">
       <div class="rhead"><Icon n="results" /><b>{p.a.name}</b><Help k="results" /><span class="muted">of <a onClick={() => open("data", p.a.table)}>{t()?.name}</a></span><span class="grow" />
         <Show when={r()?.cells.length}><button class="btn sm pri" onClick={() => act({ Exclude: { table: p.a.table, cells: r()!.cells, on: true } }).then(ok => ok && toast("Outliers excluded. They stay in the table in blue.", true))}>Exclude {r()!.cells.length} outlier{r()!.cells.length > 1 ? "s" : ""}</button></Show>
-        <Show when={r()?.table}><button class="btn sm pri" title="A new data table (with its graph) from these values" onClick={() => act({ NewTable: { table: r()!.table, graph: {} } }).then(ok => { if (ok) { const ts = out()!.project.tables; open("data", ts[ts.length - 1].id); toast("New data table made from the result.", true); } })}>New table from result</button></Show>
+        <Show when={r()?.table}><button class="btn sm pri" title="A new data table (with its graph) from these values" onClick={() => act({ NewTable: { table: r()!.table, graph: r()!.graph ?? {} } }).then(ok => { if (ok) { const ts = out()!.project.tables; open("data", ts[ts.length - 1].id); toast("New data table made from the result.", true); } })}>New table from result</button></Show>
         <Show when={draws(p.a.kind, t())}><For each={graphs()}>{g => <Check label={`Show on ${g.name}`} value={g.settings.overlays.includes(p.a.id)} set={v => act({ Overlay: { graph: g.id, analysis: p.a.id, on: v } })} />}</For></Show>
         <button class="btn sm" onClick={() => analysisDialog(p.a.kind, t(), p.a)}>Change…</button><button class="btn sm" onClick={code}>Python code</button>
       </div>

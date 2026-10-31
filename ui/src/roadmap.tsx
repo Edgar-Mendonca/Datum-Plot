@@ -99,6 +99,7 @@ const ANALYSES: Choice[] = [
   { id: "B7", name: "Multiple comparisons", icon: "list", group: "Compare groups", desc: "Which groups differ after ANOVA: Tukey, Dunnett, Holm-Šidák…" },
   { id: "B8", name: "Effect sizes", icon: "sigma", group: "Compare groups", desc: "Cohen's d and Hedges' g with the t-test; η² and ω² with ANOVA." },
   { id: "B15", name: "Two-way ANOVA", icon: "table", group: "Compare groups", desc: "Two factors at once, such as alloy and temperature." },
+  { id: "B33", name: "Multiple t-tests", icon: "list", group: "Compare groups", desc: "One t-test per row (genes, proteins, compounds), corrected by the false discovery rate, with a volcano plot." },
   { id: "B16", name: "Correlation", icon: "xy", group: "Relationships", desc: "How strongly two variables move together." },
   { id: "B17", name: "Contingency", icon: "grid", group: "Relationships", desc: "Tests on counts." },
   { id: "B18", name: "Bland-Altman", icon: "err", group: "Relationships", desc: "Agreement of two measuring methods: bias and limits of agreement, with the Bland-Altman plot." },

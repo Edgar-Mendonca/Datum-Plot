@@ -32,6 +32,7 @@ export interface Result {
   plots: { title: string; svg: string }[]; curves: unknown[]; cells: [number, number][];
   /** [set, set, P] over column graphs. */ brackets?: [number, number, number][];
   /** A new data table the result can become (transforms, histograms, smoothing). */ table?: Partial<Table>;
+  /** Settings for that table's graph (a volcano plot draws points only). */ graph?: Partial<GraphSettings>;
 }
 export interface Info { title: string; experiment: string; researcher: string; organisation: string; date: string; notes: string }
 /** A page layout: items placed in millimetres from the page's top-left. */

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.6 — 2026-10-31
+
+Multiple t-tests and volcano plots.
+
+**Multiple t-tests**
+- **Analyze › Multiple t-tests** (in Compare Groups): a grouped table with one row per gene, protein or compound and two data sets (for example Control and Treated) with their replicates. Each row gets its own test: Welch's or ordinary unpaired t-test, paired t-test, or the Mann-Whitney test.
+- The P values are corrected for the number of rows by the false discovery rate (Benjamini-Hochberg, or the two-stage method of Benjamini, Krieger and Yekutieli) or by Holm-Šidák or Bonferroni. Rows below the threshold (q < 0.05 by default) are discoveries, and the answer says how many went up and down.
+- The results list every row by P value with the means, the difference, the log₂ fold change, t, P and q.
+
+**Volcano plots**
+- The result shows a volcano plot: log₂ fold change (or the difference) against −log₁₀ P, discoveries coloured and the strongest labelled by their row names.
+- **New table from result** turns it into an editable graph, with every row's name kept.
+
+**Checked**
+- Each row's test equals SciPy's, and the false discovery rates equal the Benjamini-Hochberg step-up worked by hand.
+
 ## 0.3.5 — 2026-10-31
 
 Repeated measures and mixed-effects two-way ANOVA; Copy Linked is removed again.

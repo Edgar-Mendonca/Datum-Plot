@@ -52,6 +52,8 @@ def main(fixture):
                 ask(f"{name} › layout", {"cmd": "page", "layout": l, "panels": panels, "fmt": "svg"})
             for t in p["tables"]:
                 ask(f"{name} › summary", {"cmd": "summary", "table": t})
+                if t["kind"] == "grouped":  # multiple t-tests (B33)
+                    ask(f"{name} › multit", {"cmd": "analyze", "kind": "multit", "table": t, "sets": [], "options": {}})
                 g = next((g["settings"] for g in p["graphs"] if g["table"] == t["id"]), {})
                 for kind in KINDS:  # every graph type on every kind of table: wrong ones fall back, never fail
                     ask(f"{name} › {kind} graph", {"cmd": "render", "table": t, "graph": {**g, "column": kind}, "overlays": []})

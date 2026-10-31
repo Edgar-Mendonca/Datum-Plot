@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.5";
+export const VERSION_NOW = "0.3.6";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -122,7 +122,7 @@ export const FEATURES: Feature[] = [
   // Session 10 roadmap (the user agreed points 1–9 of the comparison, then Mac and Linux), one small release each.
   ["B32", "Repeated measures and mixed-effects ANOVA", "0.3.5", "Two-way ANOVA with repeated measures in the rows, the data sets or both (Geisser-Greenhouse corrected), and a mixed-effects model when values are missing.", "statsmodels"],
   ["B33", "Multiple t-tests", "0.3.6", "Many rows (genes, proteins) tested at once, with false discovery rate control.", "scipy, statsmodels"],
-  ["D18", "Volcano plots", "0.3.6", "Fold change against significance for multiple t-tests, with the hits labelled.", "matplotlib"],
+  ["D18", "Volcano plots", "0.3.6", "Fold change against significance for multiple t-tests, with the discoveries labelled; New table from result makes it an editable graph.", "matplotlib"],
   ["D19", "Ternary, waterfall, radar and bubble graphs", "0.3.7", "Compositions on a triangle, stacked spectra, profiles on spokes, and a third value as bubble size.", "matplotlib"],
   ["D20", "Vector fields and 3D scatter", "0.3.8", "Arrows on a grid, and points in three dimensions.", "matplotlib"],
   ["B34", "More statistics", "0.3.9", "Three-way ANOVA, ANCOVA, Cohen's kappa, McNemar's test, bootstrap confidence intervals and spline fits.", "scipy, statsmodels"],

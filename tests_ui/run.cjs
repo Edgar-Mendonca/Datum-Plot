@@ -535,6 +535,11 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(300);
   check("creating a table from the File page closes it and shows the table", !(await p.$(".bs")) && !!(await p.$(".dgrid")));
+  // 0.3.6: Multiple t-tests open with their correction and threshold.
+  await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb:has-text("Multiple t-tests")'); await p.waitForTimeout(300);
+  check("Multiple t-tests offer the false discovery rate and a threshold", ((await p.textContent(".dlg").catch(() => "")) || "").includes("Correct for many rows") && ((await p.textContent(".dlg")) || "").includes("Benjamini-Hochberg"));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   // 0.3.3: the window names file types, never other companies' products.
   const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
   let named = [];
