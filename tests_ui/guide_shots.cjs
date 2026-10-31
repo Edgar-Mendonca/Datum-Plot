@@ -39,7 +39,7 @@ const srv = http.createServer((q, r) => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [{ path: "C:\\Users\\you\\Documents\\Strain study.dplot", name: "Strain study", saved: "today" }], version: "0.3.2",
       engine: { versions: { python: "3.13", numpy: "2.3", scipy: "1.16", matplotlib: "3.10" }, error: null }, models: { models: e.models }, new_project: f.state,
-      console: { ...e.console, state: f.state }, copy_linked: { path: "C:\\Users\\you\\Documents\\Strain study pictures\\Growth.png", state: f.state } };
+      console: { ...e.console, state: f.state } };
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (c === "render") return e.render[a.id];
       if (c === "result") return e.result[a.id];
@@ -135,12 +135,8 @@ const srv = http.createServer((q, r) => {
   await p.click(".ribbon .rb:has-text('Guide')"); await wait(400);
   await shot("guide-dialog", [[".guidecards", 1]], ".dlg");
   await p.keyboard.press("Escape"); await wait(200);
-  // 8. Copy Linked, then File › Export (of the open graph).
+  // 8. File › Export (of the open graph).
   await nav(9);
-  await tab("Graph");
-  await p.click('.ribbon .rb:has-text("Copy Linked")'); await wait(400);
-  await shot("linked", [[".dlg .linkpath", 1], [".dlg ol", 2], ['.dlg footer .btn', 3, 0]], ".dlg");
-  await p.keyboard.press("Escape"); await wait(200);
   await p.click(".tabs .file"); await wait(300);
   await p.click(".bs aside button:has-text('Export')"); await wait(500);
   await shot("export", [[".bs aside", 1, 0, "in"], [".bs .tile", 2, 0]]);

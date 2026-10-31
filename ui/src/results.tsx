@@ -30,7 +30,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   fit: { model: "exp_decay", equation: "Y = A*exp(-k*X) + C", init: {}, fixed: {}, points: "each", weight: "none", bands: "ci", label: true, unknowns: "" },
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
-  twoway: { posthoc: "sidak", compare: "rows", interaction: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
+  twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
   parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
@@ -88,7 +88,9 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
           </Show>
           <Show when={kind === "twoway"}>
             <label>Factor names</label><span class="inline"><input placeholder="Rows, e.g. Alloy" value={o().rowname} onChange={e => put("rowname", e.currentTarget.value)} /><input placeholder="Data sets, e.g. Treatment" value={o().colname} onChange={e => put("colname", e.currentTarget.value)} /></span>
-            <label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} />
+            <label>Repeated measures</label><Pick value={o().rm ?? "none"} set={v => put("rm", v)} options={[["none", "No: every value is a different subject"], ["rows", "Each sub-column is one subject, measured in every row"], ["sets", "Each row's sub-column is one subject, measured in every data set"], ["both", "Each sub-column is one subject, measured in every row and data set"]]} />
+            <Show when={(o().rm ?? "none") === "none"}><label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} /></Show>
+            <Show when={(o().rm ?? "none") !== "none"}><label>Sphericity</label><Check label="Geisser-Greenhouse correction (missing values: a mixed-effects model is used instead)" value={o().gg !== false} set={v => put("gg", v)} /></Show>
             <label>Compare</label><Pick value={o().compare} set={v => put("compare", v)} options={[["rows", "The data sets within each row"], ["sets", "The rows within each data set"]]} />
             <label>Correction</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["sidak", "Šidák"], ["holm", "Holm-Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]]} />
             <Brackets />

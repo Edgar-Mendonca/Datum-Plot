@@ -27,13 +27,13 @@
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
     "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change.",
     "Import CSV, TXT, .xlsx and .pzfx files, plate readers and many runs at once; large data sets stay quick.",
-    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
+    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios).",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Matrices and 3D: contour maps, heat maps and 3D surfaces, polar graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
-    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods); Copy Linked keeps a graph as a picture that linked slides and documents update from.",
+    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
     "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
@@ -46,23 +46,22 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.5",
-      "title": "Repeated measures",
+      "v": "0.3.6",
+      "title": "Many tests at once",
       "when": "Next",
       "items": [
-        "Two- and three-way repeated measures ANOVA",
-        "Mixed-effects models when values are missing"
+        "Multiple t-tests with false discovery rate",
+        "Volcano plots"
       ]
     },
     {
-      "v": "0.3.6–0.3.9",
-      "title": "More tests and graphs",
+      "v": "0.3.7–0.3.9",
+      "title": "More graphs and tests",
       "when": "Soon",
       "items": [
-        "Multiple t-tests and volcano plots",
         "Ternary, waterfall, radar and bubble graphs",
         "Vector fields and 3D scatter",
-        "ANCOVA, kappa, McNemar, bootstrap CIs, spline fits"
+        "Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits"
       ]
     },
     {

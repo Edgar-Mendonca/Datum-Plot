@@ -574,6 +574,9 @@ def twoway(table, ks, o):
     import statsmodels.formula.api as smf
     from statsmodels.stats.anova import anova_lm
     alpha, post, within = float(o.get("alpha", ALPHA)), o.get("posthoc", "sidak"), o.get("compare", "rows")
+    if o.get("rm") in ("rows", "sets", "both"):  # repeated measures (B32)
+        from .repeated import twoway_rm
+        return twoway_rm(table, ks, o)
     if any(table["sets"][k]["entry"] != "rep" for k in ks):
         raise ValueError("Two-way ANOVA needs the individual values; enter them as replicates.")
     rows, cv = cells(table)

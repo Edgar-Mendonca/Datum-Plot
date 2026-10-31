@@ -142,7 +142,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 ### What Datum Plot can analyse
 
 - **Statistics:** descriptive statistics, normality tests, outliers, frequency distributions, fractions of a total.
-- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, nested t-tests and ANOVA, effect sizes, power.
+- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, nested t-tests and ANOVA, effect sizes, power.
 - **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio).
 - **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
@@ -160,7 +160,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 1. **Graph.** **New Graph**, **Graph Type** (scatter, bars, box, violin, before–after, lines and more) and **Data Table** (back to the data).
 2. **Axes.** Logarithmic axes, framed axes, **Format Axes** and **Axis Break**.
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
-4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides), **Copy Linked** (see Linked pictures) and **Print**.
+4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides) and **Print**.
 
 The other groups set the **Error Bars**, show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
 
@@ -229,18 +229,6 @@ Other ways to share, under **Tools**:
 
 Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenDocument, the open standard.
 
-### Linked pictures
-
-**Graph › Copy Linked** keeps a graph as a picture in a folder beside the project (for `Strain study.dplot`, the folder `Strain study pictures`). Every time you save the project, the picture is redrawn. Slides and documents that insert it *as a link* show the new graph when their links are updated, in any program.
-
-![Graph › Copy Linked: the picture and the first steps.](img/linked.png)
-
-1. **The picture.** Its path is already on the clipboard.
-2. **The first time.** In your slides or document, insert a picture from a file, paste the path into the file name box ([[Ctrl+V]]) and insert it as a link, not as a copy (the linking option of the Insert button, or a **Link** tick box).
-3. **Open Pictures Folder** shows the pictures; **Stop Linking** ends the link for this graph.
-
-From then on: change the graph in Datum Plot and save ([[Ctrl+S]]). When you next open the slides, accept updating the links, or use their Edit Links › Update command. **Tools › Update Linked Pictures** redraws every linked picture at once. Save the project before the first Copy Linked, and keep the pictures folder beside the project when you move it.
-
 ### Print
 
 **File › Print** prints a graph with a header and footer, or saves it as a PDF.
@@ -296,7 +284,7 @@ Ready to use: `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `scipy` and `p
 | Do two groups differ? | two columns of values | t-test (Mann-Whitney if not normal) |
 | Did the same items change? | before and after, paired by row | paired t-test (Wilcoxon if not normal) |
 | Do three or more groups differ? | columns of values | one-way ANOVA with multiple comparisons (Kruskal-Wallis if not normal) |
-| Do two factors matter? | grouped table | two-way ANOVA |
+| Do two factors matter? | grouped table | two-way ANOVA (repeated measures if the same subjects are measured again) |
 | Are proportions different? | counts | chi-square or Fisher's exact test |
 | How are X and Y related? | XY | linear regression or curve fit |
 | Do two variables move together? | two columns | correlation |

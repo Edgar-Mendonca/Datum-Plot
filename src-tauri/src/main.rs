@@ -5,7 +5,7 @@ mod py;
 mod runtime;
 mod update;
 
-use datum_core::{doc::{write_atomic, Doc, Op}, pictures_dir, templates, DataSet, Entry, GraphSettings, Project, Table};
+use datum_core::{doc::{write_atomic, Doc, Op}, templates, DataSet, Entry, GraphSettings, Project, Table};
 use py::{Calc, Engine, Py};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -75,8 +75,6 @@ struct App {
     doc: Doc,
     opts: Options,
     rev: u64,
-    /// Linked pictures written in this session: file → what was drawn (so unchanged graphs are not redrawn).
-    pictures: std::collections::HashMap<PathBuf, u64>,
 }
 
 struct St(Mutex<App>);
@@ -304,95 +302,17 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
             None => return Ok(None),
         },
     };
-    let o = {
-        let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-        if a.doc.path.is_none() || as_new {
-            if let Some(stem) = path.file_stem() {
-                a.doc.p.name = stem.to_string_lossy().into_owned();
-            }
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
+    if a.doc.path.is_none() || as_new {
+        if let Some(stem) = path.file_stem() {
+            a.doc.p.name = stem.to_string_lossy().into_owned();
         }
-        a.doc.save(&path)?;
-        remember(&app, &path);
-        clear_recovery(&app);
-        a.rev += 1;
-        out(&a)
-    };
-    // Saving also brings the linked pictures up to date (a failure there never undoes the save).
-    let _ = refresh_pictures(&app, &st, false).await;
-    Ok(Some(o))
-}
-
-/// The linked pictures of the open project: (graph, file) for each linked graph, once it is saved.
-fn linked_files(st: &State<'_, St>) -> Vec<(u32, PathBuf)> {
-    let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-    let Some(dir) = a.doc.path.as_deref().map(pictures_dir) else { return vec![] };
-    a.doc.p.graphs.iter().filter(|g| !g.settings.linked.is_empty()).map(|g| (g.id, dir.join(&g.settings.linked))).collect()
-}
-
-/// Redraws the linked pictures whose graphs changed (or every one with `all`); returns how many were written.
-async fn refresh_pictures(app: &AppHandle, st: &State<'_, St>, all: bool) -> R<usize> {
-    let mut n = 0;
-    for (id, file) in linked_files(st) {
-        let mut q = graph_req(st, id, "export")?;
-        let key = { use std::hash::{Hash, Hasher}; let mut h = std::collections::hash_map::DefaultHasher::new(); q.to_string().hash(&mut h); h.finish() };
-        if !all && file.exists() && st.0.lock().unwrap_or_else(PoisonError::into_inner).pictures.get(&file) == Some(&key) {
-            continue;
-        }
-        if let Some(d) = file.parent() {
-            std::fs::create_dir_all(d).map_err(|e| format!("Could not make the pictures folder: {e}"))?;
-        }
-        q["fmt"] = json!("png");
-        q["dpi"] = json!(st.0.lock().unwrap_or_else(PoisonError::into_inner).opts.dpi.clamp(150, 600));
-        q["path"] = json!(file.display().to_string());
-        let h = app.clone();
-        tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
-        st.0.lock().unwrap_or_else(PoisonError::into_inner).pictures.insert(file, key);
-        n += 1;
     }
-    Ok(n)
-}
-
-/// Copy Linked (G8): keeps graph `id` as a picture in the folder beside the project, redrawn at every save,
-/// and puts the picture's path on the clipboard for a slide or document to insert as a linked picture.
-#[tauri::command]
-async fn copy_linked(app: AppHandle, st: State<'_, St>, id: u32) -> R<Value> {
-    let file = {
-        let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-        let dir = pictures_dir(a.doc.path.as_deref().ok_or("Save the project first: its linked pictures are kept in a folder beside it.")?);
-        let mut s = a.doc.p.graph(id).ok_or("That graph no longer exists.")?.settings.clone();
-        if s.linked.is_empty() {
-            s.linked = a.doc.p.picture_name(id);
-            guard(|| a.doc.apply(Op::GraphSet { graph: id, settings: Box::new(s.clone()) }))?;
-            a.rev += 1;
-        }
-        dir.join(&s.linked)
-    };
-    st.0.lock().unwrap_or_else(PoisonError::into_inner).pictures.remove(&file);
-    refresh_pictures(&app, &st, false).await?;
-    app.clipboard().write_text(file.display().to_string()).map_err(|e| e.to_string())?;
-    let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-    Ok(json!({ "path": file.display().to_string(), "state": out(&a) }))
-}
-
-/// Tools › Update Linked Pictures: redraws every linked picture now.
-#[tauri::command]
-async fn update_pictures(app: AppHandle, st: State<'_, St>) -> R<usize> {
-    if st.0.lock().unwrap_or_else(PoisonError::into_inner).doc.path.is_none() {
-        return Err("Save the project first: its linked pictures are kept in a folder beside it.".into());
-    }
-    refresh_pictures(&app, &st, true).await
-}
-
-/// Opens the folder of the project's linked pictures.
-#[tauri::command]
-fn open_pictures(st: State<St>) -> R<()> {
-    let dir = st.0.lock().unwrap_or_else(PoisonError::into_inner).doc.path.as_deref().map(pictures_dir).ok_or("Save the project first.")?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    #[cfg(windows)]
-    let r = std::process::Command::new("explorer").arg(&dir).spawn();
-    #[cfg(not(windows))]
-    let r = std::process::Command::new("xdg-open").arg(&dir).spawn();
-    r.map(|_| ()).map_err(|e| e.to_string())
+    a.doc.save(&path)?;
+    remember(&app, &path);
+    clear_recovery(&app);
+    a.rev += 1;
+    Ok(Some(out(&a)))
 }
 
 #[tauri::command]
@@ -828,7 +748,7 @@ fn main() {
             let opts: Options = options_file(app.handle()).and_then(|f| read_small(&f)).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             let mut p = Project::new("Project1");
             p.add_table(opts.table(), Some(opts.graph()));
-            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, pictures: Default::default() })));
+            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
             app.manage(Engine(Mutex::new(Py::default())));
             app.manage(Calc(Mutex::new(Py::default())));
             // Start Python now so the first graph appears quickly.
@@ -856,7 +776,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
-            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, copy_linked, update_pictures, open_pictures
+            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())
         .expect("Datum Plot failed to start");

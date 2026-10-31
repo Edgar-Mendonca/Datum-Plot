@@ -13,7 +13,7 @@ import { newTable, analyze, graphTypes, importFile, importFiles, runAnalysis } f
 import * as T from "./tools";
 import * as L from "./layout";
 import { Layout } from "./api";
-import { annotate, zoomTool, zoomOut, resetAxes, updatePictures } from "./graph";
+import { annotate, zoomTool, zoomOut, resetAxes } from "./graph";
 import { Help, helpCard, HELP } from "./help";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Plot";
@@ -161,7 +161,7 @@ export const Ribbon = () => (
       <Show when={curTable() && curTable()!.kind !== "xy" && curTable()!.kind !== "multi" && curTable()!.kind !== "survival" && curTable()!.kind !== "nested" && curTable()!.kind !== "sheet"}><G l="Columns" h="columns"><B big i="err" l="Column Graph" dd={e => openMenu(e, columnMenu())} /></G></Show>
       <G l="Add" h="add"><S><B i="curve" l="Fit a Curve" title="Linear regression or a curve fit, drawn on this graph" run={() => analyze("B9")} /><B i="err" l="Significance" title="Stars over the groups, from a t-test or ANOVA" run={e => T.significance(e)} /><B i="note" l="Annotation" title="Text, arrows, lines and boxes on the graph" dd={e => openMenu(e, ANNOT())} /></S></G>
       <G l="Style" h="style"><B big i="style" l="Styles" dd={e => openMenu(e, T.styleMenu())} /><S><B i="paint" l="Copy Look" title="Give other graphs this graph's look" run={T.copyLook} /><B i="bucket" l="Colour Schemes" run={T.paletteDialog} /></S></G>
-      <G l="Share" h="share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="link" l="Copy Linked" title="Keep the graph as a picture beside the project: slides and documents that link to it show each new version" run={C.copyLinked} /><B i="print" l="Print" run={C.print} /></S></G>
+      <G l="Share" h="share"><B big i="export" l="Export" run={() => C.exportG()} dd={e => openMenu(e, exportMenu())} /><S><B i="copy" l="Copy Picture" run={C.copyG} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
       <G l="Format" h="format"><B big i="style" l="Format Graph" run={() => C.format("sets")} /><S><B i="symbol" l="Data Sets" run={() => C.format("sets")} /><B i="axis" l="X Axis" run={() => C.format("x")} /><B i="axis" l="Y Axis" run={() => C.format("y")} /></S></G>
@@ -183,7 +183,7 @@ export const Ribbon = () => (
     <Show when={tab() === "tools"}>
       <G l="Python" h="console"><B big i="fx" l="Python Console" title="Run your own Python on the tables (press ? for how to use it)" run={openConsole} /><S><B i="fx" l="My Analyses" title="Run code you saved from the console" dd={myAnalyses} /><B i="report" l="Notebook" title="The project as a Jupyter notebook (.ipynb)" run={T.exportNotebook} /></S></G>
       <G l="Automate" h="automate"><B big i="repeat" l="Analysis Template" title="Repeat one table's analyses on other tables" run={T.templateDialog} /><B big i="folder" l="Batch Process" title="Many files analysed the same way, with a summary" run={T.batchProcess} /></G>
-      <G l="Export" h="exportall"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Workbook" title="Data tables and results as a workbook (.xlsx or .ods)" run={T.exportExcel} /><S><B i="report" l="Slides" title="Every graph on its own slide, and the results (.pptx or .odp)" run={() => T.exportReport("slides")} /><B i="report" l="Document" title="A document with the graphs, the results and the methods text (.docx or .odt)" run={() => T.exportReport("word")} /><B i="link" l="Update Linked Pictures" title="Redraw every linked picture now (saving does it too)" run={updatePictures} /></S></G>
+      <G l="Export" h="exportall"><B big i="export" l="Export All Graphs" run={T.exportAll} /><B big i="table" l="Workbook" title="Data tables and results as a workbook (.xlsx or .ods)" run={T.exportExcel} /><S><B i="report" l="Slides" title="Every graph on its own slide, and the results (.pptx or .odp)" run={() => T.exportReport("slides")} /><B i="report" l="Document" title="A document with the graphs, the results and the methods text (.docx or .odt)" run={() => T.exportReport("word")} /></S></G>
       <G l="Engine" h="engine"><B big i="update" l="Restart Engine" title="Restart the Python engine" run={() => call("restart_engine").then(() => toast("The Python engine restarted.", true))} /></G>
     </Show>
     <Show when={tab() === "view"}>

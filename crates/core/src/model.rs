@@ -372,30 +372,6 @@ pub struct GraphSettings {
     pub levels: u32,
     pub elev: f64,
     pub azim: f64,
-    /// Copy Linked (G8): the picture file kept up to date in the project's pictures folder ("" = not linked).
-    pub linked: String,
-}
-
-/// A linked picture's file name: letters, digits, spaces, `-_().`, ending in .png, no path, at most 120 characters.
-pub fn safe_picture(name: &str) -> bool {
-    name.len() <= 120 && name.to_lowercase().ends_with(".png") && !name.starts_with(['.', ' ']) && name.chars().all(|c| c.is_alphanumeric() || " -_().".contains(c))
-}
-
-/// The folder beside a project where its linked pictures live: "Strain study.dplot" → "Strain study pictures".
-pub fn pictures_dir(project: &std::path::Path) -> std::path::PathBuf {
-    let stem = project.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "Project".into());
-    project.with_file_name(format!("{stem} pictures"))
-}
-
-impl Project {
-    /// A free file name for graph `id`'s linked picture, from its name ("Growth.png", then "Growth (2).png").
-    pub fn picture_name(&self, id: u32) -> String {
-        let base: String = self.graph(id).map(|g| g.name.as_str()).unwrap_or("Graph").chars().map(|c| if c.is_alphanumeric() || " -_()".contains(c) { c } else { ' ' }).collect();
-        let base = base.trim().chars().take(100).collect::<String>();
-        let base = if base.is_empty() { "Graph".to_string() } else { base };
-        let used: Vec<String> = self.graphs.iter().filter(|g| g.id != id).map(|g| g.settings.linked.to_lowercase()).collect();
-        (1..).map(|n| if n == 1 { format!("{base}.png") } else { format!("{base} ({n}).png") }).find(|f| !used.contains(&f.to_lowercase())).unwrap()
-    }
 }
 
 impl Default for GraphSettings {
@@ -403,7 +379,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
-            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, linked: String::new(),
+            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0,
         }
     }
 }
@@ -584,14 +560,6 @@ impl Project {
             s.notes.truncate(500);
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
-            }
-        }
-        // Linked pictures: a plain file name inside the pictures folder (never a path), each used by one graph only.
-        let mut seen = std::collections::HashSet::new();
-        for g in &mut self.graphs {
-            let l = &mut g.settings.linked;
-            if !l.is_empty() && (!safe_picture(l) || !seen.insert(l.to_lowercase())) {
-                l.clear();
             }
         }
         let gids: Vec<u32> = self.graphs.iter().map(|g| g.id).collect();

@@ -39,6 +39,9 @@ def main(fixture):
             name = p["tables"][0]["name"] if p["tables"] else f"project {i}"
             for a in p["analyses"]:
                 ask(f"{name} › {a['kind']}", {"cmd": "analyze", "kind": a["kind"], "table": tables[a["table"]], "sets": a["sets"], "options": a["options"]})
+                if a["kind"] == "twoway":  # repeated measures designs (B32)
+                    for rm in ("rows", "sets", "both"):
+                        ask(f"{name} › twoway rm={rm}", {"cmd": "analyze", "kind": "twoway", "table": tables[a["table"]], "sets": a["sets"], "options": {**a["options"], "rm": rm}})
             for g in p["graphs"]:
                 q = {"table": tables[g["table"]], "graph": g["settings"], "overlays": overlays(g["settings"])}
                 ask(f"{name} › graph {g['name']}", {"cmd": "render", **q})

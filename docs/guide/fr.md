@@ -142,7 +142,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 ### Ce que Datum Plot sait analyser
 
 - **Statistiques :** statistiques descriptives, tests de normalité, valeurs aberrantes, distributions de fréquences, fractions d’un total.
-- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, tests t et ANOVA imbriqués, tailles d’effet, puissance.
+- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, mesures répétées et modèles à effets mixtes, tests t et ANOVA imbriqués, tailles d’effet, puissance.
 - **Relations :** corrélation, comparaison de méthodes de Bland-Altman, courbes ROC, tableaux de contingence (khi-deux, Fisher, risque relatif, rapport des cotes).
 - **Régression et ajustement :** régression linéaire, ajustement de courbe à partir d’une bibliothèque de modèles ou de votre propre équation, ajustements globaux et comparaison de modèles, interpolation, aire sous la courbe, lissage, régression multiple, logistique et de Poisson, analyse en composantes principales et classification, ajustements de surface.
 - **Survie :** courbes de Kaplan-Meier, test du log-rank et rapports de risques instantanés (hazard ratios).
@@ -160,7 +160,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 1. **Graph** (Graphique). **New Graph** (Nouveau graphique), **Graph Type** (Type de graphique : nuage de points, barres, boîte à moustaches, violon, avant–après, courbes et d’autres) et **Data Table** (Tableau de données, pour revenir aux données).
 2. **Axes** (Axes). Axes logarithmiques, axes encadrés, **Format Axes** (Mettre en forme les axes) et **Axis Break** (Coupure d’axe).
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
-4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives), **Copy Linked** (Copier avec lien, voir Images liées) et **Print** (Imprimer).
+4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives) et **Print** (Imprimer).
 
 Les autres groupes règlent les **Error Bars** (Barres d’erreur), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
 
@@ -229,18 +229,6 @@ Autres façons de partager, dans **Tools** (Outils) :
 
 Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .ods, .odt et .odp sont au format OpenDocument, la norme ouverte.
 
-### Images liées
-
-**Graph › Copy Linked** (Graphique › Copier avec lien) conserve un graphique sous forme d’image dans un dossier à côté du projet (pour `Strain study.dplot`, le dossier `Strain study pictures`). À chaque enregistrement du projet, l’image est redessinée. Les diapositives et les documents qui l’insèrent *sous forme de lien* affichent le nouveau graphique lorsque leurs liens sont mis à jour, quel que soit le logiciel.
-
-![Graph › Copy Linked (Graphique › Copier avec lien) : l’image et les premières étapes.](img/linked.png)
-
-1. **L’image.** Son chemin est déjà dans le presse-papiers.
-2. **La première fois.** Dans vos diapositives ou votre document, insérez une image à partir d’un fichier, collez le chemin dans la zone du nom de fichier ([[Ctrl+V]]) et insérez-la sous forme de lien, et non de copie (l’option de liaison du bouton Insérer, ou une case **Link** (Lier)).
-3. **Open Pictures Folder** (Ouvrir le dossier des images) montre les images ; **Stop Linking** (Arrêter le lien) met fin au lien de ce graphique.
-
-Ensuite : modifiez le graphique dans Datum Plot et enregistrez ([[Ctrl+S]]). À la prochaine ouverture des diapositives, acceptez la mise à jour des liens, ou utilisez leur commande Modifier les liens › Mettre à jour. **Tools › Update Linked Pictures** (Outils › Mettre à jour les images liées) redessine toutes les images liées en une fois. Enregistrez le projet avant le premier Copy Linked, et gardez le dossier des images à côté du projet si vous le déplacez.
-
 ### Impression
 
 **File › Print** (Fichier › Imprimer) imprime un graphique avec un en-tête et un pied de page, ou l’enregistre en PDF.
@@ -296,7 +284,7 @@ Prêts à l’emploi : `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `sci
 | Deux groupes diffèrent-ils ? | deux colonnes de valeurs | test t (Mann-Whitney si la distribution n’est pas normale) |
 | Les mêmes éléments ont-ils changé ? | avant et après, appariés par ligne | test t apparié (Wilcoxon si la distribution n’est pas normale) |
 | Trois groupes ou plus diffèrent-ils ? | des colonnes de valeurs | ANOVA à un facteur avec comparaisons multiples (Kruskal-Wallis si la distribution n’est pas normale) |
-| Deux facteurs ont-ils un effet ? | tableau groupé | ANOVA à deux facteurs |
+| Deux facteurs ont-ils un effet ? | tableau groupé | ANOVA à deux facteurs (à mesures répétées si les mêmes sujets sont mesurés plusieurs fois) |
 | Les proportions sont-elles différentes ? | des effectifs | khi-deux ou test exact de Fisher |
 | Quelle relation entre X et Y ? | XY | régression linéaire ou ajustement de courbe |
 | Deux variables varient-elles ensemble ? | deux colonnes | corrélation |

@@ -1,15 +1,15 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.4";
+export const VERSION_NOW = "0.3.5";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
   "0.2.6": "ROC, Bland-Altman and special graphs", "0.2.7": "Axis breaks and a second Y axis", "0.2.8": "Annotations", "0.2.9": "Click, drag, zoom and exclude on the graph", "0.2.10": "Users' requests: open new tables, remove data sets, choose the test, X axis gaps", "0.2.11": "Page layouts and journal figures",
   "0.2.12": "Multi-panel figures", "0.2.13": "Security: the library that unpacks the Python engine, licence checks", "0.2.14": "Many variables and multiple regression", "0.2.15": "PCA and clustering", "0.2.16": "Survival analysis", "0.2.17": "Nested data",
   "0.2.18": "Peaks and signal processing", "0.2.19": "DSC/TGA and S–N curves", "0.2.20": "Worksheets and column formulas", "0.2.21": "Matrices, 3D and surface fits", "0.2.22": "Large data, regions, import, slides, reports and posters",
-  "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "0.3.0": "A full check: security, robustness, hardening and speed", "0.3.1": "Publisher shown as Datum", "0.3.2": "The guide in English, Chinese and French; five new samples", "0.3.3": "Colour schemes beside the graph, OpenDocument export, plain names", "0.3.4": "Copy Linked: slides and documents follow the graph",
-  "0.3.5": "Repeated measures and mixed-effects ANOVA", "0.3.6": "Multiple t-tests and volcano plots", "0.3.7": "Ternary, waterfall, radar and bubble graphs", "0.3.8": "Vector fields and 3D scatter",
+  "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "0.3.0": "A full check: security, robustness, hardening and speed", "0.3.1": "Publisher shown as Datum", "0.3.2": "The guide in English, Chinese and French; five new samples", "0.3.3": "Colour schemes beside the graph, OpenDocument export, plain names", "0.3.4": "Copy Linked (removed again in 0.3.5)",
+  "0.3.5": "Repeated measures and mixed-effects ANOVA; Copy Linked removed", "0.3.6": "Multiple t-tests and volcano plots", "0.3.7": "Ternary, waterfall, radar and bubble graphs", "0.3.8": "Vector fields and 3D scatter",
   "0.3.9": "More statistics", "0.3.10": "Control charts and design of experiments", "0.3.11": "Wavelets and short-time spectra", "0.3.12": "Graph digitizer and image tools", "0.3.13": "Bayesian tests", "0.3.14": "Mac and Linux versions",
   "1.0": "Stable, signed, validated",
 };
@@ -120,13 +120,12 @@ export const FEATURES: Feature[] = [
   ["I2", "Engine timeout and restart", "0.1.1", "A request that takes too long restarts the Python engine instead of freezing.", ""],
   ["I3", "Second engine for long work", "0.2.2", "A second Python engine calculates results, so a long fit never holds up the graphs.", ""],
   // Session 10 roadmap (the user agreed points 1–9 of the comparison, then Mac and Linux), one small release each.
-  ["G8", "Copy Linked", "0.3.4", "Keep a graph as a picture beside the project, redrawn at every save: slides and documents that link to it show each new version.", ""],
-  ["B32", "Repeated measures and mixed-effects ANOVA", "0.3.5", "Two- and three-way repeated measures, with a mixed-effects model when values are missing.", "statsmodels"],
+  ["B32", "Repeated measures and mixed-effects ANOVA", "0.3.5", "Two-way ANOVA with repeated measures in the rows, the data sets or both (Geisser-Greenhouse corrected), and a mixed-effects model when values are missing.", "statsmodels"],
   ["B33", "Multiple t-tests", "0.3.6", "Many rows (genes, proteins) tested at once, with false discovery rate control.", "scipy, statsmodels"],
   ["D18", "Volcano plots", "0.3.6", "Fold change against significance for multiple t-tests, with the hits labelled.", "matplotlib"],
   ["D19", "Ternary, waterfall, radar and bubble graphs", "0.3.7", "Compositions on a triangle, stacked spectra, profiles on spokes, and a third value as bubble size.", "matplotlib"],
   ["D20", "Vector fields and 3D scatter", "0.3.8", "Arrows on a grid, and points in three dimensions.", "matplotlib"],
-  ["B34", "More statistics", "0.3.9", "ANCOVA, Cohen's kappa, McNemar's test, bootstrap confidence intervals and spline fits.", "scipy, statsmodels"],
+  ["B34", "More statistics", "0.3.9", "Three-way ANOVA, ANCOVA, Cohen's kappa, McNemar's test, bootstrap confidence intervals and spline fits.", "scipy, statsmodels"],
   ["B35", "Control charts and design of experiments", "0.3.10", "Process control charts (X̄, R, individuals, p) and factorial designs with their effects.", "statsmodels"],
   ["B36", "Wavelets and short-time spectra", "0.3.11", "Time–frequency analysis of signals: wavelet transforms and spectrograms.", "scipy"],
   ["E8", "Graph digitizer and image tools", "0.3.12", "Read data points from a picture of a graph; profiles and simple measurements on images.", "matplotlib"],

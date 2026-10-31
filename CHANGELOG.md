@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.5 — 2026-10-31
+
+Repeated measures and mixed-effects two-way ANOVA; Copy Linked is removed again.
+
+**Repeated measures**
+- **Two-way ANOVA** has a new **Repeated measures** option for grouped tables where the same subjects are measured again (one sub-column per subject): in every row (for example at each time point), in every data set, or in both.
+- With complete data it is a repeated measures ANOVA with the right error term for each effect and the Geisser-Greenhouse correction for sphericity. When values are missing it fits a mixed-effects model instead, so no subject is thrown away.
+- Multiple comparisons within each row or each data set, with stars on the graph, come from the fitted model. The results show the variance between subjects and the sphericity estimates.
+- Checked against independent calculations: the fully repeated design matches a reference repeated measures ANOVA exactly, and the classic and mixed-model tests agree for complete data.
+
+**Removed**
+- **Copy Linked** (0.3.4) is gone: it depended on other programs' linking steps and was too awkward to use. Copy Picture, Export, Slides, Document and Workbook remain. Projects saved with 0.3.4 open as before.
+
 ## 0.3.4 — 2026-10-31
 
 Copy Linked: slides and documents follow your graph.

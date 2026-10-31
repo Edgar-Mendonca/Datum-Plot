@@ -225,13 +225,13 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J4 | Validation page: every statistic checked against R and NIST reference data, with the numbers | 1.0 |
 | J5 | ? help: a small ? beside each tool opens a card saying what it is for and how to use it; Help › What Is This Tool? lists every card (all Datum apps; ✅ 0.2.1) | 0.2.1 |
 | G7 | OpenDocument export: workbooks (.ods), documents (.odt), slides (.odp) | ✅ 0.3.3 |
-| G8 | Copy Linked: a graph kept as a picture beside the project, redrawn at every save, for slides and documents that link to it | ✅ 0.3.4 |
-| B32 | Repeated measures and mixed-effects ANOVA (two- and three-way, missing values) | 0.3.5 |
+| G8 | Copy Linked: a graph kept as a picture beside the project, redrawn at every save, for slides and documents that link to it | 0.3.4, **removed in 0.3.5** (too awkward; the user decided against linking) |
+| B32 | Repeated measures and mixed-effects two-way ANOVA (rows, data sets or both; missing values) | ✅ 0.3.5 |
 | B33 | Multiple t-tests with false discovery rate | 0.3.6 |
 | D18 | Volcano plots | 0.3.6 |
 | D19 | Ternary, waterfall, radar and bubble graphs | 0.3.7 |
 | D20 | Vector fields and 3D scatter | 0.3.8 |
-| B34 | ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | 0.3.9 |
+| B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | 0.3.9 |
 | B35 | Control charts and design of experiments | 0.3.10 |
 | B36 | Wavelets and short-time spectra | 0.3.11 |
 | E8 | Graph digitizer and image tools | 0.3.12 |
@@ -381,12 +381,12 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.1** ✅ | Publisher "Datum" (family rule) |
 | **0.3.2** ✅ | The guide in three languages (J6), five new samples (J7), the installer keeps a custom install folder after the publisher change |
 | **0.3.3** ✅ | Testers' requests: colour schemes beside the graph with colour-blind-safe labels, OpenDocument export (G7), plain names for file types |
-| **0.3.4** ✅ | Copy Linked (G8) |
-| 0.3.5 | Repeated measures and mixed-effects ANOVA, two- and three-way (B32) |
+| **0.3.4** ✅ | Copy Linked (G8; removed in 0.3.5) |
+| **0.3.5** ✅ | Repeated measures and mixed-effects two-way ANOVA (B32); Copy Linked removed |
 | 0.3.6 | Multiple t-tests (B33) and volcano plots (D18) |
 | 0.3.7 | Ternary, waterfall, radar and bubble graphs (D19) |
 | 0.3.8 | Vector fields and 3D scatter (D20) |
-| 0.3.9 | More statistics: ANCOVA, kappa, McNemar, bootstrap CIs, spline fits (B34) |
+| 0.3.9 | More statistics: three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits (B34) |
 | 0.3.10 | Control charts and design of experiments (B35) |
 | 0.3.11 | Wavelets and short-time spectra (B36) |
 | 0.3.12 | Graph digitizer and image tools (E8) |

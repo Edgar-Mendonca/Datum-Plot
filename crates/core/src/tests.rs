@@ -362,23 +362,8 @@ fn layouts_hold_graphs_and_lose_deleted_ones() {
 }
 
 #[test]
-fn linked_pictures_stay_in_their_folder_and_are_never_shared() {
-    use crate::model::{pictures_dir, safe_picture};
-    assert!(safe_picture("Growth (2).png") && !safe_picture("Courbe d’été.png") && safe_picture("Été.png"));
-    for bad in ["../x.png", "..\\x.png", "C:\\x.png", "a/b.png", ".png", " x.png", "x.exe", "x.png.exe", &format!("{}.png", "a".repeat(120))] {
-        assert!(!safe_picture(bad), "{bad}");
-    }
-    assert_eq!(pictures_dir(std::path::Path::new("/data/Strain study.dplot")), std::path::PathBuf::from("/data/Strain study pictures"));
-    let mut p = templates::build(Some("growth")).unwrap();
-    let id = p.graphs[0].id;
-    assert_eq!(p.picture_name(id), "Growth.png");
-    p.graphs[0].settings.linked = "Growth.png".into();
-    let mut d = Doc::new(p);
-    d.apply(Op::Duplicate { id }).unwrap();
-    let copy = d.p.graphs.iter().find(|g| g.id != id).unwrap();
-    assert_eq!((copy.settings.linked.as_str(), d.p.graphs[0].settings.linked.as_str()), ("", "Growth.png"), "a duplicate does not take over the original's picture");
-    assert_eq!(d.p.picture_name(copy.id), "Growth copy.png");
-    let hostile = r#"{"name":"h","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"linked":"../../evil.png"}},{"id":3,"table":1,"name":"H","settings":{"linked":"ok.png"}},{"id":4,"table":1,"name":"I","settings":{"linked":"OK.png"}}],"nextId":5}"#;
-    let p = Project::from_json(hostile).unwrap();
-    assert_eq!(p.graphs.iter().map(|g| g.settings.linked.as_str()).collect::<Vec<_>>(), ["", "ok.png", ""], "paths and shared names are dropped on loading");
+fn projects_saved_with_copy_linked_still_open() {
+    // 0.3.4 stored a linked picture name in each graph's settings; 0.3.5 removed the feature.
+    let p = Project::from_json(r#"{"name":"old","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"linked":"G.png","width":90}}],"nextId":3}"#).unwrap();
+    assert_eq!((p.graphs.len(), p.graphs[0].settings.width), (1, 90.0));
 }
