@@ -82,7 +82,10 @@ class RandomTables(unittest.TestCase):
                     json.dumps(A.run(kind, t, [], {}))
                 except ValueError:
                     pass
-            graph.render(t, {"column": rnd.choice(["scatter", "bars", "box", "contour", "surface", "pie"]), "y": {"breakFrom": 1, "breakTo": 2}})
+            try:
+                graph.render(t, {"column": rnd.choice(["scatter", "bars", "box", "contour", "surface", "pie", "waterfall", "ternary", "bubble", "radar"]), "y": {"breakFrom": 1, "breakTo": 2}})
+            except ValueError:  # a graph this table cannot make says why (a radar needs three rows…)
+                pass
 
 
 class OpenDocument(unittest.TestCase):

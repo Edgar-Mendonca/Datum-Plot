@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.7 — 2026-10-31
+
+Ternary, waterfall, radar and bubble graphs.
+
+**New graph styles** (Graph › Graph Style, or Format Graph › Graph)
+- **Waterfall** (XY tables): each data set's curve is lifted above the last and labelled at its end, for spectra, runs or temperatures. The lift is automatic, or set it in Format Graph.
+- **Ternary** (tables of many variables): the first three variables of each row as shares of 100 % on a triangle, for compositions.
+- **Bubble** (tables of many variables): X, Y, bubble size from the third variable, and colour from a fourth if there is one, with a size key and a colour bar.
+- **Radar** (grouped tables): the rows are the spokes and each data set is an outline through its means, for comparing profiles.
+- A graph style a table cannot make says why (a radar needs at least three rows, a ternary three variables).
+
+**New sample**
+- **Composition triangle**: copper, nickel and zinc in 18 alloys on a ternary graph; switch to Bubble to see hardness as bubble size.
+
 ## 0.3.6 — 2026-10-31
 
 Multiple t-tests and volcano plots.

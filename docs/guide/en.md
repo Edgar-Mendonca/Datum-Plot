@@ -198,7 +198,7 @@ Your own colours go in the last row (#hex, separated by commas). In **Format Gra
 
 ![A survival study: Kaplan-Meier curves with censored subjects marked.](img/survival.png)
 
-XY graphs can also be polar graphs (**Format Graph › Graph › Polar**); matrix tables can be drawn as contour maps, heat maps, 3D surfaces or wireframes.
+XY graphs can also be polar graphs (**Format Graph › Graph › Polar**) or waterfalls, with each curve lifted above the last (**Graph › Graph Style › Waterfall**). Tables of many variables can be ternary graphs (the first three variables as shares of 100 %) or bubble graphs (X, Y, bubble size and colour); grouped tables can be radar graphs (the rows are the spokes). Matrix tables can be drawn as contour maps, heat maps, 3D surfaces or wireframes.
 
 ## Layouts and export
 

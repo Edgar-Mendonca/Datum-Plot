@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, twenty-four samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 29, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, twenty-five samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 30, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -535,6 +535,14 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(300);
   check("creating a table from the File page closes it and shows the table", !(await p.$(".bs")) && !!(await p.$(".dgrid")));
+  // 0.3.7: an XY graph can be a waterfall.
+  await p.click('.nav .nitem:has-text("Growth") >> nth=-1'); await p.waitForTimeout(300);
+  await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb:has-text("Graph Style")'); await p.waitForTimeout(150);
+  check("Graph Style offers a waterfall for an XY graph", ((await p.textContent(".menu").catch(() => "")) || "").includes("Waterfall"));
+  await reset();
+  await p.click('.menu button:has-text("Waterfall")'); await p.waitForTimeout(200);
+  check("choosing Waterfall sets the graph's style", (await ops()).find(o => o.GraphSet)?.GraphSet.settings.column === "waterfall");
   // 0.3.6: Multiple t-tests open with their correction and threshold.
   await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(100);
   await p.click('.ribbon .rb:has-text("Multiple t-tests")'); await p.waitForTimeout(300);

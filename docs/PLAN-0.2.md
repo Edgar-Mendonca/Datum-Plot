@@ -229,7 +229,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B32 | Repeated measures and mixed-effects two-way ANOVA (rows, data sets or both; missing values) | ✅ 0.3.5 |
 | B33 | Multiple t-tests with false discovery rate | ✅ 0.3.6 |
 | D18 | Volcano plots | ✅ 0.3.6 |
-| D19 | Ternary, waterfall, radar and bubble graphs | 0.3.7 |
+| D19 | Ternary, waterfall, radar and bubble graphs | ✅ 0.3.7 |
 | D20 | Vector fields and 3D scatter | 0.3.8 |
 | B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | 0.3.9 |
 | B35 | Control charts and design of experiments | 0.3.10 |
@@ -384,7 +384,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.4** ✅ | Copy Linked (G8; removed in 0.3.5) |
 | **0.3.5** ✅ | Repeated measures and mixed-effects two-way ANOVA (B32); Copy Linked removed |
 | **0.3.6** ✅ | Multiple t-tests (B33) and volcano plots (D18) |
-| 0.3.7 | Ternary, waterfall, radar and bubble graphs (D19) |
+| **0.3.7** ✅ | Ternary, waterfall, radar and bubble graphs (D19) |
 | 0.3.8 | Vector fields and 3D scatter (D20) |
 | 0.3.9 | More statistics: three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits (B34) |
 | 0.3.10 | Control charts and design of experiments (B35) |

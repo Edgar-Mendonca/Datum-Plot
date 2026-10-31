@@ -222,7 +222,7 @@ fn worksheets_and_formulas() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 24);
+    assert_eq!(l.len(), 25);
     assert!(l.iter().all(|t| t.dots.len() >= 2 && t.dots.iter().all(|d| d.0.is_finite() && d.1.is_finite())), "every tile has a picture");
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1), ("trial", 1), ("surface", 1)] {
         let p = templates::build(Some(id)).unwrap();

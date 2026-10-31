@@ -19,7 +19,7 @@ export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
   style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[];
   /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis; /** Annotations. */ notes: Note[];
-  /** XY: polar axes. Matrix: contour levels and the 3D view. */ polar?: boolean; levels?: number; elev?: number; azim?: number;
+  /** XY: polar axes. Matrix: contour levels and the 3D view. */ polar?: boolean; levels?: number; elev?: number; azim?: number; /** Waterfall: lift between curves (0 = automatic). */ offset?: number;
 }
 /** An annotation in data coordinates: text at (x, y); an arrow from (x, y) to (x2, y2); a line; a box with those corners. */
 export interface Note { kind: string; x: number; y: number; x2: number; y2: number; text: string; color: string; size: number; bold: boolean }

@@ -9,7 +9,7 @@ import sys
 import tempfile
 import time
 
-KINDS = ["scatter", "line", "bars", "box", "violin", "mean", "paired", "stacked", "percent", "pie", "donut", "contour", "heatmap", "surface", "wireframe", "arrow", "range"]
+KINDS = ["scatter", "line", "bars", "box", "violin", "mean", "paired", "stacked", "percent", "pie", "donut", "contour", "heatmap", "surface", "wireframe", "arrow", "range", "waterfall", "ternary", "bubble", "radar"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -19,7 +19,7 @@ def main(fixture):
     assert json.loads(w.stdout.readline()).get("ready")
     failed, count, slow = [], 0, []
 
-    def ask(what, q):
+    def ask(what, q, explained=False):
         nonlocal count
         count += 1
         t = time.time()
@@ -28,7 +28,7 @@ def main(fixture):
         r = json.loads(w.stdout.readline())
         if time.time() - t > 20:
             slow.append(f"{what} ({time.time() - t:.0f} s)")
-        if not r.get("ok"):
+        if not r.get("ok") and not (explained and str(r.get("error", "")).startswith("ValueError")):
             failed.append(f"{what}: {r.get('error')}")
         return r
 
@@ -56,7 +56,7 @@ def main(fixture):
                     ask(f"{name} › multit", {"cmd": "analyze", "kind": "multit", "table": t, "sets": [], "options": {}})
                 g = next((g["settings"] for g in p["graphs"] if g["table"] == t["id"]), {})
                 for kind in KINDS:  # every graph type on every kind of table: wrong ones fall back, never fail
-                    ask(f"{name} › {kind} graph", {"cmd": "render", "table": t, "graph": {**g, "column": kind}, "overlays": []})
+                    ask(f"{name} › {kind} graph", {"cmd": "render", "table": t, "graph": {**g, "column": kind}, "overlays": []}, explained=True)  # or say why not
             ask(f"{name} › .xlsx", {"cmd": "excel", "project": p, "analyses": p["analyses"], "path": os.path.join(d, f"p{i}.xlsx")})
             ask(f"{name} › .ipynb", {"cmd": "notebook", "project": p, "path": os.path.join(d, f"p{i}.ipynb")})
             ask(f"{name} › console", {"cmd": "console", "project": p, "code": "len(tables)"})

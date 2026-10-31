@@ -98,6 +98,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "agreement", name: "Method comparison", desc: "Blood glucose of 30 patients by a lab analyser and a bedside meter: Bland-Altman bias and limits of agreement.", dots: dots("agreement") },
         Tpl { id: "diagnostic", name: "Diagnostic test", desc: "A biomarker in 30 healthy people and 30 patients: the ROC curve, its AUC and the best cut-off.", dots: dots("diagnostic") },
         Tpl { id: "surface", name: "Response surface", desc: "Process yield over a grid of temperatures and times: a contour map and a quadratic surface fit locating the best settings.", dots: dots("surface") },
+        Tpl { id: "ternary", name: "Composition triangle", desc: "Copper, nickel and zinc shares of 18 alloy samples on a ternary graph; switch Graph Style to Bubble to see hardness as bubble size.", dots: dots("ternary") },
         Tpl { id: "polar", name: "Polar pattern", desc: "The radiation pattern of two antennas, gain against angle, on a polar graph.", dots: dots("polar") },
     ]
 }
@@ -526,6 +527,26 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Surface fit".into(), kind: "surface".into(), sets: vec![], options: serde_json::json!({ "model": "quad" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
+        }
+        Some("ternary") => {
+            let mut seed = 59u64;
+            let mut t = Table::multi(4, 18);
+            t.name = "Alloys".into();
+            for (k, n) in ["Copper", "Nickel", "Zinc", "Hardness"].iter().enumerate() {
+                t.sets[k].title = (*n).into();
+            }
+            for r in 0..18 {
+                let (cu, ni) = (55.0 + 25.0 * (0.5 + jitter(&mut seed, 0.5)), 5.0 + 20.0 * (0.5 + jitter(&mut seed, 0.5)));
+                let zn = (100.0 - cu - ni).max(1.0);
+                t.cols[1][r] = Some(round(cu, 1));
+                t.cols[2][r] = Some(round(ni, 1));
+                t.cols[3][r] = Some(round(zn, 1));
+                t.cols[4][r] = Some(round(60.0 + 3.0 * ni + 0.8 * zn + jitter(&mut seed, 6.0), 0));
+                t.row_titles[r] = format!("A{}", r + 1);
+            }
+            p.name = "Composition triangle".into();
+            p.info = Info { title: "Copper–nickel–zinc alloys".into(), experiment: "The copper, nickel and zinc content (wt%) of 18 alloy samples and their Vickers hardness. The ternary graph places each sample by its three shares; as a bubble graph, hardness sets the bubble size.".into(), ..Default::default() };
+            p.add_table(t, Some(GraphSettings { column: "ternary".into(), height: 75.0, ..g }));
         }
         Some("polar") => {
             let xs: Vec<f64> = (0..=72).map(|i| i as f64 * 5.0).collect();

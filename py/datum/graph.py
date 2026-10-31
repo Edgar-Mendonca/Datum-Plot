@@ -264,6 +264,14 @@ def build(table, graph, overlays=(), fig=None):
         ys = [k for k in range(len(sets)) if k not in table["hidden"]]
         cols = palette(graph, max(len(ys), 1))
         graph = dict(graph, sets=[dict(s, show=False) if k in table["hidden"] else dict(s, color=s.get("color") or cols[ys.index(k) % len(cols)], symbol=s.get("symbol") or SYMBOL_ORDER[ys.index(k) % 8]) for k, s in enumerate(sets)])
+    kind = graph.get("column")
+    if table.get("kind") == "multi" and kind in ("ternary", "bubble"):  # D19: the variables themselves
+        from . import special
+        cols = palette(graph, len(table["sets"]))
+        return (special.ternary_figure if kind == "ternary" else special.bubble_figure)(fig, ax, table, graph, cols, size)
+    if table.get("kind") in ("grouped", "contingency") and kind == "radar":
+        from . import special
+        return special.radar_figure(fig, ax, table, graph, palette(graph, len(table["sets"])), size)
     hidden_x = table.get("kind") == "multi"
     if hidden_x:  # many variables: the first one on X, the others on Y
         from .regress import xy_view
@@ -287,6 +295,9 @@ def build(table, graph, overlays=(), fig=None):
     summary = stats.summarize(table)
     if graph.get("polar"):
         return polar_figure(fig, ax, table, graph, colors, size, summary)
+    if kind == "waterfall" and not hidden_x:
+        from .special import waterfall_figure
+        return waterfall_figure(fig, ax, table, graph, colors, size, summary)
     err, each, conn = graph.get("error", "sd"), graph.get("points") == "each", graph.get("line", False)
     direction = graph.get("errorDir", "both")
     right = {k for k, x in enumerate(graph.get("sets") or []) if x.get("right")}

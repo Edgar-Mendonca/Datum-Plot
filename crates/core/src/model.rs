@@ -372,6 +372,8 @@ pub struct GraphSettings {
     pub levels: u32,
     pub elev: f64,
     pub azim: f64,
+    /// Waterfall graphs (D19): the lift between curves, in Y units (0 = automatic).
+    pub offset: f64,
 }
 
 impl Default for GraphSettings {
@@ -379,7 +381,7 @@ impl Default for GraphSettings {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
-            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0,
+            column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
 }
@@ -556,7 +558,7 @@ impl Project {
             let s = &mut g.settings;
             let fit = |v: f64, lo: f64, hi: f64, d: f64| if v.is_finite() { v.clamp(lo, hi) } else { d };
             (s.width, s.height, s.font_size, s.cap) = (fit(s.width, 10.0, 1000.0, 80.0), fit(s.height, 10.0, 1000.0, 60.0), fit(s.font_size, 4.0, 96.0, 10.0), fit(s.cap, 0.0, 20.0, 3.0));
-            (s.elev, s.azim, s.levels) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200));
+            (s.elev, s.azim, s.levels, s.offset) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200), fit(s.offset, 0.0, 1e12, 0.0));
             s.notes.truncate(500);
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
