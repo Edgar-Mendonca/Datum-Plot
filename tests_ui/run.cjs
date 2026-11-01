@@ -548,6 +548,15 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.click('.ribbon .rb:has-text("Multiple t-tests")'); await p.waitForTimeout(300);
   check("Multiple t-tests offer the false discovery rate and a threshold", ((await p.textContent(".dlg").catch(() => "")) || "").includes("Correct for many rows") && ((await p.textContent(".dlg")) || "").includes("Benjamini-Hochberg"));
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  // 0.3.9: the new analyses are in the gallery and their options open.
+  await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(100);
+  await p.click('.ribbon .rb:has-text("Analyze…")'); await p.waitForTimeout(300);
+  await p.click('.dlg nav button:has-text("Compare groups")'); await p.waitForTimeout(150);
+  const gal = (await p.textContent(".dlg .galitems")) || "";
+  check("the Analyze gallery offers Three-way ANOVA and ANCOVA", gal.includes("Three-way ANOVA") && gal.includes("ANCOVA"), gal.slice(0, 200));
+  await p.dblclick('.dlg .galitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
+  check("double-clicking ANCOVA opens its options and closes the gallery", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
+  await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   // 0.3.3: the window names file types, never other companies' products.
   const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
   let named = [];

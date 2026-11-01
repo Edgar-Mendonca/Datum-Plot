@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.9 — 2026-11-01
+
+More statistics: three-way ANOVA, ANCOVA, agreement, bootstrap confidence intervals and spline fits.
+
+**Compare groups**
+- **Three-way ANOVA**: a grouped table whose rows are the first factor and whose data sets are named by two levels with a slash ("Young / Drug", "Old / Placebo"…). Main effects and every interaction, with effect sizes.
+- **ANCOVA**: an XY table with the covariate in X and one data set per group. Checks that the slopes are parallel, then compares the groups' adjusted means (with Šidák comparisons) and draws the parallel lines on the graph.
+
+**Relationships**
+- **Agreement**: a contingency table of paired ratings (the first rating in the rows, the second in the data sets). Cohen's kappa with its 95% CI and strength, weighted for ordered categories, and McNemar's test (2 × 2) or Bowker's test (larger tables) for a systematic difference.
+
+**Statistics and fitting**
+- **Bootstrap confidence intervals** of each data set's mean, median or SD, and of the difference between the first two, without assuming a distribution (BCa, repeatable).
+- **Spline fit**: Smooth has a smoothing spline whose smoothness is chosen automatically; it is drawn on the graph.
+
+**Fixed**
+- Double-clicking an item in the Analyze or Graph gallery now closes the gallery behind the window it opens.
+
+**Checked** against independent results: kappa by its formula, McNemar's exact test by the binomial distribution, three-way sums of squares by hand, ANCOVA by nested models, the spline by SciPy.
+
 ## 0.3.8 — 2026-10-31
 
 Vector fields and 3D scatter graphs.

@@ -53,7 +53,7 @@ const Gallery = (p: { title: string; help?: string; items: Choice[]; ok: string;
     <Dialog title={p.title} help={p.help} wide okText={ready(sel().id) ? p.ok : `In ${rel(feature(sel().id)?.[2] ?? "")}`} ok={ok}>
       <div class="gal">
         <nav><For each={groups}>{x => <button classList={{ on: g() === x }} onClick={() => { setG(x); setSel(p.items.find(i => i.group === x)!); }}>{x}</button>}</For></nav>
-        <div class="galitems"><For each={p.items.filter(i => i.group === g())}>{c => <button class="galitem" classList={{ on: sel() === c, soon: !ready(c.id) }} onClick={() => setSel(c)} onDblClick={ok}>
+        <div class="galitems"><For each={p.items.filter(i => i.group === g())}>{c => <button class="galitem" classList={{ on: sel() === c, soon: !ready(c.id) }} onClick={() => setSel(c)} onDblClick={() => { if (ok() !== false) closeDialog(); }}>
           <Icon n={c.icon} size={26} /><b>{c.name}</b><Chip id={c.id} /></button>}</For></div>
         <aside><h3>{sel().name}</h3><p>{sel().desc}</p><p class="muted">{feature(sel().id)?.[3]}</p><Show when={feature(sel().id)?.[4]}><p class="muted small">Python: {feature(sel().id)![4]}</p></Show></aside>
       </div>
@@ -99,6 +99,11 @@ const ANALYSES: Choice[] = [
   { id: "B7", name: "Multiple comparisons", icon: "list", group: "Compare groups", desc: "Which groups differ after ANOVA: Tukey, Dunnett, Holm-Šidák…" },
   { id: "B8", name: "Effect sizes", icon: "sigma", group: "Compare groups", desc: "Cohen's d and Hedges' g with the t-test; η² and ω² with ANOVA." },
   { id: "B15", name: "Two-way ANOVA", icon: "table", group: "Compare groups", desc: "Two factors at once, such as alloy and temperature." },
+  { id: "B34", key: "B34a", name: "Three-way ANOVA", icon: "table", group: "Compare groups", desc: "Three factors at once: rows, and data sets named by two levels (“Young / Drug”)." },
+  { id: "B34", key: "B34b", name: "ANCOVA", icon: "line", group: "Compare groups", desc: "Compare groups while allowing for a covariate (X): adjusted means and parallel lines." },
+  { id: "B34", key: "B34c", name: "Agreement (kappa, McNemar)", icon: "grid", group: "Relationships", desc: "Two ratings of the same items: Cohen's kappa (weighted for ordered categories) and McNemar's or Bowker's test." },
+  { id: "B34", key: "B34d", name: "Bootstrap confidence intervals", icon: "sigma", group: "Statistics", desc: "Confidence intervals of the mean, median or SD without assuming a distribution (BCa)." },
+  { id: "B34", key: "B34s", name: "Spline fit", icon: "curve", group: "Regression and fitting", desc: "A smoothing spline through the data, its smoothness chosen automatically." },
   { id: "B33", name: "Multiple t-tests", icon: "list", group: "Compare groups", desc: "One t-test per row (genes, proteins, compounds), corrected by the false discovery rate, with a volcano plot." },
   { id: "B16", name: "Correlation", icon: "xy", group: "Relationships", desc: "How strongly two variables move together." },
   { id: "B17", name: "Contingency", icon: "grid", group: "Relationships", desc: "Tests on counts." },

@@ -11,7 +11,7 @@ import { Help } from "./help";
 export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   describe: ["Descriptive statistics", "B1", false], normality: ["Normality tests", "B2", false], outliers: ["Outliers", "B3", false],
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
-  ttest: ["t-test", "B4", "brackets"], multit: ["Multiple t-tests", "B33", false], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
+  ttest: ["t-test", "B4", "brackets"], multit: ["Multiple t-tests", "B33", false], threeway: ["Three-way ANOVA", "B34", false], ancova: ["ANCOVA", "B34", true], agreement: ["Agreement (kappa, McNemar)", "B34", false], bootstrap: ["Bootstrap confidence intervals", "B34", false], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
   tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
 };
@@ -20,7 +20,7 @@ export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; 
 /** Catalogue id → analysis kind (and preset options), for the Analyze gallery and ribbon. */
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
-  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
+  B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B34a: ["threeway", {}], B34b: ["ancova", {}], B34c: ["agreement", {}], B34d: ["bootstrap", {}], B34s: ["smooth", { method: "spline" }], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
   B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
@@ -31,6 +31,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
+  threeway: { rowname: "", bname: "", cname: "", alpha: 0.05 }, ancova: { alpha: 0.05 }, agreement: { weights: "none" }, bootstrap: { stat: "mean", n: 9999 },
   multit: { test: "welch", method: "fdr_bh", q: 0.05, x: "log2", label: 10 },
   parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
@@ -95,6 +96,18 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Compare</label><Pick value={o().compare} set={v => put("compare", v)} options={[["rows", "The data sets within each row"], ["sets", "The rows within each data set"]]} />
             <label>Correction</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["sidak", "Šidák"], ["holm", "Holm-Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]]} />
             <Brackets />
+          </Show>
+          <Show when={kind === "threeway"}>
+            <label>Factor names</label><span class="inline"><input placeholder="Rows, e.g. Sex" value={o().rowname} onChange={e => put("rowname", e.currentTarget.value)} /><input placeholder="Before the /, e.g. Age" value={o().bname} onChange={e => put("bname", e.currentTarget.value)} /><input placeholder="After the /, e.g. Treatment" value={o().cname} onChange={e => put("cname", e.currentTarget.value)} /></span>
+            <label /><span class="muted">Name each data set by its two levels with a slash, for example “Young / Drug”, “Young / Placebo”, “Old / Drug”, “Old / Placebo”.</span>
+          </Show>
+          <Show when={kind === "agreement"}>
+            <label>Weights</label><Pick value={o().weights} set={v => put("weights", v)} options={[["none", "None (categories without order)"], ["linear", "Linear (ordered categories)"], ["quadratic", "Quadratic (ordered categories)"]]} />
+            <label /><span class="muted">Rows: the first rating; data sets: the second rating, with the same categories in the same order.</span>
+          </Show>
+          <Show when={kind === "bootstrap"}>
+            <label>Of the</label><Pick value={o().stat} set={v => put("stat", v)} options={[["mean", "Mean"], ["median", "Median"], ["sd", "Standard deviation"]]} />
+            <label>Resamples</label><input type="number" min="999" max="99999" step="1000" style={{ width: "90px" }} value={o().n} onChange={e => put("n", +e.currentTarget.value)} />
           </Show>
           <Show when={kind === "multit"}>
             <label>Test for each row</label><Pick value={o().test} set={v => put("test", v)} options={[["welch", "Unpaired t-test with Welch's correction"], ["student", "Unpaired t-test (equal SDs)"], ["paired", "Paired t-test (sub-column j matches sub-column j)"], ["mw", "Mann-Whitney test"]]} />
@@ -188,8 +201,8 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <Range />
           </Show>
           <Show when={kind === "smooth"}>
-            <label>Smoothing</label><span class="inline"><Pick value={o().method} set={v => put("method", v)} options={[["sg", "Savitzky-Golay"], ["lowess", "LOWESS"], ["ma", "Moving average"], ["none", "None"]]} />
-              <Show when={o().method === "sg" || o().method === "ma"}><span class="muted">window</span><N k="window" w={60} /></Show><Show when={o().method === "sg"}><span class="muted">order</span><N k="order" w={50} /></Show><Show when={o().method === "lowess"}><span class="muted">fraction</span><N k="frac" w={60} /></Show></span>
+            <label>Smoothing</label><span class="inline"><Pick value={o().method} set={v => put("method", v)} options={[["sg", "Savitzky-Golay"], ["lowess", "LOWESS"], ["ma", "Moving average"], ["spline", "Smoothing spline"], ["none", "None"]]} />
+              <Show when={o().method === "sg" || o().method === "ma"}><span class="muted">window</span><N k="window" w={60} /></Show><Show when={o().method === "sg"}><span class="muted">order</span><N k="order" w={50} /></Show><Show when={o().method === "lowess"}><span class="muted">fraction</span><N k="frac" w={60} /></Show><Show when={o().method === "spline"}><span class="muted">λ (empty = automatic)</span><input style={{ width: "80px" }} value={o().lam ?? ""} onChange={e => put("lam", e.currentTarget.value.trim())} /></Show></span>
             <label>Result</label><Pick value={o().mode} set={v => put("mode", v)} options={[["smooth", "The smoothed curve"], ["deriv1", "First derivative (slope)"], ["deriv2", "Second derivative"], ["integral", "Cumulative integral (area so far)"]]} />
             <Range />
           </Show>

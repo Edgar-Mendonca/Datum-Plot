@@ -141,10 +141,10 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 
 ### What Datum Plot can analyse
 
-- **Statistics:** descriptive statistics, normality tests, outliers, frequency distributions, fractions of a total.
-- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power.
-- **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio).
-- **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits.
+- **Statistics:** descriptive statistics, normality tests, outliers, frequency distributions, fractions of a total, bootstrap confidence intervals of the mean, median or SD.
+- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power, three-way ANOVA, ANCOVA (groups compared allowing for a covariate).
+- **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio), agreement of paired ratings (Cohen's kappa, McNemar's and Bowker's tests).
+- **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits, smoothing splines.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
 - **Signals and spectra:** peak finding, Gaussian, Lorentzian and Voigt peak fits, Fourier spectra and filters.
 - **Materials:** tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, DSC and TGA thermal analysis.
@@ -290,6 +290,8 @@ Ready to use: `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `scipy` and `p
 | Do two variables move together? | two columns | correlation |
 | Which of many genes or proteins changed? | grouped table, one row each, two data sets | multiple t-tests and a volcano plot |
 | Do two methods agree? | paired values | Bland-Altman |
+| Do two raters agree? | contingency table of paired ratings | Agreement (Cohen's kappa) |
+| Do groups differ once a covariate is allowed for? | XY: covariate in X, one data set per group | ANCOVA |
 | How well does a test detect a condition? | values of controls and cases | ROC curve |
 | How long until an event? | times with events and censored subjects | Kaplan-Meier and log-rank |
 

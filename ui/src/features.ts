@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.8";
+export const VERSION_NOW = "0.3.9";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -125,7 +125,7 @@ export const FEATURES: Feature[] = [
   ["D18", "Volcano plots", "0.3.6", "Fold change against significance for multiple t-tests, with the discoveries labelled; New table from result makes it an editable graph.", "matplotlib"],
   ["D19", "Ternary, waterfall, radar and bubble graphs", "0.3.7", "Compositions on a triangle, stacked spectra, profiles on spokes, and a third value as bubble size.", "matplotlib"],
   ["D20", "Vector fields and 3D scatter", "0.3.8", "Arrows on a grid, and points in three dimensions.", "matplotlib"],
-  ["B34", "More statistics", "0.3.9", "Three-way ANOVA, ANCOVA, Cohen's kappa, McNemar's test, bootstrap confidence intervals and spline fits.", "scipy, statsmodels"],
+  ["B34", "More statistics", "0.3.9", "Three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar's and Bowker's tests), bootstrap confidence intervals and smoothing splines.", "scipy, statsmodels"],
   ["B35", "Control charts and design of experiments", "0.3.10", "Process control charts (X̄, R, individuals, p) and factorial designs with their effects.", "statsmodels"],
   ["B36", "Wavelets and short-time spectra", "0.3.11", "Time–frequency analysis of signals: wavelet transforms and spectrograms.", "scipy"],
   ["E8", "Graph digitizer and image tools", "0.3.12", "Read data points from a picture of a graph; profiles and simple measurements on images.", "matplotlib"],

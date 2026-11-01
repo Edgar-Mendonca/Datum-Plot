@@ -54,6 +54,8 @@ def main(fixture):
                 ask(f"{name} › summary", {"cmd": "summary", "table": t})
                 if t["kind"] == "grouped":  # multiple t-tests (B33)
                     ask(f"{name} › multit", {"cmd": "analyze", "kind": "multit", "table": t, "sets": [], "options": {}})
+                for kind, opt in (("ancova", {}), ("agreement", {}), ("bootstrap", {"n": 999}), ("threeway", {}), ("smooth", {"method": "spline"})):  # B34: works or says why
+                    ask(f"{name} › {kind}", {"cmd": "analyze", "kind": kind, "table": t, "sets": [], "options": opt}, explained=True)
                 g = next((g["settings"] for g in p["graphs"] if g["table"] == t["id"]), {})
                 for kind in KINDS:  # every graph type on every kind of table: wrong ones fall back, never fail
                     ask(f"{name} › {kind} graph", {"cmd": "render", "table": t, "graph": {**g, "column": kind}, "overlays": []}, explained=True)  # or say why not

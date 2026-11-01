@@ -245,6 +245,16 @@ def smooth(table, ks, o):
         elif method == "lowess":
             from statsmodels.nonparametric.smoothers_lowess import lowess
             ys = lowess(y, x, frac=float(o.get("frac", 0.3)), return_sorted=False)
+        elif method == "spline":  # smoothing spline; its smoothness chosen by generalised cross-validation (B34)
+            from scipy.interpolate import make_smoothing_spline
+            if len(x) < 5:
+                raise ValueError("A smoothing spline needs at least five points in each data set.")
+            lam = o.get("lam")
+            spl = make_smoothing_spline(x, y, lam=float(lam) if lam not in (None, "", 0) else None)
+            ys = spl(x)
+            if mode == "smooth":  # draw the spline itself, not only at the data's X values
+                xd = np.linspace(x[0], x[-1], 200)
+                curves.append({"set": k, "x": xd.tolist(), "y": spl(xd).tolist(), "label": ""})
         elif method == "ma":
             ys = np.convolve(np.pad(y, w // 2, mode="edge"), np.ones(w) / w, mode="valid")
         else:
@@ -257,7 +267,7 @@ def smooth(table, ks, o):
             out = np.concatenate([[0.0], np.cumsum((ys[1:] + ys[:-1]) / 2 * np.diff(x))])
         else:
             out = ys
-        if mode == "smooth":
+        if mode == "smooth" and method != "spline":
             curves.append({"set": k, "x": x.tolist(), "y": out.tolist(), "label": ""})
         xs_all = x if xs_all is None or len(x) > len(xs_all) else xs_all
         cols.append((name_of(table, k), x, out))
@@ -268,7 +278,7 @@ def smooth(table, ks, o):
     what = {"smooth": "Smoothed", "deriv1": "First derivative", "deriv2": "Second derivative", "integral": "Cumulative integral"}[mode]
     yt = {"smooth": None, "deriv1": f"d{table.get('yTitle', 'Y')}/d{table.get('xTitle', 'X')}", "deriv2": f"d²{table.get('yTitle', 'Y')}/d{table.get('xTitle', 'X')}²", "integral": f"∫{table.get('yTitle', 'Y')} d{table.get('xTitle', 'X')}"}[mode]
     tb = new_table(table, f"{table.get('name', 'Data')} {what.lower()}", [c[0] for c in cols], xs.tolist(), tbcols, y_title=yt)
-    mname = {"sg": f"Savitzky-Golay smoothing (window {win}, order {o.get('order', 2)})", "lowess": f"LOWESS (fraction {o.get('frac', 0.3)})", "ma": f"a moving average of {win} points", "none": "no smoothing"}[method]
+    mname = {"sg": f"Savitzky-Golay smoothing (window {win}, order {o.get('order', 2)})", "lowess": f"LOWESS (fraction {o.get('frac', 0.3)})", "ma": f"a moving average of {win} points", "spline": "a cubic smoothing spline (smoothness by generalised cross-validation)" if o.get("lam") in (None, "", 0) else f"a cubic smoothing spline (λ = {o.get('lam')})", "none": "no smoothing"}[method]
     plots = [small_plot(f"{what} · {c[0]}"[:40], lambda ax, c=c, i=i: (ax.plot(c[1], c[2], color=COLORS[ks[i] % 8], lw=1.2), ax.set_xlabel(table.get("xTitle", "X")[:20]))) for i, c in enumerate(cols)] if mode != "smooth" else []
     return result(what, f"{what}: {len(cols)} data set{'s' if len(cols) > 1 else ''} ({mname}). Make it a data table to graph or analyse it.", [{"name": "Summary", "tables": [preview(tb)]}],
                   [(None, "Smoothing changes the data; analyse the raw values, and use smoothing to show trends.")] if mode == "smooth" else [], curves=curves, plots=plots, table=tb,

@@ -640,14 +640,14 @@ KINDS = {"describe": describe, "normality": normality, "outliers": outliers, "li
 
 def more_kinds():
     """The analyses in groups.py and tools.py (imported here, as they use the helpers above)."""
-    from . import groups, many, nested, regress, signal, surface, survival, thermal, tools
-    KINDS.update({"multit": many.multit, "surface": surface.surface, "thermal": thermal.thermal, "sn": thermal.sn, "peaks": signal.peaks, "signal": signal.signal, "nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
+    from . import groups, many, more, nested, regress, signal, surface, survival, thermal, tools
+    KINDS.update({"multit": many.multit, "threeway": more.threeway, "ancova": more.ancova, "agreement": more.agreement, "bootstrap": more.bootstrap, "surface": surface.surface, "thermal": thermal.thermal, "sn": thermal.sn, "peaks": signal.peaks, "signal": signal.signal, "nested": nested.nested, "survival": survival.survival, "multireg": regress.multireg, "pca": regress.pca, "cluster": regress.cluster, "ttest": groups.ttest, "nonparam": groups.nonparam, "anova": groups.anova, "correlation": groups.correlation, "power": groups.power, "twoway": groups.twoway, "contingency": groups.contingency, "parts": groups.parts, "blandaltman": groups.blandaltman, "roc": groups.roc,
                   "transform": tools.transform, "check": tools.check, "frequency": tools.frequency, "auc": tools.auc, "smooth": tools.smooth, "tensile": tools.tensile, "weibull": tools.weibull})
     return KINDS
 
 
 # Analyses that compare data sets: empty ones are left out (a new column table starts with three).
-COMPARE = {"multit", "nested", "pca", "cluster", "ttest", "nonparam", "anova", "correlation", "power", "blandaltman", "roc", "weibull", "describe", "normality", "outliers"}
+COMPARE = {"multit", "bootstrap", "nested", "pca", "cluster", "ttest", "nonparam", "anova", "correlation", "power", "blandaltman", "roc", "weibull", "describe", "normality", "outliers"}
 
 
 def run(kind, table, sets, options):
