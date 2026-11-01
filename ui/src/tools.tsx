@@ -2,7 +2,8 @@
 // styles, colour schemes and Copy Look, and exporting every graph or the whole project to Excel.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { Graph, GraphSettings, Table, letter, num, spans, invoke } from "./api";
-import { act, call, curTable, graph, opts, setOpts, setOut, toast, openDialog, closeDialog, P, setGoto, openMenu } from "./store";
+import { act, call, curTable, graph, opts, setOpts, setOut, toast, openDialog, closeDialog, P, setGoto, openMenu, open } from "./store";
+import { Out } from "./api";
 import { setG } from "./format";
 import { analysisDialog } from "./results";
 import { Dialog, Pick, Check } from "./ui";
@@ -341,3 +342,26 @@ export const batchProcess = () => {
 
 /** Tools › Notebook (H5): the project as a Jupyter notebook. */
 export const exportNotebook = async () => { const p = await call<string | null>("export_notebook"); if (p) toast(`Saved ${p}`, true); };
+
+// ---------- Analyze › New Design (B35) ----------
+/** A two-level factorial design as a new table: the factors coded −1/+1 and an empty Response column to fill in. */
+export const newDesign = () => openDialog(() => {
+  const [k, setK] = createSignal(3), [half, setHalf] = createSignal(false), [reps, setReps] = createSignal(1), [centers, setCenters] = createSignal(0);
+  const runs = () => (2 ** (half() && k() >= 3 ? k() - 1 : k())) * reps() + centers();
+  return (
+    <Dialog title="New Factorial Design" help="quality" okText="Create" ok={async () => {
+      const o = await call<Out>("new_design", { factors: k(), half: half(), reps: reps(), centers: centers() });
+      if (!o) return false;
+      setOut(o); open("data", o.project.tables[o.project.tables.length - 1].id);
+      toast("Do the runs in the order of their row titles (Run 1, Run 2…), type each result in Response, then Analyze › Factorial Analysis.", true);
+    }}>
+      <div class="form">
+        <label>Factors</label><input type="number" min="2" max="7" style={{ width: "70px" }} value={k()} onChange={e => setK(Math.min(7, Math.max(2, +e.currentTarget.value || 2)))} />
+        <label>Design</label><Pick value={half() ? "half" : "full"} set={v => setHalf(v === "half")} options={[["full", "Full factorial (every combination)"], ["half", "Half fraction (half the runs; the last factor = the product of the others)"]]} />
+        <label>Replicates</label><input type="number" min="1" max="10" style={{ width: "70px" }} value={reps()} onChange={e => setReps(Math.min(10, Math.max(1, +e.currentTarget.value || 1)))} />
+        <label>Centre points</label><input type="number" min="0" max="20" style={{ width: "70px" }} value={centers()} onChange={e => setCenters(Math.min(20, Math.max(0, +e.currentTarget.value || 0)))} />
+      </div>
+      <p class="muted">{runs()} runs. Factors are coded −1 (low) and +1 (high), centre points 0; rename the columns to your factors, or replace the codes by real levels. The row titles give a random order to do the runs in.</p>
+    </Dialog>
+  );
+});

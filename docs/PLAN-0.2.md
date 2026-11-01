@@ -232,7 +232,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D19 | Ternary, waterfall, radar and bubble graphs | ✅ 0.3.7 |
 | D20 | Vector fields and 3D scatter | ✅ 0.3.8 |
 | B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | ✅ 0.3.9 |
-| B35 | Control charts and design of experiments | 0.3.10 |
+| B35 | Control charts and design of experiments | ✅ 0.3.10 |
 | B36 | Wavelets and short-time spectra | 0.3.11 |
 | E8 | Graph digitizer and image tools | 0.3.12 |
 | B37 | Bayesian tests | 0.3.13 |
@@ -387,7 +387,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.7** ✅ | Ternary, waterfall, radar and bubble graphs (D19) |
 | **0.3.8** ✅ | Vector fields and 3D scatter (D20) |
 | **0.3.9** ✅ | More statistics: three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits (B34) |
-| 0.3.10 | Control charts and design of experiments (B35) |
+| **0.3.10** ✅ | Control charts and design of experiments (B35) |
 | 0.3.11 | Wavelets and short-time spectra (B36) |
 | 0.3.12 | Graph digitizer and image tools (E8) |
 | 0.3.13 | Bayesian tests (B37) |

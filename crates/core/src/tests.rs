@@ -367,3 +367,23 @@ fn projects_saved_with_copy_linked_still_open() {
     let p = Project::from_json(r#"{"name":"old","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"linked":"G.png","width":90}}],"nextId":3}"#).unwrap();
     assert_eq!((p.graphs.len(), p.graphs[0].settings.width), (1, 90.0));
 }
+
+#[test]
+fn factorial_designs_are_balanced_and_orthogonal() {
+    let t = Table::design(3, false, 2, 3);
+    assert_eq!((t.kind.as_str(), t.rows, t.sets.len(), t.sets[3].title.as_str()), ("multi", 19, 4, "Response"));
+    for a in 1..=3 {
+        let col: Vec<f64> = (0..16).map(|r| t.get(r, a).unwrap()).collect();
+        assert_eq!(col.iter().sum::<f64>(), 0.0, "each factor is balanced");
+        for b in a + 1..=3 {
+            assert_eq!((0..16).map(|r| t.get(r, a).unwrap() * t.get(r, b).unwrap()).sum::<f64>(), 0.0, "factors are orthogonal");
+        }
+    }
+    assert!((16..19).all(|r| (1..=3).all(|a| t.get(r, a) == Some(0.0))) && (0..19).all(|r| t.get(r, 4).is_none()));
+    let mut order: Vec<String> = t.row_titles.clone();
+    order.sort_by_key(|s| s[4..].parse::<usize>().unwrap());
+    assert_eq!(order, (1..=19).map(|i| format!("Run {i}")).collect::<Vec<_>>(), "every run once in the random order");
+    let h = Table::design(4, true, 1, 0);
+    assert_eq!(h.rows, 8);
+    assert!((0..8).all(|r| h.get(r, 4).unwrap() == h.get(r, 1).unwrap() * h.get(r, 2).unwrap() * h.get(r, 3).unwrap()), "D = ABC");
+}

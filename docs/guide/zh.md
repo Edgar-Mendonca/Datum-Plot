@@ -147,6 +147,7 @@ Analyze 选项卡的其他组可以直接启动一项分析：**Statistics**（�
 - **回归与拟合：** 线性回归、使用模型库或自定义方程的曲线拟合、全局拟合与模型比较、插值、曲线下面积、平滑、多元回归、logistic 回归和 Poisson 回归、主成分分析与聚类、曲面拟合、平滑样条。
 - **生存分析：** Kaplan-Meier 曲线、log-rank 检验和风险比。
 - **信号与光谱：** 寻峰，Gaussian、Lorentzian 和 Voigt 峰拟合，傅里叶频谱和滤波。
+- **质量：** 控制图（单值、X̄–R、X̄–S、p 图），带判异规则检查和过程能力 Cp/Cpk；**Analyze › New Design**（分析 › 新建试验设计）生成两水平析因设计（全因子或半分式），填入结果后用 Factorial Analysis（析因分析）得到各效应、帕累托图和主效应图。
 - **材料：** 拉伸试验、Weibull 强度分析、Arrhenius 活化能、S–N 疲劳曲线、DSC 和 TGA 热分析。
 
 ![带多重比较的单因素方差分析结果表。](img/anova-results.png)

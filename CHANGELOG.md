@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.10 — 2026-11-01
+
+Control charts and design of experiments.
+
+**Control charts** (Analyze › Quality › Control Chart)
+- **Individuals and moving range** for one value per row, **X̄ and R** or **X̄ and S** for subgroups (each row a subgroup in its sub-columns), and the **p chart** for defectives out of the number inspected.
+- 3σ limits, points beyond them and runs of 8 on one side of the centre line are flagged; give the specification limits for **Cp and Cpk**.
+
+**Design of experiments**
+- **New Design** makes a two-level factorial design as a table: 2 to 7 factors, full factorial or half fraction, replicates and centre points, the factors coded −1/+1 and the runs in a random order (row titles). Type each result in the Response column.
+- **Factorial Analysis** gives each factor's and interaction's effect with its test (Lenth's method when there are no replicates), a Pareto chart of the effects and the main-effect plot.
+
+**Checked**: the control limits equal the textbook constants (A2, D4, A3, B4, 2.66, 3.267) and the binomial limits of the p chart; known effects are recovered from a simulated design; designs are balanced and orthogonal.
+
 ## 0.3.9 — 2026-11-01
 
 More statistics: three-way ANOVA, ANCOVA, agreement, bootstrap confidence intervals and spline fits.

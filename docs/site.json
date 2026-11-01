@@ -31,6 +31,7 @@
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison, smoothing splines; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Matrices and 3D: contour maps, heat maps, 3D surfaces and 3D scatter, vector fields, polar, ternary, bubble, radar and waterfall graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
+    "Quality: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
     "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
@@ -46,29 +47,27 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.10",
-      "title": "Quality tools",
+      "v": "0.3.11",
+      "title": "Signals",
       "when": "Next",
       "items": [
-        "Control charts",
-        "Design of experiments"
+        "Wavelets and short-time spectra"
       ]
     },
     {
-      "v": "0.3.11–0.3.12",
-      "title": "Signals and images",
+      "v": "0.3.12–0.3.13",
+      "title": "Images and Bayes",
       "when": "Soon",
       "items": [
-        "Wavelets and short-time spectra",
-        "Graph digitizer and image tools"
+        "Graph digitizer and image tools",
+        "Bayesian tests"
       ]
     },
     {
-      "v": "0.3.13–0.3.14",
-      "title": "Bayes, Mac and Linux",
+      "v": "0.3.14",
+      "title": "Mac and Linux",
       "when": "Later",
       "items": [
-        "Bayesian tests",
         "Mac and Linux versions"
       ]
     },

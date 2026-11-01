@@ -99,6 +99,8 @@ const ANALYSES: Choice[] = [
   { id: "B7", name: "Multiple comparisons", icon: "list", group: "Compare groups", desc: "Which groups differ after ANOVA: Tukey, Dunnett, Holm-Šidák…" },
   { id: "B8", name: "Effect sizes", icon: "sigma", group: "Compare groups", desc: "Cohen's d and Hedges' g with the t-test; η² and ω² with ANOVA." },
   { id: "B15", name: "Two-way ANOVA", icon: "table", group: "Compare groups", desc: "Two factors at once, such as alloy and temperature." },
+  { id: "B35", key: "B35c", name: "Control chart", icon: "line", group: "Quality", desc: "Individuals, X̄–R, X̄–S or p charts with 3σ limits, rule checks and process capability (Cp, Cpk)." },
+  { id: "B35", key: "B35d", name: "Factorial analysis", icon: "table", group: "Quality", desc: "Effects of two-level factors on a response, with a Pareto chart and main-effect plot. Analyze › New Design makes the table." },
   { id: "B34", key: "B34a", name: "Three-way ANOVA", icon: "table", group: "Compare groups", desc: "Three factors at once: rows, and data sets named by two levels (“Young / Drug”)." },
   { id: "B34", key: "B34b", name: "ANCOVA", icon: "line", group: "Compare groups", desc: "Compare groups while allowing for a covariate (X): adjusted means and parallel lines." },
   { id: "B34", key: "B34c", name: "Agreement (kappa, McNemar)", icon: "grid", group: "Relationships", desc: "Two ratings of the same items: Cohen's kappa (weighted for ordered categories) and McNemar's or Bowker's test." },

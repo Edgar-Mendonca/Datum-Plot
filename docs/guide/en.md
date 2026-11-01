@@ -147,6 +147,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 - **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits, smoothing splines.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
 - **Signals and spectra:** peak finding, Gaussian, Lorentzian and Voigt peak fits, Fourier spectra and filters.
+- **Quality:** control charts (individuals, X̄–R, X̄–S, p) with rule checks and Cp/Cpk; **Analyze › New Design** makes a two-level factorial design (full or half fraction) to fill in, and Factorial Analysis gives the effects, a Pareto chart and the main effects.
 - **Materials:** tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, DSC and TGA thermal analysis.
 
 ![A one-way ANOVA results sheet with multiple comparisons.](img/anova-results.png)

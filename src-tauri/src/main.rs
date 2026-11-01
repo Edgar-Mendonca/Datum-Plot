@@ -228,6 +228,18 @@ async fn export_report(app: AppHandle, st: State<'_, St>, kind: String) -> R<Opt
     Ok(Some(path.display().to_string()))
 }
 
+/// Analyze › New Design (B35): a two-level factorial design as a new table, its runs in a random order.
+#[tauri::command]
+fn new_design(st: State<St>, factors: usize, half: bool, reps: usize, centers: usize) -> R<Value> {
+    let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
+    let t = Table::design(factors, half, reps, centers);
+    let g = graph_for(&t.kind, a.opts.graph());
+    guard(|| a.doc.apply(Op::NewTable { table: Box::new(t), graph: Some(Box::new(g)) }))?;
+    a.rev += 1;
+    Ok(out(&a))
+}
+
+/// A new, empty table of the given kind with its graph.
 #[tauri::command]
 fn new_table(st: State<St>, kind: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
@@ -776,7 +788,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
-            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
+            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design
         ])
         .run(tauri::generate_context!())
         .expect("Datum Plot failed to start");

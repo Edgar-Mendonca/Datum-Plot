@@ -147,6 +147,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 - **Régression et ajustement :** régression linéaire, ajustement de courbe à partir d’une bibliothèque de modèles ou de votre propre équation, ajustements globaux et comparaison de modèles, interpolation, aire sous la courbe, lissage, régression multiple, logistique et de Poisson, analyse en composantes principales et classification, ajustements de surface, splines de lissage.
 - **Survie :** courbes de Kaplan-Meier, test du log-rank et rapports de risques instantanés (hazard ratios).
 - **Signaux et spectres :** détection de pics, ajustement de pics gaussiens, lorentziens et de Voigt, spectres de Fourier et filtres.
+- **Qualité :** cartes de contrôle (valeurs individuelles, X̄–R, X̄–S, p) avec vérification des règles et Cp/Cpk ; **Analyze › New Design** (Analyser › Nouveau plan) crée un plan factoriel à deux niveaux (complet ou demi-fraction) à remplir, et Factorial Analysis (Analyse factorielle) donne les effets, un diagramme de Pareto et les effets principaux.
 - **Matériaux :** essais de traction, résistance de Weibull, énergies d’activation d’Arrhenius, courbes de fatigue S–N, analyse thermique DSC et ATG.
 
 ![Une feuille de résultats d’ANOVA à un facteur avec comparaisons multiples.](img/anova-results.png)

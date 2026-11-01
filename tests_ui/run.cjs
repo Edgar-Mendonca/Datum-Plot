@@ -32,7 +32,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
     f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
-    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state,
+    const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, new_design: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
@@ -557,6 +557,12 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.dblclick('.dlg .galitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
   check("double-clicking ANCOVA opens its options and closes the gallery", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  // 0.3.10: New Design asks the shell for the factorial table.
+  await reset();
+  await p.click('.ribbon .rb:has-text("New Design")'); await p.waitForTimeout(200);
+  check("New Design counts the runs", ((await p.textContent(".dlg").catch(() => "")) || "").includes("8 runs"));
+  await p.click('.dlg .btn.pri'); await p.waitForTimeout(300);
+  check("New Design asks the shell for a 3-factor full factorial", JSON.stringify(await calls("new_design")) === JSON.stringify([{ factors: 3, half: false, reps: 1, centers: 0 }]), JSON.stringify(await calls("new_design")));
   // 0.3.3: the window names file types, never other companies' products.
   const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
   let named = [];

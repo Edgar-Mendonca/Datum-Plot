@@ -176,6 +176,46 @@ impl Table {
         t.normalize();
         t
     }
+    /// A two-level factorial design (B35): `k` factors coded −1/+1 (a half fraction with the last factor as the
+    /// product of the others when `half`), each run `reps` times, plus `centers` centre points (0), and an empty
+    /// Response column. Row titles give a random run order (fixed seed), so the runs can be done in that order.
+    pub fn design(k: usize, half: bool, reps: usize, centers: usize) -> Self {
+        let k = k.clamp(2, 7);
+        let half = half && k >= 3;
+        let base = if half { k - 1 } else { k };
+        let mut runs: Vec<Vec<f64>> = vec![];
+        for _ in 0..reps.clamp(1, 10) {
+            for i in 0..(1usize << base) {
+                let mut r: Vec<f64> = (0..base).map(|j| if i >> j & 1 == 1 { 1.0 } else { -1.0 }).collect();
+                if half {
+                    r.push(r.iter().product());
+                }
+                runs.push(r);
+            }
+        }
+        runs.extend((0..centers.min(20)).map(|_| vec![0.0; k]));
+        let n = runs.len();
+        let mut order: Vec<usize> = (1..=n).collect();
+        let mut seed = 0x2545_F491_4F6C_DD1Du64;
+        for i in (1..n).rev() {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            order.swap(i, (seed % (i as u64 + 1)) as usize);
+        }
+        let mut t = Table::multi(k + 1, n);
+        t.name = format!("{}2^{}{} design", if half { "Half-fraction " } else { "" }, k, if half { "−1" } else { "" });
+        for (j, s) in t.sets.iter_mut().enumerate() {
+            s.title = if j < k { format!("Factor {}", crate::doc::set_letter(j)) } else { "Response".into() };
+        }
+        for (r, run) in runs.iter().enumerate() {
+            for (j, v) in run.iter().enumerate() {
+                t.cols[j + 1][r] = Some(*v);
+            }
+            t.row_titles[r] = format!("Run {}", order[r]);
+        }
+        t
+    }
     /// An empty worksheet (A9): free columns, one value per row, the first one X.
     pub fn sheet(cols: usize) -> Self {
         let sets = (0..cols).map(|k| DataSet { title: crate::doc::set_letter(k), entry: Entry::Replicates, reps: 1, role: if k == 0 { "x".into() } else { String::new() }, ..Default::default() }).collect();
