@@ -126,7 +126,7 @@ def result(title, answer, tabs, checks=(), methods="", legend="", code="", plots
 
 
 def by_set(table, ks, rows):
-    """A Prism-style table: one row per statistic, one column per data set."""
+    """A summary table: one row per statistic, one column per data set."""
     return {"title": "", "columns": [""] + [name_of(table, k) for k in ks], "rows": rows}
 
 
@@ -372,7 +372,7 @@ def linear(table, ks, o):
 
 
 def compare_lines(table, fits, model):
-    """F tests: are the slopes equal, then (if so) the intercepts? (Zar, as Prism.)"""
+    """F tests: are the slopes equal, then (if so) the intercepts? (Zar, Biostatistical Analysis.)"""
     import statsmodels.api as sm
     xs = np.concatenate([f[1] for f in fits]); ys = np.concatenate([f[2] for f in fits])
     g_ = np.concatenate([np.full(len(f[1]), i) for i, f in enumerate(fits)])

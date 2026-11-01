@@ -1,4 +1,4 @@
-// The sidebar (Info, Data, Results, Graphs, Layouts), the Prism-style navigator next to it, and
+// The sidebar (Info, Data, Results, Graphs, Layouts), the navigator next to it, and
 // the Info sheet and empty pages.
 import { For, Show, JSX } from "solid-js";
 import { Info } from "./api";
@@ -48,7 +48,7 @@ const Thumb = (p: { id: number; on: boolean }) => {
     <Show when={r()} fallback={<span class="muted">…</span>}>{x => <GraphImg r={x()} scale={Math.min(150 / x().w, 100 / x().h)} />}</Show></button>;
 };
 
-/** Prism's Info sheet: what the experiment is. Fields can go into page headers. */
+/** The Info sheet: what the experiment is. Fields can go into page headers. */
 export const InfoPage = () => {
   const put = (k: keyof Info, v: string) => act({ Info: { info: { ...P().info, [k]: v } } });
   const F = (p: { k: keyof Info; l: string; hint: string; area?: boolean }) => <div class="opt"><div><b>{p.l}</b><small>{p.hint}</small></div><div class="ctl">{p.area

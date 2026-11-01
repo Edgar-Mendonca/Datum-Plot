@@ -1,5 +1,5 @@
 // Data tools (sort, find, exclude rows by a rule), the test chooser and statistics guide, graph
-// styles, colour schemes and Copy Look, and exporting every graph or the whole project to Excel.
+// styles, colour schemes and Copy Look, and exporting every graph or the whole project as a workbook.
 import { For, Show, createSignal, createMemo } from "solid-js";
 import { Graph, GraphSettings, Table, letter, num, spans, invoke } from "./api";
 import { act, call, curTable, graph, opts, setOpts, setOut, toast, openDialog, closeDialog, P, setGoto, openMenu, open } from "./store";
@@ -240,7 +240,7 @@ export const copyLook = () => {
   });
 };
 
-// ---------- export every graph (G4), Excel workbook (G6) ----------
+// ---------- export every graph (G4), workbook (G6) ----------
 export const exportAll = () => {
   if (!P().graphs.length) return toast("This project has no graphs.");
   openDialog(() => {
@@ -256,7 +256,7 @@ export const exportAll = () => {
     );
   });
 };
-export const exportExcel = async () => { const p = await call<string | null>("export_excel"); if (p) toast(`Saved ${p}`, true); };
+export const exportWorkbook = async () => { const p = await call<string | null>("export_workbook"); if (p) toast(`Saved ${p}`, true); };
 /** Tools › Slides (one graph per slide) or Document (graphs, results and methods) (G5). */
 export const exportReport = async (kind: "slides" | "word") => { toast(kind === "slides" ? "Making the slides…" : "Writing the document…", true); const p = await call<string | null>("export_report", { kind }); if (p) toast(`Saved ${p}`, true); };
 

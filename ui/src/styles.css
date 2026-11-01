@@ -211,7 +211,7 @@ tr.link:hover td { background: var(--pale); }
 .c.r { text-align: right; }
 .c.at { outline: 2px solid var(--blue); outline-offset: -2px; }
 .c.idc { border-right-color: var(--line); }
-/* ---------- 0.3.1: Excel-style grid ---------- */
+/* ---------- 0.3.1: spreadsheet grid ---------- */
 .grid { display: flex; flex-direction: column; min-width: 120px; flex: none; min-height: 0; }
 .gscroll { flex: 1; overflow: auto; position: relative; outline: none; background: var(--bg2); }
 .gsheet { position: relative; }
@@ -245,7 +245,7 @@ tr.link:hover td { background: var(--pale); }
 .fbar input { flex: 1; border: 0 !important; height: 100%; padding: 0 8px !important; font: 12.5px var(--mono); background: transparent !important; outline: none !important; }
 .fbar .agg { padding: 0 12px; font: 11px var(--mono); color: var(--muted); white-space: nowrap; border-left: 1px solid var(--line); line-height: 27px; }
 
-/* ---------- 0.3.1: CentriForge polish on the MS Project layout ---------- */
+/* ---------- 0.3.1: polish on the ribbon layout ---------- */
 body, .app { background: var(--bg); color: var(--text); }
 .top, .ribbon, .status, .side { background: var(--panel); }
 .ribbon .grp .cap { font: 500 9.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }

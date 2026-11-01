@@ -43,7 +43,7 @@ class Dates(unittest.TestCase):
         self.assertIn("per day", A.run("linear", t, [], {})["answer"])
         from openpyxl import load_workbook
         with tempfile.TemporaryDirectory() as d:
-            dio.write_excel(os.path.join(d, "p.xlsx"), {"name": "P", "tables": [PLAN]}, [])
+            dio.write_workbook(os.path.join(d, "p.xlsx"), {"name": "P", "tables": [PLAN]}, [])
             cell = load_workbook(os.path.join(d, "p.xlsx")).worksheets[0]["A2"].value
             self.assertEqual((cell.year, cell.month, cell.day), (2026, 10, 12))
 

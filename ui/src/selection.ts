@@ -40,7 +40,7 @@ export const createSel = (size: () => [number, number], reveal: (row: number, co
 };
 
 const num = (s: string) => { const v = parseFloat(s.replace(/[^\d.\-]/g, "")); return /\d/.test(s) && !/[a-z]{3,}-/i.test(s) ? v : NaN; };
-/** "Sum 12 · Average 4 · Count 3" for a selection of more than one cell, as in Excel's status bar. */
+/** "Sum 12 · Average 4 · Count 3" for a selection of more than one cell, in the status bar. */
 export const aggregate = (sel: Sel, text: (r: number, c: number) => string) => {
   const vals: number[] = []; let cells = 0;
   sel.each((r, c) => { cells++; const v = num(text(r, c) ?? ""); if (!isNaN(v)) vals.push(v); }, 5000 * 30);

@@ -1,5 +1,5 @@
 // The data table: X (hidden in column tables), then each data set's replicate (or mean/SD/N) columns, on the family
-// grid engine (selection.ts, cells.ts, fmt.ts): ranges, clipboard with Excel, fill handle,
+// grid engine (selection.ts, cells.ts, fmt.ts): ranges, clipboard with spreadsheets, fill handle,
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, createEffect, onMount, onCleanup } from "solid-js";
 import { Table, DataSet, spans, width, num, letter, dateText } from "./api";
@@ -106,7 +106,7 @@ export const DataTable = (p: { t: Table }) => {
     if (what !== "formats") await pasteRows(m);
     if (what !== "values" && st.length) await act({ Style: { table: t().id, cells: st.flatMap((l, i) => l.map((v, j) => [key(r0 + i, k0 + j), v])) } });
   };
-  /** Fills from the selection down (or right), continuing series as Excel does; Ctrl copies. */
+  /** Fills from the selection down (or right), continuing series; Ctrl copies. */
   const fillRange = (r1: number, c1: number, copy = false) => {
     const [a, b, c, d] = range(), out: [number, number, string][] = [];
     if (r1 > c) for (let k = b; k <= d; k++) { const src = Array.from({ length: c - a + 1 }, (_, i) => text(a + i, k)); for (let r = c + 1; r <= r1; r++) out.push([r, k, series(src, r - c, copy)]); }

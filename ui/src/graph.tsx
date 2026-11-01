@@ -219,7 +219,7 @@ export const zoomOut = (g: Graph) => {
 export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: true }, y: { ...s.y, auto: true } }));
 
 /** Copies the graph to the Windows clipboard as a picture (through Rust; WebView2 blocks the
- *  browser clipboard), for Word and PowerPoint. */
+ *  browser clipboard), for documents and slides. */
 export const copyGraph = async (id: number) => {
   try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into a document, slides or an email.", true); }
   catch (e) { toast(`Could not copy the picture: ${e}`); }

@@ -50,7 +50,7 @@ class Exports(unittest.TestCase):
              "sets": [{"title": "=1+1", "entry": "rep", "reps": 1}], "cols": [[1, 2], [3, 4]]}
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "x.xlsx")
-            dio.write_excel(p, {"name": "P", "tables": [t]}, [])
+            dio.write_workbook(p, {"name": "P", "tables": [t]}, [])
             wb = load_workbook(p)
             cells = [c for ws in wb.worksheets for row in ws.iter_rows() for c in row if c.value is not None]
             self.assertTrue(cells and not [c.value for c in cells if c.data_type == "f"])
@@ -98,7 +98,7 @@ class OpenDocument(unittest.TestCase):
         a = {"id": 2, "table": 1, "name": "Fit <&>", "kind": "linear", "sets": [], "options": {}}
         p = {"name": "P", "info": {"title": "Test & check"}, "tables": [t], "analyses": [a], "graphs": [{"id": 3, "table": 1, "name": "G", "settings": {}}], "layouts": []}
         with tempfile.TemporaryDirectory() as d:
-            dio.write_excel(os.path.join(d, "b.ods"), p, [a])
+            dio.write_workbook(os.path.join(d, "b.ods"), p, [a])
             report.word(p, os.path.join(d, "d.odt"))
             report.slides(p, os.path.join(d, "s.odp"))
             for f, mime in (("b.ods", "spreadsheet"), ("d.odt", "text"), ("s.odp", "presentation")):

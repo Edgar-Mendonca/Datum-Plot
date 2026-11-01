@@ -1,4 +1,4 @@
-"""Reading data files for File › Import: CSV, TSV, TXT and Excel workbooks. Every cell comes back
+"""Reading data files for File › Import: CSV, TSV, TXT and .xlsx workbooks. Every cell comes back
 as text (numbers without trailing zeros, dates as ISO), the Rust engine parses the numbers."""
 import csv
 import datetime
@@ -58,7 +58,7 @@ def read_text(path):
     return [{"name": os.path.splitext(os.path.basename(path))[0], "rows": rows, "delimiter": delim}]
 
 
-def read_excel(path):
+def read_xlsx(path):
     from openpyxl import load_workbook
     wb = load_workbook(path, read_only=True, data_only=True)
     out = []
@@ -86,7 +86,7 @@ def read_file(path):
         return {"sheets": [], "tables": read_pzfx(path)}
     if ext in (".xlsx", ".xlsm"):
         try:
-            sheets = read_excel(path)
+            sheets = read_xlsx(path)
         except (OSError, ValueError, KeyError, EOFError) as e:  # BadZipFile is an OSError's cousin: catch it by name below
             raise ValueError(f"That .xlsx file is damaged or not a workbook ({type(e).__name__}).")
         except Exception as e:
@@ -154,7 +154,7 @@ def sheets(project, analyses):
     return out
 
 
-def write_excel(path, project, analyses):
+def write_workbook(path, project, analyses):
     """File › Export › Workbook (G6): a sheet per data table and one per result, as .xlsx or .ods by the extension."""
     if path.lower().endswith(".ods"):
         from . import odf
@@ -194,7 +194,7 @@ def as_date(days):
 
 
 def num(v):
-    """Result cells are text; plain numbers go to Excel as numbers."""
+    """Result cells are text; plain numbers go to the workbook as numbers."""
     try:
         return float(v) if re.fullmatch(r"-?\d+(\.\d+)?(e[-+]?\d+)?", v.strip()) else v
     except (AttributeError, ValueError):

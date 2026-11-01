@@ -1,4 +1,4 @@
-// Text formatting (Excel's Font and Alignment groups) for the task sheet and the Sheets tabs.
+// Text formatting (Font and Alignment) for the task sheet and the Sheets tabs.
 // A style is a short string such as "b;i;c:#C0392B;f:#FFF2CC;z:12;a:c"; the engine stores it as is.
 import { createSignal, JSX } from "solid-js";
 import { toast } from "./store";

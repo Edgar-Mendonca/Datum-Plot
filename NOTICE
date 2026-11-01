@@ -11,3 +11,5 @@ The Windows installer bundles a Python runtime and these libraries, each under i
 - DejaVu fonts shipped with matplotlib (Bitstream Vera / DejaVu licence)
 
 The window also bundles SolidJS (MIT) and the IBM Plex fonts (SIL Open Font Licence 1.1).
+
+Product and file-format names are trademarks of their owners and are used only to describe file compatibility.

@@ -62,7 +62,7 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Smooth, derivative or integral", () => runAnalysis("B14s")], ["Global fit and model comparison", () => runAnalysis("B12")], ["Tensile test analysis", () => runAnalysis("B27")], ["Weibull analysis", () => runAnalysis("B29")],
   ["New page layout", () => import("./layout").then(m => m.newLayout())], ["Remove data sets", () => C.removeSets()], ["Sort rows", T.sortDialog], ["Find", T.findDialog, "Ctrl+F"], ["Exclude rows by a rule", T.excludeRows], ["Test chooser", T.testChooser], ["Statistics guide", T.statsGuide], ["Significance brackets", T.significance],
   ["Graph styles (Nature, IEEE, presentation…)", () => import("./store").then(m => m.openMenu({ x: 300, y: 120 }, T.styleMenu()))], ["Copy look to other graphs", T.copyLook], ["Colour schemes", T.paletteDialog],
-  ["Export all graphs", T.exportAll], ["Export a workbook (.xlsx or .ods)", T.exportExcel],
+  ["Export all graphs", T.exportAll], ["Export a workbook (.xlsx or .ods)", T.exportWorkbook],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),
 ];
 export { out, openDialog };

@@ -1,4 +1,4 @@
-"""Graphs with matplotlib in the Prism style: what the window shows (SVG) and what is exported.
+"""Graphs with matplotlib in a clean publication style: what the window shows (SVG) and what is exported.
 
 `render(table, graph)` returns the SVG plus where the plot area, the axes and the legend are
 (in points from the top-left), so the window can map the mouse to data and open the right
@@ -469,7 +469,7 @@ def axes(ax, table, graph, points, only_y=False, x=True):
         if not a.get("auto", True) and a.get("min") is not None and a.get("max") is not None and a["max"] > a["min"] and (not log or a["min"] > 0):
             lim(a["min"], a["max"])
         elif not log and which == "y" and points and min(p[2] for p in points) >= 0:
-            lim(bottom=0)  # Prism starts a positive Y axis at zero
+            lim(bottom=0)  # a positive Y axis starts at zero
         if which == "x" and table.get("xFormat") in ("date", "datetime") and not log:
             date_axis(axis, a)  # 0.3.11: X holds days since 1970, matplotlib's own date numbers
         elif log:

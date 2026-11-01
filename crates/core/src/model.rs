@@ -570,7 +570,7 @@ impl Project {
         }
         self.next_id = total + 1;
     }
-    /// Adds a table (and a graph of it, as Prism does); returns the table's id.
+    /// Adds a table (and a graph of it); returns the table's id.
     pub fn add_table(&mut self, mut t: Table, g: Option<GraphSettings>) -> u32 {
         t.id = self.take_id();
         let id = t.id;

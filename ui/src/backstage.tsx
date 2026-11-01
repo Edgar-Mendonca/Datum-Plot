@@ -35,7 +35,7 @@ const md = (s: string) => s.split("\n").map(l => {
   return l.startsWith("## ") ? `<h3>${e.slice(3)}</h3>` : l.startsWith("- ") ? `<li>${e.slice(2)}</li>` : e.trim() ? `<p>${e}</p>` : "";
 }).join("");
 
-/** A sample's data as a small Prism-style picture. */
+/** A sample's data as a small picture. */
 const Mini = (p: { t: Tpl }) => (
   <svg viewBox="0 0 100 60">
     <path d="M8 4v50h88" fill="none" stroke="currentColor" stroke-width="1.2" />
@@ -98,7 +98,7 @@ const Export = () => (
     <Show when={graph()} fallback={<p class="muted">Open a graph first (sidebar › Graphs), then come back here to export it.</p>}>{g => <>
       <p class="muted">Exporting <b>{g().name}</b> at its size, {g().settings.width} × {g().settings.height} mm.</p>
       <div class="tiles">
-        <For each={[["png", "PNG picture", "For slides, documents and the web. 300 dpi by default."], ["tiff", "TIFF picture", "What many journals ask for, at 300–1200 dpi."], ["svg", "SVG vector", "Sharp at any size; text stays editable in Illustrator or Inkscape."],
+        <For each={[["png", "PNG picture", "For slides, documents and the web. 300 dpi by default."], ["tiff", "TIFF picture", "What many journals ask for, at 300–1200 dpi."], ["svg", "SVG vector", "Sharp at any size; text stays editable in drawing programs."],
           ["pdf", "PDF vector", "For LaTeX, print shops and archiving."], ["eps", "EPS vector", "For older publishing tools."]]}>{([k, n, d]) =>
           <button class="tile" onClick={() => C.exportG(k)}><div class="pic"><svg class="ic"><use href="#i-image" /></svg><small>.{k}</small></div><b>{n}</b><span>{d}</span></button>}</For>
         <button class="tile" onClick={() => { setBackstage(null); C.copyG(); }}><div class="pic"><svg class="ic"><use href="#i-copy" /></svg></div><b>Copy picture</b><span>Paste the graph straight into a document, slides or an email.</span></button>

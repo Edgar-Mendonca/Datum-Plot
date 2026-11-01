@@ -31,19 +31,19 @@ testers use. Also copy pictures as **vector** (SVG beside the PNG on the clipboa
 
 ## 3. Generic names instead of other companies' products
 
-Today the window names other products about 60 times (buttons **PowerPoint**, **Word Report**, **Excel Workbook**,
-texts like "paste into Word, PowerPoint or an email", "Excel-like", a few mentions of other graphing apps), and the
+Today the window names other companies' products about 60 times (buttons named after office programs, texts
+telling users to paste into named programs, comparisons with other graphing apps), and the
 guide about 8 times.
 
 Fix: name the thing and its file type, never the product:
 
 | Today | New |
 |---|---|
-| PowerPoint | **Slides** (.pptx, .odp) |
-| Word Report | **Report** (.docx, .odt) |
-| Excel Workbook | **Workbook** (.xlsx, .ods) |
-| "paste into Word, PowerPoint or an email" | "paste into documents, slides or an email" |
-| "works with Excel" (copy and paste) | "works with spreadsheets" |
+| a slides program's name | **Slides** (.pptx, .odp) |
+| a word processor's name + "Report" | **Report** (.docx, .odt) |
+| a spreadsheet program's name + "Workbook" | **Workbook** (.xlsx, .ods) |
+| "paste into [program names] or an email" | "paste into documents, slides or an email" |
+| "works with [a spreadsheet program]" (copy and paste) | "works with spreadsheets" |
 | mentions of other graphing apps | removed (the .pzfx import keeps the extension only) |
 
 Recommendation: do it everywhere: window, help cards, guide (all three languages), CHANGELOG from now on. A
@@ -87,4 +87,4 @@ in their own format.
 5. Colour-blindness (the user asked whether it was checked): CIEDE2000 between the closest two colours of each scheme
    under simulated protanopia, deuteranopia and tritanopia (Machado 2009): Okabe-Ito ≥ 10.9, Muted ≥ 11.5, Bright
    ≥ 8.6 (tritan), Cividis by design; Classic 0.7, Dark 2.1, Pastel 2.9. The user: only a small "colour-blind
-   safe" label on the safe schemes, nothing on the others. "Tableau" was renamed "Classic".
+   safe" label on the safe schemes, nothing on the others. The scheme named after a commercial product was renamed "Classic".

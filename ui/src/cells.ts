@@ -1,4 +1,4 @@
-// Shared by the task sheet and the Sheets tabs: tab-separated clipboard text, Excel-style series
+// Shared by the task sheet and the Sheets tabs: tab-separated clipboard text, spreadsheet-style series
 // for the fill handle, and the last copy (values and formats) for Paste Special.
 import { dateDay, iso } from "./api";
 
@@ -26,7 +26,7 @@ export const clip = { text: "", styles: [] as string[][] };
 const NUM = /^(-?[\d,]*\.?\d+)(\s*\S*)$/, TAIL = /^(.*?)(\d+)$/;
 export const asDate = (s: string) => { if (!/\d/.test(s) || !/[-/ ]/.test(s) || /^\d+$/.test(s)) return null; const d = new Date(s.replace(/-(\d\d)$/, " 20$1").replace(/-/g, " ")); return isNaN(+d) ? null : dateDay(d); };
 /**
- * The k-th value (k = 1, 2, …) after the source cells `src`, as Excel's fill handle does:
+ * The k-th value (k = 1, 2, …) after the source cells `src`, as a fill handle does:
  * numbers continue their step (a single number counts up by 1), "Phase 1" → "Phase 2",
  * dates continue their step (a single date is copied); anything else repeats. `copy` (Ctrl) repeats.
  */

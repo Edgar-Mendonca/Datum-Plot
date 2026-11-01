@@ -21,10 +21,10 @@ pub enum Op {
     /// Typed values: (row, grid column, text); column -1 is the row title. Empty text clears.
     /// Cells that cannot take the text are skipped; it fails only when none could be set.
     Cells { table: u32, cells: Vec<(usize, i64, String)> },
-    /// Pasted rows from Excel at a cell. A first row of words becomes the column titles; the
+    /// Pasted rows (from a spreadsheet or elsewhere) at a cell. A first row of words becomes the column titles; the
     /// table grows (rows, and data sets like the last one) to fit.
     Paste { table: u32, row: usize, col: i64, rows: Vec<Vec<String>> },
-    /// A new table from imported rows (CSV, Excel): column 0 is X, then the Y columns, `reps` (or
+    /// A new table from imported rows (CSV, .xlsx): column 0 is X, then the Y columns, `reps` (or
     /// 3 for mean/SD/N) per data set. With `header`, the first row holds the titles.
     Import { name: String, entry: Entry, reps: usize, header: bool, rows: Vec<Vec<String>>, graph: Option<Box<GraphSettings>> },
     Exclude { table: u32, cells: Vec<(usize, usize)>, on: bool },

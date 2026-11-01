@@ -10,7 +10,7 @@ dates, as an option per column, and to receive Plan's time charts with `xFormat:
 | Value = days since 1970-01-01, fraction = time of day | matplotlib 3.11 in the app uses exactly this epoch (`dates.get_epoch()` = 1970-01-01) | ✅ no conversion |
 | `Table.xFormat` optional, `.dplot` stays format 1 | Project JSON ignores unknown fields and every field has a default; `FORMAT = 1` | ✅ old files unchanged, new field optional |
 | Plan's sample file (`format`, `info.notes`, `ui`, `rowTitles`, graph `sets` with `symbol: "none"`) | All these fields exist with the same names | ✅ opens today, shows 20738… until `xFormat` is read |
-| Excel dates arrive as ISO text | `io.py` already turns Excel dates into ISO text | ✅ only the parsing is missing |
+| Dates in .xlsx files arrive as ISO text | `io.py` already turns .xlsx dates into ISO text | ✅ only the parsing is missing |
 | Typed text → number in Rust (`doc::number`) | Exists; a date stays empty today | ✅ add `doc::date_number` beside it |
 | CSV export of tables | Datum Plot has no CSV export of tables (workbooks only: .xlsx/.ods) | ⚠ "CSV" means: workbooks write real dates; CSV only in notebook exports |
 | Guide "both languages" | Datum Plot's guide has three (en, zh, fr) | ⚠ all three get the section |

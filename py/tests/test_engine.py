@@ -73,7 +73,7 @@ class Graphs(unittest.TestCase):
         self.assertIsNotNone(r["legend"])  # two data sets
         self.assertEqual(len(r["points"]), 8)
         self.assertEqual(r["ylim"][0], 0)  # positive data: Y starts at zero
-        self.assertIn("Time (h)", r["svg"])  # text stays text (editable in Illustrator)
+        self.assertIn("Time (h)", r["svg"])  # text stays text (editable in drawing programs)
 
     def test_log_axis_and_fixed_range(self):
         r = graph.render(self.T, {"x": {"scale": "log"}, "y": {"auto": False, "min": 0, "max": 10, "step": 2}})

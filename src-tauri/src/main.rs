@@ -210,7 +210,7 @@ async fn region(app: AppHandle, st: State<'_, St>, table: u32, x0: f64, x1: f64,
     tauri::async_runtime::spawn_blocking(move || app.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&app, &q)).await.map_err(|e| e.to_string())?
 }
 
-/// Tools › Slides (.pptx, one graph per slide) or Word Report (.docx: graphs, results, methods) (G5).
+/// Tools › Slides (.pptx or .odp, one graph per slide) or Document (.docx or .odt: graphs, results, methods) (G5).
 /// A Save dialog offering each file type; a name typed without one of their extensions gets the first.
 fn save_as(app: &AppHandle, name: &str, types: &[(&str, &str)]) -> Option<PathBuf> {
     let d = types.iter().fold(app.dialog().file(), |d, (l, e)| d.add_filter(format!("{l} (.{e})"), &[*e]));
@@ -493,12 +493,12 @@ async fn export_all(app: AppHandle, st: State<'_, St>, fmt: String, dpi: u32) ->
     Ok(Some(format!("{n} graph{} saved in {}", if n == 1 { "" } else { "s" }, dir.display())))
 }
 
-/// Tools › Excel Workbook: the data tables and every result as sheets of one .xlsx (G6).
+/// Tools › Workbook: the data tables and every result as sheets of one .xlsx or .ods file (G6).
 #[tauri::command]
-async fn export_excel(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
+async fn export_workbook(app: AppHandle, st: State<'_, St>) -> R<Option<String>> {
     let (name, q) = {
         let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-        (a.doc.p.name.clone(), json!({ "cmd": "excel", "project": a.doc.p, "analyses": a.doc.p.analyses }))
+        (a.doc.p.name.clone(), json!({ "cmd": "workbook", "project": a.doc.p, "analyses": a.doc.p.analyses }))
     };
     let Some(path) = save_as(&app, &name, &[("Workbook", "xlsx"), ("OpenDocument spreadsheet", "ods")]) else { return Ok(None) };
     let mut q = q;
@@ -526,7 +526,7 @@ async fn export_graph(app: AppHandle, st: State<'_, St>, id: u32, fmt: String, d
     tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&app, &q).map(|_| Some(path.display().to_string()))).await.map_err(|e| e.to_string())?
 }
 
-/// Puts a PNG of a graph on the Windows clipboard (Word and PowerPoint paste it as a picture).
+/// Puts a PNG of a graph on the clipboard, for documents and slides to paste as a picture.
 #[tauri::command]
 async fn copy_graph(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<()> {
     let mut q = graph_req(&st, id, "export")?;
@@ -549,7 +549,7 @@ fn read_clipboard(app: AppHandle) -> String {
     app.clipboard().read_text().unwrap_or_default()
 }
 
-/// File › Import: a CSV, TXT or Excel file read by Python, for the Import dialog.
+/// File › Import: a CSV, TXT or .xlsx file read by Python, for the Import dialog.
 #[tauri::command]
 async fn import_file(app: AppHandle) -> R<Option<Value>> {
     let Some(path) = pick(&app, "Data files", &["csv", "tsv", "txt", "dat", "prn", "xlsx", "xlsm", "pzfx"]) else { return Ok(None) };
@@ -781,7 +781,7 @@ fn main() {
                 let _ = p.ask(&h, &json!({ "cmd": "ping" }));
                 let _ = h.emit("engine", json!({ "versions": p.versions, "error": p.error }));
                 drop(p);
-                // The second engine (results, Excel) starts once the graphs' engine is ready.
+                // The second engine (results, workbooks) starts once the graphs' engine is ready.
                 let _ = h.state::<Calc>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &json!({ "cmd": "ping" }));
             });
             Ok(())
@@ -797,7 +797,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())

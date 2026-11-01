@@ -148,7 +148,7 @@ export const graphTypes = () => openDialog(() => <Gallery title="Graph Type" hel
   toast(t?.kind === "survival" ? "This survival table draws Kaplan-Meier curves." : t?.kind === "column" ? "XY graphs show XY tables: File › New Table › XY." : "This graph is already an XY graph.", true);
 }} />);
 
-/** File › Import: a CSV, TXT or Excel file into a new XY table. */
+/** File › Import: a CSV, TXT or .xlsx file into a new XY table. */
 /** Adds ready tables (a .pzfx project, plates, several runs) and opens the first. */
 const addTables = async (tables: any[], what: string) => {
   const o = await call<any>("import_tables", { tables });

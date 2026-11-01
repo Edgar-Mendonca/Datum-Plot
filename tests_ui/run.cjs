@@ -19,6 +19,14 @@ const srv = http.createServer((q, r) => {
 });
 let failed = 0;
 const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : "  " + info}`); if (!ok) failed++; };
+// FAMILY §13: the window never names another company's product. The built bundle keeps every string the window can
+// show (comments are gone), so a name anywhere in it is a name a user could read.
+const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\bWord\b|Microsoft|MS Office|\bOffice\b|SigmaPlot|Tableau|Illustrator|SPSS|Minitab|\bJMP\b|MATLAB|KaleidaGraph|Primavera|MS Project/g;
+{
+  const files = fs.readdirSync(path.join(root, "assets")).filter(f => f.endsWith(".js")).map(f => path.join(root, "assets", f)).concat(path.join(root, "index.html"));
+  const named = files.flatMap(f => [...fs.readFileSync(f, "utf8").matchAll(BRANDS)].map(m => m[0]));
+  check("no text in the window names another company's product", named.length === 0, [...new Set(named)].join(", "));
+}
 
 (async () => {
   await new Promise(ok => srv.listen(0, ok));
@@ -131,7 +139,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.evaluate(() => { const d = new DataTransfer(); d.setData("text/plain", "Time\tA\tB\n1\t2\t3\n"); document.querySelector(".dgrid").dispatchEvent(new ClipboardEvent("paste", { clipboardData: d, bubbles: true })); });
   await p.waitForTimeout(150);
   const pa = (await ops()).find(o => o.Paste);
-  check("paste from Excel sends the rows with their headings", pa && pa.Paste.row === 0 && pa.Paste.col === 0 && pa.Paste.rows.length === 2 && pa.Paste.rows[0][0] === "Time", JSON.stringify(pa));
+  check("paste from a spreadsheet sends the rows with their headings", pa && pa.Paste.row === 0 && pa.Paste.col === 0 && pa.Paste.rows.length === 2 && pa.Paste.rows[0][0] === "Time", JSON.stringify(pa));
   check("excluded values are shown struck through in blue", (await p.$$(".gbody .c.ex")).length === P.tables[0].excluded.length);
 
   // 5. Ribbon: every tab fits without a sideways scrollbar; Analyze explains what comes next.
@@ -574,7 +582,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   const xf = (await ops()).find(o => o.XFormat);
   check("OK asks the engine to make the X column dates", xf && xf.XFormat.format === "date" && xf.XFormat.table === P.tables[0].id, JSON.stringify(xf));
   // 0.3.3: the window names file types, never other companies' products.
-  const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
+  const brands = new RegExp(BRANDS.source);
   let named = [];
   for (const t of ["Data", "Analyze", "Graph", "Layout", "Tools", "View", "Help"]) {
     await p.click(`.tabs button:text-is("${t}")`); await p.waitForTimeout(60);

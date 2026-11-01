@@ -97,3 +97,5 @@ cargo test --workspace && npm run test:py && npm run test:ui
 ```
 
 Datum Plot is the second app of the Datum family, after [Datum Plan](https://github.com/Edgar-Mendonca/Datum-Plan). MIT licence; third-party notices in [NOTICE](NOTICE).
+
+Product and file-format names are trademarks of their owners and are used only to describe file compatibility.

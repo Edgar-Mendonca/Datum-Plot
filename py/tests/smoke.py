@@ -59,14 +59,14 @@ def main(fixture):
                 g = next((g["settings"] for g in p["graphs"] if g["table"] == t["id"]), {})
                 for kind in KINDS:  # every graph type on every kind of table: wrong ones fall back, never fail
                     ask(f"{name} › {kind} graph", {"cmd": "render", "table": t, "graph": {**g, "column": kind}, "overlays": []}, explained=True)  # or say why not
-            ask(f"{name} › .xlsx", {"cmd": "excel", "project": p, "analyses": p["analyses"], "path": os.path.join(d, f"p{i}.xlsx")})
+            ask(f"{name} › .xlsx", {"cmd": "workbook", "project": p, "analyses": p["analyses"], "path": os.path.join(d, f"p{i}.xlsx")})
             ask(f"{name} › .ipynb", {"cmd": "notebook", "project": p, "path": os.path.join(d, f"p{i}.ipynb")})
             ask(f"{name} › console", {"cmd": "console", "project": p, "code": "len(tables)"})
         ask("slides", {"cmd": "report", "kind": "slides", "project": projects[0], "path": os.path.join(d, "r.pptx")})
         ask("report", {"cmd": "report", "kind": "word", "project": projects[0], "path": os.path.join(d, "r.docx")})
         ask("slides .odp", {"cmd": "report", "kind": "slides", "project": projects[0], "path": os.path.join(d, "r.odp")})
         ask("document .odt", {"cmd": "report", "kind": "word", "project": projects[0], "path": os.path.join(d, "r.odt")})
-        ask("workbook .ods", {"cmd": "excel", "project": projects[0], "analyses": projects[0]["analyses"], "path": os.path.join(d, "p0.ods")})
+        ask("workbook .ods", {"cmd": "workbook", "project": projects[0], "analyses": projects[0]["analyses"], "path": os.path.join(d, "p0.ods")})
         ask("read back", {"cmd": "read", "path": os.path.join(d, "p0.xlsx")})
         left = [f for f in os.listdir(d) if f.endswith(".tmp")]
     w.stdin.close()

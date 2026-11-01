@@ -569,7 +569,7 @@ def power(table, ks, o):
 def twoway(table, ks, o):
     """Two-way ANOVA of a grouped table: rows are one factor, data sets the other, replicates in each
     cell. Type III sums of squares (sum-to-zero contrasts), so unbalanced designs are handled as in
-    Prism and R's car::Anova; then multiple comparisons within each row (or within each data set)."""
+    R's car::Anova; then multiple comparisons within each row (or within each data set)."""
     import pandas as pd
     import statsmodels.formula.api as smf
     from statsmodels.stats.anova import anova_lm

@@ -48,9 +48,9 @@ def main():
         if cmd == "read":
             from datum import io as dio
             return dio.read_file(q["path"])
-        if cmd == "excel":
+        if cmd == "workbook":
             from datum import io as dio
-            return dio.write_excel(q["path"], q["project"], q.get("analyses", []))
+            return dio.write_workbook(q["path"], q["project"], q.get("analyses", []))
         if cmd == "console":
             from datum import console
             return console.reset() if q.get("reset") else console.run(q["project"], q.get("code", ""))
