@@ -129,7 +129,8 @@ def sheets(project, analyses):
             row = [t["cols"][c][r] if c < len(t["cols"]) and r < len(t["cols"][c]) else None for c in range(first, len(t["cols"]))]
             if any(v is not None for v in row):
                 lead = [(t.get("rowTitles") or [""] * t["rows"])[r] or f"Row {r + 1}"] if grouped else []
-                rows.append(lead + [(v, "excl") if (r, j + first) in ex else v for j, v in enumerate(row)])
+                dated = lambda j, v: (v, t.get("xFormat")) if j == 0 and v is not None and xy and t.get("xFormat") in ("date", "datetime") else v  # 0.3.11: real dates
+                rows.append(lead + [(v, "excl") if (r, j + first) in ex else dated(j + first, v) for j, v in enumerate(row)])
         out.append((name_of(t["name"]), rows, False))
     for a in analyses:
         t = next((x for x in project.get("tables", []) if x["id"] == a["table"]), None)
@@ -163,11 +164,12 @@ def write_excel(path, project, analyses):
     wb = Workbook()
     wb.remove(wb.active)
     look = {"head": {"font": Font(bold=True), "fill": PatternFill("solid", fgColor="E3F5F2")}, "bold": {"font": Font(bold=True)},
-            "title": {"font": Font(bold=True, size=13)}, "excl": {"font": Font(italic=True, color="1F6FD0")}}
+            "title": {"font": Font(bold=True, size=13)}, "excl": {"font": Font(italic=True, color="1F6FD0")},
+            "date": {"number_format": "yyyy-mm-dd"}, "datetime": {"number_format": "yyyy-mm-dd hh:mm"}}
     for name, rows, wide in sheets(project, analyses):
         ws = wb.create_sheet(name)
         for row in rows:
-            ws.append([c[0] if isinstance(c, tuple) else c for c in row])
+            ws.append([as_date(c[0]) if isinstance(c, tuple) and c[1] in ("date", "datetime") else c[0] if isinstance(c, tuple) else c for c in row])
             for j, c in enumerate(row):
                 if isinstance(c, tuple):
                     for k, v in look[c[1]].items():
@@ -184,6 +186,11 @@ def write_excel(path, project, analyses):
     with atomic(path) as tmp:
         wb.save(tmp)
     return {"path": path, "sheets": len(wb.sheetnames)}
+
+
+def as_date(days):
+    """Days since 1970-01-01 (Datum Plot's dates) as a datetime, for spreadsheets."""
+    return datetime.datetime(1970, 1, 1) + datetime.timedelta(days=float(days))
 
 
 def num(v):

@@ -49,13 +49,15 @@ struct Options {
     /// My Analyses (H2): console code the user saved (name → code). Kept with the app, never in projects,
     /// so opening someone else's project never runs code.
     snippets: Value,
+    /// How dates are written (0.3.11): "dmy" day first, "mdy" month first, "" not chosen yet (the window picks from the system).
+    date_order: String,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
             theme: "auto".into(), autosave: 5, beta: false, open_last: false, decimals: -1, reps: 3, entry: "rep".into(), error: "sd".into(), width: 80.0, height: 60.0,
-            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}), snippets: json!({}),
+            font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}), snippets: json!({}), date_order: String::new(),
         }
     }
 }
@@ -229,6 +231,12 @@ async fn export_report(app: AppHandle, st: State<'_, St>, kind: String) -> R<Opt
 }
 
 /// Analyze › New Design (B35): a two-level factorial design as a new table, its runs in a random order.
+/// A typed date as days since 1970 (for date boxes in the window: axis limits), or None.
+#[tauri::command]
+fn date_number(text: String) -> Option<f64> {
+    datum_core::doc::date_number(&text, datum_core::doc::DAY_FIRST.load(std::sync::atomic::Ordering::Relaxed)).or_else(|| datum_core::doc::number(&text))
+}
+
 #[tauri::command]
 fn new_design(st: State<St>, factors: usize, half: bool, reps: usize, centers: usize) -> R<Value> {
     let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
@@ -608,6 +616,7 @@ fn set_options(app: AppHandle, st: State<St>, opts: Options) -> Value {
     if let Some(f) = options_file(&app) {
         let _ = write_atomic(&f, serde_json::to_string(&opts).unwrap_or_default().as_bytes());
     }
+    datum_core::doc::DAY_FIRST.store(opts.date_order != "mdy", std::sync::atomic::Ordering::Relaxed);
     let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     a.opts = opts;
     out(&a)
@@ -758,6 +767,7 @@ fn main() {
                 }));
             }
             let opts: Options = options_file(app.handle()).and_then(|f| read_small(&f)).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+            datum_core::doc::DAY_FIRST.store(opts.date_order != "mdy", std::sync::atomic::Ordering::Relaxed);
             let mut p = Project::new("Project1");
             p.add_table(opts.table(), Some(opts.graph()));
             app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
@@ -788,7 +798,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_excel, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
-            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design
+            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())
         .expect("Datum Plot failed to start");

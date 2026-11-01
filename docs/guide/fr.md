@@ -112,6 +112,14 @@ Pour exclure une valeur des graphiques et des analyses sans la supprimer, sélec
 
 **Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs .xlsx et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
 
+### Dates et heures
+
+La colonne X d’un tableau XY peut contenir des dates. Cliquez avec le bouton droit sur son en-tête (ou choisissez **Format X Column** (Format de la colonne X) dans le menu contextuel d’une cellule), puis **Dates** ou **Dates and times** (Dates et heures), et leur affichage : `5 Nov 2026`, `05-Nov-26`, `2026-11-05`, `05/11/2026` ou `Nov 2026`.
+
+- Tapez ou collez les dates sous la forme `2026-11-05`, `5-Nov-26`, `5 Nov 2026`, `Nov 5, 2026` ou `05/11/2026`, avec une heure si vous voulez (`2026-11-05 14:30`). **File › Options › Dates** (Fichier › Options › Dates) indique si `05/11/2026` commence par le jour ou par le mois.
+- Les dates sont gardées comme des nombres, les jours depuis le 1er janvier 1970, si bien que graphiques et ajustements les utilisent directement : le graphique a un axe de dates (**Format Graph › X Axis › Tick labels** (Mettre en forme › Axe X › Étiquettes) : automatique, jour et mois, mois et année, ISO ou numéro de semaine), et une droite ajustée donne sa pente **par jour**.
+- Les classeurs exportés (.xlsx, .ods) contiennent de vraies dates. Les fichiers venant de Datum Plan s’ouvrent avec leurs dates déjà réglées.
+
 ## Analyses et résultats
 
 ### Choisir une analyse

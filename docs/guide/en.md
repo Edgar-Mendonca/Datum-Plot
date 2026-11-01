@@ -112,6 +112,14 @@ To leave a value out of graphs and analyses without deleting it, select it and p
 
 **Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, .xlsx workbooks and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
 
+### Dates and times
+
+The X column of an XY table can hold dates. Right-click its heading (or choose **Format X Column** from the right-click menu of a cell) and pick **Dates** or **Dates and times**, and how they are shown: `5 Nov 2026`, `05-Nov-26`, `2026-11-05`, `05/11/2026` or `Nov 2026`.
+
+- Type or paste dates as `2026-11-05`, `5-Nov-26`, `5 Nov 2026`, `Nov 5, 2026` or `05/11/2026`, with a time if you like (`2026-11-05 14:30`). **File › Options › Dates** says whether `05/11/2026` is day first or month first.
+- Dates are kept as numbers, days since 1 January 1970, so graphs and fits work on them: the graph gets a date axis (**Format Graph › X Axis › Tick labels**: automatic, day and month, month and year, ISO or week number), and a straight-line fit gives its slope **per day**.
+- Workbook exports (.xlsx, .ods) write real dates. Files from Datum Plan open with their dates already set.
+
 ## Analyses and results
 
 ### Choosing an analysis

@@ -2,7 +2,7 @@
 // grid engine (selection.ts, cells.ts, fmt.ts): ranges, clipboard with Excel, fill handle,
 // formatting, and excluded values in blue italics.
 import { For, Show, createSignal, createMemo, createEffect, onMount, onCleanup } from "solid-js";
-import { Table, DataSet, spans, width, num, letter } from "./api";
+import { Table, DataSet, spans, width, num, letter, dateText } from "./api";
 import { act, call, setOut, P, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
 import { sortDialog, findDialog, excludeRows } from "./tools";
 import * as F from "./fmt";
@@ -45,7 +45,7 @@ export const DataTable = (p: { t: Table }) => {
   const lefts = createMemo(() => { let x = HW; return Array.from({ length: ncols() }, (_, k) => { const l = x; x += colW(k); return l; }); });
   const total = () => lefts()[ncols() - 1] + colW(ncols() - 1);
   const ex = createMemo(() => new Set(t().excluded.map(([r, c]) => `${r}:${c}`)));
-  const text = (r: number, k: number) => (k === 0 ? t().rowTitles[r] ?? "" : num(t().cols[k - 1]?.[r], opts().decimals));
+  const text = (r: number, k: number) => (k === 0 ? t().rowTitles[r] ?? "" : k === 1 && t().xFormat ? dateText(t().cols[0]?.[r], t().xDisplay, t().xFormat === "datetime", opts().dateOrder === "mdy") : num(t().cols[k - 1]?.[r], opts().decimals));
   const [edit, setEdit] = createSignal<string | null>(null);
   const [top, setTop] = createSignal(0), [h, setH] = createSignal(600);
   let box!: HTMLDivElement;
@@ -175,6 +175,7 @@ export const DataTable = (p: { t: Table }) => {
       { label: `Insert ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"} Above`, icon: "addrow", run: () => act({ Rows: { table: t().id, at: a, count: b - a + 1 } }) },
       { label: `Delete ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"}`, icon: "delrow", run: () => act({ Rows: { table: t().id, at: a, count: -(b - a + 1) } }) }, "-",
       ...(k >= 0 ? [{ label: `Format Data Set ${letter(k)}…`, icon: "opts", run: () => setDialog(t(), k) } as Item] : []),
+      ...(k < 0 && cur()[1] === 1 && ["xy", "sheet", "survival"].includes(t().kind) ? [{ label: "Format X Column (Number or Date)…", icon: "opts", run: () => xFormatDialog(t()) } as Item] : []),
       { label: "Add Data Set", icon: "addset", run: () => addSet(t()) },
       ...(k >= 0 && t().sets.length > 1 ? [{ label: `Delete Data Set ${letter(k)}`, icon: "del", run: () => delSet(t(), k) } as Item] : []), "-",
       { label: "Sort…", icon: "sort", run: sortDialog }, { label: "Find…", icon: "search", keys: "Ctrl+F", run: findDialog }, { label: "Exclude Rows by a Rule…", icon: "exclude", run: excludeRows },
@@ -196,7 +197,7 @@ export const DataTable = (p: { t: Table }) => {
           <div class="ghead dhead" style={{ height: `${HEAD}px` }}>
             <div class="hc idc" style={{ width: `${HW}px`, left: "0" }} />
             <div class="hc two" style={{ width: `${colW(0)}px` }}>Row title<Rsz k={0} title="Row title" /></div>
-            <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }}><b>X</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span><Rsz k={1} title={`X ${t().xTitle}`} /></div>
+            <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column; right-click to show it as numbers or dates" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); xFormatDialog(t()); }}><b>X{t().xFormat ? " · date" : ""}</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span><Rsz k={1} title={`X ${t().xTitle}`} /></div>
             <For each={t().sets}>{(s, k) => <div class="hset" style={{ width: `${Array.from({ length: spans(t())[k()][1] }, (_, j) => colW(spans(t())[k()][0] + 1 + j)).reduce((a, b) => a + b, 0)}px` }}>
               <div class="hc st" style={{ "--c": SETC[k() % 8] }} title="Double-click to change the data set" onMouseDown={e => { e.stopPropagation(); const [c0, w] = spans(t())[k()]; S.cols(c0 + 1, c0 + w, e.shiftKey, e.ctrlKey); box.focus(); }} onDblClick={e => { e.stopPropagation(); setDialog(t(), k()); }}>
                 <b>{letter(k())}{s.formula ? " ƒ" : ""}</b><span title={[s.title, s.comment, s.formula && `= ${s.formula}`].filter(Boolean).join("\n")}>{t().kind === "sheet" ? ({ x: "X", "": "Y", yerr: "Err", skip: "—" } as Record<string, string>)[s.role ?? ""] : `${s.title || `Data set ${letter(k())}`}${s.units ? ` (${s.units})` : ""}`}</span></div>
@@ -277,6 +278,22 @@ export const addSet = (t: Table) => {
   const last = t.sets[t.sets.length - 1];
   return act({ SetDef: { table: t.id, k: null, set: { title: `Data set ${letter(t.sets.length)}`, entry: last?.entry ?? "rep", reps: last?.reps ?? 3 } } });
 };
+
+/** Format X Column (0.3.11): numbers, or dates (with or without the time) and how they are shown. The values stay
+ *  numbers (days since 1970): numbers already there are read as day counts; Undo puts it back. */
+export const xFormatDialog = (t: Table) => openDialog(() => {
+  const [f, setF] = createSignal(t.xFormat ?? ""), [d, setD] = createSignal(t.xDisplay ?? "");
+  const sample = (fmt: string) => dateText(20762.604, fmt, f() === "datetime", opts().dateOrder === "mdy");
+  return (
+    <Dialog title="Format X Column" help="dates" ok={() => act({ XFormat: { table: t.id, format: f(), display: f() ? d() : "" } })}>
+      <div class="form">
+        <label>Values</label><Pick value={f()} set={setF} options={[["", "Numbers"], ["date", "Dates"], ["datetime", "Dates and times"]]} />
+        <Show when={f()}><label>Show as</label><Pick value={d()} set={setD} options={[["", sample("")], ["dmy", sample("dmy")], ["iso", sample("iso")], ["num", sample("num")], ["my", sample("my")]]} /></Show>
+      </div>
+      <p class="muted">Dates are kept as numbers, days since 1 Jan 1970, so graphs and fits work on them; numbers already in the column are read as day counts. Type dates as 2026-11-05, 5-Nov-26, 5 Nov 2026, Nov 5, 2026 or {opts().dateOrder === "mdy" ? "11/05/2026 (month first)" : "05/11/2026 (day first)"}; File › Options sets the day order.</p>
+    </Dialog>
+  );
+});
 
 /** Format Data Set: title, how values are entered, replicates; or delete it. */
 export const ROLES: [string, string][] = [["x", "X"], ["", "Y"], ["yerr", "Y error (of the column before)"], ["skip", "Not plotted"]];

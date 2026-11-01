@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.11 — 2026-11-01
+
+Dates and times.
+
+**Dates in tables**
+- The X column of an XY table can hold **dates** or **dates and times**: right-click its heading and choose how they are shown (5 Nov 2026, 05-Nov-26, 2026-11-05, 05/11/2026 or Nov 2026). Nothing changes for tables you leave as numbers, and older files open as before.
+- Type or paste dates in many forms: 2026-11-05, 2026-11-05 14:30, 5-Nov-26, 5 Nov 2026, Nov 5, 2026, 05/11/2026; impossible dates (31 Feb) are refused. **File › Options › Dates** sets whether 05/11/2026 is day first or month first (the first time, from your system's language).
+- Dates are kept as numbers, days since 1 January 1970, so everything else works on them unchanged.
+
+**Dates on graphs**
+- A date X axis with automatic ticks (the year once, then months or days), or day and month, month and year, ISO or week numbers (**Format Graph › X Axis**), with the range typed as dates. Hovering shows the date, and every export keeps the date ticks.
+
+**Analyses and exports**
+- Straight-line fits on dates give the slope **per day**. Workbook exports (.xlsx, .ods) write real dates.
+
+**From Datum Plan**
+- **Datum Plot 0.3.11 is the first version that opens Datum Plan's time charts with dates** (`xFormat: "date"`, days since 1970): they open on a date axis with no questions asked.
+
+**New sample**
+- **Readings over time**: weekly dissolved oxygen at two river sites, on a date axis, with the fall per day.
+
 ## 0.3.10 — 2026-11-01
 
 Control charts and design of experiments.

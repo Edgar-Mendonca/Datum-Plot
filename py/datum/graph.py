@@ -470,7 +470,9 @@ def axes(ax, table, graph, points, only_y=False, x=True):
             lim(a["min"], a["max"])
         elif not log and which == "y" and points and min(p[2] for p in points) >= 0:
             lim(bottom=0)  # Prism starts a positive Y axis at zero
-        if log:
+        if which == "x" and table.get("xFormat") in ("date", "datetime") and not log:
+            date_axis(axis, a)  # 0.3.11: X holds days since 1970, matplotlib's own date numbers
+        elif log:
             axis.set_major_locator(LogLocator(base=10))
             axis.set_minor_locator(LogLocator(base=10, subs=range(2, 10)) if a.get("minor", True) else NullLocator())
         else:
@@ -481,6 +483,29 @@ def axes(ax, table, graph, points, only_y=False, x=True):
         if a.get("grid"):
             ax.grid(True, axis=which, color="#D9DDE1", linewidth=0.6)
             ax.set_axisbelow(True)
+
+
+DATE_TICKS = {"daymonth": "%d %b", "monthyear": "%b %Y", "iso": "%Y-%m-%d"}
+
+
+def date_axis(axis, a):
+    """Date ticks: automatic (concise: the year once, then months or days), day and month, month and year, ISO, or
+    ISO week numbers ("W45")."""
+    import matplotlib.dates as md
+    from matplotlib.ticker import FuncFormatter
+    loc = md.AutoDateLocator(minticks=3, maxticks=8)
+    axis.set_major_locator(loc)
+    how = a.get("dates") or "auto"
+    if how == "week":
+        axis.set_major_formatter(FuncFormatter(lambda v, _: f"W{md.num2date(v).isocalendar()[1]:02d}"))
+    elif how in DATE_TICKS:
+        axis.set_major_formatter(md.DateFormatter(DATE_TICKS[how]))
+    else:
+        f = md.ConciseDateFormatter(loc, show_offset=True)
+        f.offset_formats = ["", "%Y", "%Y", "%Y", "%d %b %Y", "%d %b %Y %H:%M"]  # the year once, not "2026-Dec"
+        axis.set_major_formatter(f)
+    if a.get("minor", False):
+        axis.set_minor_locator(md.AutoDateLocator(minticks=8, maxticks=40))
 
 
 def swarm(v, h, step, lim):

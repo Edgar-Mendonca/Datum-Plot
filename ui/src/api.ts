@@ -12,8 +12,9 @@ export interface DataSet { title: string; entry: Entry; reps: number; role?: str
 export interface Table {
   id: number; name: string; kind: string; xTitle: string; xUnits: string; yTitle: string; yUnits: string; rows: number; rowTitles: string[];
   sets: DataSet[]; cols: (number | null)[][]; excluded: [number, number][]; style: Record<string, string>; notes: string;
+  /** 0.3.11: the X column holds dates ("date", "datetime"; days since 1970) and how they are shown. */ xFormat?: string; xDisplay?: string;
 }
-export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean; breakFrom?: number | null; breakTo?: number | null }
+export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean; breakFrom?: number | null; breakTo?: number | null; /** Date X axes: auto, daymonth, monthyear, iso, week. */ dates?: string }
 export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number; right?: boolean }
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
@@ -50,6 +51,7 @@ export interface Options {
   font: string; fontSize: number; style: string; dpi: number; paper: string; landscape: boolean; company: string; logo: string;
   /** Graph styles the user saved: name → settings. */ styles: Record<string, Partial<GraphSettings>>;
   /** My Analyses: console code the user saved (name → code); kept with the app, never in projects. */ snippets?: Record<string, string>;
+  /** How dates are written: "dmy" day first, "mdy" month first ("" = from the system's language). */ dateOrder?: string;
 }
 
 /** Spreadsheet-style column letters: A, B, … Z, AA. */
@@ -65,4 +67,14 @@ export const num = (v: number | null | undefined, decimals = -1) => v === null |
 /** Days since 1970-01-01 (local) and ISO dates, for the fill handle's date series. */
 export const dayDate = (d: number) => { const x = new Date(1970, 0, 1); x.setDate(x.getDate() + Math.floor(d)); return x; };
 export const dateDay = (x: Date) => Math.round((Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()) - Date.UTC(1970, 0, 1)) / 864e5);
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** A date value (days since 1970, the fraction the time of day) as text: "" 5 Nov 2026, dmy 05-Nov-26, iso 2026-11-05,
+ *  num 05/11/2026 (or 11/05/2026 month first), my Nov 2026; with the time when `time`. Display only: the value stays a number. */
+export const dateText = (v: number | null | undefined, display = "", time = false, monthFirst = false) => {
+  if (v === null || v === undefined || !isFinite(v)) return "";
+  const x = new Date(Date.UTC(1970, 0, 1) + Math.round(v * 864e5));
+  const d = x.getUTCDate(), m = x.getUTCMonth(), y = x.getUTCFullYear(), p2 = (n: number) => String(n).padStart(2, "0");
+  const day = display === "dmy" ? `${p2(d)}-${MON[m]}-${p2(y % 100)}` : display === "iso" ? `${y}-${p2(m + 1)}-${p2(d)}` : display === "num" ? (monthFirst ? `${p2(m + 1)}/${p2(d)}/${y}` : `${p2(d)}/${p2(m + 1)}/${y}`) : display === "my" ? `${MON[m]} ${y}` : `${d} ${MON[m]} ${y}`;
+  return time ? `${day} ${p2(x.getUTCHours())}:${p2(x.getUTCMinutes())}` : day;
+};
 export const iso = (d: number) => { const x = dayDate(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };

@@ -284,6 +284,9 @@ def weights(y, o):
 def linear(table, ks, o):
     model, order = o.get("model", "line"), int(o.get("order", 2))
     cols, details, plots, curves, checks, answers, interp = [], [], [], [], [], [], []
+    per = " per day" if table.get("xFormat") in ("date", "datetime") else ""  # 0.3.11: X in days since 1970
+    if per:
+        checks.append((None, "X holds dates (days since 1 Jan 1970), so slopes are per day; the Y-intercept is the value on 1 Jan 1970."))
     fits = []
     for k in ks:
         x, y, _ = points(table, k, o)
@@ -303,7 +306,7 @@ def linear(table, ks, o):
             eq = f"Y = {g(b, 4)}·X {'+' if a >= 0 else '−'} {g(abs(a), 4)}"
             xs = grid(x)
             curves.append({"set": k, "x": xs.tolist(), "y": (a + b * xs).tolist(), "label": eq})
-            answers.append(f"{name}: slope {g(b, 4)} (95% CI {g(b - t * sb, 4)} to {g(b + t * sb, 4)}).")
+            answers.append(f"{name}: slope {g(b, 4)}{per} (95% CI {g(b - t * sb, 4)} to {g(b + t * sb, 4)}).")
             fits.append((k, x, y, lambda v, a=a, b=b: a + b * v, None))
             plots.append(residual_plot(f"Residuals · {name}", x, res, c))
             continue
@@ -341,10 +344,10 @@ def linear(table, ks, o):
         pr = r.get_prediction(X(xs)).summary_frame(alpha=0.05)
         if model == "line":
             eq = f"Y = {g(b, 4)}·X {'+' if a >= 0 else '−'} {g(abs(a), 4)}"
-            answers.append(f"{name}: slope {g(b, 4)} (95% CI {g(ci[1][0], 4)} to {g(ci[1][1], 4)}), R² = {g(r2, 4)}.")
+            answers.append(f"{name}: slope {g(b, 4)}{per} (95% CI {g(ci[1][0], 4)} to {g(ci[1][1], 4)}), R² = {g(r2, 4)}.")
         elif model == "origin":
             eq = f"Y = {g(r.params[0], 4)}·X"
-            answers.append(f"{name}: slope {g(r.params[0], 4)} through the origin, R² = {g(r2, 4)}.")
+            answers.append(f"{name}: slope {g(r.params[0], 4)}{per} through the origin, R² = {g(r2, 4)}.")
         else:
             eq = "Y = " + " + ".join(f"{g(v, 4)}·X^{i}" if i > 1 else f"{g(v, 4)}·X" if i == 1 else g(v, 4) for i, v in enumerate(r.params))
             answers.append(f"{name}: polynomial of order {order}, R² = {g(r2, 4)}.")

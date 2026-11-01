@@ -222,7 +222,7 @@ fn worksheets_and_formulas() {
 #[test]
 fn templates_make_sense() {
     let l = templates::list();
-    assert_eq!(l.len(), 25);
+    assert_eq!(l.len(), 26);
     assert!(l.iter().all(|t| t.dots.len() >= 2 && t.dots.iter().all(|d| d.0.is_finite() && d.1.is_finite())), "every tile has a picture");
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1), ("trial", 1), ("surface", 1)] {
         let p = templates::build(Some(id)).unwrap();
@@ -386,4 +386,45 @@ fn factorial_designs_are_balanced_and_orthogonal() {
     let h = Table::design(4, true, 1, 0);
     assert_eq!(h.rows, 8);
     assert!((0..8).all(|r| h.get(r, 4).unwrap() == h.get(r, 1).unwrap() * h.get(r, 2).unwrap() * h.get(r, 3).unwrap()), "D = ABC");
+}
+
+#[test]
+fn dates_are_days_since_1970() {
+    use crate::doc::{date_number, days_from_civil};
+    let day = |s: &str| date_number(s, true);
+    assert_eq!(days_from_civil(1970, 1, 1), Some(0.0));
+    assert_eq!(days_from_civil(2026, 10, 12), Some(20738.0), "Datum Plan's sample: 20738 is 12 Oct 2026");
+    for s in ["2026-11-05", "05/11/2026", "5-Nov-26", "5 Nov 2026", "Nov 5, 2026", "5 November 2026", "05.11.2026", "2026/11/05"] {
+        assert_eq!(day(s), days_from_civil(2026, 11, 5), "{s}");
+    }
+    assert_eq!(date_number("11/05/2026", false), days_from_civil(2026, 11, 5), "month first");
+    assert_eq!(day("2026-11-05 14:30"), Some(days_from_civil(2026, 11, 5).unwrap() + 14.5 / 24.0));
+    assert_eq!(day("2026-11-05T06:00:00"), Some(days_from_civil(2026, 11, 5).unwrap() + 0.25));
+    assert_eq!(day("1970-01-02 06:00"), Some(1.25), "the brief's example");
+    assert_eq!(day("12:00"), Some(0.5), "a time alone is a fraction of a day");
+    assert_eq!(day("2:30 pm"), Some(14.5 / 24.0));
+    for bad in ["31 Feb 2026", "2026-02-29", "2026-13-01", "32/01/2026", "hello", "12", "2026-11-05 25:00", "1/2"] {
+        assert_eq!(day(bad), None, "{bad}");
+    }
+    assert_eq!(day("29 Feb 2024"), days_from_civil(2024, 2, 29), "a leap day");
+}
+
+#[test]
+fn a_date_column_reads_dates_and_old_files_stay_numbers() {
+    let old = Project::from_json(r#"{"name":"old","tables":[{"id":1,"name":"T","cols":[[20738]]}],"nextId":2}"#).unwrap();
+    assert_eq!(old.tables[0].x_format, "", "no xFormat: numbers, as before");
+    let mut d = Doc::new(templates::build(Some("growth")).unwrap());
+    let id = d.p.tables[0].id;
+    d.apply(Op::XFormat { table: id, format: "date".into(), display: String::new() }).unwrap();
+    d.apply(Op::Cells { table: id, cells: vec![(0, 0, "5-Nov-26".into()), (1, 0, "20738".into())] }).unwrap();
+    assert_eq!((d.p.tables[0].get(0, 0), d.p.tables[0].get(1, 0)), (crate::doc::days_from_civil(2026, 11, 5), Some(20738.0)));
+    d.undo();
+    d.undo();
+    assert_eq!(d.p.tables[0].x_format, "", "undo restores the number column");
+    let hostile = Project::from_json(r#"{"name":"h","tables":[{"id":1,"name":"T","xFormat":"evil","xDisplay":"x"}],"nextId":2}"#).unwrap();
+    assert_eq!((hostile.tables[0].x_format.as_str(), hostile.tables[0].x_display.as_str()), ("", ""));
+    // Datum Plan's hand-off file opens with its dates flagged.
+    let plan = r##"{"format":1,"name":"S","info":{"title":"Project S-curve","notes":"copy"},"tables":[{"id":1,"name":"Project S-curve","kind":"xy","xTitle":"Date","xUnits":"","xFormat":"date","yTitle":"Cumulative progress","yUnits":"%","rows":3,"rowTitles":["2026-10-12","2026-10-19","2026-10-26"],"sets":[{"title":"Planned (baseline)","entry":"rep","reps":1},{"title":"Actual","entry":"rep","reps":1}],"cols":[[20738,20745,20752],[0,12.5,31.0],[0,10.0,null]]}],"graphs":[{"id":2,"table":1,"name":"Project S-curve","settings":{"line":true,"error":"none","width":160,"height":100,"sets":[{"color":"#A3ABB8","symbol":"none","line":true},{"color":"#3B82F6","symbol":"none","line":true}]}}],"analyses":[],"layouts":[],"nextId":3,"ui":{}}"##;
+    let p = Project::from_json(plan).unwrap();
+    assert_eq!((p.tables[0].x_format.as_str(), p.tables[0].get(2, 0), p.graphs.len()), ("date", Some(20752.0), 1));
 }

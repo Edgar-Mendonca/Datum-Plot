@@ -25,7 +25,7 @@
   ],
   "highlights": [
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
-    "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change.",
+    "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change; dates and times in the X column, drawn on date axes.",
     "Import CSV, TXT, .xlsx and .pzfx files, plate readers and many runs at once; large data sets stay quick.",
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios); three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar) and bootstrap confidence intervals.",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison, smoothing splines; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
@@ -47,27 +47,30 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.11",
-      "title": "Signals",
+      "v": "0.3.12",
+      "title": "Dates, second step",
       "when": "Next",
       "items": [
-        "Wavelets and short-time spectra"
+        "Offer dates when pasted or imported text looks like dates",
+        "Axis steps in days, weeks or months; notes at a date",
+        "Date functions in column formulas"
       ]
     },
     {
-      "v": "0.3.12–0.3.13",
-      "title": "Images and Bayes",
+      "v": "0.3.13–0.3.14",
+      "title": "Signals and images",
       "when": "Soon",
       "items": [
-        "Graph digitizer and image tools",
-        "Bayesian tests"
+        "Wavelets and short-time spectra",
+        "Graph digitizer and image tools"
       ]
     },
     {
-      "v": "0.3.14",
-      "title": "Mac and Linux",
+      "v": "0.3.15–0.3.16",
+      "title": "Bayes, Mac and Linux",
       "when": "Later",
       "items": [
+        "Bayesian tests",
         "Mac and Linux versions"
       ]
     },

@@ -47,6 +47,11 @@ def cell(v, style=None):
     st = f' table:style-name="{style}"' if style else ""
     if v is None or v == "":
         return f"<table:table-cell{st}/>"
+    if style in ("date", "datetime"):  # days since 1970 → a real date cell
+        import datetime
+        d = datetime.datetime(1970, 1, 1) + datetime.timedelta(days=float(v))
+        shown = d.strftime("%Y-%m-%d" if style == "date" else "%Y-%m-%d %H:%M")
+        return f'<table:table-cell office:value-type="date" office:date-value="{d.strftime("%Y-%m-%dT%H:%M:%S")}"><text:p>{shown}</text:p></table:table-cell>'
     if isinstance(v, (int, float)) and not isinstance(v, bool) and v == v and abs(v) != float("inf"):
         return f'<table:table-cell{st} office:value-type="float" office:value="{v!r}"><text:p>{v:g}</text:p></table:table-cell>'
     return f'<table:table-cell{st} office:value-type="string">{p(v)}</table:table-cell>'

@@ -2,7 +2,7 @@
 // axes and legend are, so the window can show values under the mouse and open the right page of
 // Format Graph on a double-click.
 import { Show, For, createSignal, createEffect, on, onCleanup } from "solid-js";
-import { Graph, Render, Note, num, invoke, spans } from "./api";
+import { Graph, Render, Note, num, invoke, spans, dateText } from "./api";
 import { act, call, engine, openMenu, out, toast, open, openDialog, opts } from "./store";
 import { formatGraph, setG } from "./format";
 import { Dialog, Pick, Check, Icon } from "./ui";
@@ -53,13 +53,14 @@ export const GraphView = (p: { g: Graph }) => {
     const [px, py] = at(e), R = r()!;
     const tb = out()!.project.tables.find(x => x.id === p.g.table), gs = p.g.settings;
     // No crosshair where the picture has no flat X–Y plane to read (polar, 3D).
+    const xt = (v: number) => tb?.xFormat ? dateText(v, tb.xDisplay, tb.xFormat === "datetime", opts().dateOrder === "mdy") : num(v);  // 0.3.11: dates show as dates
     if (!inside(px, py, R.plot) || gs.polar || (tb?.kind === "matrix" && ["surface", "wireframe"].includes(gs.column))) { setCross(null); setTip(null); return; }
     setCross([px, py]);
     const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![6] ?? q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
     if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;
-      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "survival" ? `X ${num(x)} · ${num(+y.toPrecision(4))}% survival` : tb?.kind === "column" || tb?.kind === "nested" ? `mean ${num(+y.toPrecision(6))}` : `X ${num(x)} · mean ${num(+y.toPrecision(6))}`, tb?.kind === "survival" ? `${n} at risk` : n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
-    } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [tb?.kind === "column" || tb?.kind === "nested" ? `Y ${num(+y.toPrecision(4))}` : `X ${num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }
+      setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "survival" ? `X ${xt(x)} · ${num(+y.toPrecision(4))}% survival` : tb?.kind === "column" || tb?.kind === "nested" ? `mean ${num(+y.toPrecision(6))}` : `X ${xt(x)} · mean ${num(+y.toPrecision(6))}`, tb?.kind === "survival" ? `${n} at risk` : n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
+    } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [tb?.kind === "column" || tb?.kind === "nested" ? `Y ${num(+y.toPrecision(4))}` : `X ${tb?.xFormat ? xt(x) : num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }
   };
   // ---------- working on the graph: notes, points, zoom and pan ----------
   const [sel, setSel] = createSignal<number | null>(null), [shift, setShift] = createSignal<[number, number] | null>(null);

@@ -45,3 +45,8 @@ The roadmap then moves by two: wavelets 0.3.13, digitizer 0.3.14, Bayesian tests
 1. Dates in two releases (0.3.11, 0.3.12) as above, before wavelets — or all in one?
 2. Default day order: from the system's language (recommended), or always day first?
 3. Display format default `5 Nov 2026` (as the brief says)?
+
+## 4. Answers (2026-11-01)
+
+The user: "go ahead and release 0.3.11 as per your recommendation". Two releases as proposed; the day order from the
+system's language on the first start; "5 Nov 2026" as the default display.

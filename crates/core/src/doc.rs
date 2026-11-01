@@ -14,6 +14,8 @@ pub enum Op {
     /// Deletes a table (with its graphs) or a graph.
     Delete { id: u32 },
     Rename { id: u32, name: String },
+    /// The X column as numbers or dates (0.3.11): `format` "", "date" or "datetime"; `display` how dates are shown.
+    XFormat { table: u32, format: String, display: String },
     /// Copies a table (with its data) or a graph.
     Duplicate { id: u32 },
     /// Typed values: (row, grid column, text); column -1 is the row title. Empty text clears.
@@ -170,6 +172,88 @@ pub fn number(s: &str) -> Option<f64> {
     Some(if pct { v / 100.0 } else { v })
 }
 
+/// Dates are written day first (05/11/2026 = 5 November) unless the options say month first; the shell sets it.
+pub static DAY_FIRST: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
+/// Days from 1970-01-01 to a civil date (H. Hinnant's algorithm), or None for an impossible date (31 Feb).
+pub fn days_from_civil(y: i64, m: u32, d: u32) -> Option<f64> {
+    let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
+    let dim = [31, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if !(1..=12).contains(&m) || d == 0 || d > dim[m as usize - 1] || !(1..=9999).contains(&y) {
+        return None;
+    }
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let mp = (m as i64 + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d as i64 - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    Some((era * 146097 + doe - 719468) as f64)
+}
+
+/// A typed or pasted date (and time) as days since 1970-01-01, the time of day as the fraction:
+/// ISO (2026-11-05, 2026-11-05 14:30, 2026-11-05T14:30:00), 05/11/2026 (day first or month first),
+/// month names (5-Nov-26, 5 Nov 2026, Nov 5, 2026, 5 November 2026), or a time alone (14:30) as a fraction of a day.
+pub fn date_number(s: &str, day_first: bool) -> Option<f64> {
+    let s = s.trim().trim_end_matches('Z');
+    if s.is_empty() {
+        return None;
+    }
+    // "2:30 pm": take the am/pm off first, so the time is the last part.
+    let low = s.to_lowercase();
+    let (s, pm) = match () {
+        _ if low.ends_with("pm") && s[..s.len() - 2].contains(':') => (s[..s.len() - 2].trim_end(), Some(true)),
+        _ if low.ends_with("am") && s[..s.len() - 2].contains(':') => (s[..s.len() - 2].trim_end(), Some(false)),
+        _ => (s, None),
+    };
+    // Split off a time: the last part with a colon.
+    let (date, time) = match s.rfind([' ', 'T']) {
+        Some(i) if s[i + 1..].contains(':') => (s[..i].trim().trim_end_matches(','), Some(&s[i + 1..])),
+        _ if s.contains(':') && !s.contains(['-', '/', '.']) && !s.chars().any(|c| c.is_alphabetic()) => ("", Some(s)),
+        _ => (s, None),
+    };
+    let frac = match time {
+        Some(t) => {
+            let p: Vec<f64> = t.trim().split(':').map(|x| x.parse::<f64>()).collect::<Result<_, _>>().ok()?;
+            let (mut h, mi, se) = (p[0], *p.get(1).unwrap_or(&0.0), *p.get(2).unwrap_or(&0.0));
+            if p.len() > 3 || !(0.0..60.0).contains(&mi) || !(0.0..61.0).contains(&se) || !(0.0..24.0).contains(&h) {
+                return None;
+            }
+            if let Some(pm) = pm {
+                if !(1.0..=12.0).contains(&h) {
+                    return None;
+                }
+                h = h % 12.0 + if pm { 12.0 } else { 0.0 };
+            }
+            (h * 3600.0 + mi * 60.0 + se) / 86400.0
+        }
+        None => 0.0,
+    };
+    if date.is_empty() {
+        return time.map(|_| frac);
+    }
+    const MONTHS: [&str; 12] = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    let parts: Vec<&str> = date.split(['-', '/', '.', ' ', ',']).filter(|p| !p.is_empty()).collect();
+    if parts.len() != 3 {
+        return None;
+    }
+    let year = |p: &str| -> Option<i64> { let y: i64 = p.parse().ok()?; Some(if p.len() <= 2 { if y < 70 { 2000 + y } else { 1900 + y } } else { y }) };
+    let month = |p: &str| -> Option<u32> { let l = p.to_lowercase(); MONTHS.iter().position(|m| l.len() >= 3 && l.starts_with(m) && m.starts_with(&l[..3])).map(|i| i as u32 + 1) };
+    let num = |p: &str| -> Option<u32> { p.parse().ok() };
+    let (y, m, d) = if parts[0].len() == 4 && parts[0].chars().all(|c| c.is_ascii_digit()) {
+        (year(parts[0])?, num(parts[1]).or_else(|| month(parts[1]))?, num(parts[2])?)
+    } else if let Some(m) = month(parts[1]) {
+        (year(parts[2])?, m, num(parts[0])?) // 5-Nov-26, 5 Nov 2026
+    } else if let Some(m) = month(parts[0]) {
+        (year(parts[2])?, m, num(parts[1])?) // Nov 5, 2026
+    } else {
+        let (a, b) = (num(parts[0])?, num(parts[1])?);
+        let (d, m) = if day_first { (a, b) } else { (b, a) };
+        (year(parts[2])?, m, d)
+    };
+    Some(days_from_civil(y, m, d)? + frac)
+}
+
 /// Rebuilds a table's columns from `map` (new column → old column) and moves exclusions and
 /// formatting with them.
 fn remap_cols(t: &mut Table, map: &[Option<usize>]) {
@@ -225,7 +309,10 @@ fn put(t: &mut Table, r: usize, c: i64, text: &str) -> bool {
     if c >= t.width() {
         widen(t, c + 1);
     }
-    let v = if text.trim().is_empty() { None } else { match number(text) { Some(v) => Some(v), None => return false } };
+    // A date column (0.3.11) reads dates first; a plain number there is a day count.
+    let date = c == 0 && !t.x_format.is_empty();
+    let parsed = if date { date_number(text, DAY_FIRST.load(std::sync::atomic::Ordering::Relaxed)).or_else(|| number(text)) } else { number(text) };
+    let v = if text.trim().is_empty() { None } else { match parsed { Some(v) => Some(v), None => return false } };
     t.cols[c][r] = v;
     true
 }
@@ -245,6 +332,10 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             if n == p.tables.len() + p.graphs.len() + p.analyses.len() + p.layouts.len() {
                 return Err("Nothing to delete.".into());
             }
+        }
+        Op::XFormat { table, format, display } => {
+            let t = p.table_mut(table)?;
+            (t.x_format, t.x_display) = (format, display);
         }
         Op::Rename { id, name } => {
             let name = name.trim().to_string();

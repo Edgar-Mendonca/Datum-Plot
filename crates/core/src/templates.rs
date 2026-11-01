@@ -99,6 +99,7 @@ pub fn list() -> Vec<Tpl> {
         Tpl { id: "diagnostic", name: "Diagnostic test", desc: "A biomarker in 30 healthy people and 30 patients: the ROC curve, its AUC and the best cut-off.", dots: dots("diagnostic") },
         Tpl { id: "surface", name: "Response surface", desc: "Process yield over a grid of temperatures and times: a contour map and a quadratic surface fit locating the best settings.", dots: dots("surface") },
         Tpl { id: "ternary", name: "Composition triangle", desc: "Copper, nickel and zinc shares of 18 alloy samples on a ternary graph; switch Graph Style to Bubble to see hardness as bubble size.", dots: dots("ternary") },
+        Tpl { id: "dates", name: "Readings over time", desc: "Weekly dissolved-oxygen readings at two river sites through a season, on a date axis, with a trend line per day.", dots: dots("dates") },
         Tpl { id: "polar", name: "Polar pattern", desc: "The radiation pattern of two antennas, gain against angle, on a polar graph.", dots: dots("polar") },
     ]
 }
@@ -547,6 +548,20 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             p.name = "Composition triangle".into();
             p.info = Info { title: "Copper–nickel–zinc alloys".into(), experiment: "The copper, nickel and zinc content (wt%) of 18 alloy samples and their Vickers hardness. The ternary graph places each sample by its three shares; as a bubble graph, hardness sets the bubble size.".into(), ..Default::default() };
             p.add_table(t, Some(GraphSettings { column: "ternary".into(), height: 75.0, ..g }));
+        }
+        Some("dates") => {
+            let start = crate::doc::days_from_civil(2026, 3, 2).unwrap(); // a Monday
+            let xs: Vec<f64> = (0..26).map(|w| start + 7.0 * w as f64).collect();
+            let up = |d: f64| 10.6 - 0.008 * (d - start); // warming water holds less oxygen
+            let down = |d: f64| 9.9 - 0.019 * (d - start); // and less still below the outfall
+            let mut t = table(["Oxygen", "Date", "", "Dissolved oxygen", "mg/L"], &xs, &[("Upstream", &up), ("Downstream", &down)], 1, 0.03, 2);
+            t.x_format = "date".into();
+            p.name = "Readings over time".into();
+            p.info = Info { title: "River monitoring".into(), experiment: "Dissolved oxygen measured every Monday from March to August at a site upstream and one downstream of an outfall, falling as the water warms. The X column holds dates (right-click its heading to change how they are shown); the linear fit gives the change per day.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: true, error: "none".into(), width: 120.0, ..g }));
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "Trend".into(), kind: "linear".into(), sets: vec![], options: serde_json::json!({ "label": false }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("polar") => {
             let xs: Vec<f64> = (0..=72).map(|i| i as f64 * 5.0).collect();

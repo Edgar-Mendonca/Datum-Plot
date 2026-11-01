@@ -44,7 +44,7 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, twenty-five samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 30, String((await p.$$(".home .tile")).length));
+  check("Home shows the blank table, twenty-six samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 31, String((await p.$$(".home .tile")).length));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
   await p.click(".home .tile:nth-child(2)");
   await p.waitForTimeout(600);
@@ -563,6 +563,16 @@ const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${
   check("New Design counts the runs", ((await p.textContent(".dlg").catch(() => "")) || "").includes("8 runs"));
   await p.click('.dlg .btn.pri'); await p.waitForTimeout(300);
   check("New Design asks the shell for a 3-factor full factorial", JSON.stringify(await calls("new_design")) === JSON.stringify([{ factors: 3, half: false, reps: 1, centers: 0 }]), JSON.stringify(await calls("new_design")));
+  // 0.3.11: the X column can hold dates.
+  await p.click('.nav .nitem >> nth=1'); await p.waitForTimeout(300);
+  await reset();
+  await p.click(".dhead .hc.xh", { button: "right" }); await p.waitForTimeout(200);
+  check("right-clicking the X heading offers numbers or dates", ((await p.textContent(".dlg").catch(() => "")) || "").includes("Format X Column"));
+  await p.selectOption(".dlg select", "date"); await p.waitForTimeout(100);
+  check("dates are shown as 5 Nov 2026 by default", ((await p.textContent(".dlg").catch(() => "")) || "").includes("Nov 2026"));
+  await p.click(".dlg .btn.pri"); await p.waitForTimeout(200);
+  const xf = (await ops()).find(o => o.XFormat);
+  check("OK asks the engine to make the X column dates", xf && xf.XFormat.format === "date" && xf.XFormat.table === P.tables[0].id, JSON.stringify(xf));
   // 0.3.3: the window names file types, never other companies' products.
   const brands = /PowerPoint|Excel|\bWord\b|Prism|Origin|Illustrator|Tableau/;
   let named = [];

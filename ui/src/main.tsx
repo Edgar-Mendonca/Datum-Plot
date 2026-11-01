@@ -52,6 +52,12 @@ const App = () => {
         </Dialog>
       ));
       checkUpdate(true);
+      // 0.3.11: the first time, the day order of dates follows the system's language (month first in the US and a few others).
+      if (!opts().dateOrder) {
+        const mdy = /^(en-US|en-PH|en-CA|es-US|fil)/i.test(navigator.language || "");
+        const o = { ...opts(), dateOrder: mdy ? "mdy" : "dmy" };
+        setOpts(o); invoke("set_options", { opts: o }).catch(() => {});
+      }
       // Once, on the first start: point new users to the guide.
       try { if (!localStorage.getItem("guide-hint")) { localStorage.setItem("guide-hint", "1"); setTimeout(() => toast("New to Datum Plot? Help › Guide has a step-by-step guide (PDF) in English, 中文 and Français."), 1500); } } catch { /* no storage: no hint */ }
       setInterval(() => { if (opts().autosave > 0) invoke("autosave").catch(() => {}); }, Math.max(1, opts().autosave) * 60000);

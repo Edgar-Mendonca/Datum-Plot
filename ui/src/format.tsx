@@ -1,8 +1,8 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
 import { For, Show, createSignal } from "solid-js";
-import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty } from "./api";
-import { act, out, openDialog } from "./store";
+import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText } from "./api";
+import { act, out, openDialog, toast } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES, ORDERED, paletteName } from "./tools";
 import { lastRender } from "./graph";
@@ -35,14 +35,19 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
   const scheme = () => { const p = s().palette || "okabe"; return p.includes("#") ? p.split(",").map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{6}$/.test(c)) : (!ORDERED.includes(p) && PALETTES.find(x => x[0] === p)?.[2]) || (lastRender(g().id)?.colors ?? OKABE_ITO); };
   const AxisPage = (p: { k: "x" | "y" | "y2" }) => {
     const a = () => s()[p.k] ?? { title: "", scale: "lin", auto: true, min: null, max: null, step: null, minor: false, grid: false }, put = (patch: Partial<Axis>) => set(x => { x[p.k] = { ...a(), ...patch } as Axis; });
+    /** 0.3.11: a date X axis takes its limits as typed dates (read by the engine's own date rules). */
+    const isDate = () => p.k === "x" && !!t()?.xFormat;
+    const asDate = async (text: string, k: "min" | "max") => { const v = text.trim() ? await invoke<number | null>("date_number", { text }) : null; if (text.trim() && v === null) return toast(`“${text}” is not a date: type it as 2026-11-05 or 5 Nov 2026.`); put({ [k]: v }); };
     const auto = () => p.k === "y2" ? "the titles of the right-axis data sets" : `${p.k === "x" ? t()?.xTitle : t()?.yTitle}${(p.k === "x" ? t()?.xUnits : t()?.yUnits) ? ` (${p.k === "x" ? t()?.xUnits : t()?.yUnits})` : ""}`;
     const breaks = () => p.k !== "y2" && a().scale === "lin" && !s().polar && (["xy", "sheet"].includes(t()?.kind ?? "") || (p.k === "y" && ["column", "grouped", "contingency", "nested"].includes(t()?.kind ?? "") && !["heatmap", "percent"].includes(s().column)));
     return <div class="form">
       <label>Title</label><input value={a().title} placeholder={`From the table: ${auto()}`} onChange={e => put({ title: e.currentTarget.value })} />
       <label>Scale</label><Pick value={a().scale} set={v => put({ scale: v as Axis["scale"] })} options={[["lin", "Linear"], ["log", "Logarithmic (log10)"]]} />
       <label>Range</label><span class="inline"><Check label="Automatic" value={a().auto} set={v => put({ auto: v })} />
-        <Show when={!a().auto}><span class="muted">from</span><input type="number" style={{ width: "90px" }} value={a().min ?? ""} onChange={e => put({ min: num(e.currentTarget.value) })} /><span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().max ?? ""} onChange={e => put({ max: num(e.currentTarget.value) })} /></Show></span>
-      <Show when={a().scale === "lin"}><label>Major ticks every</label><input type="number" placeholder="Automatic" value={a().step ?? ""} onChange={e => put({ step: num(e.currentTarget.value) && num(e.currentTarget.value)! > 0 ? num(e.currentTarget.value) : null })} /></Show>
+        <Show when={!a().auto && !isDate()}><span class="muted">from</span><input type="number" style={{ width: "90px" }} value={a().min ?? ""} onChange={e => put({ min: num(e.currentTarget.value) })} /><span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().max ?? ""} onChange={e => put({ max: num(e.currentTarget.value) })} /></Show>
+        <Show when={!a().auto && isDate()}><span class="muted">from</span><input style={{ width: "110px" }} value={dateText(a().min, "iso")} onChange={e => asDate(e.currentTarget.value, "min")} /><span class="muted">to</span><input style={{ width: "110px" }} value={dateText(a().max, "iso")} onChange={e => asDate(e.currentTarget.value, "max")} /></Show></span>
+      <Show when={isDate()}><label>Tick labels</label><Pick value={a().dates || "auto"} set={v => put({ dates: v })} options={[["auto", "Automatic (the year once, then months or days)"], ["daymonth", "Day and month (05 Nov)"], ["monthyear", "Month and year (Nov 2026)"], ["iso", "ISO (2026-11-05)"], ["week", "Week number (W45)"]]} /></Show>
+      <Show when={a().scale === "lin" && !isDate()}><label>Major ticks every</label><input type="number" placeholder="Automatic" value={a().step ?? ""} onChange={e => put({ step: num(e.currentTarget.value) && num(e.currentTarget.value)! > 0 ? num(e.currentTarget.value) : null })} /></Show>
       <label>Ticks and grid</label><span class="inline"><Check label="Minor ticks" value={a().minor} set={v => put({ minor: v })} /><Check label="Gridlines" value={a().grid} set={v => put({ grid: v })} /></span>
       <Show when={breaks()} fallback={<Show when={p.k !== "y2"}><label>Axis break</label><span class="muted">{a().scale !== "lin" ? "Breaks need a linear axis." : "Breaks are for the Y axis of XY, column, grouped and nested graphs, and the X axis of XY graphs."}</span></Show>}><label>Axis break</label><span class="inline"><span class="muted">leave out from</span><input type="number" style={{ width: "90px" }} value={a().breakFrom ?? ""} onChange={e => put({ breakFrom: num(e.currentTarget.value) })} />
         <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span></Show>

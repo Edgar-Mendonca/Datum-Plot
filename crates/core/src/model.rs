@@ -103,16 +103,21 @@ pub struct Table {
     /// Text formatting of cells ("row:col" → style string, as in Datum Plan's fmt.ts).
     pub style: BTreeMap<String, String>,
     pub notes: String,
+    /// The X column holds dates (0.3.11): "" numbers, "date" or "datetime". Values stay numbers: days since
+    /// 1970-01-01 (matplotlib's epoch, Datum Plan's day number), the fraction being the time of day.
+    pub x_format: String,
+    /// How the table shows those dates: "" (5 Nov 2026), "dmy" (05-Nov-26), "iso" (2026-11-05), "num" (05/11/2026 or 11/05/2026), "my" (Nov 2026).
+    pub x_display: String,
 }
 
 // By hand: comparing a million empty row titles one String at a time took most of an edit's time.
 impl PartialEq for Table {
     fn eq(&self, o: &Self) -> bool {
         // Listing every field: a new one fails to compile here until it is compared.
-        let Table { id, name, kind, x_title, x_units, y_title, y_units, rows, row_titles, sets, cols, excluded, style, notes } = self;
+        let Table { id, name, kind, x_title, x_units, y_title, y_units, rows, row_titles, sets, cols, excluded, style, notes, x_format, x_display } = self;
         let titles = row_titles.len() == o.row_titles.len() && row_titles.iter().zip(&o.row_titles).all(|(a, b)| a.len() == b.len() && (a.is_empty() || a == b));
         (*id, name, kind, x_title, x_units, y_title, y_units, *rows) == (o.id, &o.name, &o.kind, &o.x_title, &o.x_units, &o.y_title, &o.y_units, o.rows)
-            && titles && *sets == o.sets && *cols == o.cols && *excluded == o.excluded && *style == o.style && *notes == o.notes
+            && titles && *sets == o.sets && *cols == o.cols && *excluded == o.excluded && *style == o.style && *notes == o.notes && *x_format == o.x_format && *x_display == o.x_display
     }
 }
 
@@ -121,6 +126,7 @@ impl Default for Table {
         Self {
             id: 0, name: "Data 1".into(), kind: "xy".into(), x_title: "X".into(), x_units: String::new(), y_title: "Y".into(), y_units: String::new(), rows: 20,
             row_titles: vec![], sets: vec![DataSet { title: "Data set A".into(), ..Default::default() }], cols: vec![], excluded: vec![], style: BTreeMap::new(), notes: String::new(),
+            x_format: String::new(), x_display: String::new(),
         }
     }
 }
@@ -267,6 +273,12 @@ impl Table {
     }
     /// Makes every column `rows` long and matches the columns to the data sets.
     pub fn normalize(&mut self) {
+        if !["", "date", "datetime"].contains(&self.x_format.as_str()) {
+            self.x_format.clear();
+        }
+        if !["", "dmy", "iso", "num", "my"].contains(&self.x_display.as_str()) {
+            self.x_display.clear();
+        }
         // Limits that keep a damaged or hostile file from exhausting memory: 1000 data sets of at most
         // 50 replicates, a million rows, and no more than 20 million cells in all.
         self.sets.truncate(MAX_SETS);

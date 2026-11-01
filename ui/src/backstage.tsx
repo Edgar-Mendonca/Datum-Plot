@@ -121,6 +121,7 @@ const OptionsPage = () => {
       <p class="muted">Settings for Datum Plot on this computer. Defaults for new tables and graphs apply when they are created; change an open graph with Format Graph.</p>
       <Sec t="General" about="How the window looks and numbers are shown.">
         <Opt l="Theme" hint="Auto follows the Windows light or dark setting."><Pick value={o().theme || "auto"} set={v => { put("theme", v); setThemeRaw(v); applyTheme(); }} options={[["auto", "Auto (follow Windows)"], ["light", "Light"], ["dark", "Dark"]]} /></Opt>
+        <Opt l="Dates" hint="How typed and pasted dates such as 05/11/2026 are read."><Pick value={o().dateOrder || "dmy"} set={v => put("dateOrder", v)} options={[["dmy", "Day first (05/11/2026 = 5 November)"], ["mdy", "Month first (11/05/2026 = 5 November)"]]} /></Opt>
         <Opt l="Decimals in data tables" hint="Values are stored exactly; this is only how they are shown."><Pick value={String(o().decimals)} set={v => put("decimals", +v)} options={[["-1", "As typed"], ["0", "0"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["6", "6"]]} /></Opt>
       </Sec>
       <Sec t="Start-up and saving" about="What happens when Datum Plot starts, and how your work is protected.">
