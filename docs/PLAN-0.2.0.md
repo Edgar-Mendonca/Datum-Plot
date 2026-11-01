@@ -22,10 +22,10 @@ flowchart LR
   A -->|Python computes| R[Results sheet<br/>Summary · Details · Residuals · Explain]
   A -->|fitted line + bands| G[Graph]
   T --> G
-  R -->|methods text, copy to Word/Excel| P[Your report]
+  R -->|methods text, copy to documents and spreadsheets| P[Your report]
 ```
 
-- **Results become real items** in the navigator (under Results), each linked to its table. Change a value and the result and the fitted line on the graph update, as in Prism.
+- **Results become real items** in the navigator (under Results), each linked to its table. Change a value and the result and the fitted line on the graph update.
 - Everything is computed in the built-in Python (numpy, SciPy, **statsmodels**, **lmfit**) and checked against R and the NIST reference data sets in tests.
 
 ## 3. The list for 0.2 (what you will see)
@@ -37,7 +37,7 @@ flowchart LR
 | **Explain panel** (C3) | Beside the tables: what was asked, the answer in one sentence ("The slope is 205 GPa (95 % CI 198–212); the line explains 99.6 % of the variation."), and checks with ✓/⚠ (normal residuals, no runs, enough points). |
 | **Methods text** (C5) | Ready to paste: "Data were fitted by least-squares linear regression in Datum Plot 0.2.0 (Python 3.13, SciPy 1.18)…" plus a figure-legend sentence. |
 | **P values** (C6) | Exact P values with APA stars by default; other styles in Options. |
-| **Copy** (C7) | Copy any results table as a table for Excel or Word. (Excel files in 0.2.2.) |
+| **Copy** (C7) | Copy any results table as a table for a spreadsheet or a document. (.xlsx files in 0.2.2.) |
 | **Show as Python code** (C8) | The exact numpy/SciPy code that reproduces the result, to check it outside the app. |
 | **Checklist** (C9) | Warnings such as "only 4 points", "curvature in the residuals", "the fit did not converge". |
 
@@ -55,7 +55,7 @@ flowchart LR
 | **Straight line** | Slope, intercept with standard errors and 95 % CI, R², adjusted R², Sy.x, F and P (is the slope different from zero?), X-intercept, runs test, residuals. |
 | **Fit range** | Fit only X from … to … (e.g. the elastic region of a stress–strain curve). Typed in 0.2.0; dragged on the graph later (E5). |
 | **Options** | Force through the origin (or a given point), weighting (1/Y², 1/SD²), all replicates or only the means, polynomial of order 2–6, **Deming regression** (errors in X and Y). |
-| **Compare lines** | Are the slopes (then intercepts) of the data sets different? (F test, as Prism.) |
+| **Compare lines** | Are the slopes (then intercepts) of the data sets different? (F test.) |
 | **On the graph** (D5) | The fitted line, 95 % confidence band and prediction band, and optionally the **equation and R² on the graph**. A **residual plot** as its own graph. |
 | **Interpolate** | Read X from Y (or Y from X) off the line for unknowns. |
 
@@ -73,8 +73,8 @@ flowchart LR
 | --- | --- |
 | **Transforms** (A15) | New linked table: log, ln, 1/X (Arrhenius), X², normalise, subtract baseline, unit conversions (MPa ↔ GPa, °C ↔ K), row means. |
 | **Sort, find, filter, data checks** (A17, A18) | Sort by X, find values, warnings for text in number cells or repeated X. |
-| **Styles, copy look, colour schemes** (D13, D14, D16) | Prism, Origin, Nature, ACS, IEEE, greyscale, presentation; apply one graph's look to others; palettes. |
-| **Batch export, Excel** (G4, G6) | Every graph at once; tables and results as an .xlsx workbook. |
+| **Styles, copy look, colour schemes** (D13, D14, D16) | Open axes, framed box, Nature, ACS, IEEE, greyscale, presentation; apply one graph's look to others; palettes. |
+| **Batch export, workbook** (G4, G6) | Every graph at once; tables and results as an .xlsx workbook. |
 | **Test chooser, statistics guide** (C4, J3) | A few questions open the right analysis; a short guide on which test when. |
 
 ### 3.6 New ideas for materials science (new IDs, for your opinion)
@@ -102,7 +102,7 @@ flowchart LR
 | --- | --- | --- |
 | **0.2.0** | Results foundation (C1–C3, C5–C9), descriptive statistics (B1), normality + QQ (B2), outliers + exclude (B3, A16), **linear regression** with fit range, polynomial, Deming, compare lines, line + bands + equation on the graph, residual plot, interpolation (B9, D5); samples: tensile modulus, Arrhenius, calibration line | big |
 | **0.2.1** | **Curve fitting** with the model library and your own equations, global fits, model comparison, standard curves, area/smoothing (B10–B14), second worker (I3); **tensile test analysis (B27) and Weibull (B29)** if you want them | big |
-| **0.2.2** | Transforms incl. unit conversion and 1/T (A15), sort/find/checks (A17, A18), histogram (D4), graph styles, copy look, colour schemes (D13, D14, D16), batch export and Excel (G4, G6), test chooser and guide (C4, J3) | medium |
+| **0.2.2** | Transforms incl. unit conversion and 1/T (A15), sort/find/checks (A17, A18), histogram (D4), graph styles, copy look, colour schemes (D13, D14, D16), batch export and .xlsx workbook (G4, G6), test chooser and guide (C4, J3) | medium |
 
 Then 0.3 compare groups (t-tests, ANOVA, column graphs, significance brackets), as agreed.
 
@@ -116,9 +116,9 @@ One installer per release (`DatumPlot-x.y.z-setup.exe`), used for new installs a
 
 1. **Split:** OK to ship 0.2 as 0.2.0 (linear regression + results), 0.2.1 (curve fitting), 0.2.2 (data tools and styles)?
 2. **Materials analyses:** which of B27 tensile, B28 Arrhenius, B29 Weibull, B30 S–N, B31 DSC do you want, and how soon? (Proposal: B28 in 0.2.0, B27 and B29 in 0.2.1, B30–B31 later.)
-3. **Results style:** a short Summary tab (Prism) plus a full Details tab (Origin's report) — OK?
+3. **Results style:** a short Summary tab plus a full Details tab (a complete report) — OK?
 4. **On the graph:** show the equation and R² next to a fitted line by default, or only when asked?
-5. **Replicates in regression:** fit every replicate point (Prism's default, better statistics) or only the means? (Proposal: every point, with a switch.)
+5. **Replicates in regression:** fit every replicate point (the usual default, better statistics) or only the means? (Proposal: every point, with a switch.)
 6. Anything from your materials work you used often that is not in this list (hardness, creep, XRD peak fitting, particle size distributions…)?
 
 ---
@@ -137,5 +137,5 @@ One installer per release (`DatumPlot-x.y.z-setup.exe`), used for new installs a
 | 0.2.3 | Global fits and model comparison, area under curve and smoothing, a second Python worker | B12, B14, I3 |
 | 0.2.4 | Tensile test analysis, Weibull analysis | B27, B29 |
 | 0.2.5 | Graph styles, copy look, colour schemes | D13, D14, D16 |
-| 0.2.6 | Batch export, Excel export, test chooser, statistics guide, samples | G4, G6, C4, J3, J2 |
+| 0.2.6 | Batch export, workbook (.xlsx) export, test chooser, statistics guide, samples | G4, G6, C4, J3, J2 |
 | 0.3.x | Compare groups (split into small steps when planned) | A2, B4–B8, D2, D3, E7 |

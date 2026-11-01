@@ -40,7 +40,7 @@ sequenceDiagram
 
 ### 3.1 Copy Picture
 `graph.tsx` uses the browser clipboard (`navigator.clipboard.write`). On Windows, Tauri 2 serves the window from `http://tauri.localhost`. That is not a "secure" address, so WebView2 switches the clipboard API off and the copy fails (it worked in the Linux test browser, which is why the tests did not catch it). The same problem affects Paste Special's fallback and the header-code copy on the Print page.
-**Fix (0.1.1):** Rust puts the picture on the Windows clipboard itself (`tauri-plugin-clipboard-manager`, image + text), so it no longer depends on the browser. Office then pastes it as a picture. Add an in-app test for the command, and you check it in Word.
+**Fix (0.1.1):** Rust puts the picture on the Windows clipboard itself (`tauri-plugin-clipboard-manager`, image + text), so it no longer depends on the browser. Documents and slides then paste it as a picture. Add an in-app test for the command, and you check it in a document.
 
 ### 3.2 Slow updates
 The 0.1.0 installer is 55 MB because 50 MB of it is Python and its libraries, and every update repeats that download even when Python did not change. The app itself (Rust + window + our Python code) is about 4 MB.
@@ -66,7 +66,7 @@ The 0.1.0 installer is 55 MB because 50 MB of it is Python and its libraries, an
 
 ## 4. The feature catalogue
 
-Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** curve fitting and regression · **0.4** two factors, interactive graphs, layouts · **0.5** survival, nested, many variables · **0.6** Origin power · **0.7** Python scripting and automation · **1.0** stable. ✅ = in 0.1.0.
+Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** curve fitting and regression · **0.4** two factors, interactive graphs, layouts · **0.5** survival, nested, many variables · **0.6** worksheets, 3D and signals · **0.7** Python scripting and automation · **1.0** stable. ✅ = in 0.1.0.
 
 ### A. Data tables and data entry
 
@@ -131,13 +131,13 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 
 | ID | Feature | Release |
 | --- | --- | --- |
-| C1 | Results sheets in the navigator, linked to their table: change a value and the result updates (Prism's chain) | 0.2 |
+| C1 | Results sheets in the navigator, linked to their table: change a value and the result updates (the linked chain) | 0.2 |
 | C2 | Tabs per result: Summary, Details, Multiple comparisons, Descriptive, Normality, Residuals | 0.2 |
 | C3 | **Explain panel**: the question asked, the answer in one sentence, assumption checks (✓/⚠) and what to do if one fails | 0.2 |
 | C4 | **Test chooser**: 3–4 questions (groups, paired, normal, what you want to know) open the right analysis | ✅ 0.2.2 |
 | C5 | **Methods and legend text** ready to paste into a paper, with the software version | 0.2 |
-| C6 | P-value styles (Prism GP, APA, NEJM, exact) and decimal places | 0.2 |
-| C7 | Copy results to Excel / Word, export as XLSX | 0.2 |
+| C6 | P-value styles (four-star, APA, NEJM, exact) and decimal places | 0.2 |
+| C7 | Copy results to spreadsheets and documents, export as XLSX | 0.2 |
 | C8 | "Show as Python code": the exact numpy/SciPy code that reproduces a result, so a reviewer can check it | 0.3 |
 | C9 | Analysis checklist warnings (too few values, unequal variances, outliers found) | 0.2 |
 
@@ -156,9 +156,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D9 | Survival curves with censor ticks and the number-at-risk table | ✅ 0.2.16 (curves, censor ticks, CI band; the number-at-risk table later) |
 | D10 | Volcano, forest, bubble, Bland-Altman, ROC | ✅ 0.2.6 |
 | D11 | Contour, 3D surface and scatter, polar, ternary, waterfall, vector field, radar | ✅ 0.2.21 (contour, heat map, 3D surface and wireframe, polar; 3D scatter, ternary, waterfall, vector field and radar later) |
-| D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes (Origin) | ✅ 0.2.12 |
-| D13 | **Graph styles and themes**: Prism, Origin, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
-| D14 | **Copy look** (Prism's Magic): apply one graph's formatting to others | ✅ 0.2.2 |
+| D12 | Multi-panel graphs (stacked, 2×2, 3×3), insets, layers with linked axes | ✅ 0.2.12 |
+| D13 | **Graph styles and themes**: open axes, framed box, Nature, Science, Cell, ACS, IEEE, presentation, greyscale; save your own | ✅ 0.2.2 |
+| D14 | **Copy look**: apply one graph's formatting to others | ✅ 0.2.2 |
 | D15 | Text, arrows, lines, boxes, images on the graph; Greek letters, sub/superscripts, simple LaTeX in titles (matplotlib mathtext) | ✅ 0.2.8 |
 | D16 | Colour schemes: Okabe-Ito ✅, viridis family, greyscale, custom palettes; colour-blind preview | ✅ 0.2.2 |
 | D17 | Large data (1 million points) with fast decimation for screen | ✅ 0.2.22 (200 000 points: draw 1.4 s, 75 kB) |
@@ -188,11 +188,11 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | ID | Feature | Release |
 | --- | --- | --- |
 | G1 | PNG, TIFF, SVG, PDF, EPS export ✅ | ✅ |
-| G2 | **Copy picture that works on Windows** (PNG through Rust), copy as SVG for Office 365 | 0.1.1 |
+| G2 | **Copy picture that works on Windows** (PNG through Rust), copy as SVG for documents and slides | 0.1.1 |
 | G3 | TIFF in CMYK and LZW for journals; colour profile | ✅ 0.2.11 |
 | G4 | Batch export: every graph in the project at once | ✅ 0.2.2 |
 | G5 | **Slides (.pptx)**: one slide per graph; **report (.docx)**: graphs, results tables and methods text | ✅ 0.2.22 (python-pptx, python-docx) |
-| G6 | Export tables and results to Excel | ✅ 0.2.2 |
+| G6 | Export tables and results to a workbook (.xlsx) | ✅ 0.2.2 |
 
 ### H. Python inside: scripting and extending
 
@@ -250,13 +250,13 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | --- | --- | --- | --- | --- |
 | numpy, SciPy, matplotlib | everything so far | BSD / PSF | 229 MB with Python | ✅ |
 | pandas | import, tables in the console, needed by statsmodels and lifelines | BSD | +60 MB | 0.1.1 (import) |
-| openpyxl | Excel import and export | MIT | +5 MB | 0.1.1 |
+| openpyxl | .xlsx import and export | MIT | +5 MB | 0.1.1 |
 | statsmodels | ANOVA (RM, two-way, mixed), regression, power, multiple comparisons | BSD | +40 MB | 0.2 |
 | scikit-posthocs | Dunn and other post-hoc tests | MIT | +1 MB | 0.2 |
 | lmfit | nonlinear curve fitting with parameters, bounds, global fits, CIs | BSD | +3 MB | 0.3 |
 | lifelines | survival analysis | MIT | +5 MB | 0.5 |
 | pybaselines | spectra baselines | BSD | +3 MB | 0.6 |
-| python-pptx, python-docx | PowerPoint and Word export | MIT | +5 MB | 0.7 |
+| python-pptx, python-docx | Slides (.pptx) and Document (.docx) export | MIT | +5 MB | 0.7 |
 
 - Total about 350 MB installed, a download of about 90 MB **once** (the runtime pack), then about 4 MB per update.
 - Left out on purpose: **pingouin** (GPL licence, cannot ship inside an MIT app), **scikit-learn** (large; PCA and clustering are easy with numpy/SciPy), **seaborn** (we draw with matplotlib directly, in our own style).
@@ -277,7 +277,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | **0.3.0** | Curve fitting and regression | B9–B14, C8, D5, I3 | big |
 | **0.4.0** | Two factors, interactive graphs, layouts | A3, A4, A6, A13, B15–B18, D6–D8, D10, D15, E2–E4, E6, F1–F2, G3 | big |
 | **0.5.0** | Survival, nested, many variables | A5, A7, A8, B19–B23, D9, D10 | medium |
-| **0.6.0** | Origin power | A9–A11, A14, B24–B26, D11, D12, D17, E5, F3, I6 | big |
+| **0.6.0** | Worksheets, 3D and signals | A9–A11, A14, B24–B26, D11, D12, D17, E5, F3, I6 | big |
 | **0.7.0** | Python scripting and automation | H1–H5, G5 | medium |
 | **1.0.0** | Stable | J4, user guide, polishing | — |
 
@@ -293,22 +293,22 @@ Each big release can go out in betas (0.2.0-beta.1, …) through the opt-in beta
 
 ## 9. Questions for you
 
-1. **Order:** after 0.1.1, which first: **0.2 compare groups** (t-tests, ANOVA, column graphs, brackets — Prism's core) or **0.3 curve fitting** (dose-response, standard curves, kinetics)? What do you use most?
-2. **Your field** (or your users'): biology/pharma, chemistry, engineering, physics? This decides the samples and the order of the Origin features.
+1. **Order:** after 0.1.1, which first: **0.2 compare groups** (t-tests, ANOVA, column graphs, brackets — the core of guided statistics) or **0.3 curve fitting** (dose-response, standard curves, kinetics)? What do you use most?
+2. **Your field** (or your users'): biology/pharma, chemistry, engineering, physics? This decides the samples and the order of the worksheet and signal features.
 3. **0.1.1 scope:** OK as listed (Copy Picture, small updates with the runtime pack, CSV/XLSX import, timeouts, faster start)?
 4. **Libraries and size:** OK to add pandas, openpyxl, statsmodels, scikit-posthocs, lmfit, lifelines (about 350 MB installed, about 90 MB once, then about 4 MB per update)?
-5. **Results:** Prism-style results sheets with tabs plus the Explain panel (my proposal)?
-6. **P values:** default Prism GP style (ns, *, **, ***, ****) or APA (*, **, ***)?
+5. **Results:** results sheets with tabs plus the Explain panel (my proposal)?
+6. **P values:** default four-star style (ns, *, **, ***, ****) or APA (*, **, ***)?
 7. **Python console (H1):** important to you early, or fine in 0.7?
 8. **Interactive graph editing (E2–E4: click, drag, edit in place):** keep in 0.4, or earlier?
-9. **Prism import (`.pzfx`):** do you have Prism files to move over? Then it can come earlier.
-10. Anything missing from the catalogue that you use in Prism or Origin every day?
+9. **`.pzfx` import:** do you have `.pzfx` files to move over? Then it can come earlier.
+10. Anything missing from the catalogue that you use in other graphing and statistics apps every day?
 
 ---
 
 ## 10. Answers (session 3, 24 Oct 2026) and the new order
 
-The user answered in one message: no Prism files; nothing missing from the catalogue; their background is **materials science R&D (now project management)**, with a lot of **linear regression and statistical analysis of many data points**. "Build the app first: lay out the whole UI with every feature in place, then build feature by feature, so it is easier to see and understand." The other questions were left to us; decided as follows.
+The user answered in one message: no `.pzfx` files; nothing missing from the catalogue; their background is **materials science R&D (now project management)**, with a lot of **linear regression and statistical analysis of many data points**. "Build the app first: lay out the whole UI with every feature in place, then build feature by feature, so it is easier to see and understand." The other questions were left to us; decided as follows.
 
 | # | Question | Decision |
 | --- | --- | --- |
@@ -316,11 +316,11 @@ The user answered in one message: no Prism files; nothing missing from the catal
 | 2 | Field | Materials science and engineering first: samples for tensile tests, Arrhenius plots, calibration lines, XRD/spectra (J2, B24). |
 | 3 | 0.1.1 scope | As proposed, **plus the full UI laid out**: every catalogue feature reachable now, planned ones dimmed and explaining when they come. |
 | 4 | Libraries | Yes; each one is added in the release that first needs it (openpyxl in 0.1.1; statsmodels and lmfit in 0.2; …). |
-| 5 | Results | Prism-style results sheets with tabs plus the Explain panel. |
-| 6 | P values | **Exact P values with APA stars** by default (engineering and materials journals); Prism GP and others as options. |
+| 5 | Results | Results sheets with tabs plus the Explain panel. |
+| 6 | P values | **Exact P values with APA stars** by default (engineering and materials journals); four-star and others as options. |
 | 7 | Python console | 0.7. |
 | 8 | Graph editing | 0.4. |
-| 9 | `.pzfx` | No Prism files: moved to 0.6. |
+| 9 | `.pzfx` | No `.pzfx` files: moved to 0.6. |
 | 10 | Missing | Nothing. |
 
 ### Release order (replaces §7)
@@ -332,7 +332,7 @@ The user answered in one message: no Prism files; nothing missing from the catal
 | 0.3.0 | Compare groups | A2, B4–B8, D2, D3, E7 |
 | 0.4.0 | Two factors, interactive graphs, layouts | A3, A4, A6, B15–B18, D6–D8, D10, D15, E2–E4, E6, F1, F2, G3 |
 | 0.5.0 | Survival, nested, many variables | A5, A7, A8, B19–B23, D9 |
-| 0.6.0 | Origin power | A9–A11, A13, A14, B24–B26, D11, D12, D17, E5, F3, I6 |
+| 0.6.0 | Worksheets, 3D and signals | A9–A11, A13, A14, B24–B26, D11, D12, D17, E5, F3, I6 |
 | 0.7.0 | Python scripting and automation | H1–H5, G5 |
 | 1.0.0 | Stable | J4 |
 
@@ -347,7 +347,7 @@ After 0.2.0 the user asked for bigger releases: "complete the application with a
 | 0.2.3 | Two factors and counts | A3, A4, A6, B15, B17, B18, D6, D7, D8, D10 |
 | 0.2.4 | Interactive graphs and layouts | D12, D15, E2, E3, E4, E6, F1, F2, G3 |
 | 0.2.5 | Survival, nested, many variables | A5, A7, A8, B19, B20, B21, B22, D9 |
-| 0.2.6 | Origin power | A9, A10, A11, B24, B25, B26, B30, B31, D11, D17, E5 |
+| 0.2.6 | Worksheets, 3D and signals | A9, A10, A11, B24, B25, B26, B30, B31, D11, D17, E5 |
 | 0.2.7 | Python scripting and automation | A13, A14, F3, G5, H1–H5 |
 | 1.0 | Stable | I6, J4 |
 

@@ -4,23 +4,23 @@ Status: **answered and built as 0.1.0.** The user approved the plan, icon and co
 
 <img src="brand/datum-plot-icon.svg" width="96" align="right" alt="Draft Datum Plot icon">
 
-**Goal:** a small, fast Windows app for scientific graphs, statistics and curve fitting. It takes the guided, "pick the right test and get a publication graph" way of working from **GraphPad Prism**, and the open workbook, many graph types and analysis power of **OriginPro**. It is the second app in the Datum family, so it looks, feels and ships like Datum Plan ([FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md)): teal accent, `.dplot` files, `com.edgarmendonca.datumplot`, releases and updates from `Edgar-Mendonca/Datum-Plot`.
+**Goal:** a small, fast Windows app for scientific graphs, statistics and curve fitting. It joins a guided, "pick the right test and get a publication graph" way of working with an open workbook, many graph types and advanced analysis. It is the second app in the Datum family, so it looks, feels and ships like Datum Plan ([FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md)): teal accent, `.dplot` files, `com.edgarmendonca.datumplot`, releases and updates from `Edgar-Mendonca/Datum-Plot`.
 
-This file follows the family pattern: what the tools do → what we take → proposal → release plan → size → questions.
+This file follows the family pattern: two ways of working → what we build → proposal → release plan → size → questions.
 
 ---
 
-## 1. How the two tools think
+## 1. Two ways of working
 
-| | GraphPad Prism | OriginPro |
+| | Guided analysis | Open workbook |
 | --- | --- | --- |
-| **Who uses it** | Biologists, pharmacologists, medical researchers. People who need the right test and a clean graph, not programming. | Physicists, chemists, engineers, materials science. People with large instrument data, spectra and many curves. |
+| **Who needs it** | Biologists, pharmacologists, medical researchers. People who need the right test and a clean graph, not programming. | Physicists, chemists, engineers, materials science. People with large instrument data, spectra and many curves. |
 | **Core idea** | A project is a chain: **data table → analysis → results → graph → layout**. The table *type* decides which analyses and graphs make sense. Everything stays linked: edit a value and every result and graph updates. | A project is a folder of **workbooks** (free spreadsheets with column roles X, Y, Z, error), **matrices**, **graphs** and **notes**. You pick columns and plot or analyse anything. Analyses can recalculate automatically or on request. |
-| **Strength** | Guidance: the table type, the "which test?" dialogs, analysis checklists, plain-language results ("P < 0.05, significant"), asterisk brackets. A huge built-in curve library with dose-response, binding and kinetics. | Breadth: 100+ graph types (3D, contour, polar, ternary, waterfall, multi-panel), layers, insets, double Y, peak analysis, signal processing, batch processing, scripting (LabTalk, Origin C, Python). |
-| **Weakness** | Limited graph types, rigid tables, little signal or spectral analysis, no scripting, Windows/Mac only, expensive yearly licence. | Steep learning curve, dense dialogs, dated look, statistics are less guided, expensive, Windows only. |
-| **Files** | `.prism` (new, zip), `.pzfx` (XML, open, documented enough to import). | `.opju` / `.opj` (closed binary). |
+| **Strength** | Guidance: the table type, the "which test?" dialogs, analysis checklists, plain-language results ("P < 0.05, significant"), asterisk brackets. A huge built-in curve library with dose-response, binding and kinetics. | Breadth: 100+ graph types (3D, contour, polar, ternary, waterfall, multi-panel), layers, insets, double Y, peak analysis, signal processing, batch processing, scripting. |
+| **Weakness** | Limited graph types, rigid tables, little signal or spectral analysis, no scripting. | Steep learning curve, dense dialogs, statistics are less guided. |
+| **Files** | `.pzfx` (XML, open, documented enough to import). | Closed binary projects. |
 
-**Datum Plot's place:** Prism's linked, guided chain as the backbone (every table, analysis and graph is a live object in one navigator), with Origin's freedom where it matters (any columns of any table can be plotted, several layers, many graph types, peaks and signals later). The look is the Datum family's: ribbon, square controls, IBM Plex, a clean light theme.
+**Datum Plot's place:** the linked, guided chain as the backbone (every table, analysis and graph is a live object in one navigator), with the workbook's freedom where it matters (any columns of any table can be plotted, several layers, many graph types, peaks and signals later). The look is the Datum family's: ribbon, square controls, IBM Plex, a clean light theme.
 
 ---
 
@@ -30,7 +30,7 @@ This file follows the family pattern: what the tools do → what we take → pro
 
 ### 2.1 Data tables
 
-| Table | Prism | Origin | What it holds | Datum Plot |
+| Table | Guided | Workbook | What it holds | Datum Plot |
 | --- | --- | --- | --- | --- |
 | **XY** | ✓ X + many Y data sets, each with replicates or entered mean/SD/SEM/N, X error, row titles | ✓ any worksheet with X/Y/yEr column roles | Dose-response, time courses, calibration curves, spectra | **0.1.0** |
 | **Column** | ✓ one group per column, replicates down; or mean/SD/N entry | ◐ plain columns (long or wide) | Compare groups: t-tests, one-way ANOVA | 0.1.1 |
@@ -43,16 +43,16 @@ This file follows the family pattern: what the tools do → what we take → pro
 | **Matrix (Z grid)** | — | ✓ matrix books | Heat maps, contour, 3D surfaces | 0.5.0 |
 | **Free worksheet** | — | ✓ column roles, formulas, metadata (long name, units, comments), sparklines | Raw data, import, anything that does not fit a type | 0.5.0 |
 
-Common to all tables (from both tools, built once in the shared grid engine):
-- Excel-like grid with ranges, TSV clipboard, fill series, Paste Special, formatting (family `selection.ts`, `cells.ts`, `fmt.ts`).
-- Column title, **units** and a comment per column (Origin's long name/units/comments). A table title and notes.
-- **Exclude** a value without deleting it (Prism shows it blue and italic; analyses and graphs skip it).
+Common to all tables (from both ways of working, built once in the shared grid engine):
+- Spreadsheet-like grid with ranges, TSV clipboard, fill series, Paste Special, formatting (family `selection.ts`, `cells.ts`, `fmt.ts`).
+- Column title, **units** and a comment per column. A table title and notes.
+- **Exclude** a value without deleting it (shown blue and italic; analyses and graphs skip it).
 - Row titles. Sub-columns for replicates. Entry formats (raw replicates, mean + SD + N, mean + SEM + N, mean + CV, upper/lower limits).
-- Later: column formulas in Excel syntax through GridCraft (Origin's "Set Column Values"), transforms (log, normalise, baseline-subtract, remove baseline) that make a new linked table, as Prism does.
+- Later: column formulas in spreadsheet syntax through GridCraft, transforms (log, normalise, baseline-subtract, remove baseline) that make a new linked table.
 
 ### 2.2 Analyses
 
-| Area | Prism | Origin | Datum Plot |
+| Area | Guided | Workbook | Datum Plot |
 | --- | --- | --- | --- |
 | **Descriptive** | Column statistics: N, mean, SD, SEM, 95 % CI, median, quartiles, min/max, CV, geometric mean, skewness, kurtosis | Same plus more moments, percentiles, frequency counts | 0.1.1 |
 | **Normality and outliers** | D'Agostino-Pearson, Anderson-Darling, Shapiro-Wilk, Kolmogorov-Smirnov; QQ plot; ROUT and Grubbs outliers | Shapiro-Wilk, KS, Lilliefors, Anderson-Darling, D'Agostino, Chen-Shapiro; Grubbs, Dixon Q | 0.1.1 (Shapiro-Wilk, D'Agostino, QQ); ROUT 0.2.0 |
@@ -63,16 +63,16 @@ Common to all tables (from both tools, built once in the shared grid engine):
 | **Two-/three-way ANOVA** | Ordinary, RM in one or both factors, mixed model; three-way | Two-way, three-way, RM | 0.3.0 (two-way); three-way later |
 | **Correlation** | Pearson, Spearman, correlation matrix, partial correlation | Pearson, Spearman, Kendall, partial | 0.3.0 |
 | **Linear regression** | Slope/intercept with CIs, R², runs test, compare slopes and intercepts, force through origin, Deming (errors in X and Y), confidence and prediction bands, interpolation | Linear, polynomial, multiple linear, with full ANOVA table; fit with errors as weights | 0.2.0 |
-| **Nonlinear regression (curve fitting)** | ~100 built-in models in families (dose-response stimulation/inhibition with 3/4/5 parameters, Hill, binding saturation and competition, enzyme kinetics: Michaelis-Menten, substrate inhibition, allosteric; exponential growth/decay one/two phase, plateau; Gaussian, Lorentzian, sine, polynomials, sigmoidal); user equations; constraints and shared parameters (**global fitting**); weighting (1/Y², relative, Poisson); robust fit; ROUT outlier removal; compare models (extra sum-of-squares F test, AICc); compare a parameter between data sets; interpolate unknowns from a standard curve; residual plots; CIs by asymptotic or profile likelihood | NLFit with 200+ functions in categories, user functions (incl. implicit and surface fits), parameter sharing across data sets, fixing, bounds, weighting by error columns, batch fitting, fit comparison (F test, AIC), simulation, reports with residual plots | 0.2.0 (engine + 20 models); 0.2.1 (global fitting, compare models, interpolation, ~60 models) |
+| **Nonlinear regression (curve fitting)** | ~100 built-in models in families (dose-response stimulation/inhibition with 3/4/5 parameters, Hill, binding saturation and competition, enzyme kinetics: Michaelis-Menten, substrate inhibition, allosteric; exponential growth/decay one/two phase, plateau; Gaussian, Lorentzian, sine, polynomials, sigmoidal); user equations; constraints and shared parameters (**global fitting**); weighting (1/Y², relative, Poisson); robust fit; ROUT outlier removal; compare models (extra sum-of-squares F test, AICc); compare a parameter between data sets; interpolate unknowns from a standard curve; residual plots; CIs by asymptotic or profile likelihood | Fitting with 200+ functions in categories, user functions (incl. implicit and surface fits), parameter sharing across data sets, fixing, bounds, weighting by error columns, batch fitting, fit comparison (F test, AIC), simulation, reports with residual plots | 0.2.0 (engine + 20 models); 0.2.1 (global fitting, compare models, interpolation, ~60 models) |
 | **Survival** | Kaplan-Meier with censoring marks, log-rank (Mantel-Cox), Gehan-Breslow-Wilcoxon, test for trend, median survival, hazard ratio (Mantel-Haenszel and log-rank), Cox proportional hazards regression | Kaplan-Meier, Cox, Weibull fit | 0.4.0 |
 | **Contingency** | Chi-square (with Yates), Fisher's exact, relative risk, odds ratio, sensitivity/specificity, chi-square for trend | Chi-square, Fisher's exact, McNemar | 0.3.0 |
-| **Other Prism analyses** | Area under curve, ROC curves, Bland-Altman, frequency distribution, normalise/transform/baseline, smoothing, derivative, integral, multiple and logistic regression, PCA, Hill plots | — | AUC, frequency distribution, transforms 0.1.1–0.2.0; ROC and Bland-Altman 0.3.0; multiple/logistic regression and PCA 0.4.0 |
-| **Origin-only power** | — | Peak Analyzer (baseline, find, integrate, fit many peaks), FFT, filters, smoothing (Savitzky-Golay, LOWESS), interpolation, integration, differentiation, cluster analysis, discriminant, PLS, batch processing with analysis templates, Gadgets (quick fit on a region of interest), scripting | 0.5.0 (peaks, smoothing, FFT, ROI gadgets); batch 0.6.0 |
+| **Other guided analyses** | Area under curve, ROC curves, Bland-Altman, frequency distribution, normalise/transform/baseline, smoothing, derivative, integral, multiple and logistic regression, PCA, Hill plots | — | AUC, frequency distribution, transforms 0.1.1–0.2.0; ROC and Bland-Altman 0.3.0; multiple/logistic regression and PCA 0.4.0 |
+| **Workbook-only power** | — | Peak analysis (baseline, find, integrate, fit many peaks), FFT, filters, smoothing (Savitzky-Golay, LOWESS), interpolation, integration, differentiation, cluster analysis, discriminant, PLS, batch processing with analysis templates, region-of-interest tools (quick fit on a region), scripting | 0.5.0 (peaks, smoothing, FFT, ROI gadgets); batch 0.6.0 |
 | **Help to choose** | "Which test?" guides, analysis checklists, interpretation text | Minimal | 0.2.0: test chooser + Explain panel (see §4) |
 
 ### 2.3 Graphs
 
-| Area | Prism | Origin | Datum Plot |
+| Area | Guided | Workbook | Datum Plot |
 | --- | --- | --- | --- |
 | **XY** | Points, connected lines, mean ± error bars, every replicate, fitted curves with bands, spline | Line, scatter, line + symbol, spline, step, drop lines, error bars from columns, fill area | **0.1.0** (points, lines, mean ± error bars, replicates); curves 0.2.0 |
 | **Column graphs** | Scatter dot plot with mean/median lines, bars with error bars, box and whiskers (Tukey, min-max, percentiles), violin (truncated or smooth), before-after, estimation plots | Column/bar, box, violin, half-box + points, beeswarm, interval plots | 0.1.1 |
@@ -81,20 +81,20 @@ Common to all tables (from both tools, built once in the shared grid engine):
 | **Survival** | Staircase curves with censor ticks, at-risk table | Staircase | 0.4.0 |
 | **Special** | Volcano, bubble, Bland-Altman, forest (via grouped), pie/donut, parts of whole | Polar, ternary, Smith chart, waterfall, 3D (scatter, surface, bars), contour, heat map, vector, windrose, radar | heat map, pie 0.3.0; volcano, forest 0.4.0; contour, 3D surface, polar, waterfall, ternary 0.5.0 |
 | **Axes** | Linear, log (10, 2, ln), probability, axis breaks/gaps (two segments), reverse, frame/offset axes, custom ticks, minor ticks | Same plus double Y, top/right axes, layer-linked axes, many scale types, broken axes with several breaks | 0.1.0 linear + log10, ranges, ticks; breaks and double Y 0.3.0 |
-| **Styling** | Format Graph dialog, Magic (copy the look of another graph), graph families, colour schemes, themes; drawing tools, text, lines | Plot Details (deep), themes, graph templates, Copy/Paste Format, layers, insets, multi-panel templates (stack, 4-panel, 9-panel), linked layers | 0.1.0 Format Graph (data sets, axes, size); styles + "Copy look" 0.2.0; layers/insets/multi-panel 0.5.0 |
+| **Styling** | Format Graph dialog, copy the look of another graph, graph families, colour schemes, themes; drawing tools, text, lines | Deep plot-details dialog, themes, graph templates, Copy/Paste Format, layers, insets, multi-panel templates (stack, 4-panel, 9-panel), linked layers | 0.1.0 Format Graph (data sets, axes, size); styles + "Copy look" 0.2.0; layers/insets/multi-panel 0.5.0 |
 | **Error bars** | SD, SEM, 95 % CI, range; one direction or both; caps; from entered mean/SD; X error | From columns (yEr, xEr), plus/minus separately, as band | **0.1.0** SD, SEM, 95 % CI, range |
-| **Statistics annotations** | Pairwise comparison brackets with asterisks or P values placed automatically from the analysis, the "ns" text, P-value style (GP: 0.1234 (ns), 0.0332 (*), 0.0021 (**), 0.0002 (***), <0.0001 (****)) | Manual with drawing tools; some apps add brackets | 0.2.0 (linked to the analysis, update when data change) |
+| **Statistics annotations** | Pairwise comparison brackets with asterisks or P values placed automatically from the analysis, the "ns" text, P-value style (four-star: 0.1234 (ns), 0.0332 (*), 0.0021 (**), 0.0002 (***), <0.0001 (****)) | Manual with drawing tools; some apps add brackets | 0.2.0 (linked to the analysis, update when data change) |
 | **Size and fonts** | Exact size in cm/in, font for the whole graph, journal-friendly | Exact page size, themes | **0.1.0** size in mm, one font and size for the graph |
 
 ### 2.4 Layouts and export
 
-| | Prism | Origin | Datum Plot |
+| | Guided | Workbook | Datum Plot |
 | --- | --- | --- | --- |
 | **Page layouts** | A page with arranged graphs, tables, text and pictures; labels A, B, C; alignment; linked to the live graphs | Layout pages with graphs and worksheet tables; multi-panel graphs | 0.3.0 (Layout page with grid, panel letters, live graphs) |
-| **Export** | PNG, TIFF, JPEG, PDF, EPS, SVG, EMF/WMF; DPI and colour (RGB/CMYK); batch export | All of those, plus clipboard as EMF for Office, batch export | 0.1.0 SVG + PNG (300/600 dpi) + Print/PDF; TIFF, EMF clipboard 0.3.0; batch 0.6.0 |
-| **Clipboard to Office** | EMF picture, embedded object | EMF, embedded | 0.1.0 PNG to clipboard; EMF later |
+| **Export** | PNG, TIFF, JPEG, PDF, EPS, SVG, EMF/WMF; DPI and colour (RGB/CMYK); batch export | All of those, plus clipboard as EMF for documents and slides, batch export | 0.1.0 SVG + PNG (300/600 dpi) + Print/PDF; TIFF, EMF clipboard 0.3.0; batch 0.6.0 |
+| **Clipboard to documents** | EMF picture, embedded object | EMF, embedded | 0.1.0 PNG to clipboard; EMF later |
 | **Print** | Print the graph or layout | Print | **0.1.0** File › Print with live preview (family `print.tsx`) |
-| **Import** | Paste, text/CSV, Excel, `.pzfx` | Many instrument formats, Excel, CSV, binary, connectors | 0.1.0 paste from Excel; CSV/XLSX 0.1.1; `.pzfx` (Prism's open XML) 0.3.0 |
+| **Import** | Paste, text/CSV, `.xlsx`, `.pzfx` | Many instrument formats, `.xlsx`, CSV, binary, connectors | 0.1.0 paste from a spreadsheet; CSV/XLSX 0.1.1; `.pzfx` (open XML) 0.3.0 |
 
 ---
 
@@ -128,7 +128,7 @@ flowchart LR
 
 **Rules (as in Plan):**
 - The window never computes a statistic, a tick or an error bar. Every edit is an `Op`; the engine applies it, recomputes what depends on it and returns what the window shows.
-- **Live chain:** analyses and graphs store only their *settings* and the id of their input. Results are computed when asked (cached by revision), so editing a value updates every result and graph, as in Prism. The `.dplot` file stores data and settings, never stale results.
+- **Live chain:** analyses and graphs store only their *settings* and the id of their input. Results are computed when asked (cached by revision), so editing a value updates every result and graph. The `.dplot` file stores data and settings, never stale results.
 - **Graphs:** the engine turns a graph's settings + data into a `GraphOut` scene (axis ranges, ticks and labels, points, error bar segments, lines, legend entries, all in data and mm units). The window draws it as **SVG**, so screen, print, SVG/PNG export and later PDF/EMF all come from one scene. Chart.js stays for the small Home/preview charts only, if at all (question 8.4).
 - **Numbers we can trust:** every statistic is checked in a unit test against a published value: **NIST StRD** reference datasets (Norris, Longley for linear regression; Misra1a, Thurber, MGH09, Eckerle4 for nonlinear; ANOVA sets SiRstv, AtmWtAg), plus worked examples from R output. A "validation" page in the docs lists them.
 - **Libraries:** `statrs` (MIT, pure Rust) for distributions (t, F, χ², normal, gamma, beta) so P values are correct; our own small Levenberg-Marquardt and QR (parameters are few, a few hundred lines) rather than `nalgebra`; GridCraft (pinned, as in Plan) for column formulas later. No Python.
@@ -148,26 +148,26 @@ Graph    { id, source: TableId | AnalysisId, kind, sets: Vec<SetStyle>, axes: [A
 **Window layout (FAMILY §6, adapted):**
 - Title bar, quick access, Tell Me (Ctrl+K), Theme, as in Plan.
 - **Ribbon tabs** (proposal): File · **Data** (clipboard, font, insert rows/columns, exclude, sort, transform) · **Analyze** (Analyze…, column statistics, quick tests, fit a curve) · **Graph** (new graph, graph type gallery, change data sets) · **Format** (Graph Tools, contextual: axes, data sets, colours, size, copy look) · **Layout** · **View** · **Help**.
-- **Left sidebar:** the family icon rail with **Info** first (Prism's Info sheet = Plan's Setup), then **Data**, **Results**, **Graphs**, **Layouts**. Next to it a narrow **navigator** list (Prism's) with every item of that kind, its family links (data → its results → its graphs), and right-click New/Duplicate/Rename/Delete.
+- **Left sidebar:** the family icon rail with **Info** first (Plan's Setup), then **Data**, **Results**, **Graphs**, **Layouts**. Next to it a narrow **navigator** list with every item of that kind, its family links (data → its results → its graphs), and right-click New/Duplicate/Rename/Delete.
 - **Status bar:** Ready, selection N/Mean/SD/Sum (Plot's version of Plan's Sum/Average/Count), item type, zoom.
 
 ---
 
-## 4. Ideas beyond Prism and Origin
+## 4. Ideas of our own
 
-1. **Explain panel** for every result: what the test asked, the answer in one sentence ("The means differ, P = 0.003"), the assumptions it checked (normality, equal variance, pairing) with ✓/⚠, and what to try if one failed. Prism has checklists; we put them next to the numbers.
-2. **Test chooser:** three or four questions (how many groups? paired? normal? what do you want to know?) that open the right analysis with the right options. Starts from the table type, as in Prism.
+1. **Explain panel** for every result: what the test asked, the answer in one sentence ("The means differ, P = 0.003"), the assumptions it checked (normality, equal variance, pairing) with ✓/⚠, and what to try if one failed. The checklists sit next to the numbers.
+2. **Test chooser:** three or four questions (how many groups? paired? normal? what do you want to know?) that open the right analysis with the right options. Starts from the table type.
 3. **Methods text:** every analysis writes a ready-to-paste sentence for a paper's methods and figure legend ("Data are mean ± SD, n = 6. Groups were compared by one-way ANOVA with Tukey's multiple comparisons test."), with the software version.
 4. **Effect sizes and CIs by default** (difference of means with 95 % CI, Cohen's d, Hedges' g, η²) and optional **estimation plots**, so results are more than a P value.
 5. **Reproducible check:** "Show as R code" for each analysis, so a reviewer can verify the numbers outside the app. No R needed inside the app; it is just text.
 6. **Journal presets** for graphs: Nature, Science, Cell, ACS, IEEE, a thesis: column width in mm, font, line widths, symbol sizes. One click and the graph fits the column.
 7. **Colour-blind safe** palettes by default (Okabe-Ito, from the family), with a greyscale preview.
 8. **Units-aware columns:** units travel with the data into axis titles, results and the methods text.
-9. **Data lineage:** the navigator shows each table → its analyses → its graphs → the layouts that use them (Prism's "family"), and warns before you delete something a graph needs.
-10. **Region-of-interest tools** on graphs (from Origin's Gadgets): drag a box on an XY graph to get statistics, area under the curve, a quick fit or peak data for just that region.
-11. **Sample-size and power** calculator (Prism sends you to another product for this).
+9. **Data lineage:** the navigator shows each table → its analyses → its graphs → the layouts that use them (its "family"), and warns before you delete something a graph needs.
+10. **Region-of-interest tools** on graphs: drag a box on an XY graph to get statistics, area under the curve, a quick fit or peak data for just that region.
+11. **Sample-size and power** calculator, built in.
 12. **Templates for common experiments** on Home: dose-response (IC50/EC50), standard curve with unknowns (ELISA, BCA, qPCR), growth curve, enzyme kinetics, Kaplan-Meier study, two-group comparison. Each opens a filled example with its analysis and graph.
-13. **Import Prism `.pzfx` files** (open XML): a big help for people moving from Prism.
+13. **Import `.pzfx` files** (open XML): a big help for people bringing existing projects.
 14. **Instrument and plate import** later: plate-reader CSVs (96/384 wells) mapped to tables by a layout of samples, standards and blanks.
 15. **Pairs with Datum Plan:** the same file habits, Options, updater and printing, so a user of one app knows the other.
 
@@ -185,13 +185,13 @@ Graph    { id, source: TableId | AnalysisId, kind, sets: Vec<SetStyle>, axes: [A
 - **XY data table:**
   - an X column and data sets A, B, C… (up to 26 in 0.1), each with 1–10 replicate sub-columns, **or** entered Mean + SD + N / Mean + SEM + N;
   - column titles and units; row titles; table title;
-  - family grid engine: ranges, Ctrl/Shift, whole rows/columns, TSV paste from Excel, fill handle with series, Paste Special, Ctrl+B/I/U, N/Mean/SD/Sum in the status bar;
+  - family grid engine: ranges, Ctrl/Shift, whole rows/columns, TSV paste from a spreadsheet, fill handle with series, Paste Special, Ctrl+B/I/U, N/Mean/SD/Sum in the status bar;
   - exclude/include values (blue italic, skipped by the graph);
   - insert/delete rows and data sets.
-- **XY graph** (created with the table, as in Prism; more than one graph per table allowed):
+- **XY graph** (created with the table; more than one graph per table allowed):
   - each data set as points (8 symbol shapes, Okabe-Ito colours), optional connecting line, mean of replicates or every replicate;
   - error bars: SD, SEM, 95 % CI, range; both directions or one; cap width;
-  - axes: linear or log10, auto or fixed range, major ticks with "nice" steps, minor ticks, title (with units from the table), number format; frame or open (Prism style) axes;
+  - axes: linear or log10, auto or fixed range, major ticks with "nice" steps, minor ticks, title (with units from the table), number format; frame or open (L-shaped) axes;
   - legend (on/off, position), graph title;
   - size in mm (default 80 × 60, journal single column), one font (IBM Plex Sans, Arial, Helvetica, Times) and size;
   - **Format Graph** dialog (Data sets · Axes · Graph) and double-click on an axis, a data set or the legend to open its page;
@@ -199,7 +199,7 @@ Graph    { id, source: TableId | AnalysisId, kind, sets: Vec<SetStyle>, axes: [A
 - **Export and print:** SVG and PNG (150/300/600 dpi, transparent or white) from File › Export or right-click; copy the graph to the clipboard as PNG; File › Print with live preview (one graph per page, size as set or fit, header/footer codes and logos from Plan's `print.tsx`), "Save as PDF" through the WebView dialog.
 - **Templates on Home:** Blank XY table, "Growth curve" (time course, 3 replicates), "Calibration curve" (standards with SD), "Dose-response" (log X; data only, the fit comes in 0.2.0).
 - **Options:** General (theme, number format, decimal places), Start-up and saving (open last, recovery minutes), New tables (replicates, error bar type), Graphs (size, font, symbol size, export DPI), Printing and branding (paper, company, logo), Updates (beta).
-- **Help tab:** Getting Started (written for Prism and Origin users), Glossary (SD vs SEM vs CI, replicate, data set, log axis…), Shortcuts, Tell Me, GitHub links.
+- **Help tab:** Getting Started (written for people coming from other graphing and statistics apps), Glossary (SD vs SEM vs CI, replicate, data set, log axis…), Shortcuts, Tell Me, GitHub links.
 - **Engine:** `crates/core` with model, ops + undo, `.dplot` read/write, descriptive statistics for error bars (mean, SD, SEM, CI with the t distribution, range), `plot.rs` (scales, nice ticks, log ticks, error bar geometry). Unit tests (≈15) including CI values against R.
 - **Quality:** CI (clippy `-D warnings`, `cargo test`, `npm run check:ui`, Playwright UI tests with a fixture from `cargo run -p datum-core --example dump`), release workflow, checked in the real app under Xvfb with screenshots.
 - **Repo:** README per FAMILY §5 with badges and a screenshot, CHANGELOG `## 0.1.0`, NOTICE, MIT licence, logo in `ui/public/logo.svg` and Windows icons from it.
@@ -222,7 +222,7 @@ Small numbered releases, every one through the in-app updater. Each step after 0
 | 0.2.1 | Curve fitting power | Global fitting (shared parameters), compare models (F test, AICc), compare a parameter between data sets, interpolate unknowns from a standard curve, ROUT outliers, robust fit, profile CIs, ~60 models in families, area under curve, transforms and normalise |
 | 0.3.0 | Two factors, counts, layouts | Grouped table + two-way ANOVA (ordinary, RM, mixed) + grouped/stacked bars + heat map; contingency (chi-square, Fisher, OR, RR); correlation + matrix; parts of whole + pie; ROC, Bland-Altman; axis breaks, double Y; **Layouts** (pages with live graphs, tables, text, pictures, panel letters A/B/C); TIFF + EMF clipboard; `.pzfx` import; journal presets |
 | 0.4.0 | Survival, nested, many variables | Survival table, Kaplan-Meier with censor ticks + at-risk table, log-rank, Gehan-Breslow-Wilcoxon, hazard ratio, Cox regression; nested table + nested t/ANOVA; multiple variables table, multiple linear + logistic regression, PCA; volcano and forest plots; power and sample size |
-| 0.5.0 | Origin power | Free worksheets with column roles and GridCraft formulas; matrices; contour, 3D surface, polar, waterfall, ternary; layers, insets, multi-panel templates; peak analyzer (baseline, find, integrate, multi-peak fit); smoothing (Savitzky-Golay, LOWESS), FFT, derivative, integral; region-of-interest gadgets |
+| 0.5.0 | Worksheets, 3D and signals | Free worksheets with column roles and GridCraft formulas; matrices; contour, 3D surface, polar, waterfall, ternary; layers, insets, multi-panel templates; peak analyzer (baseline, find, integrate, multi-peak fit); smoothing (Savitzky-Golay, LOWESS), FFT, derivative, integral; region-of-interest gadgets |
 | 0.6.0 | Automation | Analysis templates and batch processing over many files, batch export, plate-reader import, project-wide search, "Show as R code" |
 | 0.6.1 | Hardening | Large data (1M points per graph through decimation), code signing, signed updates, crash reports |
 | 1.0.0 | Stable | User guide, validation report (every statistic vs NIST/R) |
@@ -244,22 +244,22 @@ Small numbered releases, every one through the in-app updater. Each step after 0
 
 **Scope of 0.1.0**
 1. Is §5 the right first version (XY table + XY graph, no analyses)? Or should 0.1.0 also include **linear regression** (a fitted line with slope, intercept, R²) so the first graph can show a fit? It adds about a day and the results sheet.
-2. Which **sample templates** matter most for your own work? (Proposal: growth curve, calibration curve, dose-response.) What field are you in — biology/pharma (Prism-heavy), or engineering/physics/chemistry (Origin-heavy)? This decides what comes first after 0.1: group comparisons (Prism) or worksheets, peaks and signals (Origin).
+2. Which **sample templates** matter most for your own work? (Proposal: growth curve, calibration curve, dose-response.) What field are you in — biology/pharma, or engineering/physics/chemistry? This decides what comes first after 0.1: group comparisons or worksheets, peaks and signals.
 
 **Look and layout**
-3. Navigator: the family **icon rail** (Info, Data, Results, Graphs, Layouts) **plus** a Prism-style list of items next to it (my proposal), or only the rail with items shown as tabs across the top of the work area?
+3. Navigator: the family **icon rail** (Info, Data, Results, Graphs, Layouts) **plus** a list of items next to it (my proposal), or only the rail with items shown as tabs across the top of the work area?
 4. Graph engine: our own **SVG engine** fed by the Rust `GraphOut` scene (proposal; needed for exact mm sizes, breaks, brackets and vector export), with Chart.js dropped from Plot to keep it small. OK?
 5. Ribbon tabs: File · Data · Analyze · Graph · Format (Graph Tools) · Layout · View · Help. Any names you prefer (Plan's users rejected "Home")?
-6. Default graph look: Prism's (open L-shaped axes, ticks out, no gridlines, bold axis titles) or Origin's (framed box, ticks in)? Both will be options; which is default?
+6. Default graph look: open axes (L-shaped, ticks out, no gridlines, bold axis titles) or a framed box (ticks in)? Both will be options; which is default?
 7. Is the draft logo (teal axes, tint points, fitted curve, amber diamond) approved, or should it change?
 
 **Engine and numbers**
 8. OK to use the `statrs` crate for distributions (pure Rust, MIT) and write our own curve-fitting solver? Or should everything be our own code?
-9. Results presentation: Prism's style (a results sheet per analysis with tabs: Summary, Details, Multiple comparisons) plus our Explain panel? Or Origin's report sheets (collapsible tables)?
-10. P-value style: Prism's GP default (`ns`, `*` < 0.0332, `**` < 0.0021, `***` < 0.0002, `****` < 0.0001) or the classic APA (`*` < 0.05, `**` < 0.01, `***` < 0.001)? Both will be options.
+9. Results presentation: a results sheet per analysis with tabs: Summary, Details, Multiple comparisons) plus our Explain panel? Or report sheets (collapsible tables)?
+10. P-value style: the four-star default (`ns`, `*` < 0.0332, `**` < 0.0021, `***` < 0.0002, `****` < 0.0001) or the classic APA (`*` < 0.05, `**` < 0.01, `***` < 0.001)? Both will be options.
 
 **Files and exchange**
-11. Should Datum Plot import Prism `.pzfx` early (0.3.0 proposed) and export to it? Any other formats you need (Excel with the graph, Origin-friendly CSV, instrument formats)?
+11. Should Datum Plot import `.pzfx` early (0.3.0 proposed) and export to it? Any other formats you need (`.xlsx` with the graph, CSV for other graphing apps, instrument formats)?
 12. Do you need Datum Plot to read `.dplan` (e.g. plot schedule data), or are the two apps fully separate?
 
 **Process**
@@ -297,4 +297,4 @@ flowchart LR
 - **Bundled runtime:** the release workflow puts the official embeddable CPython 3.13 into the installer with `py/requirements.txt` (numpy, SciPy, matplotlib), removes test suites and precompiles everything. Development builds use the Python on the PATH (or `DATUM_PYTHON`).
 - **Size (0.1.0):** a 55 MB installer; the Python folder is 229 MB installed. Every update downloads the whole installer for now; a later release can ship the Python runtime separately so updates are small again (see MEMORY › next steps).
 
-**What Python makes easier in the next releases:** `scipy.stats` for every test in §2.2 (t, Welch, Mann-Whitney, ANOVA via `scipy.stats.f_oneway`, Tukey via `scipy.stats.tukey_hsd`, Shapiro-Wilk, Kruskal-Wallis, Fisher, log-rank via `scipy.stats.logrank`), `scipy.optimize.curve_fit`/`least_squares` for nonlinear regression with bounds and weights, `scipy.signal` for peaks, smoothing and FFT (the Origin features of 0.5), and matplotlib for 3D, contour, polar and multi-panel graphs. Candidates to add when needed: `statsmodels` (mixed models, Cox regression), `lifelines` (survival), `pandas` (import).
+**What Python makes easier in the next releases:** `scipy.stats` for every test in §2.2 (t, Welch, Mann-Whitney, ANOVA via `scipy.stats.f_oneway`, Tukey via `scipy.stats.tukey_hsd`, Shapiro-Wilk, Kruskal-Wallis, Fisher, log-rank via `scipy.stats.logrank`), `scipy.optimize.curve_fit`/`least_squares` for nonlinear regression with bounds and weights, `scipy.signal` for peaks, smoothing and FFT (the signal features of 0.5), and matplotlib for 3D, contour, polar and multi-panel graphs. Candidates to add when needed: `statsmodels` (mixed models, Cox regression), `lifelines` (survival), `pandas` (import).
