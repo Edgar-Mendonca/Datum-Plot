@@ -52,9 +52,16 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows the blank table, twenty-six samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 31, String((await p.$$(".home .tile")).length));
+  check("Home shows three blank starts, the Samples folder, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 8, String((await p.$$(".home .tile")).length));
+  await reset();
+  await p.click('.home .tile:has-text("Blank XY table") >> nth=1'); await p.waitForTimeout(300);
+  check("Blank XY table starts a project without a graph", JSON.stringify(await calls("new_project")) === JSON.stringify([{ template: "table" }]), JSON.stringify(await calls("new_project")));
+  await p.click("button.file"); await p.waitForTimeout(300);
+  await p.click('.home .tile:has-text("Samples")'); await p.waitForTimeout(200);
+  const sheads = await p.$$eval(".samples h2", hs => hs.map(h => h.textContent));
+  check("Samples lists every sample under its heading", sheads.length === 6 && sheads[0] === "Curves and regression" && (await p.$$(".samples .tile")).length === 26, JSON.stringify(sheads));
   check("updates card names the app", (await p.textContent(".card .brand")).includes("Datum Plot"));
-  await p.click(".home .tile:nth-child(2)");
+  await p.click(".samples .tile >> nth=0");
   await p.waitForTimeout(600);
   check("a sample opens on its graph", !!(await p.$(".gpaper img.gimg")) && !(await p.$(".bs")));
   check("the graph image is the engine's SVG at its size", await p.evaluate(() => { const i = document.querySelector(".gpaper .gimg"); return i.src.startsWith("data:image/svg+xml") && i.width > 200; }));

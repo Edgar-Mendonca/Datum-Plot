@@ -37,11 +37,13 @@ Datum Plot checks for a new version when it starts. When one is ready, an **Upda
 
 ![The Home page (File › Home).](img/home.png)
 
-1. **Blank XY table.** An empty XY table with its graph, ready for your data.
-2. **Samples.** Each sample is a small, complete project with real-looking data, an analysis and a graph: growth and standard curves, dose-response, group comparisons, tensile tests, survival studies, method comparison, diagnostic tests, response surfaces, polar patterns, spectra, DSC and TGA curves and more. Open one to see how a finished project looks, then replace the data with yours.
+1. **Blank starts.** **Blank XY table and graph**: an empty XY table with its graph. **Blank XY table**: the same without a graph, to enter and analyse data only. **Blank column table**: groups side by side, without a graph, for t-tests and ANOVA. A graph can be added later with **Graph › New Graph**.
+2. **Samples.** A folder of small, complete projects with real-looking data, an analysis and a graph. It opens inside Home, with the samples under headings: curves and regression, comparing groups, survival and reliability, medical tests, signals and thermal analysis, maps and special graphs. Open one to see how a finished project looks, then replace the data with yours; **← Home** goes back.
 3. **The File page.** **New**, **Open**, **Import**, **Save**, **Save As**, **Export** and **Print**, and below them **Roadmap**, **Options** and **Updates**. The arrow at the top goes back to the project.
 
-Further down the Home page are the **Guide** tile (this guide, in English, Chinese or French) and your recent projects.
+Beside them are **Open**, **Import data**, the **Guide** (this guide, in English, Chinese or French) and the **Roadmap**; further down, your recent projects.
+
+![Samples, under their headings.](img/samples.png)
 
 ## The window at a glance
 

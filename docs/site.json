@@ -38,7 +38,7 @@
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
     "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
-    "A step-by-step guide with pictures in English, Chinese and French (Help › Guide), and over twenty sample projects to start from.",
+    "A step-by-step guide with pictures in English, Chinese and French (Help › Guide), blank starts with or without a graph, and over twenty sample projects to learn from, grouped by subject.",
     "Free and open source (MIT), Windows first, installs in seconds with Python inside, and updates itself."
   ],
   "screenshots": [
@@ -47,7 +47,7 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.13",
+      "v": "0.3.14",
       "title": "Wavelets",
       "when": "Next",
       "items": [
@@ -55,7 +55,7 @@
       ]
     },
     {
-      "v": "0.3.14",
+      "v": "0.3.15",
       "title": "Images",
       "when": "Soon",
       "items": [
@@ -63,7 +63,7 @@
       ]
     },
     {
-      "v": "0.3.15–0.3.16",
+      "v": "0.3.16–0.3.17",
       "title": "Bayes, Mac and Linux",
       "when": "Later",
       "items": [

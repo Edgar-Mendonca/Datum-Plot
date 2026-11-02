@@ -223,6 +223,8 @@ fn worksheets_and_formulas() {
 fn templates_make_sense() {
     let l = templates::list();
     assert_eq!(l.len(), 26);
+    assert!(l.iter().all(|t| templates::GROUPS.contains(&t.group)), "every sample sits under a heading of Home › Samples");
+    assert!(l.windows(2).all(|w| templates::GROUPS.iter().position(|g| *g == w[0].group) <= templates::GROUPS.iter().position(|g| *g == w[1].group)), "listed heading by heading");
     assert!(l.iter().all(|t| t.dots.len() >= 2 && t.dots.iter().all(|d| d.0.is_finite() && d.1.is_finite())), "every tile has a picture");
     for (id, n) in [("modulus", 2), ("arrhenius", 1), ("groups", 1), ("dsc", 1), ("twoway", 1), ("spectrum", 1), ("tga", 1), ("fatigue", 1), ("trial", 1), ("surface", 1)] {
         let p = templates::build(Some(id)).unwrap();

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.13 — 2026-11-02
+
+A tidier Home page.
+
+**Three blank starts**
+- **Blank XY table and graph**, as before; **Blank XY table** without a graph, for when you only want to enter and analyse data; **Blank column table** without a graph, groups side by side for t-tests and ANOVA. A graph can be added at any time.
+
+**A Samples folder**
+- The sample projects moved from Home into **Samples**, which opens inside Home with every sample under a heading: curves and regression, comparing groups, survival and reliability, medical tests, signals and thermal analysis, maps and special graphs.
+- Home now shows only the starts, Samples, Open, Import data, Guide, Roadmap and your recent projects.
+
 ## 0.3.12 — 2026-11-02
 
 Dates, second step; median error bars; fixes from testers.

@@ -10,7 +10,7 @@ import { listen, invoke } from "./api";
 import { ERRORS, FONTS, SIZES } from "./format";
 import { RoadmapPage, importFile, newTable } from "./roadmap";
 
-type Tpl = { id: string; name: string; desc: string; dots: [number, number][] };
+type Tpl = { id: string; group: string; name: string; desc: string; dots: [number, number][] };
 type Info = { current: string; latest: string | null; beta: boolean; available: boolean; notes: string; published: string; url: string | null; sums: string | null; size: number; page: string };
 export const [update, setUpdate] = createSignal<Info | null>(null);
 export const [checking, setChecking] = createSignal(false), [checkedAt, setCheckedAt] = createSignal("");
@@ -44,27 +44,45 @@ const Mini = (p: { t: Tpl }) => (
   </svg>
 );
 
+/** 0.3.13 (a user's request): Home keeps the blank starts, the Samples folder, open, import, guide and roadmap;
+ *  the samples open inside Home, listed under headings. */
 const Home = () => {
   const [tpls] = createResource(() => call<Tpl[]>("templates"));
   const [recent] = createResource(() => call<{ path: string; name: string; modified: string }[]>("recent"));
+  const [folder, setFolder] = createSignal(false);
   const neu = (template: string | null) => loadOut("new_project", { template });
+  const groups = () => [...new Set((tpls() ?? []).map(t => t.group))];
+  const Tile = (p: { icon: string; name: string; desc: string; run: () => void }) => <button class="tile" onClick={p.run}><div class="pic"><svg class="ic"><use href={`#i-${p.icon}`} /></svg></div><b>{p.name}</b><span>{p.desc}</span></button>;
   return (
     <div class="home">
-      <div>
-        <h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}</h1>
-        <div class="tiles">
-          <button class="tile" onClick={() => neu(null)}><div class="pic"><svg class="ic"><use href="#i-xy" /></svg></div><b>Blank XY table</b><span>An X column and data sets with replicates, and its graph.</span></button>
-          <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><Mini t={t} /><small>sample</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
-          <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Plot project (.dplot).</span></button>
-          <button class="tile" onClick={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }}><div class="pic"><svg class="ic"><use href="#i-import" /></svg></div><b>Import data</b><span>A CSV, TXT or .xlsx file into a new XY table.</span></button>
-          <button class="tile" onClick={() => D.guide()}><div class="pic"><svg class="ic"><use href="#i-pdf" /></svg></div><b>Guide</b><span>The step-by-step guide (PDF), in English, 中文 or Français.</span></button>
-          <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Plot will do, and when.</span></button>
+      <Show when={folder()} fallback={
+        <div>
+          <h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}</h1>
+          <h2>Start</h2>
+          <div class="tiles">
+            <Tile icon="xy" name="Blank XY table and graph" desc="An X column and data sets with replicates, and its graph." run={() => neu(null)} />
+            <Tile icon="sheet" name="Blank XY table" desc="The same table without a graph: enter data and analyse it; add a graph later if you want one." run={() => neu("table")} />
+            <Tile icon="cols" name="Blank column table" desc="Groups side by side, one value per row, without a graph: for t-tests, ANOVA and descriptive statistics." run={() => neu("column")} />
+            <Tile icon="folder" name="Samples" desc={`${tpls()?.length ?? ""} ready-made projects to learn from, in ${groups().length || ""} groups.`} run={() => setFolder(true)} />
+            <Tile icon="open" name="Open" desc="A Datum Plot project (.dplot)." run={() => C.open()} />
+            <Tile icon="import" name="Import data" desc="A CSV, TXT or .xlsx file into a new XY table." run={async () => { if (!out()) await loadOut("new_project", { template: null }); importFile(); }} />
+            <Tile icon="pdf" name="Guide" desc="The step-by-step guide (PDF), in English, 中文 or Français." run={() => D.guide()} />
+            <Tile icon="list" name="Roadmap" desc="Everything Datum Plot will do, and when." run={() => setBackstage("roadmap")} />
+          </div>
+          <h2>Recent</h2>
+          <table class="recent"><tbody>
+            <For each={recent() ?? []} fallback={<tr><td class="muted">Projects you open or save appear here.</td></tr>}>{r => <tr class="f" onClick={() => loadOut("open", { path: r.path })}><td><b>{r.name}</b><div class="p">{r.path}</div></td><td class="p">{r.modified}</td></tr>}</For>
+          </tbody></table>
+        </div>}>
+        <div class="samples">
+          <h1><button class="btn sm" onClick={() => setFolder(false)}>← Home</button> Samples</h1>
+          <p class="muted">Each sample opens as a new project with its data, analyses and graphs, ready to change.</p>
+          <For each={groups()}>{g => <>
+            <h2>{g}</h2>
+            <div class="tiles"><For each={(tpls() ?? []).filter(t => t.group === g)}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><Mini t={t} /></div><b>{t.name}</b><span>{t.desc}</span></button>}</For></div>
+          </>}</For>
         </div>
-        <h2>Recent</h2>
-        <table class="recent"><tbody>
-          <For each={recent() ?? []} fallback={<tr><td class="muted">Projects you open or save appear here.</td></tr>}>{r => <tr class="f" onClick={() => loadOut("open", { path: r.path })}><td><b>{r.name}</b><div class="p">{r.path}</div></td><td class="p">{r.modified}</td></tr>}</For>
-        </tbody></table>
-      </div>
+      </Show>
       <UpdateCard />
     </div>
   );

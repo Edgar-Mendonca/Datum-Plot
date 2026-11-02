@@ -37,11 +37,13 @@ Datum Plot recherche une nouvelle version à chaque démarrage. Lorsqu’une ver
 
 ![La page Home (File › Home).](img/home.png)
 
-1. **Blank XY table** (Tableau XY vide). Un tableau XY vide avec son graphique, prêt à recevoir vos données.
-2. **Samples** (Exemples). Chaque exemple est un petit projet complet, avec des données réalistes, une analyse et un graphique : courbes de croissance et courbes d’étalonnage, dose-réponse, comparaisons de groupes, essais de traction, études de survie, comparaison de méthodes, tests diagnostiques, surfaces de réponse, diagrammes polaires, spectres, courbes DSC et ATG, et bien d’autres. Ouvrez-en un pour voir à quoi ressemble un projet abouti, puis remplacez les données par les vôtres.
+1. **Départs vierges.** **Blank XY table and graph** (Tableau XY et graphique vides) : un tableau XY vide avec son graphique. **Blank XY table** (Tableau XY vide) : le même sans graphique, pour saisir et analyser des données seulement. **Blank column table** (Tableau en colonnes vide) : des groupes côte à côte, sans graphique, pour les tests t et l’ANOVA. Un graphique peut être ajouté plus tard avec **Graph › New Graph** (Graphique › Nouveau graphique).
+2. **Samples** (Exemples). Un dossier de petits projets complets, avec des données réalistes, une analyse et un graphique. Il s’ouvre dans la page Home, les exemples rangés sous des titres : courbes et régression, comparaison de groupes, survie et fiabilité, tests médicaux, signaux et analyse thermique, cartes et graphiques spéciaux. Ouvrez-en un pour voir à quoi ressemble un projet abouti, puis remplacez les données par les vôtres ; **← Home** ramène à l’accueil.
 3. **La page File** (Fichier). **New** (Nouveau), **Open** (Ouvrir), **Import** (Importer), **Save** (Enregistrer), **Save As** (Enregistrer sous), **Export** (Exporter) et **Print** (Imprimer), et en dessous **Roadmap** (Feuille de route), **Options** (Options) et **Updates** (Mises à jour). La flèche en haut ramène au projet.
 
-Plus bas sur la page **Home** (Accueil) se trouvent la vignette **Guide** (ce guide, en anglais, en chinois ou en français) et vos projets récents.
+À côté se trouvent **Open** (Ouvrir), **Import data** (Importer des données), le **Guide** (ce guide, en anglais, en chinois ou en français) et la **Roadmap** (Feuille de route) ; plus bas, vos projets récents.
+
+![Les exemples, sous leurs titres.](img/samples.png)
 
 ## La fenêtre en un coup d’œil
 

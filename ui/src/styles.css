@@ -123,6 +123,8 @@ tr.link:hover td { background: var(--pale); }
 .bsmain h2 { font-weight: 600; font-size: 13.5px; margin: 20px 0 10px; color: var(--navy); }
 .home { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 32px; }
 .about { max-width: 480px; }
+.samples h1 { display: flex; align-items: center; gap: 12px; }
+.samples h2 { margin-top: 24px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; align-items: stretch; }
 .tile { text-align: left; padding: 8px; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; }
 .tile:hover { border-color: var(--blue); box-shadow: 0 3px 12px rgba(20,50,94,.12); }

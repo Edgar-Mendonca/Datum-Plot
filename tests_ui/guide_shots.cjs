@@ -89,7 +89,11 @@ const srv = http.createServer((q, r) => {
   const TOP = { x: 0, y: 0, width: 1440, height: 200 };
 
   // 1. Home: blank table, samples, import, guide.
-  await shot("home", [[".home .tile", 1, 0], [".home .tile", 2, 1], [".bs aside", 3, 0, "in"]]);
+  await shot("home", [[".home .tile", 1, 0], [".home .tile", 2, 3], [".bs aside", 3, 0, "in"]]);
+  // 0.3.13: the Samples folder opens inside Home, under headings.
+  await p.click('.home .tile:has-text("Samples")'); await wait(300);
+  await shot("samples", [[".samples .tile", 1, 0]]);
+  await p.click('.samples h1 button'); await wait(200);
   await p.click(".bs aside .back"); await wait(600);
   // Navigator order: info, 4 tables, 4 results, 4 graphs, 1 layout.
   await nav(9);

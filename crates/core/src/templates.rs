@@ -5,6 +5,8 @@ use serde::Serialize;
 #[derive(Serialize)]
 pub struct Tpl {
     pub id: &'static str,
+    /// The heading it sits under in Home › Samples (0.3.13), in the order of `GROUPS`.
+    pub group: &'static str,
     pub name: &'static str,
     pub desc: &'static str,
     /// Mean points of the first data set (x, y), scaled 0–1, for the tile's picture.
@@ -39,7 +41,14 @@ fn table(titles: [&str; 5], xs: &[f64], sets: &[(&str, &dyn Fn(f64) -> f64)], re
     t
 }
 
+/// The samples, grouped under the headings of `GROUPS` (in that order) for Home › Samples.
 pub fn list() -> Vec<Tpl> {
+    let mut l = all();
+    l.sort_by_key(|t| GROUPS.iter().position(|g| *g == t.group).unwrap_or(GROUPS.len()));
+    l
+}
+
+fn all() -> Vec<Tpl> {
     let dots = |id: &str| {
         let p = build(Some(id)).unwrap();
         let t = &p.tables[0];
@@ -75,36 +84,39 @@ pub fn list() -> Vec<Tpl> {
         pts.iter().map(|p| ((fx(p.0) - x0) / (x1 - x0).max(1e-9), (p.1 - y0) / (y1 - y0).max(1e-9))).collect()
     };
     vec![
-        Tpl { id: "growth", name: "Growth curve", desc: "Optical density over time, two strains in triplicate.", dots: dots("growth") },
-        Tpl { id: "standard", name: "Standard curve", desc: "Absorbance of standards entered as mean, SD and N.", dots: dots("standard") },
-        Tpl { id: "dose", name: "Dose-response", desc: "Response to two compounds on a log concentration axis.", dots: dots("dose") },
-        Tpl { id: "modulus", name: "Tensile test", desc: "Stress–strain of two alloys; the modulus is a linear fit of the elastic region.", dots: dots("modulus") },
-        Tpl { id: "arrhenius", name: "Arrhenius", desc: "Rate constants at six temperatures; the analysis gives the activation energy.", dots: dots("arrhenius") },
-        Tpl { id: "groups", name: "Compare groups", desc: "Yield strength after three heat treatments: one-way ANOVA with Tukey's test.", dots: dots("groups") },
-        Tpl { id: "weibull", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
-        Tpl { id: "twoway", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
-        Tpl { id: "counts", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
-        Tpl { id: "phases", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
-        Tpl { id: "hardness", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
-        Tpl { id: "corrosion", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
-        Tpl { id: "batches", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
-        Tpl { id: "spectrum", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
-        Tpl { id: "worksheet", name: "Worksheet", desc: "Cooling of a sample: time, temperature and its SD in free columns, with a formula column giving kelvin.", dots: dots("worksheet") },
-        Tpl { id: "hardmap", name: "Hardness map", desc: "Hardness measured on a grid across a weld: a contour map, a 3D surface and a 2D Gaussian surface fit.", dots: dots("hardmap") },
-        Tpl { id: "dsc", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
-        Tpl { id: "tga", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
-        Tpl { id: "fatigue", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
-        Tpl { id: "trial", name: "Survival study", desc: "Months to relapse of 20 patients on each of two treatments, followed for up to 36 months: Kaplan-Meier curves, log-rank test and hazard ratio.", dots: dots("trial") },
-        Tpl { id: "agreement", name: "Method comparison", desc: "Blood glucose of 30 patients by a lab analyser and a bedside meter: Bland-Altman bias and limits of agreement.", dots: dots("agreement") },
-        Tpl { id: "diagnostic", name: "Diagnostic test", desc: "A biomarker in 30 healthy people and 30 patients: the ROC curve, its AUC and the best cut-off.", dots: dots("diagnostic") },
-        Tpl { id: "surface", name: "Response surface", desc: "Process yield over a grid of temperatures and times: a contour map and a quadratic surface fit locating the best settings.", dots: dots("surface") },
-        Tpl { id: "ternary", name: "Composition triangle", desc: "Copper, nickel and zinc shares of 18 alloy samples on a ternary graph; switch Graph Style to Bubble to see hardness as bubble size.", dots: dots("ternary") },
-        Tpl { id: "dates", name: "Readings over time", desc: "Weekly dissolved-oxygen readings at two river sites through a season, on a date axis, with a trend line per day.", dots: dots("dates") },
-        Tpl { id: "polar", name: "Polar pattern", desc: "The radiation pattern of two antennas, gain against angle, on a polar graph.", dots: dots("polar") },
+        Tpl { id: "growth", group: "Curves and regression", name: "Growth curve", desc: "Optical density over time, two strains in triplicate.", dots: dots("growth") },
+        Tpl { id: "standard", group: "Curves and regression", name: "Standard curve", desc: "Absorbance of standards entered as mean, SD and N.", dots: dots("standard") },
+        Tpl { id: "dose", group: "Curves and regression", name: "Dose-response", desc: "Response to two compounds on a log concentration axis.", dots: dots("dose") },
+        Tpl { id: "modulus", group: "Curves and regression", name: "Tensile test", desc: "Stress–strain of two alloys; the modulus is a linear fit of the elastic region.", dots: dots("modulus") },
+        Tpl { id: "arrhenius", group: "Curves and regression", name: "Arrhenius", desc: "Rate constants at six temperatures; the analysis gives the activation energy.", dots: dots("arrhenius") },
+        Tpl { id: "groups", group: "Comparing groups", name: "Compare groups", desc: "Yield strength after three heat treatments: one-way ANOVA with Tukey's test.", dots: dots("groups") },
+        Tpl { id: "weibull", group: "Survival and reliability", name: "Weibull strength", desc: "Fracture strength of two ceramics, 20 bars each: Weibull modulus and characteristic strength.", dots: dots("weibull") },
+        Tpl { id: "twoway", group: "Comparing groups", name: "Two factors", desc: "Strength of three alloys as received and aged: two-way ANOVA with grouped bars.", dots: dots("twoway") },
+        Tpl { id: "counts", group: "Comparing groups", name: "Pass or fail", desc: "Specimens that passed or failed inspection with two coating processes: Fisher's exact test and relative risk.", dots: dots("counts") },
+        Tpl { id: "phases", group: "Comparing groups", name: "Phase fractions", desc: "Point counts of the phases in annealed and quenched steel: pie charts and fractions with 95% CIs.", dots: dots("phases") },
+        Tpl { id: "hardness", group: "Curves and regression", name: "Many variables", desc: "Hardness of 24 steels from their carbon content and tempering temperature: multiple regression.", dots: dots("hardness") },
+        Tpl { id: "corrosion", group: "Survival and reliability", name: "Time to failure", desc: "Hours to failure of coated and bare specimens in a salt-spray test stopped at 1000 h: Kaplan-Meier curves and the log-rank test.", dots: dots("corrosion") },
+        Tpl { id: "batches", group: "Comparing groups", name: "Batches", desc: "Strength of specimens from three batches of each of three suppliers: a nested one-way ANOVA with batches as subgroups.", dots: dots("batches") },
+        Tpl { id: "spectrum", group: "Signals, thermal analysis and worksheets", name: "Spectrum peaks", desc: "A Raman-like spectrum with three overlapping bands on a curved background: peak positions, widths and areas from a Gaussian fit.", dots: dots("spectrum") },
+        Tpl { id: "worksheet", group: "Signals, thermal analysis and worksheets", name: "Worksheet", desc: "Cooling of a sample: time, temperature and its SD in free columns, with a formula column giving kelvin.", dots: dots("worksheet") },
+        Tpl { id: "hardmap", group: "Maps, 3D and special graphs", name: "Hardness map", desc: "Hardness measured on a grid across a weld: a contour map, a 3D surface and a 2D Gaussian surface fit.", dots: dots("hardmap") },
+        Tpl { id: "dsc", group: "Signals, thermal analysis and worksheets", name: "DSC peak", desc: "A melting peak on a sloping baseline: onset and peak temperatures, and the enthalpy from the area.", dots: dots("dsc") },
+        Tpl { id: "tga", group: "Signals, thermal analysis and worksheets", name: "TGA steps", desc: "Mass loss of a filled polymer in two steps: onsets, the temperatures of fastest loss and the residue.", dots: dots("tga") },
+        Tpl { id: "fatigue", group: "Curves and regression", name: "S–N curve", desc: "Stress against cycles to failure for an aluminium alloy, with run-outs: a Basquin fit and the fatigue strength at 10⁷ cycles.", dots: dots("fatigue") },
+        Tpl { id: "trial", group: "Survival and reliability", name: "Survival study", desc: "Months to relapse of 20 patients on each of two treatments, followed for up to 36 months: Kaplan-Meier curves, log-rank test and hazard ratio.", dots: dots("trial") },
+        Tpl { id: "agreement", group: "Medical tests", name: "Method comparison", desc: "Blood glucose of 30 patients by a lab analyser and a bedside meter: Bland-Altman bias and limits of agreement.", dots: dots("agreement") },
+        Tpl { id: "diagnostic", group: "Medical tests", name: "Diagnostic test", desc: "A biomarker in 30 healthy people and 30 patients: the ROC curve, its AUC and the best cut-off.", dots: dots("diagnostic") },
+        Tpl { id: "surface", group: "Maps, 3D and special graphs", name: "Response surface", desc: "Process yield over a grid of temperatures and times: a contour map and a quadratic surface fit locating the best settings.", dots: dots("surface") },
+        Tpl { id: "ternary", group: "Maps, 3D and special graphs", name: "Composition triangle", desc: "Copper, nickel and zinc shares of 18 alloy samples on a ternary graph; switch Graph Style to Bubble to see hardness as bubble size.", dots: dots("ternary") },
+        Tpl { id: "dates", group: "Curves and regression", name: "Readings over time", desc: "Weekly dissolved-oxygen readings at two river sites through a season, on a date axis, with a trend line per day.", dots: dots("dates") },
+        Tpl { id: "polar", group: "Maps, 3D and special graphs", name: "Polar pattern", desc: "The radiation pattern of two antennas, gain against angle, on a polar graph.", dots: dots("polar") },
     ]
 }
 
 /// A new project: blank (None) or one of the samples.
+/// The headings of Home › Samples, in order.
+pub const GROUPS: [&str; 6] = ["Curves and regression", "Comparing groups", "Survival and reliability", "Medical tests", "Signals, thermal analysis and worksheets", "Maps, 3D and special graphs"];
+
 pub fn build(id: Option<&str>) -> Option<Project> {
     let mut p = Project::new("Project1");
     let g = GraphSettings::default();

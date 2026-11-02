@@ -275,14 +275,20 @@ fn templates() -> Vec<templates::Tpl> {
 #[tauri::command]
 fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-    let mut p = if template.is_none() {
+    // 0.3.13: three blank starts on Home: an XY table with its graph, an XY table alone, a column table alone.
+    let blank = matches!(template.as_deref(), None | Some("table") | Some("column"));
+    let mut p = if blank {
         let mut p = Project::new("Project1");
-        p.add_table(a.opts.table(), Some(a.opts.graph()));
+        match template.as_deref() {
+            Some("table") => p.add_table(a.opts.table(), None),
+            Some("column") => p.add_table(Table::column(3), None),
+            _ => p.add_table(a.opts.table(), Some(a.opts.graph())),
+        };
         p
     } else {
         templates::build(template.as_deref()).ok_or("Unknown template.")?
     };
-    if template.is_some() {
+    if !blank {
         let s = a.opts.graph();
         for g in &mut p.graphs {
             let t = g.settings.clone();
