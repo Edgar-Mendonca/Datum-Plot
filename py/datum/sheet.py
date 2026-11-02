@@ -5,7 +5,8 @@ A worksheet is a table whose data sets are single columns, each with a role: "x"
 
 A column formula fills a data set (one value per row) from the others: A, B, C… are the data sets
 (each row's mean when they have replicates), X the X column, i the row number, col("Title") a data set
-by its title. Arithmetic (+ − × ÷ ^ %), comparisons, if(test, a, b), and the functions in FUNCS.
+by its title. Arithmetic (+ − × ÷ ^ %), comparisons, if(test, a, b), and the functions in FUNCS, among them
+(0.3.12) date(y, m, d), today(), year, month, day (of a day number) and days(a, b), hours(a, b) (differences).
 Formulas are checked node by node before they run: only names, numbers and those calls are allowed."""
 import ast
 import math
@@ -29,6 +30,36 @@ def _agg(f):
     return lambda v: np.full_like(np.asarray(v, float), f(np.asarray(v, float)))
 
 
+def _date(y, m, d):
+    """Days since 1970-01-01 of year, month, day (0.3.12; days past a month's end roll on, as in a spreadsheet)."""
+    y, m, d = (np.asarray(a, float) for a in (y, m, d))
+    y = y + np.floor((m - 1) / 12)
+    m = (m - 1) % 12 + 1
+    y = y - (m <= 2)
+    era = np.floor(y / 400)
+    yoe = y - era * 400
+    doy = np.floor((153 * (m + np.where(m > 2, -3, 9)) + 2) / 5) + d - 1
+    return era * 146097 + yoe * 365 + np.floor(yoe / 4) - np.floor(yoe / 100) + doy - 719468
+
+
+def _civil(v):
+    """(year, month, day) of day numbers."""
+    z = np.floor(np.asarray(v, float)) + 719468
+    era = np.floor(z / 146097)
+    doe = z - era * 146097
+    yoe = np.floor((doe - np.floor(doe / 1460) + np.floor(doe / 36524) - np.floor(doe / 146096)) / 365)
+    doy = doe - (365 * yoe + np.floor(yoe / 4) - np.floor(yoe / 100))
+    mp = np.floor((5 * doy + 2) / 153)
+    d = doy - np.floor((153 * mp + 2) / 5) + 1
+    m = mp + np.where(mp < 10, 3, -9)
+    return yoe + era * 400 + (m <= 2), m, d
+
+
+def _today():
+    import datetime
+    return float((datetime.date.today() - datetime.date(1970, 1, 1)).days)
+
+
 FUNCS = {
     "abs": np.abs, "sqrt": np.sqrt, "exp": np.exp, "ln": np.log, "log": np.log10, "log10": np.log10, "log2": np.log2,
     "sin": np.sin, "cos": np.cos, "tan": np.tan, "asin": np.arcsin, "acos": np.arccos, "atan": np.arctan,
@@ -39,6 +70,8 @@ FUNCS = {
     "diff": lambda v: np.concatenate([[np.nan], np.diff(np.asarray(v, float))]),
     "if": lambda c, a, b: np.where(c, a, b),
     "radians": np.radians, "degrees": np.degrees,
+    "date": _date, "today": _today, "year": lambda v: _civil(v)[0], "month": lambda v: _civil(v)[1], "day": lambda v: _civil(v)[2],
+    "days": lambda a, b: np.asarray(a, float) - np.asarray(b, float), "hours": lambda a, b: (np.asarray(a, float) - np.asarray(b, float)) * 24,
 }
 CONSTS = {"pi": math.pi, "e": math.e}
 OPS = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Compare, ast.BoolOp, ast.Call, ast.Name, ast.Load, ast.Constant,

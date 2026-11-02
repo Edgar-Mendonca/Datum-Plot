@@ -19,7 +19,7 @@ import { Side, Navigator, InfoPage } from "./nav";
 import { LayoutsPage } from "./layout";
 import { ResultsPage } from "./results";
 import { Backstage, update, checkUpdate } from "./backstage";
-import { Menu, Toast, Dialog } from "./ui";
+import { Menu, Toast, Dialog, DialogOf } from "./ui";
 import * as D from "./dialogs";
 
 const Status = () => (
@@ -98,7 +98,7 @@ const App = () => {
       </main>
       <Status />
       <Show when={backstage()}><Backstage /></Show>
-      <For each={dialogs()}>{d => d()}</For>
+      <For each={dialogs()}>{d => <DialogOf.Provider value={d}>{d()}</DialogOf.Provider>}</For>
       <Menu /><Toast />
     </div>
   );

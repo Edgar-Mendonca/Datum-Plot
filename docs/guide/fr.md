@@ -95,7 +95,7 @@ Choisissez le type de tableau qui correspond à votre expérience : **Data › 
 ![Un tableau de données (onglet Data).](img/table.png)
 
 1. **Data › Insert** (Données › Insérer). **New Table** (Nouveau tableau), **Import** (Importer), **Several Files** (Plusieurs fichiers), **Add Data Set** (Ajouter une série), **Remove Data Set** (Supprimer une série) et les lignes.
-2. **En-têtes.** Le titre et les unités de X, et le titre de chaque série de données. Double-cliquez sur un en-tête pour le modifier, ainsi que les réplicats ou le mode de saisie des valeurs.
+2. **En-têtes.** Le titre et les unités de X, et le titre de chaque série de données. Double-cliquez sur un en-tête pour le modifier, ainsi que les réplicats ou le mode de saisie des valeurs. Les titres longs passent à la ligne, sur trois lignes au plus. Faites glisser le bord droit d’un en-tête pour élargir sa colonne ; double-cliquez sur ce bord pour l’ajuster au titre et aux valeurs.
 3. **Cellules.** Tapez une valeur et appuyez sur [[Enter]]. Le copier-coller fonctionne avec les tableurs ([[Ctrl+C]], [[Ctrl+V]]) ; [[Ctrl+D]] recopie vers le bas.
 
 Une série de données peut être saisie sous forme de réplicats (chaque valeur dans sa propre colonne) ou sous forme de **mean, SD and N** (moyenne, écart-type et N) ou de **mean, SEM and N** (moyenne, erreur-type de la moyenne et N) tirés d’un article ou d’un autre logiciel : choisissez-le dans l’en-tête de la série.
@@ -104,20 +104,22 @@ Pour exclure une valeur des graphiques et des analyses sans la supprimer, sélec
 
 ### Formules et transformations
 
-- **Data › Column Formula** (Données › Formule de colonne) remplit une colonne à partir des autres, par exemple `(B - A) / A * 100`. La colonne se met à jour quand les données changent.
+- **Data › Column Formula** (Données › Formule de colonne) remplit une colonne à partir des autres, par exemple `(B - A) / A * 100`. La colonne se met à jour quand les données changent. Les dates aussi : `date(2026, 11, 5)`, `today()`, `year(X)`, `month(X)`, `day(X)`, et `days(B, A)` ou `hours(B, A)` pour le temps entre deux dates.
 - **Data › Transform** (Données › Transformer) crée un nouveau tableau de valeurs transformées : logarithmes, 1/X, °C en K, soustraction d’une ligne de base, normalisation.
 - **Data › Check Data** (Données › Vérifier les données) recherche les fautes de frappe, les valeurs manquantes et les valeurs qu’un axe logarithmique ne peut pas afficher.
 
 ### Importer
 
-**Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs .xlsx et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
+**Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs .xlsx et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. Quand la colonne X contient des dates, **The X column holds dates** (La colonne X contient des dates) est coché pour vous. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
 
 ### Dates et heures
 
 La colonne X d’un tableau XY peut contenir des dates. Cliquez avec le bouton droit sur son en-tête (ou choisissez **Format X Column** (Format de la colonne X) dans le menu contextuel d’une cellule), puis **Dates** ou **Dates and times** (Dates et heures), et leur affichage : `5 Nov 2026`, `05-Nov-26`, `2026-11-05`, `05/11/2026` ou `Nov 2026`.
 
+- Coller des dates dans une colonne X de nombres propose de la traiter comme des dates.
 - Tapez ou collez les dates sous la forme `2026-11-05`, `5-Nov-26`, `5 Nov 2026`, `Nov 5, 2026` ou `05/11/2026`, avec une heure si vous voulez (`2026-11-05 14:30`). **File › Options › Dates** (Fichier › Options › Dates) indique si `05/11/2026` commence par le jour ou par le mois.
-- Les dates sont gardées comme des nombres, les jours depuis le 1er janvier 1970, si bien que graphiques et ajustements les utilisent directement : le graphique a un axe de dates (**Format Graph › X Axis › Tick labels** (Mettre en forme › Axe X › Étiquettes) : automatique, jour et mois, mois et année, ISO ou numéro de semaine), et une droite ajustée donne sa pente **par jour**.
+- Les dates sont gardées comme des nombres, les jours depuis le 1er janvier 1970, si bien que graphiques et ajustements les utilisent directement : le graphique a un axe de dates (**Format Graph › X Axis › Tick labels** (Mettre en forme › Axe X › Étiquettes) : automatique, jour et mois, mois et année, ISO ou numéro de semaine ; **Major ticks every** (Graduations principales tous les) : jour, semaine, 2 semaines, mois, 3 mois ou année), et une droite ajustée donne sa pente **par jour**, l’intersection avec l’axe X sous forme de date et la valeur à la première date.
+- **Format Graph › Notes › Line at a date** (Mettre en forme › Notes › Ligne à une date) trace une ligne pointillée sur tout le graphique à la date saisie, avec une étiquette.
 - Les classeurs exportés (.xlsx, .ods) contiennent de vraies dates. Les fichiers venant de Datum Plan s’ouvrent avec leurs dates déjà réglées.
 
 ## Analyses et résultats
@@ -171,11 +173,11 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
 4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives) et **Print** (Imprimer).
 
-Les autres groupes règlent les **Error Bars** (Barres d’erreur), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
+Les autres groupes règlent les **Error Bars** (Barres d’erreur : la moyenne avec SD, SEM, IC à 95 % ou étendue, ou la médiane avec l’écart interquartile, l’étendue ou un IC à 95 %), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
 
 ### Mettre en forme un graphique
 
-Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une série de données, le titre) pour la mettre en forme, ou utilisez **Graph › Format Axes** (Graphique › Mettre en forme les axes).
+Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une série de données, le titre) pour la mettre en forme, ou cliquez avec le bouton droit sur un axe › **Format Axes** (Mettre en forme les axes), ou utilisez **Graph › Format Axes** (Graphique › Mettre en forme les axes). Il n’y a qu’une fenêtre Format Graph : ces commandes l’amènent à la page demandée.
 
 ![Format Graph, ancré à côté du graphique.](img/format.png)
 

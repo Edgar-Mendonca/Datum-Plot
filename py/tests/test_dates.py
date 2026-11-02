@@ -48,5 +48,36 @@ class Dates(unittest.TestCase):
             self.assertEqual((cell.year, cell.month, cell.day), (2026, 10, 12))
 
 
+class DatesII(unittest.TestCase):
+    """0.3.12: date functions in formulas, a fixed major step, lines at a date, intercepts as dates."""
+    def setUp(self):
+        warnings.simplefilter("ignore")
+
+    def test_formula_date_functions(self):
+        from datum import sheet
+        t = dict(PLAN, sets=PLAN["sets"][:1], cols=[PLAN["cols"][0], [1, 2, 3]])
+        self.assertEqual(sheet.evaluate(t, "date(2026, 10, 12)"), [20738.0] * 3)
+        self.assertEqual(sheet.evaluate(t, "year(X)"), [2026.0] * 3)
+        self.assertEqual(sheet.evaluate(t, "month(X) * 100 + day(X)"), [1012.0, 1019.0, 1026.0])
+        self.assertEqual(sheet.evaluate(t, "days(X, date(2026, 10, 1))"), [11.0, 18.0, 25.0])
+        self.assertEqual(sheet.evaluate(t, "hours(X, X - 0.5)"), [12.0] * 3)
+        self.assertEqual(sheet.evaluate(t, "date(2024, 2, 29) - date(2024, 3, 1)"), [-1.0] * 3)  # a leap day
+        self.assertEqual(sheet.evaluate(t, "date(2026, 13, 1) - date(2027, 1, 1)"), [0.0] * 3)  # months roll on
+
+    def test_major_step_and_a_line_at_a_date(self):
+        t = dict(PLAN, rows=60, cols=[[20738 + i for i in range(60)], [float(i) for i in range(60)], [None] * 60])
+        months = " ".join(ticks(graph.render(t, dict(SETTINGS, x={"dateStep": "m1", "dates": "monthyear", "minor": True}))["svg"]))
+        for m in ("Nov 2026", "Dec 2026"):  # ticks on the 1st of each month
+            self.assertIn(m, months)
+        notes = [{"kind": "vline", "x": 20760, "y": 0, "x2": 20760, "y2": 0, "text": "Pump fitted"}]
+        self.assertIn("Pump fitted", graph.render(t, dict(SETTINGS, notes=notes))["svg"])
+
+    def test_intercepts_read_as_dates(self):
+        t = dict(PLAN, cols=[[20738 + i for i in range(5)], [-4, -3, -2, -1, 0], [None] * 5], sets=PLAN["sets"][:1], rows=5)
+        text = str(A.run("linear", t, [], {}))
+        self.assertIn("16 Oct 2026", text)  # Y reaches 0 on day 4
+        self.assertIn("Y on 12 Oct 2026", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -469,11 +469,15 @@ pub struct Axis {
     /// Y axis break: the values from `break_from` to `break_to` are cut out (both set and from < to).
     pub break_from: Option<f64>,
     pub break_to: Option<f64>,
+    /// Date X axes: tick labels ("" or auto, daymonth, monthyear, iso, week). Kept since 0.3.12 (0.3.11 lost it).
+    pub dates: String,
+    /// Date X axes (0.3.12): major tick every "d1", "w1", "w2", "m1", "m3" or "y1"; "" automatic.
+    pub date_step: String,
 }
 
 impl Default for Axis {
     fn default() -> Self {
-        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None }
+        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None, dates: String::new(), date_step: String::new() }
     }
 }
 

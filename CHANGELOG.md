@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.12 — 2026-11-02
+
+Dates, second step; median error bars; fixes from testers.
+
+**Fixes from testers**
+- Pressing **Enter** in a name box (renaming a data set, a table and so on) now keeps the new name before the window closes.
+- **Right-click an axis › Format Axes** opens the page of the axis you clicked (X, Y or the right Y axis), not always X.
+- **One Format Graph window**: Format Axes, Format Graph and double-clicks switch the open window to the page asked for instead of opening another. **×**, Close and Esc close the window they belong to, not the newest one.
+- **Long data set titles** wrap onto up to three lines and the heading grows to fit. Drag the right edge of a heading to widen a column; double-click it to fit.
+- The date axis's **Tick labels** choice is now kept in the project (0.3.11 forgot it).
+
+**Median error bars**
+- **Error Bars** offer the **median with its interquartile range**, **with its range**, or **with a 95% confidence interval** (from the order statistics), on XY, column, grouped and nested graphs. The point or bar shows the median.
+
+**Dates, second step**
+- Pasting or importing text that looks like dates into a number X column offers to **treat the column as dates**.
+- **Format Graph › X Axis › Major ticks every** day, week, 2 weeks, month, 3 months or year; minor ticks one step finer.
+- **Format Graph › Notes › Line at a date**: a dashed line across the graph at a date you type, with a label.
+- Column formulas know dates: `date(2026, 11, 5)`, `today()`, `year(X)`, `month(X)`, `day(X)`, `days(B, A)`, `hours(B, A)`.
+- Straight-line fits on dates give the X-intercept and interpolated X values as dates, and the fitted value at the first date.
+
+**Public text**
+- Product and file-format names are trademarks of their owners and are used only to describe file compatibility; code and documents name file types by extension, checked by a test.
+
 ## 0.3.11 — 2026-11-01
 
 Dates and times.

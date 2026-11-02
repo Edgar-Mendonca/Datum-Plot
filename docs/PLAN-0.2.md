@@ -238,7 +238,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B37 | Bayesian tests | 0.3.15 |
 | I7 | Mac and Linux versions | 0.3.16 |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
-| A20 | Dates, second step: offer dates on paste and import, axis steps, notes at a date, date functions in formulas | 0.3.12 |
+| A20 | Dates, second step: offer dates on paste and import, axis steps, lines at a date, date functions in formulas, intercepts as dates | ✅ 0.3.12 |
+| A21 | Long column titles wrap onto up to three lines | ✅ 0.3.12 |
+| D21 | Median error bars: median with IQR, range or 95% CI | ✅ 0.3.12 |
 | J6 | The Datum Plot Guide: PDF in English, Simplified Chinese and French, numbered screenshots, Help › Guide downloads and checks it | ✅ 0.3.2 |
 | J7 | Medical and engineering samples: survival study, method comparison, diagnostic test, response surface, polar pattern | ✅ 0.3.2 |
 
@@ -391,7 +393,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.9** ✅ | More statistics: three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits (B34) |
 | **0.3.10** ✅ | Control charts and design of experiments (B35) |
 | **0.3.11** ✅ | Dates and times (A19) |
-| 0.3.12 | Dates, second step (A20) |
+| **0.3.12** ✅ | Dates, second step (A20); testers' fixes: median error bars (D21), long titles (A21), Enter keeps names, one Format Graph window, right-click opens the axis clicked |
 | 0.3.13 | Wavelets and short-time spectra (B36) |
 | 0.3.14 | Graph digitizer and image tools (E8) |
 | 0.3.15 | Bayesian tests (B37) |

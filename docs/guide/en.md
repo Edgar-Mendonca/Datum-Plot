@@ -95,7 +95,7 @@ Choose the kind of table that matches your experiment: **Data › New Table**.
 ![A data table (Data tab).](img/table.png)
 
 1. **Data › Insert.** **New Table**, **Import**, **Several Files**, **Add Data Set**, **Remove Data Set** and rows.
-2. **Headings.** The X title and units, and each data set's title. Double-click a heading to change it, the replicates or the way values are entered.
+2. **Headings.** The X title and units, and each data set's title. Double-click a heading to change it, the replicates or the way values are entered. Long titles wrap onto up to three lines. Drag the right edge of a heading to widen its column; double-click the edge to fit the title and values.
 3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with spreadsheets ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down.
 
 A data set can be entered as replicates (each value in its own column) or as **mean, SD and N** or **mean, SEM and N** from a paper or another program: choose it in the data set's heading.
@@ -104,20 +104,22 @@ To leave a value out of graphs and analyses without deleting it, select it and p
 
 ### Formulas and transforms
 
-- **Data › Column Formula** fills a column from the others, for example `(B - A) / A * 100`. The column updates when the data change.
+- **Data › Column Formula** fills a column from the others, for example `(B - A) / A * 100`. The column updates when the data change. Dates work too: `date(2026, 11, 5)`, `today()`, `year(X)`, `month(X)`, `day(X)`, and `days(B, A)` or `hours(B, A)` for the time between two dates.
 - **Data › Transform** makes a new table of transformed values: logarithms, 1/X, °C to K, a baseline subtracted, normalised.
 - **Data › Check Data** looks for typing mistakes, missing values and values a log axis cannot show.
 
 ### Import
 
-**Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, .xlsx workbooks and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
+**Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, .xlsx workbooks and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. When the X column holds dates, **The X column holds dates** is ticked for you. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
 
 ### Dates and times
 
 The X column of an XY table can hold dates. Right-click its heading (or choose **Format X Column** from the right-click menu of a cell) and pick **Dates** or **Dates and times**, and how they are shown: `5 Nov 2026`, `05-Nov-26`, `2026-11-05`, `05/11/2026` or `Nov 2026`.
 
+- Pasting dates into a number X column asks whether to treat the column as dates.
 - Type or paste dates as `2026-11-05`, `5-Nov-26`, `5 Nov 2026`, `Nov 5, 2026` or `05/11/2026`, with a time if you like (`2026-11-05 14:30`). **File › Options › Dates** says whether `05/11/2026` is day first or month first.
-- Dates are kept as numbers, days since 1 January 1970, so graphs and fits work on them: the graph gets a date axis (**Format Graph › X Axis › Tick labels**: automatic, day and month, month and year, ISO or week number), and a straight-line fit gives its slope **per day**.
+- Dates are kept as numbers, days since 1 January 1970, so graphs and fits work on them: the graph gets a date axis (**Format Graph › X Axis › Tick labels**: automatic, day and month, month and year, ISO or week number; **Major ticks every** day, week, 2 weeks, month, 3 months or year), and a straight-line fit gives its slope **per day**, the X-intercept as a date and the value at the first date.
+- **Format Graph › Notes › Line at a date** draws a dashed line across the graph at a date you type, with a label.
 - Workbook exports (.xlsx, .ods) write real dates. Files from Datum Plan open with their dates already set.
 
 ## Analyses and results
@@ -171,11 +173,11 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
 4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides) and **Print**.
 
-The other groups set the **Error Bars**, show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
+The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range, or the median with its interquartile range, range or 95% CI), show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
 
 ### Formatting a graph
 
-Double-click any part of a graph (an axis, a data set, the title) to format it, or use **Graph › Format Axes**.
+Double-click any part of a graph (an axis, a data set, the title) to format it, or right-click an axis › **Format Axes**, or use **Graph › Format Axes**. There is one Format Graph window: these commands switch it to the page you asked for.
 
 ![Format Graph, docked beside the graph.](img/format.png)
 

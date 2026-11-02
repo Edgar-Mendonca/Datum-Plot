@@ -59,12 +59,47 @@ def style_of(graph, k, colors=OKABE_ITO):
             "size": s.get("size") or 6, "filled": s.get("filled", True), "line": s.get("line"), "width": s.get("width") or 1.0}
 
 
+MEDIAN = ("median_iqr", "median_range", "median_ci")
+
+
+def spread(v, kind):
+    """(centre, below, above) of the values `v` for an error-bar kind: the mean with SD, SEM, 95 % CI or range, or
+    (0.3.12) the median with the interquartile range, the range or a 95 % CI (order statistics, Conover 1999)."""
+    from scipy import stats as sst
+    v = np.sort(np.asarray(v, float))
+    n = len(v)
+    if kind in MEDIAN:
+        m = float(np.median(v))
+        if kind == "median_iqr":
+            lo, hi = np.percentile(v, [25, 75])
+        elif kind == "median_range":
+            lo, hi = v[0], v[-1]
+        else:  # ranks r and n + 1 - r with r the 2.5 % point of Binomial(n, 1/2): coverage ≥ 95 %
+            r = max(1, int(sst.binom.ppf(0.025, n, 0.5)))
+            lo, hi = v[r - 1], v[n - r]
+        return m, max(0.0, m - float(lo)), max(0.0, float(hi) - m)
+    m = float(v.mean())
+    if kind == "range":
+        return m, m - float(v[0]), float(v[-1]) - m
+    sd = float(v.std(ddof=1)) if n > 1 else 0.0
+    sem = sd / math.sqrt(n) if n > 1 else 0.0
+    e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, n - 1)) * sem if n > 1 else 0.0}.get(kind, 0.0)
+    return m, e, e
+
+
 def error_of(d, kind):
     """(below, above) error bar lengths for a summary point."""
+    if kind in MEDIAN:
+        return spread(d["values"], kind)[1:] if d.get("values") and d["n"] > 1 else (0.0, 0.0)
     if kind == "range" and d.get("min") is not None:
         return d["mean"] - d["min"], d["max"] - d["mean"]
     e = d.get(kind, 0.0) if kind in ("sd", "sem", "ci") else 0.0
     return e, e
+
+
+def centre_of(d, kind):
+    """The point drawn for a summary: its median for the median kinds (when the values are known), else its mean."""
+    return float(np.median(d["values"])) if kind in MEDIAN and d.get("values") and d["n"] > 1 else d["mean"]
 
 
 def rc_for(graph):
@@ -177,6 +212,10 @@ def draw_notes(ax, graph, size):
             ax.plot([x, x2], [y, y2], color=col, linewidth=1.0, zorder=6)
             if n.get("text"):
                 ax.text((x + x2) / 2, (y + y2) / 2, n["text"], color=col, fontsize=fs, fontweight=fw, ha="center", va="bottom", zorder=6)
+        elif kind == "vline":  # 0.3.12: a vertical line across the plot at X (a typed date), its label at the top
+            ax.axvline(x, color=col, linewidth=1.0, linestyle="--", zorder=6)
+            if n.get("text"):
+                ax.text(x, 1.0, " " + n["text"], transform=ax.get_xaxis_transform(), color=col, fontsize=fs, fontweight=fw, ha="left", va="top", zorder=6)
         elif kind == "box":
             ax.add_patch(Rectangle((min(x, x2), min(y, y2)), abs(x2 - x), abs(y2 - y), fill=False, edgecolor=col, linewidth=1.0, linestyle="--", zorder=6))
             if n.get("text"):
@@ -313,7 +352,7 @@ def build(table, graph, overlays=(), fig=None):
             st = style_of(graph, k, colors)
             if not st["show"] or not pts or (which == "left" and k in right) or (which == "right" and k not in right):
                 continue
-            xs, ys = [p["x"] for p in pts], [p["mean"] for p in pts]
+            xs, ys = [p["x"] for p in pts], [centre_of(p, err) for p in pts]
             mk, col = SYMBOLS.get(st["symbol"], "o"), st["color"]
             face = col if st["filled"] else "white"
             line = st["line"] if st["line"] is not None else conn
@@ -340,7 +379,7 @@ def build(table, graph, overlays=(), fig=None):
                     yerr = [[0 if direction == "up" else v for v in lo], [0 if direction == "down" else v for v in hi]]
                 ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
                             markerfacecolor=face, markeredgecolor=col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
-            points += [[k, p["x"], p["mean"], p["n"], p["sd"], p["sem"]] for p in (pts[::len(pts) // 2000 + 1] if big else pts)]  # hover: a sample of a big set
+            points += [[k, p["x"], centre_of(p, err), p["n"], p["sd"], p["sem"]] for p in (pts[::len(pts) // 2000 + 1] if big else pts)]  # hover: a sample of a big set
         return points
 
     lg = graph.get("legend") or {}
@@ -493,7 +532,14 @@ def date_axis(axis, a):
     ISO week numbers ("W45")."""
     import matplotlib.dates as md
     from matplotlib.ticker import FuncFormatter
-    loc = md.AutoDateLocator(minticks=3, maxticks=8)
+    step = a.get("dateStep") or ""
+    unit, n = step[:1], int(step[1:]) if step[1:].isdigit() and int(step[1:]) > 0 else 1
+    # 0.3.12: a fixed major step (every day, week from Monday, month or year), with minor ticks one unit finer.
+    fixed = {"d": (lambda: md.DayLocator(interval=n), lambda: md.HourLocator(byhour=[6, 12, 18])),
+             "w": (lambda: md.WeekdayLocator(byweekday=md.MO, interval=n), lambda: md.DayLocator()),
+             "m": (lambda: md.MonthLocator(interval=n), lambda: md.WeekdayLocator(byweekday=md.MO)),
+             "y": (lambda: md.YearLocator(n), lambda: md.MonthLocator())}.get(unit)
+    loc = fixed[0]() if fixed else md.AutoDateLocator(minticks=3, maxticks=8)
     axis.set_major_locator(loc)
     how = a.get("dates") or "auto"
     if how == "week":
@@ -505,7 +551,7 @@ def date_axis(axis, a):
         f.offset_formats = ["", "%Y", "%Y", "%Y", "%d %b %Y", "%d %b %Y %H:%M"]  # the year once, not "2026-Dec"
         axis.set_major_formatter(f)
     if a.get("minor", False):
-        axis.set_minor_locator(md.AutoDateLocator(minticks=8, maxticks=40))
+        axis.set_minor_locator(fixed[1]() if fixed else md.AutoDateLocator(minticks=8, maxticks=40))
 
 
 def swarm(v, h, step, lim):
@@ -542,9 +588,12 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
         st = style_of(graph, k, colors)
         col, mk = st["color"], SYMBOLS.get(st["symbol"], "o") or "o"
         sem = sd / math.sqrt(n) if n > 1 else 0.0
-        e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, n - 1)) * sem if n > 1 else 0.0, "none": 0.0}.get(err, sd)
+        e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, n - 1)) * sem if n > 1 else 0.0, "none": 0.0}.get(err, sd if err not in MEDIAN else 0.0)
         e = 0.0 if not math.isfinite(e) else e
-        yerr = [[m - v.min()], [v.max() - m]] if err == "range" and v is not None else [[0 if graph.get("errorDir") == "up" else e], [0 if graph.get("errorDir") == "down" else e]]
+        lo = hi = e
+        if v is not None and len(v) > 1 and (err == "range" or err in MEDIAN):
+            m, lo, hi = spread(v, err)
+        yerr = [[0 if graph.get("errorDir") == "up" else lo], [0 if graph.get("errorDir") == "down" else hi]]
         top = max(m + yerr[1][0], float(v.max()) if v is not None else m)
         if kind == "bars":
             ax.bar(i, m, width=0.62, color=col if st["filled"] else "none", alpha=0.35 if st["filled"] else 1, edgecolor=col, linewidth=1.2, zorder=1)
@@ -663,15 +712,12 @@ def nested_figure(fig, ax, table, graph, colors, size):
             points.append([k, float(x), float(v.mean()), len(v), float(v.std(ddof=1)) if len(v) > 1 else 0.0, float(v.std(ddof=1) / math.sqrt(len(v))) if len(v) > 1 else 0.0])
         if m:
             mm = np.array([v.mean() for v in subs])
-            gm = mm.mean()
+            gm, lo, hi = spread(mm, err) if m > 1 else (float(mm.mean()), 0.0, 0.0)
             ax.hlines(gm, i - 0.4, i + 0.4, color=st["color"], linewidth=1.8, zorder=2)
-            if err != "none" and m > 1:
-                sd = mm.std(ddof=1)
-                e = {"sd": sd, "sem": sd / math.sqrt(m), "ci": sd / math.sqrt(m) * float(sst.t.ppf(0.975, m - 1))}.get(err, 0.0)
-                if err == "range":
-                    ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["color"], linewidth=1.0)
-                elif e:
-                    ax.errorbar(i + 0.42, gm, yerr=e, fmt="none", ecolor=st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+            if err == "range" and m > 1:
+                ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["color"], linewidth=1.0)
+            elif err != "none" and (lo or hi):
+                ax.errorbar(i + 0.42, gm, yerr=[[lo], [hi]], fmt="none", ecolor=st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
     ax.set_xticks(range(len(shown)), labels); ax.tick_params(axis="x", length=0)
     ax.set_xlim(-0.6, len(shown) - 0.4)
     axes(ax, table, graph, points, x=False)
@@ -874,14 +920,14 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
             v = np.asarray(cv.get((k, r), []), float)
             if not len(v):
                 continue
-            m, sd = float(v.mean()), float(v.std(ddof=1)) if len(v) > 1 else 0.0
+            sd = float(v.std(ddof=1)) if len(v) > 1 else 0.0
             sem = sd / math.sqrt(len(v)) if len(v) > 1 else 0.0
-            e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, len(v) - 1)) * sem if len(v) > 1 else 0.0, "none": 0.0}.get(err, sd)
+            m, lo, hi = spread(v, err) if err != "none" else (float(v.mean()), 0.0, 0.0)
             x = i if kind in ("stacked", "lines") else i - 0.4 + w * (j + 0.5)
             b0 = base[i] if kind == "stacked" else 0.0
-            xs.append(x); ms_.append(m + b0); es.append(e); bs.append(b0)
+            xs.append(x); ms_.append(m + b0); es.append((lo, hi)); bs.append(b0)
             pos[(k, r)] = x
-            tops[x] = max(tops.get(x, -np.inf), m + b0 + e, float(v.max()) + b0 if kind != "stacked" else m + b0)
+            tops[x] = max(tops.get(x, -np.inf), m + b0 + hi, float(v.max()) + b0 if kind != "stacked" else m + b0)
             points.append([k, float(x), m, len(v), sd, sem])
             allv += list(v)
             if kind == "stacked":
@@ -893,7 +939,7 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
             continue
         lab = names[j]
         d = graph.get("errorDir", "both")
-        yerr = [[0 if d == "up" else e for e in es], [0 if d == "down" else e for e in es]] if err != "none" else None
+        yerr = [[0 if d == "up" else e[0] for e in es], [0 if d == "down" else e[1] for e in es]] if err != "none" else None
         if kind == "bars":
             ax.bar(xs, ms_, width=w * 0.92, color=col if st["filled"] else "none", alpha=0.85 if st["filled"] else 1, edgecolor=col, linewidth=1.0, label=lab, zorder=1)
             if yerr:

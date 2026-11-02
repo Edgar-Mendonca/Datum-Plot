@@ -269,7 +269,7 @@ fn import_builds_a_table_with_titles_and_sets() {
     let (mut d, _) = doc();
     let rows: Vec<Vec<String>> = [vec!["Strain", "Sample 1", "", "Sample 2", ""], vec!["0", "0", "0.1", "0", "0.2"], vec!["0.01", "70", "72", "68", "x"]]
         .iter().map(|r| r.iter().map(|s| s.to_string()).collect()).collect();
-    d.apply(Op::Import { name: "Tensile".into(), entry: Entry::Replicates, reps: 2, header: true, rows, graph: Some(Box::default()) }).unwrap();
+    d.apply(Op::Import { name: "Tensile".into(), entry: Entry::Replicates, reps: 2, header: true, rows, graph: Some(Box::default()), dates: String::new() }).unwrap();
     let t = d.p.tables.last().unwrap();
     assert_eq!((t.name.as_str(), t.x_title.as_str(), t.rows, t.sets.len(), t.width()), ("Tensile", "Strain", 2, 2, 5));
     assert_eq!((t.sets[0].title.as_str(), t.sets[1].title.as_str()), ("Sample 1", "Sample 2"));
@@ -427,4 +427,19 @@ fn a_date_column_reads_dates_and_old_files_stay_numbers() {
     let plan = r##"{"format":1,"name":"S","info":{"title":"Project S-curve","notes":"copy"},"tables":[{"id":1,"name":"Project S-curve","kind":"xy","xTitle":"Date","xUnits":"","xFormat":"date","yTitle":"Cumulative progress","yUnits":"%","rows":3,"rowTitles":["2026-10-12","2026-10-19","2026-10-26"],"sets":[{"title":"Planned (baseline)","entry":"rep","reps":1},{"title":"Actual","entry":"rep","reps":1}],"cols":[[20738,20745,20752],[0,12.5,31.0],[0,10.0,null]]}],"graphs":[{"id":2,"table":1,"name":"Project S-curve","settings":{"line":true,"error":"none","width":160,"height":100,"sets":[{"color":"#A3ABB8","symbol":"none","line":true},{"color":"#3B82F6","symbol":"none","line":true}]}}],"analyses":[],"layouts":[],"nextId":3,"ui":{}}"##;
     let p = Project::from_json(plan).unwrap();
     assert_eq!((p.tables[0].x_format.as_str(), p.tables[0].get(2, 0), p.graphs.len()), ("date", Some(20752.0), 1));
+}
+
+#[test]
+fn date_axis_choices_are_kept_and_imports_read_dates() {
+    // 0.3.11 lost the tick-label choice (the Axis had no field for it); 0.3.12 keeps it and the major step.
+    let g: GraphSettings = serde_json::from_str(r#"{"x":{"dates":"monthyear","dateStep":"w2"}}"#).unwrap();
+    assert_eq!((g.x.dates.as_str(), g.x.date_step.as_str()), ("monthyear", "w2"));
+    assert!(serde_json::to_string(&g).unwrap().contains(r#""dateStep":"w2""#));
+    let rows = vec![vec!["Date".into(), "DO".into()], vec!["2026-11-05".into(), "8.1".into()], vec!["12 Nov 2026".into(), "7.9".into()]];
+    let mut d = Doc::new(Project::default());
+    d.apply(Op::Import { name: "River".into(), entry: Entry::Replicates, reps: 1, header: true, rows: rows.clone(), graph: None, dates: "date".into() }).unwrap();
+    let t = &d.p.tables[0];
+    assert_eq!((t.x_format.as_str(), t.get(0, 0), t.get(1, 0)), ("date", crate::doc::days_from_civil(2026, 11, 5), crate::doc::days_from_civil(2026, 11, 12)));
+    d.apply(Op::Import { name: "Numbers".into(), entry: Entry::Replicates, reps: 1, header: true, rows, graph: None, dates: String::new() }).unwrap();
+    assert_eq!((d.p.tables[1].x_format.as_str(), d.p.tables[1].get(0, 0)), ("", None), "without the offer, dates stay empty as before");
 }

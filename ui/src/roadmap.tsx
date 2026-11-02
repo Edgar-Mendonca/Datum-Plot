@@ -1,12 +1,13 @@
 // The whole app laid out: galleries for new tables, analyses and graph types, a card for every
 // feature that is not built yet, the Roadmap page, and File › Import.
-import { For, Show, createSignal, createMemo } from "solid-js";
+import { For, Show, createSignal, createMemo, createEffect } from "solid-js";
 import { FEATURES, AREAS, RELEASES, feature, ready, VERSION_NOW } from "./features";
 import { openDialog, closeDialog, call, act, out, setOut, open, toast, setBackstage, curTable } from "./store";
 import { analysisDialog, BY_ID } from "./results";
 import { Dialog, Pick, Check, Icon } from "./ui";
 import { C } from "./cmds";
 import { num } from "./api";
+import { dateKind } from "./cells";
 
 const rel = (r: string) => `${r.length === 3 ? `${r}.0` : r}`;
 export const Chip = (p: { id: string }) => { const f = feature(p.id)!; return ready(p.id) ? <span class="chip ok">Ready</span> : <span class="chip soon" title={RELEASES[f[2]]}>In {rel(f[2])}</span>; };
@@ -180,9 +181,12 @@ export const importFile = async () => {
     const order = () => [x(), ...Array.from({ length: ncols() }, (_, j) => j).filter(j => j !== x())];
     const arranged = () => rows().map(l => order().map(j => l[j] ?? ""));
     const [plate, setPlate] = createSignal(!!r.plates?.length);
+    /** 0.3.12: an X column that looks like dates is offered (ticked) as dates. */
+    const [dates, setDates] = createSignal<"" | "date" | "datetime">(""), [seen, setSeen] = createSignal<"" | "date" | "datetime">("");
+    createEffect(() => { const j = x(), body = rows().slice(head() ? 1 : 0).map(l => l[j] ?? ""); dateKind(body).then(f => { setSeen(f); setDates(f); }); });
     const go = async () => {
       if (plate() && r.plates?.length) return addTables(r.plates, `${r.plates.length > 1 ? `${r.plates.length} plates` : "The plate"} as a grouped table (rows ${r.plates[0].rowTitles[0]}–${r.plates[0].rowTitles[r.plates[0].rows - 1]})`);
-      const ok = await act({ Import: { name: name() || "Imported", entry: entry(), reps: entry() === "rep" ? reps() : 3, header: head(), rows: arranged(), graph: null } });
+      const ok = await act({ Import: { name: name() || "Imported", entry: entry(), reps: entry() === "rep" ? reps() : 3, header: head(), rows: arranged(), graph: null, dates: dates() } });
       if (ok) { const p = out()!.project; open("data", p.tables[p.tables.length - 1].id); toast(`Imported ${rows().length - (head() ? 1 : 0)} rows.`, true); }
       return ok;
     };
@@ -194,6 +198,7 @@ export const importFile = async () => {
           <label>Table name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Headings</label><Check label="The first row holds the column titles" value={head()} set={setHead} />
           <label>X column</label><Pick value={String(x())} set={v => setX(+v)} options={Array.from({ length: ncols() }, (_, j) => [String(j), `${j + 1}: ${head() ? rows()[0][j] || "(no title)" : rows()[0][j] ?? ""}`] as [string, string])} />
+          <Show when={seen()}><label>Dates</label><Check label="The X column holds dates (read them as dates, not numbers)" value={!!dates()} set={v => setDates(v ? seen() : "")} /></Show>
           <label>The other columns are</label><span class="inline"><Pick value={entry()} set={setEntry} options={[["rep", "Replicate values"], ["msn", "Mean, SD, N (3 columns per data set)"], ["mesn", "Mean, SEM, N"]]} />
             <Show when={entry() === "rep"}><input type="number" min="1" max="50" style={{ width: "60px" }} value={reps()} onChange={e => setReps(Math.max(1, Math.min(50, +e.currentTarget.value)))} /><span class="muted">per data set</span></Show></span>
         </div>

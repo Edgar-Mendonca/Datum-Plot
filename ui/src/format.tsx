@@ -1,8 +1,8 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, JSX } from "solid-js";
 import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText } from "./api";
-import { act, out, openDialog, toast } from "./store";
+import { act, out, openDialog, closeDialog, dialogs, toast } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES, ORDERED, paletteName } from "./tools";
 import { lastRender } from "./graph";
@@ -11,7 +11,7 @@ export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7",
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
 export const FONTS = ["Arial", "Helvetica", "Calibri", "Segoe UI", "Verdana", "Times New Roman", "Georgia", "Cambria"];
 export const MATRIX: [string, string][] = [["contour", "Contour map"], ["heatmap", "Heat map"], ["surface", "3D surface"], ["wireframe", "3D wireframe"]];
-export const ERRORS: [string, string][] = [["sd", "Mean ± SD"], ["sem", "Mean ± SEM"], ["ci", "Mean ± 95% CI"], ["range", "Mean and range"], ["none", "Mean only"]];
+export const ERRORS: [string, string][] = [["sd", "Mean ± SD"], ["sem", "Mean ± SEM"], ["ci", "Mean ± 95% CI"], ["range", "Mean and range"], ["median_iqr", "Median and interquartile range"], ["median_range", "Median and range"], ["median_ci", "Median ± 95% CI"], ["none", "Mean only"]];
 /** Journal column widths in mm. */
 export const SIZES: [string, number, number][] = [["Single column (85 mm)", 85, 64], ["1.5 columns (114 mm)", 114, 80], ["Double column (174 mm)", 174, 110], ["Square (80 mm)", 80, 80], ["Slide (240 × 135 mm)", 240, 135]];
 
@@ -23,8 +23,19 @@ export const setG = (g: Graph, f: (s: GraphSettings) => GraphSettings) => {
 };
 const num = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
 
-export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
+/** The open Format Graph window: 0.3.12 reuses it (switching to the page asked for) instead of stacking another. */
+let open1: { id: number; d: () => JSX.Element; tab: (p: string) => void } | null = null;
+export const formatGraph = (g0: Graph, page = "sets") => {
+  if (open1 && dialogs().includes(open1.d)) {
+    if (open1.id === g0.id) return open1.tab(page);
+    closeDialog(open1.d);
+  }
   const [tab, setTab] = createSignal(page);
+  const d = () => fmtWindow(g0, tab, setTab);
+  open1 = { id: g0.id, d, tab: setTab };
+  openDialog(d);
+};
+const fmtWindow = (g0: Graph, tab: () => string, setTab: (p: string) => void) => {
   const g = () => out()!.project.graphs.find(x => x.id === g0.id) ?? g0, s = () => g().settings;
   const t = () => out()!.project.tables.find(x => x.id === g().table);
   const set = (f: (s: GraphSettings) => void) => setG(g(), x => { f(x); return x; });
@@ -47,11 +58,21 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
         <Show when={!a().auto && !isDate()}><span class="muted">from</span><input type="number" style={{ width: "90px" }} value={a().min ?? ""} onChange={e => put({ min: num(e.currentTarget.value) })} /><span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().max ?? ""} onChange={e => put({ max: num(e.currentTarget.value) })} /></Show>
         <Show when={!a().auto && isDate()}><span class="muted">from</span><input style={{ width: "110px" }} value={dateText(a().min, "iso")} onChange={e => asDate(e.currentTarget.value, "min")} /><span class="muted">to</span><input style={{ width: "110px" }} value={dateText(a().max, "iso")} onChange={e => asDate(e.currentTarget.value, "max")} /></Show></span>
       <Show when={isDate()}><label>Tick labels</label><Pick value={a().dates || "auto"} set={v => put({ dates: v })} options={[["auto", "Automatic (the year once, then months or days)"], ["daymonth", "Day and month (05 Nov)"], ["monthyear", "Month and year (Nov 2026)"], ["iso", "ISO (2026-11-05)"], ["week", "Week number (W45)"]]} /></Show>
+      <Show when={isDate()}><label>Major ticks every</label><Pick value={a().dateStep || ""} set={v => put({ dateStep: v })} options={[["", "Automatic"], ["d1", "Day"], ["w1", "Week (Mondays)"], ["w2", "2 weeks"], ["m1", "Month"], ["m3", "3 months"], ["y1", "Year"]]} /></Show>
       <Show when={a().scale === "lin" && !isDate()}><label>Major ticks every</label><input type="number" placeholder="Automatic" value={a().step ?? ""} onChange={e => put({ step: num(e.currentTarget.value) && num(e.currentTarget.value)! > 0 ? num(e.currentTarget.value) : null })} /></Show>
       <label>Ticks and grid</label><span class="inline"><Check label="Minor ticks" value={a().minor} set={v => put({ minor: v })} /><Check label="Gridlines" value={a().grid} set={v => put({ grid: v })} /></span>
       <Show when={breaks()} fallback={<Show when={p.k !== "y2"}><label>Axis break</label><span class="muted">{a().scale !== "lin" ? "Breaks need a linear axis." : "Breaks are for the Y axis of XY, column, grouped and nested graphs, and the X axis of XY graphs."}</span></Show>}><label>Axis break</label><span class="inline"><span class="muted">leave out from</span><input type="number" style={{ width: "90px" }} value={a().breakFrom ?? ""} onChange={e => put({ breakFrom: num(e.currentTarget.value) })} />
         <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span></Show>
     </div>;
+  };
+  /** 0.3.12: a vertical line at a typed X value or date, with an optional label. */
+  const lineAt = async () => {
+    const date = !!t()?.xFormat, at = prompt(date ? "Date of the line (2026-11-05 or 5 Nov 2026)" : "X value of the line", "");
+    if (!at?.trim()) return;
+    const x = date ? await invoke<number | null>("date_number", { text: at }) : num(at);
+    if (x === null || x === undefined) return toast(`“${at}” is not ${date ? "a date" : "a number"}.`);
+    const text = prompt("Label (optional)", "") ?? "";
+    set(s => { s.notes = [...(s.notes ?? []), { kind: "vline", x, y: 0, x2: x, y2: 0, text, color: "#222222", size: 0, bold: false }]; });
   };
   return (
     <Dialog title={`Format Graph · ${g().name}`} side help="format" cancel="Close">
@@ -107,13 +128,15 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
         <Show when={tab() === "y"}><AxisPage k="y" /></Show>
         <Show when={tab() === "y2"}><AxisPage k="y2" /></Show>
         <Show when={tab() === "notes"}>
-          <p class="inline"><For each={[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]]}>{([k, l]) => <button class="btn sm" onClick={() => import("./graph").then(m => m.annotate(k))}>＋ {l}</button>}</For></p>
+          <p class="inline"><For each={[["text", "Text"], ["arrow", "Arrow"], ["line", "Line"], ["box", "Box"]]}>{([k, l]) => <button class="btn sm" onClick={() => import("./graph").then(m => m.annotate(k))}>＋ {l}</button>}</For>
+            <button class="btn sm" title="A dashed vertical line across the graph at an X value (on a date axis: a date)" onClick={lineAt}>＋ Line at {t()?.xFormat ? "a date" : "an X value"}…</button></p>
           <Show when={s().notes?.length} fallback={<p class="muted">No notes yet. Add one with the buttons above (then click or drag on the graph), or Format › Annotate.</p>}>
             <table class="tbl setfmt"><thead><tr><th>Kind</th><th>Text</th><th>X</th><th>Y</th><th>To X</th><th>To Y</th><th>Colour</th><th>Size</th><th>Bold</th><th /></tr></thead><tbody>
               <For each={s().notes}>{(n, i) => { const put = (patch: Partial<Note>) => set(x => { x.notes[i()] = { ...x.notes[i()], ...patch }; }); const N = (q: { k: "x" | "y" | "x2" | "y2" }) =>
                 <input type="number" style={{ width: "70px" }} value={+n[q.k].toPrecision(5)} onChange={e => { const v = num(e.currentTarget.value); if (v !== null) put({ [q.k]: v }); }} />;
-                return <tr><td>{n.kind}</td><td><input value={n.text} onChange={e => put({ text: e.currentTarget.value })} /></td><td><N k="x" /></td><td><N k="y" /></td>
-                  <td>{n.kind !== "text" && <N k="x2" />}</td><td>{n.kind !== "text" && <N k="y2" />}</td><td><input type="color" value={n.color || "#222222"} onChange={e => put({ color: e.currentTarget.value })} /></td>
+                const vl = n.kind === "vline", D = () => <input style={{ width: "96px" }} value={dateText(n.x, "iso")} onChange={async e => { const v = await invoke<number | null>("date_number", { text: e.currentTarget.value }); if (v !== null) put({ x: v, x2: v }); }} />;
+                return <tr><td>{vl ? "line at X" : n.kind}</td><td><input value={n.text} onChange={e => put({ text: e.currentTarget.value })} /></td><td>{vl && t()?.xFormat ? <D /> : <N k="x" />}</td><td>{!vl && <N k="y" />}</td>
+                  <td>{n.kind !== "text" && !vl && <N k="x2" />}</td><td>{n.kind !== "text" && !vl && <N k="y2" />}</td><td><input type="color" value={n.color || "#222222"} onChange={e => put({ color: e.currentTarget.value })} /></td>
                   <td><input type="number" min="0" max="48" style={{ width: "54px" }} value={n.size} title="0 = the graph's size" onChange={e => put({ size: +e.currentTarget.value })} /></td>
                   <td><input type="checkbox" checked={n.bold} onChange={e => put({ bold: e.currentTarget.checked })} /></td><td><button class="btn sm" onClick={() => set(x => { x.notes.splice(i(), 1); })}>Delete</button></td></tr>; }}</For>
             </tbody></table>
@@ -136,4 +159,4 @@ export const formatGraph = (g0: Graph, page = "sets") => openDialog(() => {
       </div>
     </Dialog>
   );
-});
+};

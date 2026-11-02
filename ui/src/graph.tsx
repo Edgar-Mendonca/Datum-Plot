@@ -101,14 +101,20 @@ export const GraphView = (p: { g: Graph }) => {
   /** Double-click: a note edits its text; otherwise the page of Format Graph for what is under the mouse. */
   const dbl = (e: MouseEvent) => {
     if (!r() || tool()) return;
-    const [px, py] = at(e), R = r()!, [x0, y0, , y1] = R.plot;
+    const [px, py] = at(e), R = r()!, y0 = R.plot[1];
     const i = noteAt(px, py);
     if (i !== null) return editNote(i);
     if (inside(px, py, R.legend, 4)) return formatGraph(p.g, "sets");
-    if (py > y1 && px >= x0 - 10) return formatGraph(p.g, "x");
-    if (px < x0 && py <= y1 + 10) return formatGraph(p.g, "y");
-    if (py < y0) return formatGraph(p.g, "graph");
-    formatGraph(p.g, "sets");
+    formatGraph(p.g, axisAt(px, py) ?? (py < y0 ? "graph" : "sets"));
+  };
+  /** The axis under the mouse (0.3.12: right-click › Format Axes opens that axis, not always X). */
+  const axisAt = (px: number, py: number) => {
+    if (!r()) return null;
+    const [x0, , x1, y1] = r()!.plot;
+    if (py > y1 && px >= x0 - 10) return "x";
+    if (px < x0 && py <= y1 + 10) return "y";
+    if (px > x1 && py <= y1 + 10 && p.g.settings.sets.some(x => x?.right)) return "y2";
+    return null;
   };
   const menu = (e: MouseEvent) => {
     const [px, py] = at(e), i = r() ? noteAt(px, py) : null, q = r() && i === null ? pointAt(px, py) : null, t = table();
@@ -116,7 +122,7 @@ export const GraphView = (p: { g: Graph }) => {
     openMenu(e, [
       ...(i !== null ? [{ label: "Edit Note Text…", icon: "rename", run: () => editNote(i) }, { label: "Delete Note", icon: "del", keys: "Del", run: () => delNote(i) }, "-" as const] : []),
       ...(q ? [...(t?.kind === "xy" || t?.kind === "multi" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
-      { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, "x") },
+      { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, axisAt(px, py) ?? "x") },
       { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Statistics of a Region…", icon: "sigma", run: () => zoomTool("region") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
       { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
       { label: "Go to Data Table", icon: "sheet", run: () => open("data", p.g.table) },

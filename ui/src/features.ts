@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.11";
+export const VERSION_NOW = "0.3.12";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -10,7 +10,7 @@ export const RELEASES: Record<string, string> = {
   "0.2.18": "Peaks and signal processing", "0.2.19": "DSC/TGA and S–N curves", "0.2.20": "Worksheets and column formulas", "0.2.21": "Matrices, 3D and surface fits", "0.2.22": "Large data, regions, import, slides, reports and posters",
   "0.2.23": "Python console, your own analyses, templates, batch and notebooks; hardening", "0.3.0": "A full check: security, robustness, hardening and speed", "0.3.1": "Publisher shown as Datum", "0.3.2": "The guide in English, Chinese and French; five new samples", "0.3.3": "Colour schemes beside the graph, OpenDocument export, plain names", "0.3.4": "Copy Linked (removed again in 0.3.5)",
   "0.3.5": "Repeated measures and mixed-effects ANOVA; Copy Linked removed", "0.3.6": "Multiple t-tests and volcano plots", "0.3.7": "Ternary, waterfall, radar and bubble graphs", "0.3.8": "Vector fields and 3D scatter",
-  "0.3.9": "More statistics", "0.3.10": "Control charts and design of experiments", "0.3.11": "Dates and times", "0.3.12": "Dates, second step", "0.3.13": "Wavelets and short-time spectra", "0.3.14": "Graph digitizer and image tools", "0.3.15": "Bayesian tests", "0.3.16": "Mac and Linux versions",
+  "0.3.9": "More statistics", "0.3.10": "Control charts and design of experiments", "0.3.11": "Dates and times", "0.3.12": "Dates, second step; median error bars; testers' fixes", "0.3.13": "Wavelets and short-time spectra", "0.3.14": "Graph digitizer and image tools", "0.3.15": "Bayesian tests", "0.3.16": "Mac and Linux versions",
   "1.0": "Stable, signed, validated",
 };
 export const AREAS: Record<string, string> = {
@@ -128,7 +128,9 @@ export const FEATURES: Feature[] = [
   ["B34", "More statistics", "0.3.9", "Three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar's and Bowker's tests), bootstrap confidence intervals and smoothing splines.", "scipy, statsmodels"],
   ["B35", "Control charts and design of experiments", "0.3.10", "Control charts (individuals, X̄–R, X̄–S, p) with rule checks and Cp/Cpk; two-level factorial designs (full or half fraction) and their effects, Pareto chart and main effects.", "statsmodels"],
   ["A19", "Dates and times", "0.3.11", "The X column as dates (days since 1970): typed and pasted in many forms, shown as chosen, a date axis on the graph, fits per day, real dates in workbooks; Datum Plan's time charts open as dates.", ""],
-  ["A20", "Dates, second step", "0.3.12", "Offer dates when pasted or imported text looks like dates; axis steps in days, weeks or months; notes at a date; date functions in column formulas.", ""],
+  ["A20", "Dates, second step", "0.3.12", "Offer dates when pasted or imported text looks like dates; axis steps in days, weeks or months; lines at a date; date functions in column formulas; intercepts as dates.", ""],
+  ["A21", "Long column titles", "0.3.12", "Data set titles wrap onto up to three lines and the heading grows to fit.", ""],
+  ["D21", "Median error bars", "0.3.12", "Error bars as the median with its interquartile range, range or 95% CI, on XY, column, grouped and nested graphs.", ""],
   ["B36", "Wavelets and short-time spectra", "0.3.13", "Time–frequency analysis of signals: wavelet transforms and spectrograms.", "scipy"],
   ["E8", "Graph digitizer and image tools", "0.3.14", "Read data points from a picture of a graph; profiles and simple measurements on images.", "matplotlib"],
   ["B37", "Bayesian tests", "0.3.15", "Bayes factors for t-tests, ANOVA and correlation, beside the usual P values.", "scipy"],

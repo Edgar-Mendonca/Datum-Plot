@@ -80,7 +80,26 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     && (await p.$$eval(".dlg .setfmt tbody tr:first-child .swset button", bs => bs.map(b => b.title))).join() === "#0072B2,#E69F00,#009E73,#D55E00,#CC79A7,#56B4E9,#F0E442,#000000", JSON.stringify(render.colors));
   check("Data Sets can go on a right Y axis", ((await p.textContent(".dlg .setfmt thead")) || "").includes("Right Y"));
   check("Format Graph is docked so the graph stays visible", await p.evaluate(() => { const d = document.querySelector(".dlg").getBoundingClientRect(), g = document.querySelector(".gpaper").getBoundingClientRect(); return g.right <= d.left + 1; }));
-  await p.keyboard.press("Escape");
+  // 0.3.12 (testers): one Format Graph window that switches page; right-click › Format Axes opens the axis clicked.
+  const [, gy0] = render.plot, pl = await p.evaluate(() => { const r = document.querySelector(".gpaper").getBoundingClientRect(); return [r.left, r.top]; });  // the graph moved aside for the docked window
+  const yAxis = [pl[0] + (x0 - 14) * k, pl[1] + (gy0 + y1) / 2 * k];
+  await p.mouse.dblclick(...yAxis); await p.waitForTimeout(250);
+  check("double-clicking the Y axis with Format Graph open switches it to Y Axis, no second window", (await p.$$(".dlg")).length === 1 && (await p.textContent(".dlg .dtabs button.on")).includes("Y Axis"), String((await p.$$(".dlg")).length));
+  await p.click('.dlg .dtabs button:has-text("Data Sets")'); await p.waitForTimeout(100);
+  await p.mouse.click(...yAxis, { button: "right" }); await p.waitForTimeout(100);
+  await p.click('.menu button:has-text("Format Axes")'); await p.waitForTimeout(250);
+  check("right-click on the Y axis › Format Axes opens the Y Axis page", (await p.$$(".dlg")).length === 1 && (await p.textContent(".dlg .dtabs button.on")).includes("Y Axis"), await p.textContent(".dlg .dtabs button.on"));
+  await p.click('.dlg .dtabs button:has-text("Data Sets")'); await p.waitForTimeout(100);
+  check("error bars offer the median with its IQR, range or CI", await p.evaluate(() => ["Median and interquartile range", "Median and range", "Median ± 95% CI"].every(m => [...document.querySelectorAll(".dlg option")].some(o => o.textContent === m))));
+  await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(80);
+  await p.click('.ribbon .rb:has-text("Graph Type")'); await p.waitForTimeout(250);
+  const heads = async () => p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")));
+  const before = await heads();
+  await p.evaluate(() => document.querySelector(".dlg header button.x").click()); await p.waitForTimeout(150);  // the older window's ×
+  const after = await heads();
+  check("× closes its own window, not the newest one", before.length === 2 && after.length === 1 && !after[0].startsWith("Format Graph") && after[0] === before[1], JSON.stringify([before, after]));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  if ((await p.$$(".dlg")).length) await p.keyboard.press("Escape");
 
   // 3. Hovering a point shows its values.
   const pt = render.points.find(Boolean);
@@ -581,6 +600,12 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click(".dlg .btn.pri"); await p.waitForTimeout(200);
   const xf = (await ops()).find(o => o.XFormat);
   check("OK asks the engine to make the X column dates", xf && xf.XFormat.format === "date" && xf.XFormat.table === P.tables[0].id, JSON.stringify(xf));
+  // 0.3.12 (testers): Enter in a rename box keeps the new name (it used to close the window first).
+  await reset();
+  await p.dblclick(".tname"); await p.waitForTimeout(200);
+  await p.fill(".dlg input", "Renamed by Enter"); await p.keyboard.press("Enter"); await p.waitForTimeout(250);
+  const rn = (await ops()).find(o => o.TableSet);
+  check("Enter in a rename box saves the new name and closes the window", rn && rn.TableSet.value === "Renamed by Enter" && (await p.$$(".dlg")).length === 0, JSON.stringify(rn));
   // 0.3.3: the window names file types, never other companies' products.
   const brands = new RegExp(BRANDS.source);
   let named = [];

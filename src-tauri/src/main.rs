@@ -115,7 +115,7 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
     // New tables and graphs without settings follow the options.
     let op = match op {
         Op::AddGraph { table, settings: None } => Op::AddGraph { table, settings: Some(Box::new(a.opts.graph())) },
-        Op::Import { name, entry, reps, header, rows, graph: None } => Op::Import { name, entry, reps, header, rows, graph: Some(Box::new(a.opts.graph())) },
+        Op::Import { name, entry, reps, header, rows, graph: None, dates } => Op::Import { name, entry, reps, header, rows, graph: Some(Box::new(a.opts.graph())), dates },
         o => o,
     };
     guard(|| a.doc.apply(op))?;

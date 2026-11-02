@@ -6,13 +6,13 @@ import { Table, DataSet, spans, width, num, letter, dateText } from "./api";
 import { act, call, setOut, P, opts, openMenu, toast, Item, openDialog, closeDialog, goto, setGoto } from "./store";
 import { sortDialog, findDialog, excludeRows } from "./tools";
 import * as F from "./fmt";
-import { parseTsv, toTsv, transpose, series, clip } from "./cells";
+import { parseTsv, toTsv, transpose, series, clip, dateKind } from "./cells";
 import { createSel, aggregate } from "./selection";
 import { Dialog, Pick, Text, Icon } from "./ui";
 import { pasteSpecial as pasteDialog } from "./dialogs";
 import { Help } from "./help";
 
-const RH = 22, HW = 40, TW = 96, XW = 86, CW = 76, HEAD = 2 * RH;
+const RH = 22, HW = 40, TW = 96, XW = 86, CW = 76;
 const SUB: Record<string, string[]> = { msn: ["Mean", "SD", "N"], mesn: ["Mean", "SEM", "N"] };
 
 /** Selection column k: 0 is the row title, k ≥ 1 is grid column k - 1 (0 = X). */
@@ -42,6 +42,16 @@ export const DataTable = (p: { t: Table }) => {
     keepW(k, Math.min(600, Math.max(48, ...[title, ...vals].map(s => c.measureText(s).width + 22))));
   };
   const Rsz = (q: { k: number; title: string }) => <i class="rsz" title="Drag to widen; double-click to fit" onMouseDown={resize(q.k)} onDblClick={fit(q.k, q.title)} />;
+  /** 0.3.12: long titles wrap onto up to three lines; the heading grows to fit the longest. */
+  const lines = createMemo(() => {
+    const c = document.createElement("canvas").getContext("2d")!;
+    c.font = "600 12px 'IBM Plex Sans', sans-serif";
+    const need = (s: string, w: number, pad = 34) => Math.ceil((c.measureText(s).width * 1.15) / Math.max(20, w - pad));
+    // The X heading has its own line for "X", so its title gets the whole width and one extra line for free.
+    const sp = spans(t()), x = hideX() ? 1 : need(`${t().xTitle}${t().xUnits ? ` (${t().xUnits})` : ""}`, colW(1), 12) - 1;
+    return Math.min(3, Math.max(1, x, ...t().sets.map((s, k) => need(`${s.title || "Data set A"}${s.units ? ` (${s.units})` : ""}`, Array.from({ length: sp[k][1] }, (_, j) => colW(sp[k][0] + 1 + j)).reduce((a, b) => a + b, 0)))));
+  });
+  const HEAD = () => 2 * RH + (lines() - 1) * 14;
   const lefts = createMemo(() => { let x = HW; return Array.from({ length: ncols() }, (_, k) => { const l = x; x += colW(k); return l; }); });
   const total = () => lefts()[ncols() - 1] + colW(ncols() - 1);
   const ex = createMemo(() => new Set(t().excluded.map(([r, c]) => `${r}:${c}`)));
@@ -55,7 +65,7 @@ export const DataTable = (p: { t: Table }) => {
   const range = () => { const g = S.last(); return [g.r0, g.c0, g.r1, g.c1]; };
   const reveal = (r: number, c: number) => {
     if (!box) return;
-    if (r * RH < box.scrollTop) box.scrollTop = r * RH; else if ((r + 2) * RH > box.scrollTop + box.clientHeight - HEAD) box.scrollTop = (r + 2) * RH - box.clientHeight + HEAD;
+    if (r * RH < box.scrollTop) box.scrollTop = r * RH; else if ((r + 2) * RH > box.scrollTop + box.clientHeight - HEAD()) box.scrollTop = (r + 2) * RH - box.clientHeight + HEAD();
     const l = lefts()[c] ?? 0, w = colW(c);
     if (l - HW < box.scrollLeft) box.scrollLeft = l - HW; else if (l + w > box.scrollLeft + box.clientWidth - 16) box.scrollLeft = l + w - box.clientWidth + 16;
   };
@@ -95,7 +105,15 @@ export const DataTable = (p: { t: Table }) => {
     e.clipboardData?.setData("text/plain", clip.text);
     if (cut) clear();
   };
-  const pasteRows = (m: string[][]) => { const [r, k] = cur(); return act({ Paste: { table: t().id, row: r, col: k - 1, rows: m } }); };
+  const pasteRows = async (m: string[][]) => {
+    const [r, k] = cur();
+    // 0.3.12: dates pasted into a number X column: offer once to read the column as dates.
+    if (k <= 1 && !t().xFormat && ["xy", "survival"].includes(t().kind) && m[0]?.length > 1 - k) {
+      const f = await dateKind(m.map(l => l[1 - k] ?? ""));
+      if (f && confirm("The X values look like dates. Treat the X column as dates?\n\nOK: dates (shown as 5 Nov 2026, change it under Format X Column).\nCancel: keep numbers (dates stay empty).")) await act({ XFormat: { table: t().id, format: f, display: "" } });
+    }
+    return act({ Paste: { table: t().id, row: r, col: k - 1, rows: m } });
+  };
   const onPaste = (e: ClipboardEvent) => { if (edit() !== null) return; e.preventDefault(); pasteRows(parseTsv(e.clipboardData?.getData("text/plain") ?? "")); };
   const pasteSpecial = async (what: "all" | "values" | "formats", tr: boolean) => {
     const txt = clip.text || (await call<string>("read_clipboard")) || "";
@@ -123,7 +141,7 @@ export const DataTable = (p: { t: Table }) => {
     addEventListener("mousemove", mv); addEventListener("mouseup", up);
   };
   const at = (cx: number, cy: number): [number, number] => {
-    const b = box.getBoundingClientRect(), y = cy - b.top - HEAD + box.scrollTop, x = cx - b.left + box.scrollLeft;
+    const b = box.getBoundingClientRect(), y = cy - b.top - HEAD() + box.scrollTop, x = cx - b.left + box.scrollLeft;
     return [Math.floor(y / RH), lefts().findIndex((l, j) => x >= l && x < l + colW(j))];
   };
   const keys = (e: KeyboardEvent) => {
@@ -194,7 +212,7 @@ export const DataTable = (p: { t: Table }) => {
       <div class="gscroll dgrid" ref={box} tabindex="0" onFocus={() => F.setTarget(fmtTarget)} onKeyDown={keys} onMouseDown={down} onCopy={e => onCopy(e)} onCut={e => onCopy(e, true)} onPaste={onPaste}
         onScroll={() => setTop(box.scrollTop)} onDblClick={e => { if (at(e.clientX, e.clientY)[0] >= 0) setEdit(text(...cur())); }} onContextMenu={ctxMenu}>
         <div class="gsheet" style={{ width: `${total() + 40}px`, height: `${(nrows() + 2) * RH}px` }}>
-          <div class="ghead dhead" style={{ height: `${HEAD}px` }}>
+          <div class="ghead dhead" style={{ height: `${HEAD()}px`, "--st": `${HEAD() - RH}px` }}>
             <div class="hc idc" style={{ width: `${HW}px`, left: "0" }} />
             <div class="hc two" style={{ width: `${colW(0)}px` }}>Row title<Rsz k={0} title="Row title" /></div>
             <div class="hc two xh" style={{ width: `${colW(1)}px`, display: hideX() ? "none" : undefined }} title="Double-click to rename the X column; right-click to show it as numbers or dates" onDblClick={e => { e.stopPropagation(); rename(t(), "xTitle", "X title"); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); xFormatDialog(t()); }}><b>X{t().xFormat ? " · date" : ""}</b><span>{t().xTitle}{t().xUnits ? ` (${t().xUnits})` : ""}</span><Rsz k={1} title={`X ${t().xTitle}`} /></div>
@@ -297,7 +315,7 @@ export const xFormatDialog = (t: Table) => openDialog(() => {
 
 /** Format Data Set: title, how values are entered, replicates; or delete it. */
 export const ROLES: [string, string][] = [["x", "X"], ["", "Y"], ["yerr", "Y error (of the column before)"], ["skip", "Not plotted"]];
-const FORMULA_HELP = "A, B, C… are the columns (data sets), X the X column, i the row number; + − * / ^, log10, ln, exp, sqrt, abs, sin…, mean, sd, sum, min, max, median, cumsum, diff, if(test, a, b), col(\"title\").";
+const FORMULA_HELP = "A, B, C… are the columns (data sets), X the X column, i the row number; + − * / ^, log10, ln, exp, sqrt, abs, sin…, mean, sd, sum, min, max, median, cumsum, diff, if(test, a, b), col(\"title\"); dates: date(y, m, d), today(), year, month, day, days(b, a), hours(b, a).";
 /** Sets data set k's formula and works out every formula column (one undo step with `merge`). */
 export const setFormula = async (t: Table, k: number, text: string, merge = false) => {
   const o = await call<any>("formula", { table: t.id, k, text, merge });

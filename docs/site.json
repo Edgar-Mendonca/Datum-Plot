@@ -33,7 +33,7 @@
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
     "Quality: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
-    "Publication graphs: error bars, axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
+    "Publication graphs: error bars (mean or median), axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
     "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
@@ -47,21 +47,18 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.12",
-      "title": "Dates, second step",
+      "v": "0.3.13",
+      "title": "Wavelets",
       "when": "Next",
       "items": [
-        "Offer dates when pasted or imported text looks like dates",
-        "Axis steps in days, weeks or months; notes at a date",
-        "Date functions in column formulas"
+        "Wavelet transforms and short-time spectra"
       ]
     },
     {
-      "v": "0.3.13–0.3.14",
-      "title": "Signals and images",
+      "v": "0.3.14",
+      "title": "Images",
       "when": "Soon",
       "items": [
-        "Wavelets and short-time spectra",
         "Graph digitizer and image tools"
       ]
     },

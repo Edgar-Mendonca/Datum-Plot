@@ -100,6 +100,30 @@ class Graphs(unittest.TestCase):
         self.assertTrue(graph.export(self.T, {}, "png", dpi=72)["data"].startswith("iVBOR"))
 
 
+class Medians(unittest.TestCase):
+    """0.3.12: median error bars, against R: quantile(x, c(.25, .75)) (type 7) and the order-statistic CI."""
+    X = [1, 2, 3, 4, 5, 6, 7, 8, 9, 100]
+
+    def test_spread(self):
+        self.assertEqual(graph.spread(self.X, "median_iqr"), (5.5, 2.25, 2.25))  # Q1 3.25, Q3 7.75
+        self.assertEqual(graph.spread(self.X, "median_range"), (5.5, 4.5, 94.5))
+        self.assertEqual(graph.spread(self.X, "median_ci"), (5.5, 3.5, 3.5))  # ranks 2 and 9 (coverage 97.9 %)
+        m, lo, hi = graph.spread(self.X, "sem")
+        self.assertAlmostEqual((m, lo), (14.5, 9.535023160258534))
+
+    def test_every_graph_draws_medians(self):
+        xy = table([[1, 2], [1, 2], [2, 3], [9, 50], [None] * 2, [None] * 2, [None] * 2], [REP3, {"title": "Treated", "entry": "rep", "reps": 3}])
+        r = graph.render(xy, {"error": "median_iqr"})
+        self.assertEqual([p[2] for p in r["points"] if p[0] == 0], [2.0, 3.0])  # medians, not means (4 and 18.3)
+        col = {"name": "T", "kind": "column", "rows": 10, "sets": [{"title": "G", "entry": "rep", "reps": 1}], "cols": [[None] * 10, self.X], "excluded": [], "xTitle": "", "yTitle": "Y"}
+        grp = {"kind": "grouped", "rows": 1, "rowTitles": ["L"], "sets": [{"title": "A", "entry": "rep", "reps": 10}], "cols": [[None]] + [[v] for v in self.X], "excluded": []}
+        nest = dict(col, kind="nested", rows=4, sets=[{"title": "G", "entry": "rep", "reps": 3}], cols=[[None] * 4, [1, 2, 3, 4], [2, 3, 4, 5], [9, 9, 9, 9]])
+        for kind in ("median_iqr", "median_range", "median_ci"):
+            for t, extra in ((col, {"column": "bars"}), (col, {"column": "scatter"}), (grp, {}), (nest, {})):
+                self.assertIn("<svg", graph.render(t, dict(extra, error=kind))["svg"])
+        self.assertEqual(graph.render(col, {"column": "bars", "error": "median_iqr"})["points"][0][2], 5.5)
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

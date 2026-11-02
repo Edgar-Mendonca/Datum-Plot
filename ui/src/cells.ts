@@ -1,6 +1,19 @@
 // Shared by the task sheet and the Sheets tabs: tab-separated clipboard text, spreadsheet-style series
 // for the fill handle, and the last copy (values and formats) for Paste Special.
-import { dateDay, iso } from "./api";
+import { dateDay, iso, invoke } from "./api";
+
+/** 0.3.12: "date" or "datetime" when the texts of an X column look like dates (most are not numbers and the ones
+ *  tried all read as dates by the engine's own rules), else "". Pasting and importing then offer to treat them so. */
+export const dateKind = async (texts: string[]): Promise<"" | "date" | "datetime"> => {
+  const all = texts.map(s => s.trim()).filter(Boolean).slice(0, 40), words = all.filter(s => isNaN(+s.replace(",", ".")));
+  if (!words.length || words.length * 2 < all.length) return "";
+  try {
+    const got = (await Promise.all(words.slice(0, 7).map(text => invoke<number | null>("date_number", { text })))).map(v => v !== null && v !== undefined);
+    // A first word that is not a date is the column's title ("Date", "Sampled on").
+    const ok = got.every((v, i) => v || (i === 0 && words[0] === all[0])) && got.some(v => v);
+    return ok ? (words.some(w => /\d:\d\d/.test(w)) ? "datetime" : "date") : "";
+  } catch { return ""; }
+};
 
 export const parseTsv = (t: string): string[][] => {
   const out: string[][] = [[]];

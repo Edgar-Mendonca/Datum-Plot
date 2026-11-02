@@ -1,5 +1,5 @@
 // Small building blocks: icons, menus, dialogs, tabs and form rows.
-import { For, Show, JSX, createSignal, onMount, onCleanup } from "solid-js";
+import { For, Show, JSX, createSignal, onMount, onCleanup, createContext, useContext } from "solid-js";
 import { menu, setMenu, Item, closeDialog, msg, setMsg } from "./store";
 import { Help } from "./help";
 
@@ -43,11 +43,19 @@ export const Toast = () => (
 );
 
 /** A modal dialog. `ok` returns false to keep it open. */
+/** Which window a Dialog belongs to, so its ×, Close, OK and Esc close that window and no other. */
+export const DialogOf = createContext<() => JSX.Element>();
 export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element; ok?: () => boolean | void | Promise<boolean | void>; okText?: string; extra?: JSX.Element; cancel?: string; side?: boolean; help?: string }) => {
-  const done = async () => { if (!p.ok || (await p.ok()) !== false) closeDialog(); };
+  const me = useContext(DialogOf), close = () => closeDialog(me);
+  const done = async () => { if (!p.ok || (await p.ok()) !== false) close(); };
   const key = (e: KeyboardEvent) => {
-    if (e.key === "Escape") { e.stopPropagation(); closeDialog(); }
-    if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); done(); }
+    if (e.key === "Escape") { e.stopPropagation(); close(); }
+    // 0.3.12: Enter in a text box first commits what was typed (its change event), then presses OK.
+    if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) {
+      e.preventDefault();
+      if (e.target instanceof HTMLInputElement) e.target.blur();
+      setTimeout(done);
+    }
   };
   let el!: HTMLDivElement;
   /** Drag the dialog by its title bar, to see what is behind it. */
@@ -63,9 +71,9 @@ export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element
   return (
     <div class="ov" classList={{ dock: p.side }} onKeyDown={key}>
       <div class="dlg" classList={{ wide: p.wide }} ref={el}>
-        <header onMouseDown={drag}>{p.title}{p.help && <Help k={p.help} />}<button class="x" onClick={closeDialog}>×</button></header>
+        <header onMouseDown={drag}>{p.title}{p.help && <Help k={p.help} />}<button class="x" onClick={close}>×</button></header>
         <div class="bd">{p.children}</div>
-        <footer>{p.extra}<span class="grow" />{p.ok && <button class="btn pri" onClick={done}>{p.okText ?? "OK"}</button>}<button class="btn" onClick={closeDialog}>{p.cancel ?? (p.ok ? "Cancel" : "Close")}</button></footer>
+        <footer>{p.extra}<span class="grow" />{p.ok && <button class="btn pri" onClick={done}>{p.okText ?? "OK"}</button>}<button class="btn" onClick={close}>{p.cancel ?? (p.ok ? "Cancel" : "Close")}</button></footer>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ export interface Table {
   sets: DataSet[]; cols: (number | null)[][]; excluded: [number, number][]; style: Record<string, string>; notes: string;
   /** 0.3.11: the X column holds dates ("date", "datetime"; days since 1970) and how they are shown. */ xFormat?: string; xDisplay?: string;
 }
-export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean; breakFrom?: number | null; breakTo?: number | null; /** Date X axes: auto, daymonth, monthyear, iso, week. */ dates?: string }
+export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min: number | null; max: number | null; step: number | null; minor: boolean; grid: boolean; breakFrom?: number | null; breakTo?: number | null; /** Date X axes: auto, daymonth, monthyear, iso, week. */ dates?: string; /** Date X axes: d1, w1, w2, m1, m3, y1 or "" (0.3.12). */ dateStep?: string }
 export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number; right?: boolean }
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;

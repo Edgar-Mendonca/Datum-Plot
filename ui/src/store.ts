@@ -92,4 +92,5 @@ export const openMenu = (e: MouseEvent | { x: number; y: number }, items: Item[]
 };
 export const [dialogs, setDialogs] = createSignal<(() => JSX.Element)[]>([]);
 export const openDialog = (d: () => JSX.Element) => setDialogs(v => [...v, d]);
-export const closeDialog = () => setDialogs(v => v.slice(0, -1));
+/** Close one window (the one whose × was clicked), or the top one. 0.3.12: × used to close the youngest window. */
+export const closeDialog = (d?: () => JSX.Element) => setDialogs(v => (d ? v.filter(x => x !== d) : v.slice(0, -1)));

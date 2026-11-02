@@ -286,7 +286,7 @@ def linear(table, ks, o):
     cols, details, plots, curves, checks, answers, interp = [], [], [], [], [], [], []
     per = " per day" if table.get("xFormat") in ("date", "datetime") else ""  # 0.3.11: X in days since 1970
     if per:
-        checks.append((None, "X holds dates (days since 1 Jan 1970), so slopes are per day; the Y-intercept is the value on 1 Jan 1970."))
+        checks.append((None, "X holds dates (days since 1 Jan 1970), so slopes are per day; the Y-intercept is the value on 1 Jan 1970, so the fit also gives Y at the first date, and the X-intercept as a date."))
     fits = []
     for k in ks:
         x, y, _ = points(table, k, o)
@@ -302,7 +302,7 @@ def linear(table, ks, o):
             ss = float(np.sum(res ** 2))
             r2 = 1 - ss / float(np.sum((y - y.mean()) ** 2))
             cols.append([("Slope", g(b), g(sb), f"{g(b - t * sb)} to {g(b + t * sb)}"), ("Y-intercept", g(a), g(sa), f"{g(a - t * sa)} to {g(a + t * sa)}"),
-                         ("X-intercept", g(-a / b) if b else "—", "", ""), ("R squared (of Y on X)", g(r2, 4), "", ""), ("Number of points", g(n), "", "")])
+                         ("X-intercept", day_text(-a / b, table) if b else "—", "", ""), *([(f"Y on {day_text(x.min(), table)}", g(a + b * x.min()), "", "")] if per else []), ("R squared (of Y on X)", g(r2, 4), "", ""), ("Number of points", g(n), "", "")])
             eq = f"Y = {g(b, 4)}·X {'+' if a >= 0 else '−'} {g(abs(a), 4)}"
             xs = grid(x)
             curves.append({"set": k, "x": xs.tolist(), "y": (a + b * xs).tolist(), "label": eq})
@@ -320,7 +320,10 @@ def linear(table, ks, o):
         if model == "line":
             rows = [rows[1], rows[0]]
             b, a = r.params[1], r.params[0]
-            rows += [("X-intercept", g(-a / b) if b else "—", "", ""), ("1/slope", g(1 / b) if b else "—", "", "")]
+            rows += [("X-intercept", day_text(-a / b, table) if b else "—", "", ""), ("1/slope", g(1 / b) if b else "—", "", "")]
+            if per:  # 0.3.12: the value at the first date means more than the one on 1 Jan 1970
+                x0 = float(x.min())
+                rows.append((f"Y on {day_text(x0, table)}", g(a + b * x0), "", ""))
         syx = math.sqrt(r.ssr / r.df_resid) if r.df_resid > 0 else float("nan")
         r2 = r.rsquared
         rows += [("R squared", g(r2, 4), "", ""), ("Adjusted R squared", g(r.rsquared_adj, 4), "", ""), ("Sy.x", g(syx), "", ""), ("Number of points", g(n), "", "")]
@@ -394,6 +397,15 @@ def compare_lines(table, fits, model):
     return {"title": "Comparing the lines", "columns": ["Question", "F", "Degrees of freedom", "P value", "Answer"], "rows": rows}
 
 
+def day_text(v, table):
+    """0.3.12: an X value as a date ("5 Nov 2026", with the time on date-and-time columns) when X holds dates."""
+    import datetime
+    if table.get("xFormat") not in ("date", "datetime") or not math.isfinite(v) or abs(v) > 2.9e6:
+        return g(v)
+    d = datetime.datetime(1970, 1, 1) + datetime.timedelta(days=round(v) if table.get("xFormat") == "date" else round(v * 1440) / 1440)
+    return f"{d.day} {d:%b %Y}" + (f" {d:%H:%M}" if table.get("xFormat") == "datetime" else "")
+
+
 def interpolate(table, fits, unknowns):
     """X for each unknown Y, read off each fitted line or curve (inside the data range)."""
     from scipy.optimize import brentq
@@ -407,7 +419,7 @@ def interpolate(table, fits, unknowns):
             i = np.where(s[:-1] * s[1:] <= 0)[0]
             if len(i):
                 x0 = brentq(lambda v: float(np.asarray(f(v)).ravel()[0]) - u, xs[i[0]], xs[i[0] + 1]) if s[i[0]] != 0 else xs[i[0]]
-                rows.append([name_of(table, k), g(u), g(x0)])
+                rows.append([name_of(table, k), g(u), day_text(x0, table)])
             else:
                 rows.append([name_of(table, k), g(u), "outside the curve"])
     return {"title": "Unknowns read off the fit", "columns": ["Data set", "Y (unknown)", "X (interpolated)"], "rows": rows}
