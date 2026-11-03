@@ -112,7 +112,10 @@ const fitRibbon = (el: HTMLElement) => {
 };
 const gs = (): GraphSettings | undefined => graph()?.settings;
 const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) return toast("Open a graph first."); setG(g, s => { f(s); return s; }); };
-const errorMenu = (): Item[] => ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && gs()?.points !== "each", run: () => setGS(s => { s.error = k; s.points = "mean"; }) }));
+/** 0.3.14: choosing error bars keeps Each Replicate on column and grouped graphs, which draw both; XY graphs show
+ *  either the replicates or the means with their bars, so there the choice switches back to means. */
+const errorMenu = (): Item[] => { const xy = ["xy", "multi", "sheet"].includes(curTable()?.kind ?? "xy");
+  return ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && (!xy || gs()?.points !== "each"), run: () => setGS(s => { s.error = k; if (xy) s.points = "mean"; }) })); };
 const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
 const COLUMNS: [string, string][] = [["scatter", "Scatter dot plot (mean ± error)"], ["bars", "Bars (mean ± error)"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after (rows joined)"]];
 const GROUPED: [string, string][] = [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots (mean ± error)"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map of the means"], ["radar", "Radar (the rows are the spokes)"]];

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.14 — 2026-11-03
+
+Fixes from users.
+
+**Graphs**
+- Choosing **Error Bars** from the ribbon no longer switches **Each Replicate** off on column and grouped graphs.
+- Groups with many values spread their dots evenly across the group's width instead of piling the extra dots in a column at one edge.
+
+**Format Graph**
+- The Format Graph window always works on the graph you are looking at: open another graph and it follows it, on the same page; open a table, results or a layout and it closes.
+
+**Finding your graph**
+- The graph's name is shown above it (double-click to rename).
+- In the navigator, each graph's preview sits right under its name. Right-click a graph › **Hide Previews** (or **View › Thumbnails**) to save space.
+
 ## 0.3.13 — 2026-11-02
 
 A tidier Home page.

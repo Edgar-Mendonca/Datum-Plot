@@ -586,7 +586,7 @@ input.mono { font-family: var(--mono) !important; }
 .cbsafe { display: inline-block; margin-left: 6px; padding: 0 4px; font-size: 10px; line-height: 15px; color: var(--blue2); border: 1px solid var(--sky); background: var(--pale); white-space: nowrap; }
 /* 0.3.3: dialogs move by their title bar */
 .dlg > header { cursor: move; user-select: none; }
-.nthumbs { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
+.nthumbs { display: flex; padding: 2px 10px 8px 34px; }
 .nthumb { width: 150px; height: 100px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--line); }
 .nthumb.on { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
 .nthumb .gimg { pointer-events: none; }

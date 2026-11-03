@@ -179,7 +179,7 @@ Les autres groupes règlent les **Error Bars** (Barres d’erreur : la moyenne a
 
 ### Mettre en forme un graphique
 
-Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une série de données, le titre) pour la mettre en forme, ou cliquez avec le bouton droit sur un axe › **Format Axes** (Mettre en forme les axes), ou utilisez **Graph › Format Axes** (Graphique › Mettre en forme les axes). Il n’y a qu’une fenêtre Format Graph : ces commandes l’amènent à la page demandée.
+Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une série de données, le titre) pour la mettre en forme, ou cliquez avec le bouton droit sur un axe › **Format Axes** (Mettre en forme les axes), ou utilisez **Graph › Format Axes** (Graphique › Mettre en forme les axes). Il n’y a qu’une fenêtre Format Graph : ces commandes l’amènent à la page demandée, et elle agit toujours sur le graphique affiché (ouvrez-en un autre et elle le suit ; ouvrez un tableau ou des résultats et elle se ferme). Le nom du graphique est affiché au-dessus ; dans le navigateur, l’aperçu de chaque graphique est sous son nom (clic droit › **Hide Previews** (Masquer les aperçus) pour gagner de la place).
 
 ![Format Graph, ancré à côté du graphique.](img/format.png)
 

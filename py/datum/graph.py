@@ -555,14 +555,16 @@ def date_axis(axis, a):
 
 
 def swarm(v, h, step, lim):
-    """Sideways offsets that keep dots closer than `h` (one dot, in Y units) apart: a simple bee swarm."""
+    """Sideways offsets that keep dots closer than `h` (one dot, in Y units) apart: a simple bee swarm. A crowded
+    group wider than ±`lim` is squeezed evenly to fit (0.3.14: it used to pile the extra dots in a column at the edge)."""
     off, placed = np.zeros(len(v)), []
-    for i in np.argsort(v):
-        near = [o for (y, o) in placed if abs(y - v[i]) < h]
-        x = next((k * s_ * step for k in range(0, 60) for s_ in ((1, -1) if k else (1,)) if all(abs(k * s_ * step - o) >= step * 0.999 for o in near)), 0.0)
-        off[i] = max(-lim, min(lim, x))
+    for i in np.argsort(v, kind="stable"):
+        near = {round(o / step) for (y, o) in placed if abs(y - v[i]) < h}
+        x = next(j for k in range(len(v) + 1) for j in ((k, -k) if k else (0,)) if j not in near)  # nearest free place, right first
+        off[i] = x * step
         placed.append((v[i], off[i]))
-    return off
+    wide = np.abs(off).max() if len(off) else 0.0
+    return off * (lim / wide) if wide > lim else off
 
 
 def column_figure(fig, ax, table, graph, overlays, colors, size):

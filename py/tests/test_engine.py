@@ -124,6 +124,21 @@ class Medians(unittest.TestCase):
         self.assertEqual(graph.render(col, {"column": "bars", "error": "median_iqr"})["points"][0][2], 5.5)
 
 
+class Swarm(unittest.TestCase):
+    """0.3.14: a crowded group is squeezed to its width, never piled in a column at the edge."""
+    def test_crowded_groups_fit_without_a_column_at_the_edge(self):
+        import numpy as np
+        rng = np.random.default_rng(1)
+        v = np.r_[rng.uniform(10, 70, 120), rng.uniform(100, 180, 40)]
+        off = graph.swarm(v, 6.0, 0.05, 0.38)
+        self.assertLessEqual(np.abs(off).max(), 0.38 + 1e-12)
+        edge = np.sum(np.isclose(np.abs(off), np.abs(off).max()))
+        self.assertLessEqual(edge, 6, "no pile of dots at the edge")
+        self.assertLess(abs(off.mean()), 0.05, "the cloud stays centred")
+        few = graph.swarm(np.array([1.0, 1, 1, 5]), 0.5, 0.1, 0.38)
+        self.assertEqual(list(few), [0.0, 0.1, -0.1, 0.0])  # small groups: unchanged spacing
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

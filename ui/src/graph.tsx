@@ -174,6 +174,8 @@ export const GraphView = (p: { g: Graph }) => {
   onCleanup(() => { setTip(null); if (tool() === "pan" || tool() === "zoom") setTool(null); });
   return (
     <section class="gview" tabindex="0" onKeyDown={keys}>
+      {/* 0.3.14: which graph this is, at a glance (a user could not tell in a project of many graphs). */}
+      <div class="thead"><Icon n="graph" /><b class="tname" title="Double-click to rename" onDblClick={() => import("./cmds").then(m => m.C.rename())}>{p.g.name}</b><Help k="graphview" /><span class="muted">of {out()?.project.tables.find(t => t.id === p.g.table)?.name}</span></div>
       <div class="gpage" onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setZoomG(z => Math.min(4, Math.max(0.5, z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)))); } }}>
         <Show when={r()} fallback={<div class="gwait">{err() || (engine()?.error ?? engine()?.status ?? "Drawing the graph…")}</div>}>{R => (
           <div class="gpaper" classList={{ annot: !!tool() && tool() !== "pan", pan: tool() === "pan" }} style={{ width: `${R().w * k()}px`, height: `${R().h * k()}px` }} onMouseDown={down} onMouseMove={move} onMouseLeave={() => { setTip(null); setCross(null); }} onDblClick={dbl} onContextMenu={menu}>
@@ -188,7 +190,7 @@ export const GraphView = (p: { g: Graph }) => {
         )}</Show>
         <Show when={err() && r()}><div class="gerr">{err()}</div></Show>
       </div>
-      <div class="gfoot muted"><Icon n="graph" /><b>{p.g.name}</b><Help k="graphview" /><span>{p.g.settings.width} × {p.g.settings.height} mm · {p.g.settings.font} {p.g.settings.fontSize} pt</span><span class="grow" />
+      <div class="gfoot muted"><span>{p.g.settings.width} × {p.g.settings.height} mm · {p.g.settings.font} {p.g.settings.fontSize} pt</span><span class="grow" />
         <span>{tool() === "pan" ? "Drag to pan · Esc to stop" : "Drag a note to move it · double-click to format or edit · right-click for more"}</span></div>
       <Show when={tip()}>{t => <div class="gtip" style={{ left: `${t().x + 14}px`, top: `${t().y + 12}px` }}><For each={t().text}>{(l, i) => i() ? <span>{l}</span> : <b>{l}</b>}</For></div>}</Show>
     </section>

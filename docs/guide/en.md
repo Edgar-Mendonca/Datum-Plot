@@ -179,7 +179,7 @@ The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range,
 
 ### Formatting a graph
 
-Double-click any part of a graph (an axis, a data set, the title) to format it, or right-click an axis › **Format Axes**, or use **Graph › Format Axes**. There is one Format Graph window: these commands switch it to the page you asked for.
+Double-click any part of a graph (an axis, a data set, the title) to format it, or right-click an axis › **Format Axes**, or use **Graph › Format Axes**. There is one Format Graph window: these commands switch it to the page you asked for, and it always works on the graph you are looking at (open another graph and it follows; open a table or results and it closes). The graph's name is shown above it; in the navigator each graph's preview sits under its name (right-click › **Hide Previews** to save space).
 
 ![Format Graph, docked beside the graph.](img/format.png)
 

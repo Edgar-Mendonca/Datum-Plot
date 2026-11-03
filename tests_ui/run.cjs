@@ -39,6 +39,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     f.state.project.analyses = [{ id: 99, table: f.state.project.tables[0].id, name: "Growth fit", kind: "linear", sets: [], options: { xmax: 10 } }];
     f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
+    f.state.project.graphs.push({ ...f.state.project.graphs[0], id: 97, name: "Growth copy" });  // 0.3.14: Format Graph follows the graph shown
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, new_design: f.state,
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
@@ -108,6 +109,16 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   if ((await p.$$(".dlg")).length) await p.keyboard.press("Escape");
 
+  // 0.3.14 (users): Format Graph follows the graph on screen and closes without one; names and previews.
+  await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(80);
+  await p.click('.ribbon .rb.big:has-text("Format Axes")'); await p.waitForTimeout(250);
+  await p.click('.nav .nitem:has-text("Growth copy")'); await p.waitForTimeout(300);
+  check("Format Graph follows the graph you switch to", (await p.textContent(".dlg header")).includes("Growth copy") && (await p.textContent(".gview .thead")).includes("Growth copy"), await p.textContent(".dlg header").catch(() => "none"));
+  check("each graph's preview sits under its name", await p.evaluate(() => [...document.querySelectorAll(".nav .nthumbs")].every(t => t.previousElementSibling && t.previousElementSibling.classList.contains("nitem"))) && (await p.$$(".nav .nthumbs")).length === 2);
+  await p.click('.nav .nitem >> nth=1'); await p.waitForTimeout(300);
+  check("Format Graph closes when no graph is shown", (await p.$$(".dlg")).length === 0);
+  await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=1'); await p.waitForTimeout(400);
+  check("the graph page names its graph", (await p.textContent(".gview .thead b")) === "Growth", await p.textContent(".gview .thead b"));
   // 3. Hovering a point shows its values.
   const pt = render.points.find(Boolean);
   const toPx = (x, y) => { const [a, b] = render.xlim, [c, d] = render.ylim, [px0, py0, px1, py1] = render.plot; return [plot[0] + (px0 + (x - a) / (b - a) * (px1 - px0)) * k, plot[1] + (py1 - (y - c) / (d - c) * (py1 - py0)) * k]; };
@@ -542,7 +553,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.ribbon .rb.big:has-text("New Layout")');
   await p.waitForTimeout(150);
   const al = (await ops()).find(o => o.AddLayout)?.AddLayout.layout;
-  check("New Layout starts with the project's graphs", al && al.items.length === Math.min(4, P.graphs.length) && al.items[0].graph === P.graphs[0].id, JSON.stringify(al));
+  check("New Layout starts with the project's graphs", al && al.items.length === Math.min(4, P.graphs.length + 1) /* the page adds "Growth copy" */ && al.items[0].graph === P.graphs[0].id, JSON.stringify(al));
   await reset();
   await p.click('.ribbon .rb.big:has-text("Poster")');
   await p.waitForTimeout(200);

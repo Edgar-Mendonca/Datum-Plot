@@ -1,8 +1,8 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
-import { For, Show, createSignal, JSX } from "solid-js";
+import { For, Show, createSignal, createEffect, on, JSX } from "solid-js";
 import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText } from "./api";
-import { act, out, openDialog, closeDialog, dialogs, toast } from "./store";
+import { act, out, openDialog, closeDialog, dialogs, toast, item } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES, ORDERED, paletteName } from "./tools";
 import { lastRender } from "./graph";
@@ -23,20 +23,20 @@ export const setG = (g: Graph, f: (s: GraphSettings) => GraphSettings) => {
 };
 const num = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
 
-/** The open Format Graph window: 0.3.12 reuses it (switching to the page asked for) instead of stacking another. */
-let open1: { id: number; d: () => JSX.Element; tab: (p: string) => void } | null = null;
+/** The open Format Graph window: 0.3.12 reuses it (switching to the page asked for) instead of stacking another;
+ *  0.3.14 makes it follow the graph on screen (a user edited a graph they could no longer see) and close without one. */
+let open1: { id: () => number; set: (id: number) => void; d: () => JSX.Element; tab: (p: string) => void } | null = null;
 export const formatGraph = (g0: Graph, page = "sets") => {
-  if (open1 && dialogs().includes(open1.d)) {
-    if (open1.id === g0.id) return open1.tab(page);
-    closeDialog(open1.d);
-  }
-  const [tab, setTab] = createSignal(page);
-  const d = () => fmtWindow(g0, tab, setTab);
-  open1 = { id: g0.id, d, tab: setTab };
+  if (open1 && dialogs().includes(open1.d)) { open1.set(g0.id); return open1.tab(page); }
+  const [tab, setTab] = createSignal(page), [gid, setGid] = createSignal(g0.id);
+  const d = () => fmtWindow(g0, gid, setGid, tab, setTab, () => closeDialog(d));
+  open1 = { id: gid, set: setGid, d, tab: setTab };
   openDialog(d);
 };
-const fmtWindow = (g0: Graph, tab: () => string, setTab: (p: string) => void) => {
-  const g = () => out()!.project.graphs.find(x => x.id === g0.id) ?? g0, s = () => g().settings;
+const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, tab: () => string, setTab: (p: string) => void, close: () => void) => {
+  createEffect(on(item, it => { if (it.s !== "graphs" || !out()?.project.graphs.some(x => x.id === it.id)) close(); else { setGid(it.id); if (tab() === "y2") setTab("y"); } }, { defer: true }));
+  let last: Graph | undefined = g0;  // a deleted graph: keep showing it until the window closes
+  const g = () => (last = out()!.project.graphs.find(x => x.id === gid()) ?? last)!, s = () => g().settings;
   const t = () => out()!.project.tables.find(x => x.id === g().table);
   const set = (f: (s: GraphSettings) => void) => setG(g(), x => { f(x); return x; });
   const setStyle = (k: number, patch: Partial<SetStyle>) => set(x => { while (x.sets.length <= k) x.sets.push({ ...DEF_SET }); x.sets[k] = { ...x.sets[k], ...patch }; });

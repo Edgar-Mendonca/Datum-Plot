@@ -2,7 +2,7 @@
 // the Info sheet and empty pages.
 import { For, Show, JSX } from "solid-js";
 import { Info } from "./api";
-import { P, item, open, Section, navOpen, act, openMenu, thumbs } from "./store";
+import { P, item, open, Section, navOpen, act, openMenu, thumbs, setThumbs } from "./store";
 import { C } from "./cmds";
 import { newGraph, useRender, GraphImg } from "./graph";
 import { Icon } from "./ui";
@@ -20,7 +20,7 @@ const Head = (p: { l: string; h?: string; add?: () => void; title?: string }) =>
 export const Navigator = () => {
   const ctx = (e: MouseEvent, id: number, s: Section) => { open(s, id); openMenu(e, [
     ...(s === "data" ? [{ label: "New Graph of This Table", icon: "graph", run: () => newGraph(id) }, "-" as const] : []),
-    ...(s === "graphs" ? [{ label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, "-" as const] : []),
+    ...(s === "graphs" ? [{ label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, { label: thumbs() ? "Hide Previews" : "Show Previews", icon: "image", run: () => setThumbs(!thumbs()) }, "-" as const] : []),
     { label: "Rename…", icon: "rename", run: C.rename }, { label: "Duplicate", icon: "copy", run: C.duplicate }, { label: "Delete", icon: "del", run: C.del },
   ]); };
   return (
@@ -32,8 +32,11 @@ export const Navigator = () => {
         <Head l="Results" h="results" add={() => analyze()} title="Analyze data" />
         <For each={P().analyses ?? []} fallback={<p class="nnone">Analyze… adds results here</p>}>{a => <button class="nitem" classList={{ on: item().s === "results" && item().id === a.id }} onClick={() => open("results", a.id)} onContextMenu={e => ctx(e, a.id, "results")} onDblClick={C.rename}><Icon n="results" /><span>{a.name}</span></button>}</For>
         <Head l="Graphs" h="graphview" add={C.newGraph} title="New graph of the open table" />
-        <For each={P().graphs}>{g => <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>}</For>
-        <Show when={thumbs() && P().graphs.length}><div class="nthumbs"><For each={P().graphs}>{g => <Thumb id={g.id} on={item().s === "graphs" && item().id === g.id} />}</For></div></Show>
+        {/* 0.3.14 (a user's request): each graph's preview sits under its name; View › Thumbnails or a right-click hides them. */}
+        <For each={P().graphs}>{g => <>
+          <button class="nitem" classList={{ on: item().s === "graphs" && item().id === g.id }} onClick={() => open("graphs", g.id)} onContextMenu={e => ctx(e, g.id, "graphs")} onDblClick={C.rename}><Icon n="graph" /><span>{g.name}</span></button>
+          <Show when={thumbs()}><div class="nthumbs"><Thumb id={g.id} on={item().s === "graphs" && item().id === g.id} /></div></Show>
+        </>}</For>
         <Head l="Layouts" h="layouts" add={() => newLayout()} title="New layout of the graphs" />
         <For each={P().layouts ?? []} fallback={<p class="nnone">＋ arranges graphs on a page</p>}>{l => <button class="nitem" classList={{ on: item().s === "layouts" && item().id === l.id }} onClick={() => open("layouts", l.id)} onContextMenu={e => ctx(e, l.id, "layouts")} onDblClick={C.rename}><Icon n="layout" /><span>{l.name}</span></button>}</For>
       </aside>
