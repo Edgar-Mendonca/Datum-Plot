@@ -4,7 +4,7 @@
 
 # Datum Plot
 
-**Scientific graphs, statistics and curve fitting: one app for Windows.**
+**Scientific graphs, statistics and curve fitting.**
 
 [![Latest release](https://img.shields.io/github/v/release/Edgar-Mendonca/Datum-Plot?label=release&color=0E8C7F)](https://github.com/Edgar-Mendonca/Datum-Plot/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/Edgar-Mendonca/Datum-Plot/ci.yml?label=CI&logo=githubactions&logoColor=white)](https://github.com/Edgar-Mendonca/Datum-Plot/actions/workflows/ci.yml)
