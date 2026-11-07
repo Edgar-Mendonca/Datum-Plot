@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.16 — 2026-11-07
+
+Organising the navigator.
+
+**Select several items**
+- **Ctrl+click** adds items to a selection; **Shift+click** selects a run. Right-click the selection to **delete them together** (one undo step), move them to a folder or colour their names. **Delete** deletes the selection; **Esc** clears it.
+
+**Folders and colours**
+- Right-click › **Move to Folder** › **New Folder…** groups tables, results, graphs or layouts under a folder you name. Click a folder to open or close it; right-click it to rename it or remove it (its items stay).
+- Right-click › **Colour**: red, orange, green, blue, pink or grey names, to find things at a glance.
+- Folders and colours are saved with the project.
+
+**A table's family**
+- Right-click a data table › **Show Only This Family**: the navigator shows just that table, its results, its graphs and the layouts that show them. **Show All** brings back the rest.
+
 ## 0.3.15 — 2026-11-07
 
 Users' requests.

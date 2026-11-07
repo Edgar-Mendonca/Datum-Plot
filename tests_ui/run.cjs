@@ -122,6 +122,36 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   check("Format Graph closes when no graph is shown", (await p.$$(".dlg")).length === 0);
   await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=1'); await p.waitForTimeout(400);
   check("the graph page names its graph", (await p.textContent(".gview .thead b")) === "Growth", await p.textContent(".gview .thead b"));
+  // 0.3.16 (#31, #32): select several items, delete them together, folders, colours, a family view.
+  await reset();
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { modifiers: ["Control"] });
+  await p.click('.nav .nitem:has(span:text-is("Growth fit"))', { modifiers: ["Control"] }); await p.waitForTimeout(150);
+  check("Ctrl+click selects several items", (await p.$$(".nav .nitem.sel")).length >= 2 && ((await p.textContent(".nav .nfamily")) || "").includes("selected"));
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
+  check("right-click on a selection offers to delete them together", ((await p.textContent(".menu")) || "").includes("Items"), await p.textContent(".menu"));
+  p.once("dialog", d => d.accept());
+  await p.click('.menu button:has-text("Items")'); await p.waitForTimeout(250);
+  const del = (await ops()).find(o => o.Batch);
+  check("…in one undo step", del && del.Batch.length >= 2 && del.Batch.every(o => o.Delete), JSON.stringify(del));
+  await p.keyboard.press("Escape"); await p.click('.nav .nfamily button').catch(() => {}); await p.waitForTimeout(100);
+  await reset();
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
+  await p.hover('.menu button:has-text("Move to Folder")'); await p.waitForTimeout(150);
+  p.once("dialog", d => d.accept("Drafts"));
+  await p.click('.menu button:has-text("New Folder")'); await p.waitForTimeout(250);
+  const fo = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("Move to Folder › New Folder saves the folder in the project", fo && fo.Ui.value.folder["97"] === "Drafts", JSON.stringify(fo));
+  await reset();
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
+  await p.hover('.menu button:has-text("Colour")'); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Green")'); await p.waitForTimeout(250);
+  const co = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("Colour › Green colours the name", co && co.Ui.value.color["97"] === "#009E73", JSON.stringify(co));
+  await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=0', { button: "right" }); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Show Only This Family")'); await p.waitForTimeout(200);
+  check("Show Only This Family filters the navigator", ((await p.textContent(".nav .nfamily")) || "").includes("Family of") && (await p.$$(".nav .nitem:has(span:text-is('Figure 1'))")).length === 1);
+  await p.click('.nav .nfamily button:has-text("Show All")'); await p.waitForTimeout(150);
+  await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=1'); await p.waitForTimeout(400);
   // 3. Hovering a point shows its values.
   const pt = render.points.find(Boolean);
   const toPx = (x, y) => { const [a, b] = render.xlim, [c, d] = render.ylim, [px0, py0, px1, py1] = render.plot; return [plot[0] + (px0 + (x - a) / (b - a) * (px1 - px0)) * k, plot[1] + (py1 - (y - c) / (d - c) * (py1 - py0)) * k]; };

@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.3.15";
+export const VERSION_NOW = "0.3.16";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -144,7 +144,7 @@ export const FEATURES: Feature[] = [
   ["J6", "The Datum Plot Guide", "0.3.2", "A step-by-step guide with numbered pictures, in English, Chinese (中文) and French: Help › Guide downloads the checked PDF.", ""],
   ["J9", "Starts and copies", "0.3.15", "An empty project start (the app opens on Home); duplicate a table alone or with its graphs and results; copy and export layouts from the navigator.", ""],
   ["D22", "A graph's own order and colours", "0.3.15", "Reorder the data sets of a column, grouped or pie graph without changing the table; fill and border colours for bars, boxes and violins.", ""],
-  ["A22", "Organising the navigator", "0.3.16", "Select several items (Ctrl+click) to delete or move them, folders, coloured names, and a view of one table's family (its graphs and results).", ""],
+  ["A22", "Organising the navigator", "0.3.16", "Select several items (Ctrl+click or Shift+click) to delete, move or colour them together, folders, coloured names, and a view of one table's family (its graphs, results and layouts).", ""],
   ["I8", "Smaller screens", "0.3.17", "The ribbon folds its labels and groups on laptop screens so every command stays reachable.", ""],
   ["J8", "A tidier Home", "0.3.13", "Three blank starts (XY table and graph, XY table, column table) and a Samples folder with every sample under a heading.", ""],
   ["J7", "Medical and engineering samples", "0.3.2", "Survival study, method comparison (Bland-Altman), diagnostic test (ROC), response surface and polar antenna pattern.", ""],

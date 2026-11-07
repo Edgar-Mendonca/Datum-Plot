@@ -245,7 +245,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J7 | Medical and engineering samples: survival study, method comparison, diagnostic test, response surface, polar pattern | ✅ 0.3.2 |
 | J9 | Starts and copies: empty project start (opens on Home), duplicate a table alone or with its family, layouts copied and exported from the navigator | ✅ 0.3.15 |
 | D22 | A graph's own order of data sets; fill and border colours for bars, boxes and violins | ✅ 0.3.15 |
-| A22 | Organising the navigator: multiple selection, folders, coloured names, a family view | 0.3.16 |
+| A22 | Organising the navigator: multiple selection, folders, coloured names, a family view | ✅ 0.3.16 |
 | I8 | Smaller screens: the ribbon folds on laptop screens | 0.3.17 |
 | J8 | A tidier Home: three blank starts (XY table and graph, XY table, column table) and a Samples folder under headings | ✅ 0.3.13 |
 
@@ -402,7 +402,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.13** ✅ | A tidier Home: three blank starts and a Samples folder (J8), a user's request |
 | **0.3.14** ✅ | Users' fixes: Error Bars keep Each Replicate, crowded dots squeezed evenly, previews under graph names, Format Graph follows the graph shown, the graph's name above it |
 | **0.3.15** ✅ | Users' requests (GitHub #20–#33): start-up crash fixed and an empty start, layouts delete/copy/export, significance per graph, duplicates with results or table only, graph ＋ menu, preview menus, data-set order and fill colours (D22, J9), a wider panel |
-| 0.3.16 | Organising the navigator (A22) |
+| **0.3.16** ✅ | Organising the navigator (A22; GitHub #31, #32) |
 | 0.3.17 | Smaller screens (I8) |
 | 0.3.18 | Wavelets and short-time spectra (B36) |
 | 0.3.19 | Graph digitizer and image tools (E8) |
