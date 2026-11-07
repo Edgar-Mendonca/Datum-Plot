@@ -359,7 +359,9 @@ struct State {
     container: String,
 }
 
-#[implement(IOleObject, IDataObject, IPersistStorage)]
+// Not agile: Windows brings every call from the document to the window's thread (the main STA), one at a time, where
+// the window, the client site and Update live. (Agile objects got DoVerb and Close on other threads.)
+#[implement(IOleObject, IDataObject, IPersistStorage, Agile = false)]
 struct Graph {
     s: RefCell<State>,
 }
@@ -671,7 +673,7 @@ fn shut(g: &Graph, me: IUnknown) {
 // ---------------------------------------------------------------------------------------------------------------
 // The class factory, and what the window calls
 
-#[implement(IClassFactory)]
+#[implement(IClassFactory, Agile = false)]
 struct Factory;
 
 impl IClassFactory_Impl for Factory_Impl {

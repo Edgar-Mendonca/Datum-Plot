@@ -83,6 +83,11 @@ jobs:
       - if: always()
         shell: pwsh
         run: Get-ChildItem -Recurse "$env:APPDATA","$env:LOCALAPPDATA" -Filter embed.log -ErrorAction SilentlyContinue | ForEach-Object { "== $($_.FullName)"; Get-Content $_.FullName }
+      - shell: pwsh
+        run: |
+          # The document's calls reach the window's thread (the main thread, a single-threaded apartment = 3).
+          $l = Get-Content "$env:APPDATA\com.edgarmendonca.datumplot\embed.log"
+          if (-not ($l | Select-String 'DoVerb 0 \[thread ThreadId\(1\), apartment 3\]')) { throw "DoVerb did not run on the window's thread" }
 
   deny:
     runs-on: ubuntu-latest
