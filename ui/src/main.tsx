@@ -40,7 +40,13 @@ const App = () => {
   onMount(async () => {
     try {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
-      setOut(await invoke<Out>("state"));
+      // 0.3.18 → 0.3.19: a document that starts Datum Plot hands over its graph at once, often before this window has
+      // loaded. Listen first, then read the state: whichever comes first, the window opens on the graph, not on Home.
+      const embedded = (o: Out) => { setOut(o); setBackstage(null); const g = o.project.graphs[0]; openView(g ? "graphs" : "data", g?.id ?? 0); };
+      listen("ole-open", embedded);
+      listen("ole-error", (m: string) => toast(m));
+      const st = await invoke<Out>("state");
+      if (st.embedded) embedded(st); else setOut(st);
       listen("engine", e => setEngine(e));
       invoke("engine").then(e => setEngine(e)).catch(() => {});
       const start = await invoke<string | null>("startup_file");
@@ -63,8 +69,6 @@ const App = () => {
       setInterval(() => { if (opts().autosave > 0) invoke("autosave").catch(() => {}); }, Math.max(1, opts().autosave) * 60000);
       listen("close-requested", () => (out()?.embedded ? D.confirmEmbeddedClose() : D.confirmClose(() => invoke("quit"))));
       // 0.3.18: a document asked this Datum Plot to show its embedded graph.
-      listen("ole-open", (o: Out) => { setOut(o); setBackstage(null); const g = o.project.graphs[0]; openView(g ? "graphs" : "data", g?.id ?? 0); });
-      listen("ole-error", (m: string) => toast(m));
     } catch (e) { toast(String(e)); }
   });
   const keys = (e: KeyboardEvent) => {

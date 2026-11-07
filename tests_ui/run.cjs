@@ -705,6 +705,20 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     named = named.concat(await p.$$eval(".ribbon .rb", (bs, re) => bs.map(b => `${b.textContent} ${b.title}`).filter(x => new RegExp(re).test(x)), brands.source));
   }
   check("no ribbon button names another company's product", named.length === 0, named.join(" | "));
+  // 0.3.19: started by a document, the window opens on the embedded graph with its bar and Update (not on Home).
+  {
+    const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
+    await q.addInitScript(([f, rd]) => {
+      const st = { ...f.state, embedded: "the test document" };
+      const m = { state: st, options: { theme: "light", autosave: 0, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, dpi: 300, paper: "A4", dateOrder: "dmy" }, templates: f.templates, recent: [], version: "t", render: rd, recovery: null, startup_file: null };
+      try { localStorage.setItem("guide-hint", "1"); } catch {}
+      window.__TAURI__ = { core: { invoke: async (c) => (c in m ? m[c] : null) }, event: { listen: async () => () => {} } };
+    }, [fix, render]);
+    await q.goto(url); await q.waitForTimeout(900);
+    check("a window started by a document shows its graph, not Home", !(await q.$(".bs")) && !!(await q.$(".gview")), String(!!(await q.$(".bs"))));
+    check("…with the editing bar and Update", ((await q.textContent(".embedbar").catch(() => "")) || "").includes("the test document") && !!(await q.$('.ribbon .rb:has-text("Update Document")')) || !!(await q.$('.embedbar .btn')));
+    await q.close();
+  }
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();
   console.log(failed ? `\n${failed} failed` : "\nall passed");

@@ -406,7 +406,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.16** ✅ | Organising the navigator (A22; GitHub #31, #32) |
 | **0.3.17** ✅ | Smaller screens (I8; GitHub #9) |
 | **0.3.18** ✅ | Embedded graphs (G9; GitHub #12): Copy Embedded, edit in Datum Plot from a document, Update |
-| 0.3.19 | Embedded graphs: fixes from the testers' trials in office suites |
+| **0.3.19** ✅ | Embedded graphs, first fix from testing: the window a document opens shows the graph and its Update bar (it showed Home) |
 | 0.3.20 | Wavelets and short-time spectra (B36) |
 | 0.3.21 | Graph digitizer and image tools (E8) |
 | 0.3.22 | Bayesian tests (B37) |

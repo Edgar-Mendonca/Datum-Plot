@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.19 — 2026-11-07
+
+Embedded graphs: the first fix from testing.
+
+- Double-clicking an embedded graph in a document opens Datum Plot **on that graph**, with the bar "Editing a graph embedded in …" and its **Update** button. In 0.3.18 the window could open on the Home page instead, hiding the graph and the bar.
+- The bar now stands out (teal, with a white Update button), and **Graph › Share › Update Document** does the same.
+
 ## 0.3.18 — 2026-11-07
 
 Embedded graphs: edit a pasted graph again in Datum Plot (Windows).

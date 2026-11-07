@@ -676,6 +676,7 @@ input.mono { font-family: var(--mono) !important; }
 }
 
 /* 0.3.18: the window editing a graph embedded in a document */
-.embedbar { display: flex; align-items: center; gap: 12px; padding: 5px 12px; background: var(--pale, var(--sel)); border-bottom: 1px solid var(--sel2); font-size: 12px; flex: none; }
-.embedbar span { color: var(--text2); }
+.embedbar { display: flex; align-items: center; gap: 12px; padding: 7px 14px; background: var(--blue); color: #fff; font-size: 12.5px; flex: none; }
+.embedbar span { color: #E3F5F2; }
+.embedbar .btn { background: #fff; color: var(--blue2); border-color: #fff; font-weight: 600; }
 .embedbar .grow { flex: 1; }
