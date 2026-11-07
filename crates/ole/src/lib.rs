@@ -24,7 +24,7 @@ pub struct Picture {
 }
 
 /// What the window does when a document asks for its embedded graph.
-pub trait Host {
+pub trait Host: Send + Sync {
     /// Show the graph (`data` is the project the document holds) for editing; `container` names the program.
     fn open(&self, data: Vec<u8>, container: String);
     /// The document closed the object (or no longer needs Datum Plot): close quietly.

@@ -42,8 +42,22 @@ const NAME: &str = "Datum Plot Graph";
 const DATA: PCWSTR = w!("DatumPlot");
 const PICTURE: PCWSTR = w!("DatumPlotPicture");
 
+/// The window that shows the graph: reachable from whichever thread the document's calls arrive on (0.3.19: it was
+/// per thread, so a document's DoVerb found no window and failed with "unknown error").
+static HOST: std::sync::Mutex<Option<Box<dyn Host>>> = std::sync::Mutex::new(None);
+fn host() -> std::sync::MutexGuard<'static, Option<Box<dyn Host>>> {
+    HOST.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+/// Which thread and apartment a call runs in (for the log).
+fn here() -> String {
+    let mut t = windows::Win32::System::Com::APTTYPE::default();
+    let mut q = windows::Win32::System::Com::APTTYPEQUALIFIER::default();
+    let apt = unsafe { windows::Win32::System::Com::CoGetApartmentType(&mut t, &mut q) }.map(|_| t.0).unwrap_or(-9);
+    format!("[thread {:?}, apartment {apt}]", std::thread::current().id())
+}
+
 thread_local! {
-    static HOST: RefCell<Option<Box<dyn Host>>> = const { RefCell::new(None) };
     static CURRENT: RefCell<Option<IOleObject>> = const { RefCell::new(None) };
     static COOKIE: RefCell<Option<u32>> = const { RefCell::new(None) };
 }
@@ -545,11 +559,9 @@ impl IOleObject_Impl for Graph_Impl {
             }
         }
         shut(self, self.to_interface());
-        HOST.with(|h| {
-            if let Some(h) = h.borrow().as_ref() {
-                h.close()
-            }
-        });
+        if let Some(h) = host().as_ref() {
+            h.close()
+        }
         Ok(())
     }
     fn SetMoniker(&self, _w: &OLEWHICHMK, _m: Ref<IMoniker>) -> windows::core::Result<()> {
@@ -565,7 +577,7 @@ impl IOleObject_Impl for Graph_Impl {
         hr(E_NOTIMPL)
     }
     fn DoVerb(&self, verb: i32, _msg: *const MSG, _site: Ref<IOleClientSite>, _l: i32, _p: HWND, _r: *const RECT) -> windows::core::Result<()> {
-        log(&format!("DoVerb {verb}"));
+        log(&format!("DoVerb {verb} {}", here()));
         if verb == -3 {
             return Ok(()); // hide: the window stays as the user left it
         }
@@ -582,7 +594,7 @@ impl IOleObject_Impl for Graph_Impl {
                 let _ = site.OnShowWindow(true);
             }
         }
-        HOST.with(|h| match h.borrow().as_ref() {
+        match host().as_ref() {
             Some(h) => {
                 h.open(data, container);
                 Ok(())
@@ -591,7 +603,7 @@ impl IOleObject_Impl for Graph_Impl {
                 log("DoVerb: no window to show the graph (not started for a document)");
                 hr(E_FAIL)
             }
-        })
+        }
     }
     fn EnumVerbs(&self) -> windows::core::Result<IEnumOLEVERB> {
         unsafe { OleRegEnumVerbs(&CLSID) }
@@ -669,7 +681,7 @@ impl IClassFactory_Impl for Factory_Impl {
                 *out = std::ptr::null_mut();
             }
         }
-        log("CreateInstance: a document asks for a graph");
+        log(&format!("CreateInstance: a document asks for a graph {}", here()));
         if !outer.is_null() {
             return hr(CLASS_E_NOAGGREGATION);
         }
@@ -700,7 +712,8 @@ pub fn copy_embedded(data: &[u8], pic: &Picture) -> Result<(), String> {
 /// Started for a document (`-Embedding`): offers "Datum Plot Graph" objects to it. Call on the window's thread
 /// after `OleInitialize`, before the message loop runs.
 pub fn serve(host: Box<dyn Host>) -> Result<(), String> {
-    HOST.with(|h| *h.borrow_mut() = Some(host));
+    *self::host() = Some(host);
+    log(&format!("Serve {}", here()));
     let f: IUnknown = Factory.into();
     let cookie = logged("Serve: CoRegisterClassObject", unsafe { CoRegisterClassObject(&CLSID, &f, CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE) }).map_err(text)?;
     COOKIE.with(|c| *c.borrow_mut() = Some(cookie));
@@ -717,7 +730,7 @@ pub fn update(data: Vec<u8>, pic: Picture) -> Result<(), String> {
         s.site.clone()
     };
     let dat = g.s.borrow().dat.clone();
-    log("Update");
+    log(&format!("Update {}", here()));
     unsafe {
         if let Some(site) = site {
             logged("Update: SaveObject", site.SaveObject()).map_err(text)?;
@@ -734,7 +747,7 @@ pub fn update(data: Vec<u8>, pic: Picture) -> Result<(), String> {
 
 /// The window closed: the document is told, and lets the object go.
 pub fn closed() {
-    log("Closed by the window");
+    log(&format!("Closed by the window {}", here()));
     if let Some(obj) = CURRENT.with(|c| c.borrow().clone()) {
         let g: &Graph = unsafe { AsImpl::<Graph>::as_impl(&obj) };
         let me: IUnknown = obj.cast().unwrap_or_else(|_| obj.clone().into());
