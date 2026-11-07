@@ -61,7 +61,8 @@ const G = (p: { l: string; h?: string; children: JSX.Element }) => {
     e.stopPropagation();
     if (unfolded() === el) return setUnfolded(null);
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect(), items = el.querySelector<HTMLElement>(".items")!;
-    items.style.left = `${Math.max(4, Math.min(r.left, innerWidth - 420))}px`; items.style.top = `${r.bottom + 2}px`;
+    // Below the whole group, so its name and ? stay visible above the commands.
+    items.style.left = `${Math.max(4, Math.min(r.left, innerWidth - 420))}px`; items.style.top = `${el.getBoundingClientRect().bottom + 1}px`;
     setUnfolded(el);
   };
   return <div class="grp" ref={el} classList={{ open: unfolded() === el }} onClick={e => { if (unfolded() === el && (e.target as HTMLElement).closest(".items button")) setTimeout(() => setUnfolded(null)); }}>
@@ -128,8 +129,13 @@ const fitRibbon = (el: HTMLElement) => {
       g.dataset.fit = "fold";
     }
   };
-  new ResizeObserver(fit).observe(el);
-  new MutationObserver(() => requestAnimationFrame(fit)).observe(el, { childList: true, subtree: false });
+  // Re-fit when the window resizes, the tab changes, or a group's own content grows later (the font list loads after
+  // the Data tab appears). One fit per 16 ms (a timer, not a frame: frames can pause); a fit ends with the same sizes, so it does not wake itself again.
+  let queued = false;
+  const later = () => { if (!queued) { queued = true; setTimeout(() => { queued = false; fit(); el.querySelectorAll<HTMLElement>(":scope > .grp").forEach(g => ro.observe(g)); }, 16); } };
+  const ro = new ResizeObserver(later);
+  ro.observe(el);
+  new MutationObserver(later).observe(el, { childList: true, subtree: false });
 };
 const gs = (): GraphSettings | undefined => graph()?.settings;
 const setGS = (f: (s: GraphSettings) => void) => { const g = graph(); if (!g) return toast("Open a graph first."); setG(g, s => { f(s); return s; }); };

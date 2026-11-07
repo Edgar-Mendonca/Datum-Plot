@@ -32,7 +32,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await new Promise(ok => srv.listen(0, ok));
   const url = `http://localhost:${srv.address().port}/`;
   const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const p = await b.newPage({ viewport: { width: 1920, height: 1000 } });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
   await p.addInitScript(([f, rd, ln]) => {
@@ -49,6 +49,17 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   const calls = (c) => p.evaluate(c => window.__calls.filter(x => x[0] === c).map(x => x[1]), c);
   const ops = async () => (await calls("apply")).map(a => a.op);
   const reset = () => p.evaluate(() => { window.__calls = []; });
+  // 0.3.17: a ribbon command may sit in a folded group (narrow windows, or wider fonts on the test machine): open the
+  // group first, as a user would.
+  const click0 = p.click.bind(p);
+  p.click = async (sel, o) => {
+    if (typeof sel === "string" && sel.startsWith(".ribbon ") && !sel.includes("gfold")) {
+      await p.waitForTimeout(60);  // the ribbon re-fits shortly after a tab change
+      const el = await p.$(sel);
+      if (el && !(await el.isVisible())) { await el.evaluate(e => { const g = e.closest(".grp"); if (g && !g.classList.contains("open")) g.querySelector(".gfold")?.click(); }); await p.waitForTimeout(150); }
+    }
+    return click0(sel, o);
+  };
   await p.goto(url);
   await p.waitForTimeout(700);
 
@@ -223,7 +234,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     }
   }
   check("ribbon tabs fit at 1280 and 1600 px", true);
-  await p.setViewportSize({ width: 1920, height: 1000 });
+  await p.setViewportSize({ width: 1440, height: 900 });
   await p.click('.tabs button:text-is("Tools")');
   check("every ribbon command is ready (none planned any more)", (await p.$$(".ribbon .rb.soonb")).length === 0);
   await reset();
@@ -680,7 +691,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.ribbon .grp[data-fit="fold"] .gfold >> nth=0'); await p.waitForTimeout(200);
   check("a folded group opens its commands with their names", await p.evaluate(() => { const i = document.querySelector('.ribbon .grp.open > .items'); return !!i && getComputedStyle(i).display !== "none" && i.textContent.trim().length > 5; }));
   await p.keyboard.press("Escape"); await p.mouse.click(5, 400); await p.waitForTimeout(100);
-  await p.setViewportSize({ width: 1920, height: 1000 }); await p.waitForTimeout(300);
+  await p.setViewportSize({ width: 1440, height: 900 }); await p.waitForTimeout(300);
   // 0.3.3: the window names file types, never other companies' products.
   const brands = new RegExp(BRANDS.source);
   let named = [];

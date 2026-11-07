@@ -381,6 +381,7 @@ input, select, textarea { background: var(--bg2); color: var(--text); }
 .ribbon .grp[data-fit="fold"].open > .items { display: flex; flex-wrap: wrap; position: fixed; z-index: 30; max-width: 420px; padding: 6px; gap: 4px; background: var(--panel); border: 1px solid var(--line3); box-shadow: 0 6px 22px rgba(12,26,43,.22); }
 .ribbon .grp[data-fit="fold"].open .gfold { background: var(--sel); border-color: var(--sel2); }
 .ribbon .grp[data-fit="fold"] > .cap { visibility: hidden; }
+.ribbon .grp[data-fit="fold"].open > .cap { visibility: visible; }
 .ribbon .grp .cap { overflow: hidden; text-overflow: ellipsis; }
 /* 0.3.6: updates card */
 .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
