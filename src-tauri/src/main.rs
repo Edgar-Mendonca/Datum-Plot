@@ -832,7 +832,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, embed::copy_embedded, embed::ole_update, embed::ole_close, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, embed::copy_embedded, embed::ole_update, embed::ole_close, embed::ole_check, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())

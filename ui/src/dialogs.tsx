@@ -122,6 +122,12 @@ export const shortcuts = () => openDialog(() => (
   </Dialog>
 ));
 
+/** 0.3.20: Help › Check Embedded Graphs: the shell starts Datum Plot as a document would, and reports each step. */
+export const checkEmbedded = async () => {
+  toast("Checking: a second Datum Plot opens for a moment…", true);
+  const r = await call<string>("ole_check");
+  if (r) openDialog(() => <Dialog title="Check Embedded Graphs" cancel="Close" extra={<button class="btn" onClick={() => invoke("copy_text", { text: r })}>Copy</button>}><p style={{ "white-space": "pre-wrap", "max-width": "560px" }}>{r}</p></Dialog>);
+};
 /** 0.3.18: closing the window that edits an embedded graph: update the document first, or close without. */
 export const confirmEmbeddedClose = () => openDialog(() => (
   <Dialog title={`Update ${out()?.embedded}?`} okText="Update and Close" cancel="Cancel" ok={async () => { const ok = (await call("ole_update")) !== undefined; if (ok) invoke("ole_close"); return ok; }}

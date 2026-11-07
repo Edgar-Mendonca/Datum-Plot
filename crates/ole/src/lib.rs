@@ -41,6 +41,9 @@ mod other {
     use super::{Host, Picture};
     const NO: &str = "Embedded graphs need Windows: documents on other systems show the picture only.";
     pub fn init() -> Result<(), String> { Ok(()) }
+    pub fn log_to(_path: std::path::PathBuf) {}
+    pub fn log(_msg: &str) {}
+    pub fn self_test() -> Result<String, String> { Err(NO.into()) }
     pub fn register(_exe: &std::path::Path) -> Result<(), String> { Ok(()) }
     pub fn unregister() {}
     pub fn copy_embedded(_data: &[u8], _pic: &Picture) -> Result<(), String> { Err(NO.into()) }

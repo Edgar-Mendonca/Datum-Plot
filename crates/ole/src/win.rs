@@ -48,6 +48,36 @@ thread_local! {
     static COOKIE: RefCell<Option<u32>> = const { RefCell::new(None) };
 }
 
+/// 0.3.20: every step is written to a log (embed.log in the app's data folder), so a failure inside a document
+/// can be traced. Lines carry the process id: the copy started by the document has its own.
+static LOG: std::sync::Mutex<Option<std::path::PathBuf>> = std::sync::Mutex::new(None);
+
+/// Where the log goes (the shell sets it at start).
+pub fn log_to(path: std::path::PathBuf) {
+    *LOG.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Some(path);
+}
+
+/// Appends one line to the log (kept under about 1 MB: an older half is dropped).
+pub fn log(msg: &str) {
+    let Some(path) = LOG.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clone() else { return };
+    if std::fs::metadata(&path).map(|m| m.len() > 1 << 20).unwrap_or(false) {
+        let _ = std::fs::rename(&path, path.with_extension("old.log"));
+    }
+    let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0);
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+        use std::io::Write;
+        let _ = writeln!(f, "{secs:.3} pid {} {msg}", std::process::id());
+    }
+}
+
+fn logged<T>(what: &str, r: windows::core::Result<T>) -> windows::core::Result<T> {
+    match &r {
+        Ok(_) => log(&format!("{what}: ok")),
+        Err(e) => log(&format!("{what}: FAILED {}", text(e.clone()))),
+    }
+    r
+}
+
 fn hr<T>(e: HRESULT) -> windows::core::Result<T> {
     Err(e.into())
 }
@@ -359,6 +389,7 @@ impl Graph_Impl {
 impl IDataObject_Impl for Graph_Impl {
     fn GetData(&self, f: *const FORMATETC) -> windows::core::Result<STGMEDIUM> {
         let f = unsafe { f.as_ref() }.ok_or(windows::core::Error::from(DV_E_FORMATETC))?;
+        log(&format!("GetData format {} medium {}", f.cfFormat, f.tymed));
         let (data, pic) = {
             let s = self.s.borrow();
             (s.data.clone(), s.pic.clone())
@@ -450,11 +481,13 @@ impl IPersistStorage_Impl for Graph_Impl {
         if self.s.borrow().dirty { S_OK } else { S_FALSE }
     }
     fn InitNew(&self, _stg: Ref<IStorage>) -> windows::core::Result<()> {
+        log("InitNew");
         Ok(())
     }
     fn Load(&self, stg: Ref<IStorage>) -> windows::core::Result<()> {
-        let stg = stg.ok()?;
-        let data = read_stream(stg, DATA)?;
+        let stg = logged("Load: the document's storage", stg.ok())?;
+        let data = logged("Load: the graph's project", read_stream(stg, DATA))?;
+        log(&format!("Load: {} bytes of project", data.len()));
         let pic = read_stream(stg, PICTURE).ok().and_then(|b| picture_from(&b)).unwrap_or_default();
         let mut s = self.s.borrow_mut();
         (s.data, s.pic, s.dirty) = (data, pic, false);
@@ -484,6 +517,7 @@ impl IPersistStorage_Impl for Graph_Impl {
 
 impl IOleObject_Impl for Graph_Impl {
     fn SetClientSite(&self, site: Ref<IOleClientSite>) -> windows::core::Result<()> {
+        log(&format!("SetClientSite ({})", if site.is_null() { "none" } else { "a site" }));
         self.s.borrow_mut().site = site.cloned();
         Ok(())
     }
@@ -494,9 +528,11 @@ impl IOleObject_Impl for Graph_Impl {
         if !app.is_null() {
             self.s.borrow_mut().container = unsafe { app.to_string() }.unwrap_or_default();
         }
+        log(&format!("SetHostNames: {}", self.s.borrow().container));
         Ok(())
     }
     fn Close(&self, how: &OLECLOSE) -> windows::core::Result<()> {
+        log(&format!("Close ({})", how.0));
         let (dirty, site) = {
             let s = self.s.borrow();
             (s.dirty, s.site.clone())
@@ -529,6 +565,7 @@ impl IOleObject_Impl for Graph_Impl {
         hr(E_NOTIMPL)
     }
     fn DoVerb(&self, verb: i32, _msg: *const MSG, _site: Ref<IOleClientSite>, _l: i32, _p: HWND, _r: *const RECT) -> windows::core::Result<()> {
+        log(&format!("DoVerb {verb}"));
         if verb == -3 {
             return Ok(()); // hide: the window stays as the user left it
         }
@@ -550,7 +587,10 @@ impl IOleObject_Impl for Graph_Impl {
                 h.open(data, container);
                 Ok(())
             }
-            None => hr(E_FAIL),
+            None => {
+                log("DoVerb: no window to show the graph (not started for a document)");
+                hr(E_FAIL)
+            }
         })
     }
     fn EnumVerbs(&self) -> windows::core::Result<IEnumOLEVERB> {
@@ -629,6 +669,7 @@ impl IClassFactory_Impl for Factory_Impl {
                 *out = std::ptr::null_mut();
             }
         }
+        log("CreateInstance: a document asks for a graph");
         if !outer.is_null() {
             return hr(CLASS_E_NOAGGREGATION);
         }
@@ -643,7 +684,7 @@ impl IClassFactory_Impl for Factory_Impl {
 
 /// Prepares the window's thread for OLE (call once, on that thread, before the message loop runs).
 pub fn init() -> Result<(), String> {
-    unsafe { windows::Win32::System::Ole::OleInitialize(None) }.map_err(text)
+    logged("OleInitialize", unsafe { windows::Win32::System::Ole::OleInitialize(None) }).map_err(text)
 }
 
 /// Puts the graph on the clipboard as an embeddable object (with pictures for programs that take only pictures).
@@ -651,8 +692,8 @@ pub fn init() -> Result<(), String> {
 pub fn copy_embedded(data: &[u8], pic: &Picture) -> Result<(), String> {
     let g: IDataObject = Graph { s: RefCell::new(State { data: data.to_vec(), pic: pic.clone(), ..Default::default() }) }.into();
     unsafe {
-        OleSetClipboard(&g).map_err(text)?;
-        OleFlushClipboard().map_err(text) // the clipboard keeps its own copy, even after Datum Plot closes
+        logged("Copy Embedded: clipboard", OleSetClipboard(&g)).map_err(text)?;
+        logged("Copy Embedded: flush", OleFlushClipboard()).map_err(text) // the clipboard keeps its own copy, even after Datum Plot closes
     }
 }
 
@@ -661,7 +702,7 @@ pub fn copy_embedded(data: &[u8], pic: &Picture) -> Result<(), String> {
 pub fn serve(host: Box<dyn Host>) -> Result<(), String> {
     HOST.with(|h| *h.borrow_mut() = Some(host));
     let f: IUnknown = Factory.into();
-    let cookie = unsafe { CoRegisterClassObject(&CLSID, &f, CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE) }.map_err(text)?;
+    let cookie = logged("Serve: CoRegisterClassObject", unsafe { CoRegisterClassObject(&CLSID, &f, CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE) }).map_err(text)?;
     COOKIE.with(|c| *c.borrow_mut() = Some(cookie));
     Ok(())
 }
@@ -676,9 +717,12 @@ pub fn update(data: Vec<u8>, pic: Picture) -> Result<(), String> {
         s.site.clone()
     };
     let dat = g.s.borrow().dat.clone();
+    log("Update");
     unsafe {
         if let Some(site) = site {
-            site.SaveObject().map_err(text)?;
+            logged("Update: SaveObject", site.SaveObject()).map_err(text)?;
+        } else {
+            log("Update: no client site");
         }
         if let Some(h) = dat {
             let me: IDataObject = obj.cast().map_err(text)?;
@@ -690,11 +734,43 @@ pub fn update(data: Vec<u8>, pic: Picture) -> Result<(), String> {
 
 /// The window closed: the document is told, and lets the object go.
 pub fn closed() {
+    log("Closed by the window");
     if let Some(obj) = CURRENT.with(|c| c.borrow().clone()) {
         let g: &Graph = unsafe { AsImpl::<Graph>::as_impl(&obj) };
         let me: IUnknown = obj.cast().unwrap_or_else(|_| obj.clone().into());
         shut(g, me);
     }
+}
+
+/// Help › Check Embedded Graphs: starts Datum Plot for a "document" exactly as a document does (through Windows,
+/// a second copy with `-Embedding`), hands it a graph, shows it, and closes it. Returns what happened, step by step.
+pub fn self_test() -> Result<String, String> {
+    std::thread::spawn(|| unsafe {
+        use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, COINIT_APARTMENTTHREADED};
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        let t0 = std::time::Instant::now();
+        log("Check: starting Datum Plot for a document");
+        let obj: IOleObject = CoCreateInstance(&CLSID, None, CLSCTX_LOCAL_SERVER)
+            .map_err(|e| format!("Windows could not start Datum Plot for a document: {}", text(e)))?;
+        let started = t0.elapsed().as_secs_f64();
+        let pic = Picture { rgba: vec![255; 16 * 12 * 4], width: 16, height: 12, mm: (80.0, 60.0), png: vec![] };
+        let src: IPersistStorage = Graph { s: RefCell::new(State { data: br#"{"name":"Check"}"#.to_vec(), pic, ..Default::default() }) }.into();
+        let lb = CreateILockBytesOnHGlobal(None, true).map_err(text)?;
+        let stg = StgCreateDocfileOnILockBytes(&lb, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0).map_err(text)?;
+        src.Save(&stg, true).map_err(text)?;
+        let ps: IPersistStorage = obj.cast().map_err(text)?;
+        ps.Load(&stg).map_err(|e| format!("Datum Plot started ({started:.1} s) but could not read the graph: {}", text(e)))?;
+        let size = obj.GetExtent(DVASPECT_CONTENT).map_err(text)?;
+        obj.SetHostNames(w!("the check"), w!("graph")).map_err(text)?;
+        obj.DoVerb(0, std::ptr::null(), None, 0, HWND::default(), std::ptr::null())
+            .map_err(|e| format!("Datum Plot started and read the graph, but could not show it: {}", text(e)))?;
+        std::thread::sleep(std::time::Duration::from_millis(1500));
+        let _ = obj.Close(OLECLOSE_NOSAVE);
+        log("Check: passed");
+        Ok(format!("Datum Plot started for a document in {started:.1} s, read its graph ({} × {} mm), showed it and closed.", size.cx / 100, size.cy / 100))
+    })
+    .join()
+    .unwrap_or_else(|_| Err("The check stopped unexpectedly.".into()))
 }
 
 #[cfg(test)]

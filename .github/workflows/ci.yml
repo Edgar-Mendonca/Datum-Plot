@@ -64,6 +64,26 @@ jobs:
       - run: python -m pip install -r py/requirements.txt
       - run: python -m unittest discover -s py/tests
 
+  # 0.3.20: the built app started by Windows for a document, as a double-click in a document does.
+  embedded:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build:ui
+      - run: cargo build -p datum-plot
+      - run: cargo test -p datum-ole -- --ignored --nocapture
+        env:
+          DATUM_PLOT_EXE: ${{ github.workspace }}\target\debug\datum-plot.exe
+      - if: always()
+        shell: pwsh
+        run: Get-ChildItem -Recurse "$env:APPDATA","$env:LOCALAPPDATA" -Filter embed.log -ErrorAction SilentlyContinue | ForEach-Object { "== $($_.FullName)"; Get-Content $_.FullName }
+
   deny:
     runs-on: ubuntu-latest
     steps:

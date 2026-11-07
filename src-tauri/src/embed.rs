@@ -72,6 +72,17 @@ pub fn ole_close(app: AppHandle) {
     app.exit(0);
 }
 
+/// Help › Check Embedded Graphs: starts Datum Plot for a "document" the way a document does, and says what happened.
+#[tauri::command]
+pub async fn ole_check(app: AppHandle) -> R<String> {
+    let log = app.path().app_data_dir().map(|d| d.join("embed.log").display().to_string()).unwrap_or_default();
+    let r = tauri::async_runtime::spawn_blocking(datum_ole::self_test).await.map_err(|e| e.to_string())?;
+    Ok(match r {
+        Ok(m) => format!("✓ {m}\n\nThe steps are written to {log}"),
+        Err(e) => format!("✗ {e}\n\nThe steps are written to {log}: please send that file."),
+    })
+}
+
 /// What a document asks of this Datum Plot (started with `-Embedding`).
 struct Host(AppHandle);
 
@@ -94,22 +105,38 @@ impl datum_ole::Host for Host {
         if let Some(w) = self.0.get_webview_window("main") {
             let _ = w.show();
             let _ = w.unminimize();
+            // In front of the document that asked (Windows lets a started program take the focus only briefly).
+            let _ = w.set_always_on_top(true);
             let _ = w.set_focus();
+            let _ = w.set_always_on_top(false);
         }
+        datum_ole::log("Showing the graph");
     }
     fn close(&self) {
-        self.0.exit(0);
+        // Let the document's call return first, then end this Datum Plot.
+        let app = self.0.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            app.exit(0);
+        });
     }
 }
 
 /// At start: OLE on the window's thread, "Datum Plot Graph" registered for this user, and when a document
 /// started us, the object offered to it (the window stays hidden until the document asks to show the graph).
 pub fn start(app: &tauri::App) {
+    if let Ok(dir) = app.path().app_data_dir() {
+        let _ = std::fs::create_dir_all(&dir);
+        datum_ole::log_to(dir.join("embed.log"));
+    }
+    datum_ole::log(&format!("Start {} {:?} (version {})", std::env::current_exe().map(|p| p.display().to_string()).unwrap_or_default(), std::env::args().skip(1).collect::<Vec<_>>(), env!("CARGO_PKG_VERSION")));
     if let Err(e) = datum_ole::init() {
         eprintln!("OLE: {e}");
     }
     if let Ok(exe) = std::env::current_exe() {
-        let _ = datum_ole::register(&exe);
+        if let Err(e) = datum_ole::register(&exe) {
+            datum_ole::log(&e);
+        }
     }
     if datum_ole::embedding_launch() {
         if let Some(w) = app.get_webview_window("main") {

@@ -110,3 +110,19 @@ fn copy_embedded_offers_the_object_first() {
     };
     assert_eq!(first, cf(w!("Embed Source")));
 }
+
+/// The real thing on Windows CI: the built Datum Plot (DATUM_PLOT_EXE) is started by Windows for a "document" and
+/// hands back its graph, as a word processor's double-click does. Run with `--ignored` after building the app.
+#[test]
+#[ignore]
+fn the_built_app_starts_for_a_document() {
+    let exe = std::env::var("DATUM_PLOT_EXE").expect("DATUM_PLOT_EXE: the built datum-plot.exe");
+    let log = std::env::temp_dir().join("datum-ole-check.log");
+    let _ = std::fs::remove_file(&log);
+    log_to(log.clone());
+    register(std::path::Path::new(&exe)).unwrap();
+    let r = self_test();
+    println!("{}", std::fs::read_to_string(&log).unwrap_or_default());
+    unregister();
+    r.unwrap();
+}
