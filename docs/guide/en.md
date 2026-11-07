@@ -50,7 +50,7 @@ Beside them are **Open**, **Import data**, the **Guide** (this guide, in English
 ![The Datum Plot window with a graph open.](img/window.png)
 
 1. **Tabs.** **File** opens the File page. **Data**, **Analyze**, **Graph**, **Layout**, **Tools**, **View** and **Help** each show their own ribbon.
-2. **Ribbon.** The tools of the current tab, in named groups. When the window is narrow, groups fold into smaller buttons.
+2. **Ribbon.** The tools of the current tab, in named groups. When the window is narrow (a laptop screen), groups fold from the right into one button each with the group's name, such as **Style ▾**: click it for its commands. On short screens the File page lists its commands in a compact column.
 3. **Sidebar.** Jumps between the project's **Info** sheet, **Data**, **Results**, **Graphs** and **Layouts**.
 4. **Navigator.** Every data table, result, graph and layout in the project, with small pictures of the graphs. Right-click an item to rename, duplicate or delete it.
 5. **The open item.** Here a graph; it can also be a data table, a results sheet or a page layout.

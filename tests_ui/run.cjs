@@ -32,7 +32,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await new Promise(ok => srv.listen(0, ok));
   const url = `http://localhost:${srv.address().port}/`;
   const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const p = await b.newPage({ viewport: { width: 1920, height: 1000 } });
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
   await p.addInitScript(([f, rd, ln]) => {
@@ -223,7 +223,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     }
   }
   check("ribbon tabs fit at 1280 and 1600 px", true);
-  await p.setViewportSize({ width: 1440, height: 900 });
+  await p.setViewportSize({ width: 1920, height: 1000 });
   await p.click('.tabs button:text-is("Tools")');
   check("every ribbon command is ready (none planned any more)", (await p.$$(".ribbon .rb.soonb")).length === 0);
   await reset();
@@ -672,6 +672,15 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.fill(".dlg input", "Renamed by Enter"); await p.keyboard.press("Enter"); await p.waitForTimeout(250);
   const rn = (await ops()).find(o => o.TableSet);
   check("Enter in a rename box saves the new name and closes the window", rn && rn.TableSet.value === "Renamed by Enter" && (await p.$$(".dlg")).length === 0, JSON.stringify(rn));
+  // 0.3.17 (#9): on a laptop-sized window, groups fold into labelled buttons that open their commands.
+  await p.setViewportSize({ width: 1092, height: 589 }); await p.waitForTimeout(300);
+  await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(300);
+  const folded = await p.$$eval('.ribbon .grp[data-fit="fold"] .gfold', bs => bs.map(b => b.textContent.trim()));
+  check("a narrow window folds ribbon groups into named buttons, and nothing spills over", folded.length > 0 && folded.every(t => t.length > 2) && await p.evaluate(() => { const r = document.querySelector(".ribbon"); return r.scrollWidth <= r.clientWidth + 1; }), JSON.stringify(folded));
+  await p.click('.ribbon .grp[data-fit="fold"] .gfold >> nth=0'); await p.waitForTimeout(200);
+  check("a folded group opens its commands with their names", await p.evaluate(() => { const i = document.querySelector('.ribbon .grp.open > .items'); return !!i && getComputedStyle(i).display !== "none" && i.textContent.trim().length > 5; }));
+  await p.keyboard.press("Escape"); await p.mouse.click(5, 400); await p.waitForTimeout(100);
+  await p.setViewportSize({ width: 1920, height: 1000 }); await p.waitForTimeout(300);
   // 0.3.3: the window names file types, never other companies' products.
   const brands = new RegExp(BRANDS.source);
   let named = [];

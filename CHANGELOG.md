@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.17 — 2026-11-07
+
+Smaller screens.
+
+**Ribbon**
+- On a narrow window (a laptop screen), ribbon groups fold from the right into one button each that keeps the group's name, such as **Style ▾**. Click it and the group's commands open below it, with their names. No more rows of icons without names.
+
+**File page and Home**
+- On short screens the File page lists its commands in a compact column that scrolls, so **Roadmap**, **Options** and **Updates** stay reachable.
+- On narrow windows the Home page puts the update card below the tiles.
+- Format Graph takes less room beside the graph on narrow windows.
+
 ## 0.3.16 — 2026-11-07
 
 Organising the navigator.

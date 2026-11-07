@@ -47,19 +47,18 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.17",
-      "title": "Small screens",
+      "v": "0.3.18",
+      "title": "Wavelets",
       "when": "Next",
       "items": [
-        "A ribbon that fits laptop screens"
+        "Wavelet transforms and short-time spectra"
       ]
     },
     {
-      "v": "0.3.18–0.3.19",
-      "title": "Signals and images",
+      "v": "0.3.19",
+      "title": "Images",
       "when": "Soon",
       "items": [
-        "Wavelet transforms and short-time spectra",
         "Graph digitizer and image tools"
       ]
     },

@@ -50,7 +50,7 @@ Datum Plot recherche une nouvelle version à chaque démarrage. Lorsqu’une ver
 ![La fenêtre de Datum Plot avec un graphique ouvert.](img/window.png)
 
 1. **Onglets.** **File** (Fichier) ouvre la page Fichier. **Data** (Données), **Analyze** (Analyser), **Graph** (Graphique), **Layout** (Mise en page), **Tools** (Outils), **View** (Affichage) et **Help** (Aide) affichent chacun leur propre ruban.
-2. **Ruban.** Les outils de l’onglet actif, rangés en groupes nommés. Quand la fenêtre est étroite, les groupes se replient en boutons plus petits.
+2. **Ruban.** Les outils de l’onglet actif, rangés en groupes nommés. Quand la fenêtre est étroite (un écran de portable), les groupes se replient depuis la droite en un bouton portant leur nom, par exemple **Style ▾** : cliquez dessus pour ses commandes. Sur un écran peu haut, la page Fichier présente ses commandes en une colonne compacte.
 3. **Barre latérale.** Permet de passer de la feuille **Info** (Informations) du projet aux **Data** (Données), **Results** (Résultats), **Graphs** (Graphiques) et **Layouts** (Mises en page).
 4. **Navigator** (Navigateur). Tous les tableaux de données, résultats, graphiques et mises en page du projet, avec des miniatures des graphiques. Faites un clic droit sur un élément pour le renommer, le dupliquer ou le supprimer.
 5. **L’élément ouvert.** Ici un graphique ; ce peut aussi être un tableau de données, une feuille de résultats ou une mise en page.

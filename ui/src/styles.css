@@ -372,9 +372,15 @@ input, select, textarea { background: var(--bg2); color: var(--text); }
 
 /* Ribbon fitting: 1 = tighter, 2 = small buttons show icons only, 3 = big buttons too */
 .ribbon[data-fit="1"] .grp { padding: 0 2px; }
-.ribbon .grp[data-fit] .stack .rb span { display: none; }
-.ribbon .grp[data-fit="3"] .rb.big span, .ribbon .grp[data-fit="3"] .splitbig .bot span { font-size: 0; }
-.ribbon .grp[data-fit="3"] .rb.big, .ribbon .grp[data-fit="3"] .splitbig .rb { min-width: 40px; max-width: 48px; }
+/* 0.3.17 (#9): a folded group is one labelled button; its commands open below it with their names. */
+.grp .gfold { display: none; }
+.ribbon .grp[data-fit="fold"] .gfold { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px 8px; min-width: 54px; border: 1px solid transparent; border-radius: 3px; line-height: 1.15; white-space: nowrap; }
+.ribbon .grp[data-fit="fold"] .gfold:hover { background: var(--pale); border-color: var(--sel2); }
+.ribbon .grp[data-fit="fold"] .gfold svg { width: 26px; height: 26px; }
+.ribbon .grp[data-fit="fold"] > .items { display: none; }
+.ribbon .grp[data-fit="fold"].open > .items { display: flex; flex-wrap: wrap; position: fixed; z-index: 30; max-width: 420px; padding: 6px; gap: 4px; background: var(--panel); border: 1px solid var(--line3); box-shadow: 0 6px 22px rgba(12,26,43,.22); }
+.ribbon .grp[data-fit="fold"].open .gfold { background: var(--sel); border-color: var(--sel2); }
+.ribbon .grp[data-fit="fold"] > .cap { visibility: hidden; }
 .ribbon .grp .cap { overflow: hidden; text-overflow: ellipsis; }
 /* 0.3.6: updates card */
 .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
@@ -653,3 +659,17 @@ input.mono { font-family: var(--mono) !important; }
 .guidecard .ic { grid-row: span 2; width: 36px; height: 36px; color: var(--navy); }
 .guidecard b { font-size: 16px; }
 .guidecard span { color: var(--muted); font-size: 12px; }
+
+/* 0.3.17 (#9): short and narrow screens. The File sidebar scrolls and its buttons lie flat; Home's update card goes
+   below the tiles; Format Graph docks narrower. */
+.bs aside { overflow-y: auto; }
+@media (max-height: 800px) {
+  .bs aside button { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 7px 16px; }
+  .bs aside button svg { width: 18px; height: 18px; }
+  .bs aside .back { padding: 6px 0 8px; justify-content: center; }
+}
+@media (max-width: 1180px) {
+  .home { grid-template-columns: minmax(0, 1fr); }
+  .bsmain { padding: 18px 20px; }
+  .ov.dock .dlg { min-width: 420px; }
+}
