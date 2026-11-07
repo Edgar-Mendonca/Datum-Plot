@@ -14,3 +14,11 @@
   DeleteRegKey SHCTX "Software\Edgar Mendonca\Datum Plot"
   DeleteRegKey /ifempty SHCTX "Software\Edgar Mendonca"
 !macroend
+
+; 0.3.18: Datum Plot registers "Datum Plot Graph" (embedded graphs) for the user at every start; the uninstaller
+; removes it, so documents no longer try to start a Datum Plot that is gone (they keep showing the picture).
+!macro NSIS_HOOK_POSTUNINSTALL
+  DeleteRegKey HKCU "Software\Classes\CLSID\{5F0C2B7E-8A1D-4C3E-9B6A-0D17A7E2C341}"
+  DeleteRegKey HKCU "Software\Classes\DatumPlot.Graph.1"
+  DeleteRegKey HKCU "Software\Classes\DatumPlot.Graph"
+!macroend

@@ -34,7 +34,7 @@
     "Quality: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars (mean or median), axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
-    "Page layouts at journal sizes, posters and slides; export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
+    "Page layouts at journal sizes, posters and slides; graphs pasted into documents, slides and workbooks that open again in Datum Plot with a double-click (Windows); export as PNG or TIFF (with CMYK), SVG, PDF or EPS, every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods).",
     "Interactive graphs: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.",
     "A Python console inside the app, with your tables as pandas DataFrames and a built-in guide; your own saved analyses, analysis templates, batch processing and notebook export.",
     "Safe and sturdy: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.",
@@ -47,23 +47,24 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.18",
-      "title": "Wavelets",
+      "v": "0.3.19",
+      "title": "Embedded graphs",
       "when": "Next",
       "items": [
-        "Wavelet transforms and short-time spectra"
-      ]
-    },
-    {
-      "v": "0.3.19",
-      "title": "Images",
-      "when": "Soon",
-      "items": [
-        "Graph digitizer and image tools"
+        "Fixes from trials in office suites"
       ]
     },
     {
       "v": "0.3.20–0.3.21",
+      "title": "Signals and images",
+      "when": "Soon",
+      "items": [
+        "Wavelet transforms and short-time spectra",
+        "Graph digitizer and image tools"
+      ]
+    },
+    {
+      "v": "0.3.22–0.3.23",
       "title": "Bayes, Mac and Linux",
       "when": "Later",
       "items": [

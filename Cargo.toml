@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/core", "src-tauri"]
+members = ["crates/core", "crates/ole", "src-tauri"]
 
 [workspace.dependencies]
 chrono = { version = "0.4", default-features = false, features = ["serde", "clock", "std"] }

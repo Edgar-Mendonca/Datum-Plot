@@ -124,7 +124,7 @@ export const GraphView = (p: { g: Graph }) => {
       ...(q ? [...(t?.kind === "xy" || t?.kind === "multi" ? [{ label: `Exclude ${name} at X = ${num(q[1])}`, icon: "exclude", run: () => excludePoint(q) }] : []), { label: `Format ${name}…`, icon: "symbol", run: () => formatGraph(p.g, "sets") }, "-" as const] : []),
       { label: "Format Graph…", icon: "style", run: () => formatGraph(p.g, "sets") }, { label: "Format Axes…", icon: "axis", run: () => formatGraph(p.g, axisAt(px, py) ?? "x") },
       { label: "Axis Break (Gap)…", icon: "axis", run: () => formatGraph(p.g, "y") }, { label: "Statistics of a Region…", icon: "sigma", run: () => zoomTool("region") }, { label: "Zoom to a Box", icon: "zin", run: () => zoomTool("zoom") }, { label: "Zoom Out", icon: "zout", run: () => zoomOut(p.g) }, { label: "Reset Axes", icon: "fit", run: () => resetAxes(p.g) }, "-",
-      { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
+      { label: "Copy Picture", icon: "copy", keys: "Ctrl+C", run: () => copyGraph(p.g.id) }, { label: "Copy Embedded", icon: "copy", run: () => copyEmbedded(p.g.id) }, { label: "Export…", icon: "export", run: () => exportGraph(p.g) }, "-",
       { label: "Go to Data Table", icon: "sheet", run: () => open("data", p.g.table) },
     ]);
   };
@@ -228,6 +228,12 @@ export const resetAxes = (g: Graph) => setG(g, s => ({ ...s, x: { ...s.x, auto: 
 
 /** Copies the graph to the Windows clipboard as a picture (through Rust; WebView2 blocks the
  *  browser clipboard), for documents and slides. */
+/** 0.3.18: Copy Embedded. Pasted into a document, slides or a workbook (Windows), the graph opens again in Datum Plot
+ *  when double-clicked there; elsewhere it pastes as a picture. */
+export const copyEmbedded = async (id: number) => {
+  try { await invoke("copy_embedded", { id }); toast("Graph copied for embedding. Paste it into a document, slides or a workbook; double-click it there to edit it in Datum Plot.", true); }
+  catch (e) { toast(`Could not copy the graph: ${e}`); }
+};
 export const copyGraph = async (id: number) => {
   try { await invoke("copy_graph", { id, dpi: Math.min(600, opts().dpi) }); toast("Graph copied as a picture. Paste it into a document, slides or an email.", true); }
   catch (e) { toast(`Could not copy the picture: ${e}`); }

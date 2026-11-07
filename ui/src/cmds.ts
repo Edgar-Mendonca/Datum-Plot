@@ -4,7 +4,7 @@ import { Out } from "./api";
 import { FEATURES, ready } from "./features";
 import { soon } from "./roadmap";
 import { addSet, setDialog, removeSets, formulaDialog } from "./datatable";
-import { copyGraph, exportGraph, newGraph, setZoomG } from "./graph";
+import { copyGraph, copyEmbedded, exportGraph, newGraph, setZoomG } from "./graph";
 import { formatGraph } from "./format";
 import * as D from "./dialogs";
 import { analyze, importFile, newTable, graphTypes, runAnalysis } from "./roadmap";
@@ -12,7 +12,7 @@ import * as T from "./tools";
 
 const need = <T,>(v: T | undefined, what: string) => { if (!v) toast(`Open ${what} first.`); return v; };
 export const C = {
-  save: async (asNew = false) => { const o = await call<Out | null>("save", { asNew }); if (o) { setOut(o); toast(`Saved ${o.path}`, true); } },
+  save: async (asNew = false) => { if (out()?.embedded && !asNew) return C.updateDocument(); const o = await call<Out | null>("save", { asNew }); if (o) { setOut(o); toast(`Saved ${o.path}`, true); } },
   open: () => loadOut("open", { path: null }),
   undo: async () => setOut(await call<Out>("history", { redo: false })),
   redo: async () => setOut(await call<Out>("history", { redo: true })),
@@ -26,6 +26,9 @@ export const C = {
   format: (page = "sets") => { const g = need(graph(), "a graph"); if (g) formatGraph(g, page); },
   exportG: (fmt = "png") => { const g = need(graph(), "a graph"); if (g) exportGraph(g, fmt); },
   copyG: () => { const g = need(graph(), "a graph"); if (g) copyGraph(g.id); },
+  /** 0.3.18: a graph a document, slides or a workbook can open again in Datum Plot (double-click it there). */
+  copyEmbedded: () => { const g = need(graph(), "a graph"); if (g) copyEmbedded(g.id); },
+  updateDocument: async () => { if ((await call("ole_update")) !== undefined) toast(`Updated in ${out()?.embedded ?? "the document"}.`, true); },
   zoom: (f: number) => setZoomG(z => Math.min(4, Math.max(0.5, f ? z * f : 1.5))),
   rename: () => {
     const it = item(), cur = it.s === "data" ? table() : it.s === "results" ? analysis() : it.s === "layouts" ? layout() : graph();

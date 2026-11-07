@@ -173,7 +173,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 1. **Graph** (Graphique). **New Graph** (Nouveau graphique), **Graph Type** (Type de graphique : nuage de points, barres, boîte à moustaches, violon, avant–après, courbes et d’autres) et **Data Table** (Tableau de données, pour revenir aux données).
 2. **Axes** (Axes). Axes logarithmiques, axes encadrés, **Format Axes** (Mettre en forme les axes) et **Axis Break** (Coupure d’axe).
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
-4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives) et **Print** (Imprimer).
+4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives), **Copy Embedded** (Copier en objet incorporé : un graphique que le document peut rouvrir dans Datum Plot) et **Print** (Imprimer).
 
 Les autres groupes règlent les **Error Bars** (Barres d’erreur : la moyenne avec SD, SEM, IC à 95 % ou étendue, ou la médiane avec l’écart interquartile, l’étendue ou un IC à 95 %), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
 
@@ -241,6 +241,14 @@ Autres façons de partager, dans **Tools** (Outils) :
 - **Document** : les informations du projet, chaque graphique avec sa légende, chaque résultat et le texte des méthodes (.docx ou .odt).
 
 Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .ods, .odt et .odp sont au format OpenDocument, la norme ouverte.
+
+### Des graphiques modifiables depuis un document
+
+**Graph › Copy Embedded** (Graphique › Copier en objet incorporé, ou clic droit sur un graphique) copie le graphique avec ses données. Collez-le dans un document, des diapositives ou un classeur sous Windows : il ressemble à l’image, et **un double-clic dessus l’ouvre dans Datum Plot**. Modifiez les données, les couleurs ou les axes, puis cliquez sur **Update** (Mettre à jour) dans la barre du haut (ou fermez la fenêtre et choisissez **Update and Close**, Mettre à jour et fermer) : le graphique du document change. Les données voyagent dans le document, si bien qu’un collègue équipé de Datum Plot peut aussi l’ouvrir.
+
+- **Copy Picture** (Copier l’image) reste le choix simple : une image sans lien avec Datum Plot.
+- Sur Mac ou dans un navigateur, le graphique incorporé s’affiche comme une image et ne peut pas être ouvert.
+- Le document montre le premier graphique de la fenêtre.
 
 ### Impression
 

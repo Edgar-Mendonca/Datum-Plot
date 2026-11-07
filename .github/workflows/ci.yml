@@ -53,6 +53,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test -p datum-core --release
+      # 0.3.18: embedded graphs (OLE) are Windows code: lint and test them where they run.
+      - if: runner.os == 'Windows'
+        run: cargo clippy -p datum-ole --all-targets -- -D warnings
+      - if: runner.os == 'Windows'
+        run: cargo test -p datum-ole
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"

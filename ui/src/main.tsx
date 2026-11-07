@@ -10,7 +10,7 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "./styles.css";
 import { invoke, listen, Out, Options } from "./api";
-import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, item, table, graph, engine, setEngine, P } from "./store";
+import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, item, table, graph, engine, setEngine, P, open as openView } from "./store";
 import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
 import { DataTable } from "./datatable";
@@ -61,7 +61,10 @@ const App = () => {
       // Once, on the first start: point new users to the guide.
       try { if (!localStorage.getItem("guide-hint")) { localStorage.setItem("guide-hint", "1"); setTimeout(() => toast("New to Datum Plot? Help › Guide has a step-by-step guide (PDF) in English, 中文 and Français."), 1500); } } catch { /* no storage: no hint */ }
       setInterval(() => { if (opts().autosave > 0) invoke("autosave").catch(() => {}); }, Math.max(1, opts().autosave) * 60000);
-      listen("close-requested", () => D.confirmClose(() => invoke("quit")));
+      listen("close-requested", () => (out()?.embedded ? D.confirmEmbeddedClose() : D.confirmClose(() => invoke("quit"))));
+      // 0.3.18: a document asked this Datum Plot to show its embedded graph.
+      listen("ole-open", (o: Out) => { setOut(o); setBackstage(null); const g = o.project.graphs[0]; openView(g ? "graphs" : "data", g?.id ?? 0); });
+      listen("ole-error", (m: string) => toast(m));
     } catch (e) { toast(String(e)); }
   });
   const keys = (e: KeyboardEvent) => {
@@ -81,6 +84,7 @@ const App = () => {
     <div class="app" ref={() => document.addEventListener("keydown", keys)}>
       <TitleBar update={update()?.available ? update()!.latest : null} />
       <Ribbon />
+      <Show when={out()?.embedded}>{c => <div class="embedbar"><b>Editing a graph embedded in {c()}.</b><span>Changes reach the document when you update it or close this window.</span><span class="grow" /><button class="btn sm pri" onClick={C.updateDocument}>Update {c()}</button></div>}</Show>
       <main class="work">
         <Side />
         <Show when={out()}><Navigator /></Show>

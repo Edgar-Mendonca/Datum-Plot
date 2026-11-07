@@ -482,3 +482,16 @@ fn significance_goes_on_one_graph_and_duplicates_bring_the_family() {
     let last = d.p.tables.last().unwrap().id;
     assert!(!d.p.graphs.iter().any(|g| g.table == last) && !d.p.analyses.iter().any(|a| a.table == last), "the table alone");
 }
+
+#[test]
+fn an_embedded_graph_keeps_its_table_and_drawn_analyses() {
+    let p = templates::build(Some("modulus")).unwrap();
+    let g = &p.graphs[0];
+    let e = p.graph_only(g.id).unwrap();
+    assert_eq!((e.tables.len(), e.graphs.len(), e.graphs[0].id, e.tables[0].id), (1, 1, g.id, g.table));
+    assert_eq!(e.analyses.len(), g.settings.overlays.len());
+    assert!(e.analyses.iter().all(|a| a.table == g.table));
+    let back = Project::from_json(&serde_json::to_string(&e).unwrap()).unwrap();
+    assert_eq!(back.graphs[0].settings, g.settings, "the document's copy opens as it was");
+    assert!(p.graph_only(999_999).is_none());
+}

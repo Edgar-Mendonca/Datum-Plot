@@ -1,6 +1,7 @@
 //! Datum Plot desktop shell: owns the open project, files, options and recovery, talks to the
 //! window, and passes graphs to the Python engine.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod embed;
 mod py;
 mod runtime;
 mod update;
@@ -77,6 +78,8 @@ struct App {
     doc: Doc,
     opts: Options,
     rev: u64,
+    /// 0.3.18: the program whose embedded graph this window edits (started with `-Embedding`).
+    embedded: Option<String>,
 }
 
 struct St(Mutex<App>);
@@ -91,11 +94,12 @@ struct Out<'a> {
     undo: bool,
     redo: bool,
     rev: u64,
+    embedded: Option<&'a str>,
 }
 
 fn out(a: &App) -> Value {
     let d = &a.doc;
-    serde_json::to_value(Out { project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev }).unwrap_or_default()
+    serde_json::to_value(Out { project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev, embedded: a.embedded.as_deref() }).unwrap_or_default()
 }
 
 fn dir(app: &AppHandle, data: bool) -> Option<PathBuf> {
@@ -659,7 +663,8 @@ fn clear_recovery(app: &AppHandle) {
 #[tauri::command]
 fn autosave(app: AppHandle, st: State<St>) {
     let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
-    if let (true, Some((file, meta))) = (a.doc.dirty, recovery_files(&app)) {
+    // An embedded graph belongs to its document: it is never kept as this Datum Plot's recovery copy.
+    if let (true, None, Some((file, meta))) = (a.doc.dirty, &a.embedded, recovery_files(&app)) {
         let info = Recovery { name: a.doc.p.name.clone(), path: a.doc.path.as_ref().map(|p| p.display().to_string()), saved: chrono::Local::now().format("%d-%b-%y %H:%M").to_string() };
         let _ = write_atomic(&file, a.doc.json().as_bytes());
         let _ = write_atomic(&meta, serde_json::to_string(&info).unwrap_or_default().as_bytes());
@@ -668,6 +673,9 @@ fn autosave(app: AppHandle, st: State<St>) {
 
 #[tauri::command]
 fn recovery(app: AppHandle) -> Option<Recovery> {
+    if datum_ole::embedding_launch() {
+        return None; // started by a document for its graph: no other work to recover here
+    }
     let (file, meta) = recovery_files(&app)?;
     file.exists().then_some(())?;
     serde_json::from_str(&read_small(&meta)?).ok()
@@ -725,6 +733,9 @@ fn recent(app: AppHandle) -> Vec<Recent> {
 /// A .dplot path passed on the command line (double-clicked in Explorer), or the last project.
 #[tauri::command]
 fn startup_file(app: AppHandle, st: State<St>) -> Option<String> {
+    if datum_ole::embedding_launch() {
+        return None;
+    }
     let last = || if st.0.lock().unwrap_or_else(PoisonError::into_inner).opts.open_last { recent_paths(&app).into_iter().find(|p| Path::new(p).exists()) } else { None };
     std::env::args().skip(1).find(|a| a.to_lowercase().ends_with(".dplot")).or_else(last)
 }
@@ -790,7 +801,8 @@ fn main() {
             datum_core::doc::DAY_FIRST.store(opts.date_order != "mdy", std::sync::atomic::Ordering::Relaxed);
             // 0.3.15 (#26): the app opens on Home with an empty project; a start or a sample fills it.
             let p = Project::new("Project1");
-            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
+            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, embedded: None })));
+            embed::start(app);
             app.manage(Engine(Mutex::new(Py::default())));
             app.manage(Calc(Mutex::new(Py::default())));
             // Start Python now so the first graph appears quickly.
@@ -808,7 +820,10 @@ fn main() {
         })
         .on_window_event(|w, e| {
             if let WindowEvent::CloseRequested { api, .. } = e {
-                if w.state::<St>().0.lock().unwrap_or_else(PoisonError::into_inner).doc.dirty {
+                let st = w.state::<St>();
+                let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
+                // An embedded graph's window always asks: the document must be told (and may want the update).
+                if a.doc.dirty || a.embedded.is_some() {
                     api.prevent_close();
                     let _ = w.emit("close-requested", ());
                 } else {
@@ -817,7 +832,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, embed::copy_embedded, embed::ole_update, embed::ole_close, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())

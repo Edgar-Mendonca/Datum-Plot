@@ -554,18 +554,27 @@ dependencies = [
 
 [[package]]
 name = "datum-core"
-version = "0.3.17"
+version = "0.3.18"
 dependencies = [
  "serde",
  "serde_json",
 ]
 
 [[package]]
+name = "datum-ole"
+version = "0.1.0"
+dependencies = [
+ "windows",
+ "windows-core",
+]
+
+[[package]]
 name = "datum-plot"
-version = "0.3.17"
+version = "0.3.18"
 dependencies = [
  "chrono",
  "datum-core",
+ "datum-ole",
  "serde",
  "serde_json",
  "sha2",

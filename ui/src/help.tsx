@@ -50,7 +50,7 @@ export const HELP: Record<string, Topic> = {
   size: { t: "Size", what: "The size of the graph in millimetres, as it will be printed or exported. Journal column widths are in the list." },
   add: { t: "Add to the graph", what: "Fit a Curve runs linear regression or a curve fit and draws it on this graph. Significance runs a t-test (two groups) or a one-way ANOVA and puts stars over the columns of a column graph. Annotation adds text, arrows, lines and boxes." },
   share: { t: "Share", what: "Get the graph out of Datum Plot at publication quality.",
-    how: ["Export: PNG or TIFF at any dpi, or SVG, PDF and EPS with editable text.", "Copy Picture puts the graph on the clipboard for documents and slides (Ctrl+C on the graph).", "Print (Ctrl+P) with page setup and headers."] },
+    how: ["Export: PNG or TIFF at any dpi, or SVG, PDF and EPS with editable text.", "Copy Picture puts the graph on the clipboard for documents and slides (Ctrl+C on the graph).", "Copy Embedded copies the graph with its data: pasted into a document, slides or a workbook on Windows, double-click it there to edit it in Datum Plot; Update (or closing the window) changes it in the document. Elsewhere it shows as a picture.", "Print (Ctrl+P) with page setup and headers."] },
   format: { t: "Format Graph", what: "Every setting of the graph, in a panel on the right. Each change shows at once and can be undone.",
     how: ["Data Sets: symbols, colours, lines and error bars.", "X Axis / Y Axis: range, scale, ticks, title and numbers.", "Graph: title, size, font, legend and frame.", "Double-click a part of the graph to open its page."] },
   text: { t: "Graph text", what: "The font and size of all the text in the graph, and bold axis titles. A+ and A− step the size." },

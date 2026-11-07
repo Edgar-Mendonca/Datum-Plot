@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.18 — 2026-11-07
+
+Embedded graphs: edit a pasted graph again in Datum Plot (Windows).
+
+**Copy Embedded**
+- **Graph › Copy Embedded** (also in the graph's and the navigator's right-click menus) copies the graph with its data. Paste it into a document, slides or a workbook: it looks like the picture.
+- **Double-click it there** and Datum Plot opens it. Change anything, then click **Update** in the bar at the top (or press Ctrl+S, or close the window and choose **Update and Close**): the graph in the document changes.
+- The data is kept inside the document, so anyone with Datum Plot can open the graph from it.
+- **Copy Picture** stays as before: a plain picture.
+- Windows only, like other programs' embedded objects: on a Mac or in a browser the graph shows as its picture.
+
+This is the first version of embedded graphs: please tell us how it works in your office programs.
+
 ## 0.3.17 — 2026-11-07
 
 Smaller screens.

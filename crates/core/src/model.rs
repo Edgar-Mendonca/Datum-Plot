@@ -548,6 +548,16 @@ impl Project {
     pub fn graph(&self, id: u32) -> Option<&Graph> {
         self.graphs.iter().find(|g| g.id == id)
     }
+    /// 0.3.18: the small project a document keeps for an embedded graph: the graph, its data table and the analyses
+    /// drawn on it, with the project's info (ids unchanged).
+    pub fn graph_only(&self, id: u32) -> Option<Project> {
+        let g = self.graph(id)?.clone();
+        let t = self.table(g.table)?.clone();
+        let analyses = self.analyses.iter().filter(|a| g.settings.overlays.contains(&a.id)).cloned().collect();
+        let mut p = Project { name: g.name.clone(), info: self.info.clone(), tables: vec![t], graphs: vec![g], analyses, next_id: self.next_id, ..Default::default() };
+        p.normalize();
+        Some(p)
+    }
     pub fn take_id(&mut self) -> u32 {
         if self.next_id >= ID_LIMIT {
             self.renumber();

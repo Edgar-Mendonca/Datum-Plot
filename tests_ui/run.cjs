@@ -175,6 +175,11 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.mouse.click(hx, hy, { button: "right" });
   await p.waitForTimeout(100);
   check("right-clicking a point offers to exclude it", ((await p.textContent(".menu")) || "").includes("Exclude"));
+  check("the graph's menu offers Copy Picture and Copy Embedded", ((await p.textContent(".menu")) || "").includes("Copy Embedded"));
+  await p.click('.menu button:has-text("Copy Embedded")'); await p.waitForTimeout(150);
+  check("Copy Embedded asks the shell for that graph", JSON.stringify(await calls("copy_embedded")) === JSON.stringify([{ id: P.graphs[0].id }]), JSON.stringify(await calls("copy_embedded")));
+  await reset();
+  await p.mouse.click(hx, hy, { button: "right" }); await p.waitForTimeout(100);
   await p.click('.menu button:has-text("Exclude")');
   await p.waitForTimeout(150);
   const exP = (await ops()).find(o => o.Exclude);

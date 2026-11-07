@@ -4,7 +4,7 @@ import { For, Show, JSX, createSignal } from "solid-js";
 import { Info } from "./api";
 import { P, item, open, Section, navOpen, act, openMenu, thumbs, setThumbs, graph } from "./store";
 import { C } from "./cmds";
-import { newGraph, useRender, GraphImg, copyGraph, exportGraph } from "./graph";
+import { newGraph, useRender, GraphImg, copyGraph, copyEmbedded, exportGraph } from "./graph";
 import { Icon } from "./ui";
 import { Help } from "./help";
 import { analyze, newTable, importFile } from "./roadmap";
@@ -68,7 +68,7 @@ export const Navigator = () => {
     if (ids.length > 1) return openMenu(e, [...organise(ids, s), "-", { label: `Delete ${ids.length} Items`, icon: "del", run: () => delMany(ids) }, { label: "Clear the Selection", run: () => setSel([]) }]);
     setSel([]); open(s, id); openMenu(e, [
       ...(s === "data" ? [{ label: "New Graph of This Table", icon: "graph", run: () => newGraph(id) }, { label: "Show Only This Family", icon: "list", run: () => setFamily(id) }, "-" as const] : []),
-      ...(s === "graphs" ? [{ label: "Copy Picture", icon: "copy", run: () => copyGraph(id) }, { label: "Export…", icon: "export", run: () => { const g = P().graphs.find(x => x.id === id); if (g) exportGraph(g); } },
+      ...(s === "graphs" ? [{ label: "Copy Picture", icon: "copy", run: () => copyGraph(id) }, { label: "Copy Embedded", icon: "copy", run: () => copyEmbedded(id) }, { label: "Export…", icon: "export", run: () => { const g = P().graphs.find(x => x.id === id); if (g) exportGraph(g); } },
         { label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, { label: thumbs() ? "Hide Previews" : "Show Previews", icon: "image", run: () => setThumbs(!thumbs()) }, "-" as const] : []),
       ...(s === "layouts" ? [{ label: "Copy Picture", icon: "copy", run: () => copyPage(id) }, { label: "Export…", icon: "export", run: () => { const l = P().layouts?.find(x => x.id === id); if (l) exportLayout(l); } }, "-" as const] : []),
       ...organise([id], s), "-" as const,

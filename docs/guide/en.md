@@ -173,7 +173,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 1. **Graph.** **New Graph**, **Graph Type** (scatter, bars, box, violin, before–after, lines and more) and **Data Table** (back to the data).
 2. **Axes.** Logarithmic axes, framed axes, **Format Axes** and **Axis Break**.
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
-4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides) and **Print**.
+4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides), **Copy Embedded** (a graph the document can open again in Datum Plot) and **Print**.
 
 The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range, or the median with its interquartile range, range or 95% CI), show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
 
@@ -241,6 +241,14 @@ Other ways to share, under **Tools**:
 - **Document**: the project's details, every graph with a caption, every result and the methods text (.docx or .odt).
 
 Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenDocument, the open standard.
+
+### Graphs you can edit again from a document
+
+**Graph › Copy Embedded** (or right-click a graph) copies the graph with its data. Paste it into a document, slides or a workbook on Windows: it looks like the picture, and **double-clicking it there opens it in Datum Plot**. Change the data, colours or axes, then click **Update** in the bar at the top (or close the window and choose **Update and Close**): the graph in the document changes. The data travels inside the document, so a colleague with Datum Plot can open it too.
+
+- **Copy Picture** stays the simple choice: a picture that is not linked to Datum Plot.
+- On a Mac, or in a browser, the embedded graph shows as its picture and cannot be opened.
+- The first graph of the window is the one the document shows.
 
 ### Print
 

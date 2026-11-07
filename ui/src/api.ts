@@ -40,7 +40,7 @@ export interface Info { title: string; experiment: string; researcher: string; o
 export interface LayoutItem { kind: string; graph: number; x: number; y: number; w: number; h: number; text: string; size: number; bold: boolean; inset?: boolean; hideX?: boolean }
 export interface Layout { id: number; name: string; width: number; height: number; letters: string; letterSize: number; font: string; fontSize: number; align?: boolean; items: LayoutItem[] }
 export interface Project { format: number; name: string; info: Info; tables: Table[]; graphs: Graph[]; analyses: Analysis[]; layouts: Layout[]; nextId: number; ui: any }
-export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number }
+export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; /** 0.3.18: the program whose embedded graph this window edits. */ embedded?: string | null }
 /** A graph drawn by the Python engine: SVG and where things are, in points from the top-left. */
 export interface Render {
   svg: string; w: number; h: number; plot: [number, number, number, number]; all: [number, number, number, number]; legend: [number, number, number, number] | null;

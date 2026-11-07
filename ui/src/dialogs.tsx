@@ -1,7 +1,7 @@
 // Help and small dialogs: Paste Special, Getting Started, Glossary, Shortcuts, save before closing.
 import { For, Show, createSignal } from "solid-js";
-import { Out } from "./api";
-import { openDialog, closeDialog, toast, call, P } from "./store";
+import { Out, invoke } from "./api";
+import { openDialog, closeDialog, toast, call, P, out } from "./store";
 import * as F from "./fmt";
 import { Dialog, Row, Check } from "./ui";
 
@@ -122,6 +122,13 @@ export const shortcuts = () => openDialog(() => (
   </Dialog>
 ));
 
+/** 0.3.18: closing the window that edits an embedded graph: update the document first, or close without. */
+export const confirmEmbeddedClose = () => openDialog(() => (
+  <Dialog title={`Update ${out()?.embedded}?`} okText="Update and Close" cancel="Cancel" ok={async () => { const ok = (await call("ole_update")) !== undefined; if (ok) invoke("ole_close"); return ok; }}
+    extra={<button class="btn" onClick={() => { closeDialog(); invoke("ole_close"); }}>Close without Updating</button>}>
+    <p>{out()?.dirty ? "This graph has changes." : "No changes since the last update."} Update the graph in {out()?.embedded} before closing?</p>
+  </Dialog>
+));
 export const confirmClose = (then: () => void) => openDialog(() => (
   <Dialog title="Save changes?" okText="Save" cancel="Cancel" ok={async () => { const o = await call<Out | null>("save", { asNew: false }); if (o) then(); return !!o; }}
     extra={<button class="btn" onClick={() => { closeDialog(); then(); }}>Don't save</button>}>
