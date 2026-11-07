@@ -53,9 +53,12 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.waitForTimeout(700);
 
   // 1. Home: the samples from the engine, and the updates card.
-  check("Home shows three blank starts, the Samples folder, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 8, String((await p.$$(".home .tile")).length));
+  check("Home shows four starts (empty, table, table and graph, column table), Samples, open, import, guide and roadmap", (await p.$$(".home .tile")).length === 9, String((await p.$$(".home .tile")).length));
   await reset();
-  await p.click('.home .tile:has-text("Blank XY table") >> nth=1'); await p.waitForTimeout(300);
+  await p.click('.home .tile:has-text("Empty project")'); await p.waitForTimeout(300);
+  check("Empty project starts a project with nothing in it", JSON.stringify(await calls("new_project")) === JSON.stringify([{ template: "empty" }]), JSON.stringify(await calls("new_project")));
+  await reset(); await p.click("button.file"); await p.waitForTimeout(300);
+  await p.click('.home .tile:has-text("Blank XY table") >> nth=0'); await p.waitForTimeout(300);
   check("Blank XY table starts a project without a graph", JSON.stringify(await calls("new_project")) === JSON.stringify([{ template: "table" }]), JSON.stringify(await calls("new_project")));
   await p.click("button.file"); await p.waitForTimeout(300);
   await p.click('.home .tile:has-text("Samples")'); await p.waitForTimeout(200);
@@ -543,6 +546,21 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.waitForTimeout(150);
   const ls = (await ops()).find(o => o.LayoutSet)?.LayoutSet.layout;
   check("dragging a panel moves it in whole millimetres", ls && ls.items[0].x > 0 && Number.isInteger(ls.items[0].x) && ls.items[0].y === 0, JSON.stringify(ls?.items?.[0]));
+  p.once("dialog", d => d.accept());
+  await reset();
+  await p.click('.nav .nitem:has-text("Figure 1")', { button: "right" }); await p.waitForTimeout(150);
+  const lmenu = (await p.textContent(".menu")) || "";
+  check("a layout's right-click menu copies, exports and deletes it", lmenu.includes("Copy Picture") && lmenu.includes("Export") && lmenu.includes("Delete"), lmenu);
+  await p.click('.menu button:has-text("Delete")'); await p.waitForTimeout(250);
+  check("Delete deletes a layout", JSON.stringify((await ops()).find(o => o.Delete)) === JSON.stringify({ Delete: { id: 98 } }), JSON.stringify(await ops()));
+  await p.click('.nav .nthumbs >> nth=0', { button: "right" }); await p.waitForTimeout(150);
+  check("a graph's preview has the same menu as its name", ((await p.textContent(".menu")) || "").includes("New Layout with This Graph"));
+  await p.keyboard.press("Escape");
+  await p.click('.nav .nhead:has-text("Graphs") button:has-text("＋")'); await p.waitForTimeout(150);
+  const gmenu = (await p.textContent(".menu")) || "";
+  check("the Graphs + offers a new graph of each table", gmenu.includes("New Graph of “Growth”"), gmenu);
+  await p.keyboard.press("Escape");
+  await p.click('.nav .nitem:has-text("Figure 1")'); await p.waitForTimeout(300);
   await reset();
   await p.click(".lpaper .litem >> nth=0", { button: "right" });
   await p.click('.menu button:has-text("Hide X Axis Title")');

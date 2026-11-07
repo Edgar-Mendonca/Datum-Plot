@@ -60,9 +60,11 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const put = (k: string, v: unknown) => setO({ ...o(), [k]: v });
     const on = (k: number) => !sets().length || sets().includes(k);
     const toggle = (k: number) => { const all = t.sets.map((_, i) => i), cur = sets().length ? sets() : all, next = on(k) ? cur.filter(x => x !== k) : [...cur, k].sort(); setSets(next.length === all.length ? [] : next); };
+    // 0.3.15 (#33): started from a graph, it is drawn on that graph only; from the table, on all of its graphs.
+    const from = item(), here = () => (from.s === "graphs" && out()!.project.graphs.some(g => g.id === from.id && g.table === t.id) ? from.id : null);
     const ok = async () => {
       const a = { id: existing?.id ?? 0, table: t.id, name: name(), kind, sets: sets(), options: o() };
-      const done = existing ? await act({ SetAnalysis: { analysis: a } }) : await act({ AddAnalysis: { analysis: a, overlay: draws(kind, t) } });
+      const done = existing ? await act({ SetAnalysis: { analysis: a } }) : await act({ AddAnalysis: { analysis: a, overlay: draws(kind, t), graph: here() } });
       if (done && !existing) { const as = out()!.project.analyses; open("results", as[as.length - 1].id); }
       return done;
     };

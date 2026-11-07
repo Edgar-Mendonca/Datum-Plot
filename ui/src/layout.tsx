@@ -76,6 +76,11 @@ export const sizeMenu = (l: Layout): Item[] => PAGES.map(([t, w, h]) => ({ label
 export const letterMenu = (l: Layout): Item[] => [["A", "A, B, C"], ["a", "a, b, c"], ["(a)", "(a), (b), (c)"], ["none", "No letters"]].map(([k, t]) => ({ label: t, on: l.letters === k, run: () => set({ ...l, letters: k }) }));
 
 /** Export: format, resolution and CMYK for journals; the page at its real size. */
+/** Copies the whole page as a picture (0.3.15, #28). */
+export const copyPage = async (id: number) => {
+  try { await invoke("copy_page", { id, dpi: Math.min(300, opts().dpi) }); toast("Layout copied as a picture. Paste it into a document, slides or an email.", true); }
+  catch (e) { toast(`Could not copy the picture: ${e}`); }
+};
 export const exportLayout = (l: Layout, tiff = false) => openDialog(() => {
   const [fmt, setFmt] = createSignal(tiff ? "tiff" : "pdf"), [dpi, setDpi] = createSignal(String(tiff ? 600 : opts().dpi)), [cmyk, setCmyk] = createSignal(tiff);
   return (

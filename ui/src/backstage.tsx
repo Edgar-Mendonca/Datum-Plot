@@ -60,8 +60,9 @@ const Home = () => {
           <h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}</h1>
           <h2>Start</h2>
           <div class="tiles">
-            <Tile icon="xy" name="Blank XY table and graph" desc="An X column and data sets with replicates, and its graph." run={() => neu(null)} />
-            <Tile icon="sheet" name="Blank XY table" desc="The same table without a graph: enter data and analyse it; add a graph later if you want one." run={() => neu("table")} />
+            <Tile icon="new" name="Empty project" desc="Nothing in it yet: add tables, import data or open a sample when you are ready." run={() => neu("empty")} />
+            <Tile icon="sheet" name="Blank XY table" desc="An X column and data sets with replicates, without a graph: enter data and analyse it; add a graph later if you want one." run={() => neu("table")} />
+            <Tile icon="xy" name="Blank XY table and graph" desc="The same table with its graph." run={() => neu(null)} />
             <Tile icon="cols" name="Blank column table" desc="Groups side by side, one value per row, without a graph: for t-tests, ANOVA and descriptive statistics." run={() => neu("column")} />
             <Tile icon="folder" name="Samples" desc={`${tpls()?.length ?? ""} ready-made projects to learn from, in ${groups().length || ""} groups.`} run={() => setFolder(true)} />
             <Tile icon="open" name="Open" desc="A Datum Plot project (.dplot)." run={() => C.open()} />

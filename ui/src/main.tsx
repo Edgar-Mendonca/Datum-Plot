@@ -15,7 +15,7 @@ import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
 import { DataTable } from "./datatable";
 import { GraphView, zoomG, setZoomG } from "./graph";
-import { Side, Navigator, InfoPage } from "./nav";
+import { Side, Navigator, InfoPage, EmptyProject } from "./nav";
 import { LayoutsPage } from "./layout";
 import { ResultsPage } from "./results";
 import { Backstage, update, checkUpdate } from "./backstage";
@@ -92,6 +92,7 @@ const App = () => {
               <Match when={item().s === "layouts"}><LayoutsPage /></Match>
               <Match when={item().s === "graphs" && graph()}><For each={[graph()!.id]}>{() => <GraphView g={graph()!} />}</For></Match>
               <Match when={table()}><For each={[table()!.id]}>{() => <DataTable t={table()!} />}</For></Match>
+              <Match when={item().s === "data" || item().s === "graphs"}><EmptyProject /></Match>
             </Switch>
           </Show>
         </div>

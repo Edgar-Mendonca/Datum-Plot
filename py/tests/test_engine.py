@@ -139,6 +139,27 @@ class Swarm(unittest.TestCase):
         self.assertEqual(list(few), [0.0, 0.1, -0.1, 0.0])  # small groups: unchanged spacing
 
 
+class OrderAndColours(unittest.TestCase):
+    """0.3.15: a column graph's own order of data sets (#23), and fill and border colours (#20)."""
+    T = {"name": "T", "kind": "column", "rows": 3, "sets": [{"title": t, "entry": "rep", "reps": 1} for t in ("Alpha", "Beta", "Gamma")],
+         "cols": [[None] * 3, [1, 2, 3], [2, 3, 4], [5, 6, 7]], "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+    def test_order_moves_groups_not_their_colours(self):
+        import re
+        svg = graph.render(self.T, {"column": "bars", "order": [2, 0]})["svg"]
+        names = [n for n in re.findall(r">([A-Za-z]+)</text>", svg) if n in ("Alpha", "Beta", "Gamma")]
+        self.assertEqual(names, ["Gamma", "Alpha", "Beta"])
+        self.assertEqual(graph.ordered({"order": [2, 0]}, [0, 1, 2]), [2, 0, 1])
+        self.assertEqual(graph.ordered({}, [0, 1, 2]), [0, 1, 2])
+
+    def test_fill_and_border(self):
+        st = graph.style_of({"sets": [{"color": "#111111", "fill": "#ABCDEF"}]}, 0)
+        self.assertEqual((st["color"], st["fill"], st["edge"]), ("#111111", "#ABCDEF", "#111111"))
+        svg = graph.render(self.T, {"column": "bars", "sets": [{"fill": "#abcdef", "edge": "#123456"}]})["svg"].lower()
+        self.assertIn("#abcdef", svg)
+        self.assertIn("#123456", svg)
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

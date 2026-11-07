@@ -65,6 +65,12 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
         <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span></Show>
     </div>;
   };
+  /** 0.3.15 (#20, #23): lines belong to XY-like graphs; the others take fill and border colours and their own order. */
+  const lined = () => ["xy", "survival", "sheet", "multi"].includes(t()?.kind ?? "xy");
+  const ordered = () => ["column", "grouped", "parts", "nested"].includes(t()?.kind ?? "");
+  const rows = () => { const n = t()?.sets.length ?? 0, ks = Array.from({ length: n }, (_, k) => k), o = s().order ?? [];
+    return ordered() ? ks.sort((a, b) => (o.includes(a) ? o.indexOf(a) : o.length + a) - (o.includes(b) ? o.indexOf(b) : o.length + b)) : ks; };
+  const move = (k: number, d: number) => { const r = rows(), i = r.indexOf(k), j = i + d; if (j < 0 || j >= r.length) return; [r[i], r[j]] = [r[j], r[i]]; set(x => { x.order = r; }); };
   /** 0.3.12: a vertical line at a typed X value or date, with an optional label. */
   const lineAt = async () => {
     const date = !!t()?.xFormat, at = prompt(date ? "Date of the line (2026-11-05 or 5 Nov 2026)" : "X value of the line", "");
@@ -108,21 +114,26 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             </Show>
             <Show when={t()?.kind === "xy"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
           </div>
-          <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th><th>Line</th><th>Width</th><Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
-            <For each={t()?.sets ?? []}>{(d, k) => <tr classList={{ dimset: !!t() && isEmpty(t()!, k()) }}>
-              <td><b>{letter(k())}</b></td><td>{d.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
+          <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th>
+            <Show when={lined()} fallback={<><th title="The fill of bars, boxes and violins (empty: the data set's colour)">Fill</th><th title="Their border (empty: the data set's colour)">Border</th></>}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show>
+            <Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
+            <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()) }}>
+              <td><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
+              <Show when={ordered()}><td class="nowrap"><button class="btn sm" title="Earlier on the graph" disabled={at() === 0} onClick={() => move(k0, -1)}>▲</button><button class="btn sm" title="Later on the graph" disabled={at() === rows().length - 1} onClick={() => move(k0, 1)}>▼</button></td></Show>
               <td><input type="checkbox" checked={st(k()).show} onChange={e => setStyle(k(), { show: e.currentTarget.checked })} /></td>
               <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
               <td><span class="inline"><input type="color" value={drawn(k())} onChange={e => setStyle(k(), { color: e.currentTarget.value })} />
                 <span class="swset"><For each={scheme()}>{c => <button style={{ background: c }} title={c} onClick={() => setStyle(k(), { color: c })} />}</For></span></span></td>
               <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
               <td><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
+              <Show when={lined()} fallback={<><td><input type="color" value={st(k()).fill || drawn(k())} title="Fill" onChange={e => setStyle(k(), { fill: e.currentTarget.value })} /></td>
+                <td><input type="color" value={st(k()).edge || drawn(k())} title="Border" onChange={e => setStyle(k(), { edge: e.currentTarget.value })} /></td></>}>
               <td><Pick value={st(k()).line === null ? "" : st(k()).line ? "1" : "0"} set={v => setStyle(k(), { line: v === "" ? null : v === "1" })} options={[["", "As the graph"], ["1", "Line"], ["0", "No line"]]} /></td>
-              <td><input type="number" min="0.25" max="6" step="0.25" style={{ width: "58px" }} value={st(k()).width} onChange={e => setStyle(k(), { width: +e.currentTarget.value })} /></td>
+              <td><input type="number" min="0.25" max="6" step="0.25" style={{ width: "58px" }} value={st(k()).width} onChange={e => setStyle(k(), { width: +e.currentTarget.value })} /></td></Show>
               <Show when={t()?.kind === "xy"}><td><input type="checkbox" checked={!!st(k()).right} onChange={e => setStyle(k(), { right: e.currentTarget.checked })} /></td></Show>
-            </tr>}</For>
+            </tr>; }}</For>
           </tbody></table></div>
-          <p class="muted">Empty colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
+          <p class="muted">Order changes this graph only; the table keeps its own. Empty colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
         </Show>
         <Show when={tab() === "x"}><AxisPage k="x" /></Show>
         <Show when={tab() === "y"}><AxisPage k="y" /></Show>

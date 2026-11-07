@@ -84,9 +84,9 @@ fn random_op(r: &mut Rng, p: &Project) -> Op {
         5 => Op::SetDef { table: t, k: [None, Some(0), Some(big)][r.below(3) as usize], set: if r.below(3) == 0 { None } else { Some(DataSet { reps: big.min(80), ..Default::default() }) } },
         6 => Op::NewTable { table: Box::new(Table::column(1 + r.below(3) as usize)), graph: Some(Box::new(GraphSettings::default())) },
         7 => Op::Delete { id: *r.pick(&[t, 0, 99]) },
-        8 => Op::Duplicate { id: *r.pick(&[t, 0, 99]) },
+        8 => Op::Duplicate { id: *r.pick(&[t, 0, 99]), only: r.below(2) == 1 },
         9 => Op::Formula { table: t, k: Some(big % 4), formula: Some("A".into()), sets: vec![(big % 4, vec![Some(1.0); big % 7])] },
-        10 => Op::AddAnalysis { analysis: Box::new(Analysis { table: t, kind: "linear".into(), ..Default::default() }), overlay: r.below(2) == 1 },
+        10 => Op::AddAnalysis { analysis: Box::new(Analysis { table: t, kind: "linear".into(), ..Default::default() }), overlay: r.below(2) == 1, graph: None },
         _ => Op::Batch(vec![Op::Rename { id: t, name: "B".into() }, Op::Rows { table: t, at: 0, count: 1 }]),
     }
 }

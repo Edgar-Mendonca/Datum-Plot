@@ -1,5 +1,5 @@
 // Commands shared by the ribbon, menus, shortcuts and Tell Me.
-import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, graph, analysis, curTable, open, P, openDialog } from "./store";
+import { act, call, loadOut, out, setOut, setBackstage, toast, item, table, graph, analysis, layout, curTable, open, P, openDialog } from "./store";
 import { Out } from "./api";
 import { FEATURES, ready } from "./features";
 import { soon } from "./roadmap";
@@ -28,17 +28,17 @@ export const C = {
   copyG: () => { const g = need(graph(), "a graph"); if (g) copyGraph(g.id); },
   zoom: (f: number) => setZoomG(z => Math.min(4, Math.max(0.5, f ? z * f : 1.5))),
   rename: () => {
-    const it = item(), cur = it.s === "data" ? table() : it.s === "results" ? analysis() : graph();
+    const it = item(), cur = it.s === "data" ? table() : it.s === "results" ? analysis() : it.s === "layouts" ? layout() : graph();
     if (!cur) return;
     const n = prompt("Name", cur.name);
     if (n?.trim()) act({ Rename: { id: cur.id, name: n.trim() } });
   },
-  duplicate: () => { const cur = table() ?? graph() ?? analysis(); if (cur) act({ Duplicate: { id: cur.id } }); },
+  /** 0.3.15 (#32): a table is copied with its graphs and results, or alone (`only`). */
+  duplicate: (only?: unknown) => { const cur = table() ?? graph() ?? analysis() ?? layout(); if (cur) act({ Duplicate: { id: cur.id, only: only === true } }); },  // a ribbon click passes its event: not "only"
   del: () => {
-    const cur = table() ?? graph() ?? analysis();
+    const cur = table() ?? graph() ?? analysis() ?? layout();
     if (!cur) return;
     const t = table(), gs = t ? P().graphs.filter(g => g.table === t.id).length : 0;
-    if (t && P().tables.length === 1) return toast("A project keeps at least one data table.");
     if (confirm(t ? `Delete the data table “${t.name}”${gs ? ` and its ${gs} ${gs === 1 ? "graph" : "graphs"}` : ""} and its results?` : `Delete “${cur.name}”?`)) act({ Delete: { id: cur.id } });
   },
   analyze: () => analyze(),

@@ -102,7 +102,7 @@ fn undo_redo_and_unchanged_edits() {
 #[test]
 fn deleting_a_table_deletes_its_graphs_and_duplicates_copy_both() {
     let (mut d, id) = doc();
-    d.apply(Op::Duplicate { id }).unwrap();
+    d.apply(Op::Duplicate { id, only: false }).unwrap();
     assert_eq!((d.p.tables.len(), d.p.graphs.len()), (2, 2));
     assert_eq!(d.p.tables[1].name, "Data 1 copy");
     d.apply(Op::Delete { id }).unwrap();
@@ -159,7 +159,7 @@ fn edits_with_impossible_values_are_refused_not_crashing() {
         Op::Formula { table: id, k: Some(99), formula: Some("A".into()), sets: vec![] },
         Op::Formula { table: id, k: None, formula: None, sets: vec![(0, vec![Some(1.0); 5_000_000])] },
         Op::Style { table: id, cells: vec![("99999999:99999".into(), "b".into()), ("x".into(), "y".into())] },
-        Op::Delete { id: 12345 }, Op::Rename { id: 12345, name: "x".into() }, Op::Duplicate { id: 12345 },
+        Op::Delete { id: 12345 }, Op::Rename { id: 12345, name: "x".into() }, Op::Duplicate { id: 12345, only: false },
         Op::Overlay { graph: 12345, analysis: 1, on: true }, Op::CopyLook { from: 12345, to: vec![1, 2] },
         Op::AddGraph { table: 12345, settings: None },
         Op::Batch(vec![Op::Rename { id, name: "ok".into() }, Op::Delete { id: 12345 }]),
@@ -283,7 +283,7 @@ fn import_builds_a_table_with_titles_and_sets() {
 fn analyses_are_linked_to_their_table_and_drawn_on_its_graphs() {
     let (mut d, id) = doc();
     let a = Analysis { table: id, kind: "linear".into(), options: serde_json::json!({ "model": "line" }), ..Default::default() };
-    d.apply(Op::AddAnalysis { analysis: Box::new(a), overlay: true }).unwrap();
+    d.apply(Op::AddAnalysis { analysis: Box::new(a), overlay: true, graph: None }).unwrap();
     let aid = d.p.analyses[0].id;
     assert_eq!(d.p.analyses[0].name, "linear · Data 1");
     assert_eq!(d.p.graphs[0].settings.overlays, vec![aid]);
@@ -298,11 +298,11 @@ fn analyses_are_linked_to_their_table_and_drawn_on_its_graphs() {
     d.apply(Op::Overlay { graph: d.p.graphs[0].id, analysis: aid, on: true }).unwrap();
     d.apply(Op::Delete { id: aid }).unwrap();
     assert!(d.p.analyses.is_empty() && d.p.graphs[0].settings.overlays.is_empty(), "deleting removes the curves too");
-    d.apply(Op::AddAnalysis { analysis: Box::new(Analysis { table: id, kind: "describe".into(), ..Default::default() }), overlay: false }).unwrap();
-    d.apply(Op::Duplicate { id }).unwrap();
+    d.apply(Op::AddAnalysis { analysis: Box::new(Analysis { table: id, kind: "describe".into(), ..Default::default() }), overlay: false, graph: None }).unwrap();
+    d.apply(Op::Duplicate { id, only: false }).unwrap();
     let t2 = d.p.tables[1].id;
     d.apply(Op::Delete { id }).unwrap();
-    assert!(d.p.analyses.is_empty(), "a table's analyses go with it");
+    assert!(d.p.analyses.iter().all(|a| a.table == t2) && d.p.analyses.len() == 1, "a table's analyses go with it; the copy keeps its own (0.3.15)");
     assert!(d.p.table(t2).is_some());
 }
 
@@ -354,7 +354,7 @@ fn layouts_hold_graphs_and_lose_deleted_ones() {
     assert!(it.inset && it.hide_x && it.kind == "graph");
     d.apply(Op::LayoutSet { layout: Box::new(Layout { width: 89.0, ..l.clone() }) }).unwrap();
     assert_eq!(d.p.layouts[0].width, 89.0);
-    d.apply(Op::Duplicate { id: l.id }).unwrap();
+    d.apply(Op::Duplicate { id: l.id, only: false }).unwrap();
     d.apply(Op::Rename { id: l.id, name: "Figure 1".into() }).unwrap();
     assert_eq!((d.p.layouts.len(), d.p.layouts[0].name.as_str()), (2, "Figure 1"));
     d.apply(Op::Delete { id: gid }).unwrap();
@@ -444,4 +444,41 @@ fn date_axis_choices_are_kept_and_imports_read_dates() {
     assert_eq!((t.x_format.as_str(), t.get(0, 0), t.get(1, 0)), ("date", crate::doc::days_from_civil(2026, 11, 5), crate::doc::days_from_civil(2026, 11, 12)));
     d.apply(Op::Import { name: "Numbers".into(), entry: Entry::Replicates, reps: 1, header: true, rows, graph: None, dates: String::new() }).unwrap();
     assert_eq!((d.p.tables[1].x_format.as_str(), d.p.tables[1].get(0, 0)), ("", None), "without the offer, dates stay empty as before");
+}
+
+#[test]
+fn typing_in_a_table_made_in_code_works() {
+    // #26: the start-up table (made from the options, not normalised) panicked on every typed value.
+    let mut p = Project::new("P");
+    p.add_table(Table { sets: vec![DataSet { title: "A".into(), ..Default::default() }], ..Default::default() }, None);
+    let id = p.tables[0].id;
+    let mut d = Doc::new(p);
+    d.apply(Op::Cells { table: id, cells: vec![(0, 0, "1".into()), (0, 1, "2.5".into()), (3, 2, "7".into())] }).unwrap();
+    assert_eq!((d.p.tables[0].get(0, 0), d.p.tables[0].get(0, 1), d.p.tables[0].get(3, 2)), (Some(1.0), Some(2.5), Some(7.0)));
+    let mut raw = Table::default();
+    raw.cols.clear();
+    assert!(crate::doc::put_for_test(&mut raw, 2, 1, "4"), "even a table without columns takes a value");
+}
+
+#[test]
+fn significance_goes_on_one_graph_and_duplicates_bring_the_family() {
+    let mut d = Doc::new(templates::build(Some("groups")).unwrap());
+    let t = d.p.tables[0].id;
+    d.apply(Op::Duplicate { id: d.p.graphs[0].id, only: false }).unwrap();
+    let (g1, g2) = (d.p.graphs[0].id, d.p.graphs[1].id);
+    let before = d.p.graph(g2).unwrap().settings.overlays.clone();
+    d.apply(Op::AddAnalysis { analysis: Box::new(Analysis { table: t, kind: "ttest".into(), ..Default::default() }), overlay: true, graph: Some(g1) }).unwrap();
+    let a = d.p.analyses.last().unwrap().id;
+    assert!(d.p.graph(g1).unwrap().settings.overlays.contains(&a), "#33: drawn on the graph it was made from");
+    assert_eq!(d.p.graph(g2).unwrap().settings.overlays, before, "#33: and on no other graph of the table");
+    // #32: the whole family, results included, the copied graph drawing the copied result; or the table alone.
+    let (na, ng, nt) = (d.p.analyses.len(), d.p.graphs.len(), d.p.tables.len());
+    d.apply(Op::Duplicate { id: t, only: false }).unwrap();
+    let nt_id = d.p.tables.last().unwrap().id;
+    assert_eq!((d.p.tables.len(), d.p.graphs.len(), d.p.analyses.len()), (nt + 1, ng * 2, na * 2));
+    let copied: Vec<u32> = d.p.analyses.iter().filter(|x| x.table == nt_id).map(|x| x.id).collect();
+    assert!(d.p.graphs.iter().filter(|g| g.table == nt_id).all(|g| g.settings.overlays.iter().all(|o| copied.contains(o))));
+    d.apply(Op::Duplicate { id: t, only: true }).unwrap();
+    let last = d.p.tables.last().unwrap().id;
+    assert!(!d.p.graphs.iter().any(|g| g.table == last) && !d.p.analyses.iter().any(|a| a.table == last), "the table alone");
 }

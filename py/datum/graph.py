@@ -56,7 +56,9 @@ def style_of(graph, k, colors=OKABE_ITO):
     """A data set's look: saved settings over the defaults for its position."""
     s = (graph.get("sets") or [])[k] if k < len(graph.get("sets") or []) else {}
     return {"show": s.get("show", True), "color": s.get("color") or colors[k % len(colors)], "symbol": s.get("symbol") or SYMBOL_ORDER[k % 8],
-            "size": s.get("size") or 6, "filled": s.get("filled", True), "line": s.get("line"), "width": s.get("width") or 1.0}
+            "size": s.get("size") or 6, "filled": s.get("filled", True), "line": s.get("line"), "width": s.get("width") or 1.0,
+            # 0.3.15 (#20): bars, boxes and violins can take their own fill and border colours; empty = the data set's colour.
+            "fill": s.get("fill") or s.get("color") or colors[k % len(colors)], "edge": s.get("edge") or s.get("color") or colors[k % len(colors)]}
 
 
 MEDIAN = ("median_iqr", "median_range", "median_ci")
@@ -85,6 +87,12 @@ def spread(v, kind):
     sem = sd / math.sqrt(n) if n > 1 else 0.0
     e = {"sd": sd, "sem": sem, "ci": float(sst.t.ppf(0.975, n - 1)) * sem if n > 1 else 0.0}.get(kind, 0.0)
     return m, e, e
+
+
+def ordered(graph, ks):
+    """The data sets `ks` in the graph's own order (0.3.15, #23); sets it does not name follow in table order."""
+    order = [k for k in (graph.get("order") or []) if isinstance(k, int)]
+    return sorted(ks, key=lambda k: (order.index(k) if k in order else len(order), k))
 
 
 def error_of(d, kind):
@@ -573,7 +581,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     from scipy import stats as sst
     kind, err = graph.get("column") or "scatter", graph.get("error", "sd")
     each = graph.get("points", "each") == "each"
-    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    shown = ordered(graph, [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]])
     data = [(k, *summary(table, k)) for k in shown]
     data = [d for d in data if d[2] > 0]
     allv = np.concatenate([d[1] if d[1] is not None else np.array([d[3]]) for d in data]) if data else np.zeros(0)
@@ -598,19 +606,19 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
         yerr = [[0 if graph.get("errorDir") == "up" else lo], [0 if graph.get("errorDir") == "down" else hi]]
         top = max(m + yerr[1][0], float(v.max()) if v is not None else m)
         if kind == "bars":
-            ax.bar(i, m, width=0.62, color=col if st["filled"] else "none", alpha=0.35 if st["filled"] else 1, edgecolor=col, linewidth=1.2, zorder=1)
-            ax.bar(i, m, width=0.62, color="none", edgecolor=col, linewidth=1.2, zorder=1.1)
+            ax.bar(i, m, width=0.62, color=st["fill"] if st["filled"] else "none", alpha=0.35 if st["filled"] else 1, edgecolor=st["edge"], linewidth=1.2, zorder=1)
+            ax.bar(i, m, width=0.62, color="none", edgecolor=st["edge"], linewidth=1.2, zorder=1.1)
         elif kind == "box" and v is not None and len(v) > 1:
             b = ax.boxplot(v, positions=[i], widths=0.5, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
-                           boxprops={"facecolor": col, "alpha": 0.3, "edgecolor": col}, medianprops={"color": col, "linewidth": 1.6}, whiskerprops={"color": col}, capprops={"color": col}, flierprops={"markeredgecolor": col})
+                           boxprops={"facecolor": st["fill"], "alpha": 0.3, "edgecolor": st["edge"]}, medianprops={"color": st["edge"], "linewidth": 1.6}, whiskerprops={"color": st["edge"]}, capprops={"color": st["edge"]}, flierprops={"markeredgecolor": col})
             del b
         elif kind == "violin" and v is not None and len(v) > 2 and np.ptp(v) > 0:
             vp = ax.violinplot(v, [i], widths=0.75, showextrema=False)
             for body in vp["bodies"]:
-                body.set_facecolor(col); body.set_edgecolor(col); body.set_alpha(0.3)
+                body.set_facecolor(st["fill"]); body.set_edgecolor(st["edge"]); body.set_alpha(0.3)
             q1, med, q3 = np.percentile(v, [25, 50, 75])
-            ax.vlines(i, q1, q3, color=col, linewidth=3, zorder=2)
-            ax.plot(i, med, "o", color="white", markeredgecolor=col, markersize=4, zorder=3)
+            ax.vlines(i, q1, q3, color=st["edge"], linewidth=3, zorder=2)
+            ax.plot(i, med, "o", color="white", markeredgecolor=st["edge"], markersize=4, zorder=3)
         dots = v is not None and (kind in ("scatter", "paired") or (each and kind in ("bars", "box", "violin")))
         if dots:
             ms = st["size"] * (1.0 if kind == "scatter" else 0.75 if kind in ("bars", "paired") else 0.55)
@@ -652,7 +660,7 @@ def parts_figure(fig, ax, table, graph, size):
     rows, cv = cells(table)
     kind = graph.get("column") if graph.get("column") in ("pie", "donut", "percent") else "pie"
     cols = palette(graph, len(rows))
-    shown = [k for k in range(len(table["sets"])) if style_of(graph, k)["show"]]
+    shown = ordered(graph, [k for k in range(len(table["sets"])) if style_of(graph, k)["show"]])
     labels = [lab for _, lab in rows]
     vals = {k: [sum(cv.get((k, r), [0])) for r, _ in rows] for k in shown}
     shown = [k for k in shown if sum(v for v in vals[k] if v > 0) > 0]
@@ -701,7 +709,7 @@ def nested_figure(fig, ax, table, graph, colors, size):
     from .nested import subgroups
     err = graph.get("error", "sd")
     points, labels = [], []
-    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    shown = ordered(graph, [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]])
     for i, k in enumerate(shown):
         st, subs = style_of(graph, k, colors), subgroups(table, k)
         labels.append(table["sets"][k].get("title") or f"Data set {chr(65 + k)}")
@@ -887,7 +895,7 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
         kind, err, pct = "stacked", "none", True
     else:
         pct = False
-    shown = [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]]
+    shown = ordered(graph, [k for k in range(len(table["sets"])) if style_of(graph, k, colors)["show"]])
     names = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in shown]
     labels = [lab for _, lab in rows]
     points, pos, tops, leg = [], {}, {}, None
@@ -943,7 +951,7 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
         d = graph.get("errorDir", "both")
         yerr = [[0 if d == "up" else e[0] for e in es], [0 if d == "down" else e[1] for e in es]] if err != "none" else None
         if kind == "bars":
-            ax.bar(xs, ms_, width=w * 0.92, color=col if st["filled"] else "none", alpha=0.85 if st["filled"] else 1, edgecolor=col, linewidth=1.0, label=lab, zorder=1)
+            ax.bar(xs, ms_, width=w * 0.92, color=st["fill"] if st["filled"] else "none", alpha=0.85 if st["filled"] else 1, edgecolor=st["edge"], linewidth=1.0, label=lab, zorder=1)
             if yerr:
                 ax.errorbar(xs, ms_, yerr=yerr, fmt="none", ecolor="#222222", elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
         elif kind == "stacked":

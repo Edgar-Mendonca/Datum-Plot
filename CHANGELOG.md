@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.15 — 2026-11-07
+
+Users' requests.
+
+**Fixes**
+- Typing into the table of a new project no longer fails with an error on every value.
+- **Delete** now deletes layouts from their right-click menu.
+- Significance stars and fits added from a graph are drawn on that graph only, not on every graph of the same table.
+- Right-clicking a graph's preview in the navigator opens the same menu as its name.
+
+**Starting**
+- Datum Plot opens on the Home page. Choose **Empty project**, **Blank XY table**, **Blank XY table and graph** or **Blank column table**, or open a sample. An empty project shows how to add a table or import data.
+
+**Graphs**
+- **Format Graph › Data Sets › Order**: move data sets earlier or later on a column, grouped, pie or nested graph; the table keeps its own order.
+- **Fill** and **Border** colours for bars, boxes and violins, separate from the symbols. The Line and Width settings (now **Connect** and **Line width**) show only on graphs that draw lines.
+
+**Navigator**
+- The **＋** beside Graphs offers a new graph of any table, or a copy of the open graph with all its formatting.
+- Right-click a table › **Duplicate with Graphs and Results** or **Duplicate Table Only**.
+- Right-click a layout › **Copy Picture** or **Export**.
+- Drag the right edge of the navigator to widen it; long names show in full on hover.
+
 ## 0.3.14 — 2026-11-03
 
 Fixes from users.

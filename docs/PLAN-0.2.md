@@ -233,16 +233,20 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D20 | Vector fields and 3D scatter | ✅ 0.3.8 |
 | B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | ✅ 0.3.9 |
 | B35 | Control charts and design of experiments | ✅ 0.3.10 |
-| B36 | Wavelets and short-time spectra | 0.3.15 |
-| E8 | Graph digitizer and image tools | 0.3.16 |
-| B37 | Bayesian tests | 0.3.17 |
-| I7 | Mac and Linux versions | 0.3.18 |
+| B36 | Wavelets and short-time spectra | 0.3.18 |
+| E8 | Graph digitizer and image tools | 0.3.19 |
+| B37 | Bayesian tests | 0.3.20 |
+| I7 | Mac and Linux versions | 0.3.21 |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
 | A20 | Dates, second step: offer dates on paste and import, axis steps, lines at a date, date functions in formulas, intercepts as dates | ✅ 0.3.12 |
 | A21 | Long column titles wrap onto up to three lines | ✅ 0.3.12 |
 | D21 | Median error bars: median with IQR, range or 95% CI | ✅ 0.3.12 |
 | J6 | The Datum Plot Guide: PDF in English, Simplified Chinese and French, numbered screenshots, Help › Guide downloads and checks it | ✅ 0.3.2 |
 | J7 | Medical and engineering samples: survival study, method comparison, diagnostic test, response surface, polar pattern | ✅ 0.3.2 |
+| J9 | Starts and copies: empty project start (opens on Home), duplicate a table alone or with its family, layouts copied and exported from the navigator | ✅ 0.3.15 |
+| D22 | A graph's own order of data sets; fill and border colours for bars, boxes and violins | ✅ 0.3.15 |
+| A22 | Organising the navigator: multiple selection, folders, coloured names, a family view | 0.3.16 |
+| I8 | Smaller screens: the ribbon folds on laptop screens | 0.3.17 |
 | J8 | A tidier Home: three blank starts (XY table and graph, XY table, column table) and a Samples folder under headings | ✅ 0.3.13 |
 
 ---
@@ -397,8 +401,11 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.12** ✅ | Dates, second step (A20); testers' fixes: median error bars (D21), long titles (A21), Enter keeps names, one Format Graph window, right-click opens the axis clicked |
 | **0.3.13** ✅ | A tidier Home: three blank starts and a Samples folder (J8), a user's request |
 | **0.3.14** ✅ | Users' fixes: Error Bars keep Each Replicate, crowded dots squeezed evenly, previews under graph names, Format Graph follows the graph shown, the graph's name above it |
-| 0.3.15 | Wavelets and short-time spectra (B36) |
-| 0.3.16 | Graph digitizer and image tools (E8) |
-| 0.3.17 | Bayesian tests (B37) |
-| 0.3.18 | Mac and Linux versions (I7) |
+| **0.3.15** ✅ | Users' requests (GitHub #20–#33): start-up crash fixed and an empty start, layouts delete/copy/export, significance per graph, duplicates with results or table only, graph ＋ menu, preview menus, data-set order and fill colours (D22, J9), a wider panel |
+| 0.3.16 | Organising the navigator (A22) |
+| 0.3.17 | Smaller screens (I8) |
+| 0.3.18 | Wavelets and short-time spectra (B36) |
+| 0.3.19 | Graph digitizer and image tools (E8) |
+| 0.3.20 | Bayesian tests (B37) |
+| 0.3.21 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

@@ -17,7 +17,8 @@ pub enum Op {
     /// The X column as numbers or dates (0.3.11): `format` "", "date" or "datetime"; `display` how dates are shown.
     XFormat { table: u32, format: String, display: String },
     /// Copies a table (with its data) or a graph.
-    Duplicate { id: u32 },
+    /// A copy of a table (with its graphs and results, or alone with `only`), graph, result or layout.
+    Duplicate { id: u32, #[serde(default)] only: bool },
     /// Typed values: (row, grid column, text); column -1 is the row title. Empty text clears.
     /// Cells that cannot take the text are skipped; it fails only when none could be set.
     Cells { table: u32, cells: Vec<(usize, i64, String)> },
@@ -45,7 +46,8 @@ pub enum Op {
     AddGraph { table: u32, settings: Option<Box<GraphSettings>> },
     /// Adds an analysis (its id is assigned here); with `overlay`, its fitted curves are drawn on
     /// the table's graphs (whose joining lines are switched off).
-    AddAnalysis { analysis: Box<Analysis>, overlay: bool },
+    /// A new analysis; with `overlay` it is drawn on `graph` (0.3.15: only that graph), or on every graph of its table.
+    AddAnalysis { analysis: Box<Analysis>, overlay: bool, #[serde(default)] graph: Option<u32> },
     /// Changes an analysis's data sets, options or name.
     SetAnalysis { analysis: Box<Analysis> },
     /// Shows or hides an analysis's curves on a graph.
@@ -294,6 +296,11 @@ pub fn set_letter(k: usize) -> String {
 }
 
 /// Puts text into a cell: a number, nothing, or (row titles) any text.
+#[cfg(test)]
+pub(crate) fn put_for_test(t: &mut Table, r: usize, c: i64, text: &str) -> bool {
+    put(t, r, c, text)
+}
+
 fn put(t: &mut Table, r: usize, c: i64, text: &str) -> bool {
     if r >= MAX_ROWS || c > MAX_SETS as i64 {
         return false; // beyond what a table can hold
@@ -311,6 +318,9 @@ fn put(t: &mut Table, r: usize, c: i64, text: &str) -> bool {
         widen(t, c + 1);
     }
     // A date column (0.3.11) reads dates first; a plain number there is a day count.
+    if t.cols.get(c).is_none_or(|col| col.len() <= r) {
+        t.normalize(); // never index past the columns, whatever made the table
+    }
     let date = c == 0 && !t.x_format.is_empty();
     let parsed = if date { date_number(text, DAY_FIRST.load(std::sync::atomic::Ordering::Relaxed)).or_else(|| number(text)) } else { number(text) };
     let v = if text.trim().is_empty() { None } else { match parsed { Some(v) => Some(v), None => return false } };
@@ -353,14 +363,23 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 l.name = name;
             }
         }
-        Op::Duplicate { id } => {
+        Op::Duplicate { id, only } => {
             if let Some(t) = p.table(id).cloned() {
                 let name = format!("{} copy", t.name);
                 let nid = p.add_table(Table { name, ..t }, None);
-                let gs: Vec<Graph> = p.graphs.iter().filter(|g| g.table == id).cloned().collect();
-                for g in gs {
-                    let gid = p.take_id();
-                    p.graphs.push(Graph { id: gid, table: nid, name: format!("{} copy", g.name), ..g });
+                if !only {
+                    // 0.3.15: the family comes along: graphs and results, the copied graphs drawing the copied results.
+                    let mut map = std::collections::HashMap::new();
+                    for a in p.analyses.iter().filter(|a| a.table == id).cloned().collect::<Vec<_>>() {
+                        let aid = p.take_id();
+                        map.insert(a.id, aid);
+                        p.analyses.push(Analysis { id: aid, table: nid, name: format!("{} copy", a.name), ..a });
+                    }
+                    for mut g in p.graphs.iter().filter(|g| g.table == id).cloned().collect::<Vec<_>>() {
+                        g.settings.overlays = g.settings.overlays.iter().map(|o| *map.get(o).unwrap_or(o)).collect();
+                        let gid = p.take_id();
+                        p.graphs.push(Graph { id: gid, table: nid, name: format!("{} copy", g.name), ..g });
+                    }
                 }
             } else if let Some(g) = p.graph(id).cloned() {
                 let gid = p.take_id();
@@ -521,7 +540,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             let id = p.take_id();
             p.graphs.push(Graph { id, table, name: if n == 0 { name } else { format!("{name} ({})", n + 1) }, settings: settings.map(|s| *s).unwrap_or_default() });
         }
-        Op::AddAnalysis { mut analysis, overlay } => {
+        Op::AddAnalysis { mut analysis, overlay, graph } => {
             if p.table(analysis.table).is_none() {
                 return Err("That data table no longer exists.".into());
             }
@@ -530,7 +549,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 analysis.name = format!("{} · {}", analysis.kind, p.table(analysis.table).map(|t| t.name.clone()).unwrap_or_default());
             }
             if overlay {
-                for g in p.graphs.iter_mut().filter(|g| g.table == analysis.table) {
+                for g in p.graphs.iter_mut().filter(|g| g.table == analysis.table && graph.is_none_or(|k| k == g.id)) {
                     g.settings.overlays.push(analysis.id);
                     g.settings.line = false;
                 }

@@ -37,7 +37,7 @@ Datum Plot checks for a new version when it starts. When one is ready, an **Upda
 
 ![The Home page (File › Home).](img/home.png)
 
-1. **Blank starts.** **Blank XY table and graph**: an empty XY table with its graph. **Blank XY table**: the same without a graph, to enter and analyse data only. **Blank column table**: groups side by side, without a graph, for t-tests and ANOVA. A graph can be added later with **Graph › New Graph**.
+1. **Starts.** Datum Plot opens here. **Empty project**: nothing in it yet. **Blank XY table**: a table without a graph, to enter and analyse data only. **Blank XY table and graph**: the same with its graph. **Blank column table**: groups side by side, without a graph, for t-tests and ANOVA. A graph can be added later with **Graph › New Graph**.
 2. **Samples.** A folder of small, complete projects with real-looking data, an analysis and a graph. It opens inside Home, with the samples under headings: curves and regression, comparing groups, survival and reliability, medical tests, signals and thermal analysis, maps and special graphs. Open one to see how a finished project looks, then replace the data with yours; **← Home** goes back.
 3. **The File page.** **New**, **Open**, **Import**, **Save**, **Save As**, **Export** and **Print**, and below them **Roadmap**, **Options** and **Updates**. The arrow at the top goes back to the project.
 
@@ -179,7 +179,7 @@ The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range,
 
 ### Formatting a graph
 
-Double-click any part of a graph (an axis, a data set, the title) to format it, or right-click an axis › **Format Axes**, or use **Graph › Format Axes**. There is one Format Graph window: these commands switch it to the page you asked for, and it always works on the graph you are looking at (open another graph and it follows; open a table or results and it closes). The graph's name is shown above it; in the navigator each graph's preview sits under its name (right-click › **Hide Previews** to save space).
+Double-click any part of a graph (an axis, a data set, the title) to format it, or right-click an axis › **Format Axes**, or use **Graph › Format Axes**. There is one Format Graph window: these commands switch it to the page you asked for, and it always works on the graph you are looking at (open another graph and it follows; open a table or results and it closes). The graph's name is shown above it; in the navigator each graph's preview sits under its name (right-click › **Hide Previews** to save space). Drag the navigator's right edge to widen it. The **＋** beside Graphs makes a new graph of any table or copies the open graph with its formatting; right-click a table › **Duplicate with Graphs and Results** or **Duplicate Table Only**; right-click a layout › **Copy Picture** or **Export**. In **Format Graph › Data Sets**, **Order** moves data sets along a column graph (the table keeps its order), and **Fill** and **Border** colour bars, boxes and violins.
 
 ![Format Graph, docked beside the graph.](img/format.png)
 

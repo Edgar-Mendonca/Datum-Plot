@@ -410,6 +410,9 @@ pub struct GraphSettings {
     pub sets: Vec<SetStyle>,
     /// Analyses whose fitted curves (or significance brackets) are drawn on this graph.
     pub overlays: Vec<u32>,
+    /// The order of the data sets along a column, grouped or pie graph (indices into the table's sets); empty or
+    /// missing ones follow in table order. 0.3.15: a graph's own order, the table unchanged (#23).
+    pub order: Vec<usize>,
     /// Column tables: scatter, bars, box, violin, paired or mean.
     pub column: String,
     /// Annotations drawn on the graph (text, arrows, lines, boxes), in data coordinates.
@@ -432,7 +435,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![],
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![],
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -518,11 +521,14 @@ pub struct SetStyle {
     pub width: f64,
     /// Drawn against the second Y axis on the right.
     pub right: bool,
+    /// Bars, boxes and violins (0.3.15, #20): their fill and border colours; empty = `color`.
+    pub fill: String,
+    pub edge: String,
 }
 
 impl Default for SetStyle {
     fn default() -> Self {
-        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false }
+        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new() }
     }
 }
 
@@ -576,6 +582,7 @@ impl Project {
     }
     /// Adds a table (and a graph of it); returns the table's id.
     pub fn add_table(&mut self, mut t: Table, g: Option<GraphSettings>) -> u32 {
+        t.normalize(); // 0.3.15: a table made in code had no columns yet, so typing in it failed (#26)
         t.id = self.take_id();
         let id = t.id;
         if self.tables.iter().any(|x| x.name == t.name) || t.name.is_empty() {
@@ -616,6 +623,7 @@ impl Project {
             (s.width, s.height, s.font_size, s.cap) = (fit(s.width, 10.0, 1000.0, 80.0), fit(s.height, 10.0, 1000.0, 60.0), fit(s.font_size, 4.0, 96.0, 10.0), fit(s.cap, 0.0, 20.0, 3.0));
             (s.elev, s.azim, s.levels, s.offset) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200), fit(s.offset, 0.0, 1e12, 0.0));
             s.notes.truncate(500);
+            s.order.truncate(1000);
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
             }

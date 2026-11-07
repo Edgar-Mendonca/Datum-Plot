@@ -6,8 +6,8 @@ abstract: "Scientific graphs, statistics, regression and curve fitting in one ap
 authors:
   - family-names: "Mendonca"
     given-names: "Edgar"
-version: "0.3.14"
-date-released: 2026-11-03
+version: "0.3.15"
+date-released: 2026-11-07
 license: MIT
 repository-code: "https://github.com/Edgar-Mendonca/Datum-Plot"
 url: "https://github.com/Edgar-Mendonca/Datum-Plot"

@@ -276,12 +276,13 @@ fn templates() -> Vec<templates::Tpl> {
 fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     // 0.3.13: three blank starts on Home: an XY table with its graph, an XY table alone, a column table alone.
-    let blank = matches!(template.as_deref(), None | Some("table") | Some("column"));
+    let blank = matches!(template.as_deref(), None | Some("table") | Some("column") | Some("empty"));
     let mut p = if blank {
         let mut p = Project::new("Project1");
         match template.as_deref() {
             Some("table") => p.add_table(a.opts.table(), None),
             Some("column") => p.add_table(Table::column(3), None),
+            Some("empty") => 0,
             _ => p.add_table(a.opts.table(), Some(a.opts.graph())),
         };
         p
@@ -545,6 +546,19 @@ async fn copy_graph(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<(
     app.clipboard().write_image(&img).map_err(|e| format!("Could not copy the picture: {e}"))
 }
 
+/// Copies a whole page layout as a picture (0.3.15, #28).
+#[tauri::command]
+async fn copy_page(app: AppHandle, st: State<'_, St>, id: u32, dpi: u32) -> R<()> {
+    let mut q = page_req(&st, id)?;
+    q["fmt"] = json!("png");
+    q["dpi"] = json!(dpi.clamp(72, 600));
+    let h = app.clone();
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &q)).await.map_err(|e| e.to_string())??;
+    let png = base64_decode(r["data"].as_str().unwrap_or(""))?;
+    let img = tauri::image::Image::from_bytes(&png).map_err(|e| format!("Could not read the picture: {e}"))?;
+    app.clipboard().write_image(&img).map_err(|e| format!("Could not copy the picture: {e}"))
+}
+
 #[tauri::command]
 fn copy_text(app: AppHandle, text: String) -> R<()> {
     app.clipboard().write_text(text).map_err(|e| e.to_string())
@@ -774,8 +788,8 @@ fn main() {
             }
             let opts: Options = options_file(app.handle()).and_then(|f| read_small(&f)).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             datum_core::doc::DAY_FIRST.store(opts.date_order != "mdy", std::sync::atomic::Ordering::Relaxed);
-            let mut p = Project::new("Project1");
-            p.add_table(opts.table(), Some(opts.graph()));
+            // 0.3.15 (#26): the app opens on Home with an empty project; a start or a sample fills it.
+            let p = Project::new("Project1");
             app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0 })));
             app.manage(Engine(Mutex::new(Py::default())));
             app.manage(Calc(Mutex::new(Py::default())));
@@ -803,7 +817,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())

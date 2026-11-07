@@ -47,26 +47,30 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.15",
-      "title": "Wavelets",
+      "v": "0.3.16",
+      "title": "Organising projects",
       "when": "Next",
       "items": [
-        "Wavelet transforms and short-time spectra"
-      ]
-    },
-    {
-      "v": "0.3.16",
-      "title": "Images",
-      "when": "Soon",
-      "items": [
-        "Graph digitizer and image tools"
+        "Select several items at once",
+        "Folders and coloured names in the navigator",
+        "A view of one table with its graphs and results"
       ]
     },
     {
       "v": "0.3.17–0.3.18",
-      "title": "Bayes, Mac and Linux",
+      "title": "Small screens and signals",
+      "when": "Soon",
+      "items": [
+        "A ribbon that fits laptop screens",
+        "Wavelet transforms and short-time spectra"
+      ]
+    },
+    {
+      "v": "0.3.19–0.3.21",
+      "title": "Images, Bayes, Mac and Linux",
       "when": "Later",
       "items": [
+        "Graph digitizer and image tools",
         "Bayesian tests",
         "Mac and Linux versions"
       ]

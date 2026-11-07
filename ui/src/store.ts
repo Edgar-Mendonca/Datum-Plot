@@ -1,6 +1,6 @@
 // Window state: the open project, the item shown (Info, a table or a graph), menus, dialogs, toasts.
 import { createSignal, batch, JSX } from "solid-js";
-import { invoke, Out, Options, Table, Graph, Analysis } from "./api";
+import { invoke, Out, Options, Table, Graph, Analysis, Layout } from "./api";
 
 export const [out, setOutRaw] = createSignal<Out | null>(null);
 export const [tick, setTick] = createSignal(0);
@@ -34,6 +34,7 @@ export const setThumbs = (v: boolean) => { setThumbsRaw(v); try { localStorage.s
 export const table = (): Table | undefined => item().s === "data" ? out()?.project.tables.find(t => t.id === item().id) : undefined;
 export const graph = (): Graph | undefined => item().s === "graphs" ? out()?.project.graphs.find(g => g.id === item().id) : undefined;
 export const analysis = (): Analysis | undefined => item().s === "results" ? out()?.project.analyses?.find(a => a.id === item().id) : undefined;
+export const layout = (): Layout | undefined => item().s === "layouts" ? out()?.project.layouts?.find(l => l.id === item().id) : undefined;
 /** The table behind what is shown: the table itself, or the graph's or the result's data. */
 export const curTable = (): Table | undefined => table() ?? out()?.project.tables.find(t => t.id === (graph()?.table ?? analysis()?.table));
 export const open = (s: Section, id = 0) => {
