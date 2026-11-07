@@ -2,10 +2,12 @@
 
 ## 0.3.19 — 2026-11-07
 
-Embedded graphs: the first fix from testing.
+Embedded graphs: the fixes from testing.
 
+- **Double-clicking an embedded graph works.** In 0.3.18 it failed ("the server application … returned an unknown error", or nothing at all): Datum Plot started and read the graph, but could not reach its window from the thread the document called on. Every call from the document now comes to the window's thread.
 - Double-clicking an embedded graph in a document opens Datum Plot **on that graph**, with the bar "Editing a graph embedded in …" and its **Update** button. In 0.3.18 the window could open on the Home page instead, hiding the graph and the bar.
 - The bar now stands out (teal, with a white Update button), and **Graph › Share › Update Document** does the same.
+- **Help › Check Embedded Graphs** starts Datum Plot the way a document does and says what happened, step by step; every step is also written to `embed.log` in Datum Plot's data folder, for reporting a problem.
 
 ## 0.3.18 — 2026-11-07
 

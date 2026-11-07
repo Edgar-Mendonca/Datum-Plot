@@ -249,6 +249,7 @@ Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .o
 - **Copy Picture** (Copier l’image) reste le choix simple : une image sans lien avec Datum Plot.
 - Sur Mac ou dans un navigateur, le graphique incorporé s’affiche comme une image et ne peut pas être ouvert.
 - Le document montre le premier graphique de la fenêtre.
+- Si un double-clic ne fait rien, **Help › Check Embedded Graphs** (Aide › Vérifier les graphiques incorporés) fait le test et dit ce qui ne va pas.
 
 ### Impression
 

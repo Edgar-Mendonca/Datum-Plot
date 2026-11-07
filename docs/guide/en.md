@@ -249,6 +249,7 @@ Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenD
 - **Copy Picture** stays the simple choice: a picture that is not linked to Datum Plot.
 - On a Mac, or in a browser, the embedded graph shows as its picture and cannot be opened.
 - The first graph of the window is the one the document shows.
+- If double-clicking does nothing, **Help › Check Embedded Graphs** tests it and says what went wrong.
 
 ### Print
 

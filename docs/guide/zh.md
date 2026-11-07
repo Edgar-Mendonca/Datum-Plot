@@ -249,6 +249,7 @@ XY 图表也可以绘制成极坐标图（**Format Graph › Graph › Polar**�
 - **Copy Picture**（复制为图片）仍是简单的选择：一张不与 Datum Plot 关联的图片。
 - 在 Mac 上或浏览器中，嵌入的图表显示为图片，无法打开。
 - 文档显示的是窗口中的第一张图表。
+- 如果双击没有反应，**Help › Check Embedded Graphs**（帮助 › 检查嵌入式图表）会进行测试并说明问题所在。
 
 ### 打印
 
