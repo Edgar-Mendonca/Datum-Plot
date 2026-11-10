@@ -495,3 +495,12 @@ fn an_embedded_graph_keeps_its_table_and_drawn_analyses() {
     assert_eq!(back.graphs[0].settings, g.settings, "the document's copy opens as it was");
     assert!(p.graph_only(999_999).is_none());
 }
+
+#[test]
+fn break_position_and_ticks_are_kept_and_checked() {
+    let p = Project::from_json(r#"{"name":"b","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"y":{"breakFrom":10,"breakTo":90,"breakRatio":7,"breakStep":-1},"x":{"breakRatio":0.25,"breakStep":5},"legend":{"groups":true}}}],"nextId":3}"#).unwrap();
+    let s = &p.graphs[0].settings;
+    assert_eq!((s.y.break_ratio, s.y.break_step), (Some(0.9), None), "kept within 10–90 %, no negative step");
+    assert_eq!((s.x.break_ratio, s.x.break_step, s.legend.groups), (Some(0.25), Some(5.0), true));
+    assert!(!Project::from_json(r#"{"name":"o","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{}}],"nextId":3}"#).unwrap().graphs[0].settings.legend.groups, "older graphs: no group legend");
+}

@@ -101,6 +101,10 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     JSON.stringify(await p.$$eval('.dlg .setfmt input[type="color"]', is => is.map(i => i.value.toUpperCase()))) === JSON.stringify(render.colors.map(c => c.toUpperCase()))
     && (await p.$$eval(".dlg .setfmt tbody tr:first-child .swset button", bs => bs.map(b => b.title))).join() === "#0072B2,#E69F00,#009E73,#D55E00,#CC79A7,#56B4E9,#F0E442,#000000", JSON.stringify(render.colors));
   check("Data Sets can go on a right Y axis", ((await p.textContent(".dlg .setfmt thead")) || "").includes("Right Y"));
+  // 0.3.20 (#35): Ctrl+Z and Ctrl+Y work while Format Graph is open (it is docked beside the graph).
+  await reset();
+  await p.locator(".dlg .dtabs").click(); await p.keyboard.press("Control+z"); await p.keyboard.press("Control+y"); await p.waitForTimeout(150);
+  check("Ctrl+Z and Ctrl+Y undo and redo with Format Graph open", (await calls("history")).length === 2, JSON.stringify(await calls("history")));
   check("Format Graph is docked so the graph stays visible", await p.evaluate(() => { const d = document.querySelector(".dlg").getBoundingClientRect(), g = document.querySelector(".gpaper").getBoundingClientRect(); return g.right <= d.left + 1; }));
   // 0.3.12 (testers): one Format Graph window that switches page; right-click › Format Axes opens the axis clicked.
   const [, gy0] = render.plot, pl = await p.evaluate(() => { const r = document.querySelector(".gpaper").getBoundingClientRect(); return [r.left, r.top]; });  // the graph moved aside for the docked window

@@ -72,8 +72,10 @@ const App = () => {
     } catch (e) { toast(String(e)); }
   });
   const keys = (e: KeyboardEvent) => {
-    const ctrl = e.ctrlKey || e.metaKey, k = e.key.toLowerCase(), typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
-    if (dialogs().length) return;
+    const t = e.target, ctrl = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+    const typing = (t instanceof HTMLInputElement && !["checkbox", "color", "radio", "range", "button"].includes(t.type)) || t instanceof HTMLTextAreaElement || (t instanceof HTMLElement && t.isContentEditable);
+    // 0.3.20 (#35): docked panels (Format Graph, Colour Schemes) leave the shortcuts on; a window in the middle does not.
+    if (dialogs().length && (document.querySelector(".ov:not(.dock)") || !(ctrl && ["z", "y", "s"].includes(k)))) return;
     if ((ctrl && k === "k") || (e.altKey && k === "q")) { e.preventDefault(); palette(); }
     else if (ctrl && k === "s") { e.preventDefault(); C.save(e.shiftKey); }
     else if (ctrl && k === "o") { e.preventDefault(); C.open(); }

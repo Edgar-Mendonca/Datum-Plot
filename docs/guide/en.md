@@ -175,7 +175,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 3. **Style.** Ready-made **Styles** for journals and presentations, **Copy Look** to other graphs, and **Colour Schemes** (including colour-blind-safe ones).
 4. **Share.** **Export**, **Copy Picture** (paste straight into a document or slides), **Copy Embedded** (a graph the document can open again in Datum Plot) and **Print**.
 
-The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range, or the median with its interquartile range, range or 95% CI), show **Each Replicate**, connect points, show the legend, set the **Size** and add a curve fit, significance stars or annotations.
+The other groups set the **Error Bars** (the mean with SD, SEM, 95% CI or range, or the median with its interquartile range, range or 95% CI), show **Each Replicate**, connect points, show the legend (on a column graph it names each group by its colour), set the **Size** and add a curve fit, significance stars or annotations. With an **Axis Break**, **Format Graph › Y Axis** also sets how much of the axis each part takes and the ticks beyond the break.
 
 ### Formatting a graph
 
@@ -249,6 +249,7 @@ Choose the file type in the Save dialog. The .ods, .odt and .odp files are OpenD
 - **Copy Picture** stays the simple choice: a picture that is not linked to Datum Plot.
 - On a Mac, or in a browser, the embedded graph shows as its picture and cannot be opened.
 - The first graph of the window is the one the document shows.
+- In a word processor, paste with **Paste Special › Datum Plot Graph Object** (a plain paste may give a picture).
 - If double-clicking does nothing, **Help › Check Embedded Graphs** tests it and says what went wrong.
 
 ### Print

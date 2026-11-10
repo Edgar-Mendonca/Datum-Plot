@@ -47,24 +47,23 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.19",
-      "title": "Embedded graphs",
+      "v": "0.3.21",
+      "title": "Wavelets",
       "when": "Next",
       "items": [
-        "Fixes from trials in office suites"
+        "Wavelet transforms and short-time spectra"
       ]
     },
     {
-      "v": "0.3.20–0.3.21",
-      "title": "Signals and images",
+      "v": "0.3.22",
+      "title": "Images",
       "when": "Soon",
       "items": [
-        "Wavelet transforms and short-time spectra",
         "Graph digitizer and image tools"
       ]
     },
     {
-      "v": "0.3.22–0.3.23",
+      "v": "0.3.23–0.3.24",
       "title": "Bayes, Mac and Linux",
       "when": "Later",
       "items": [

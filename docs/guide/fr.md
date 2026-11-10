@@ -175,7 +175,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 3. **Style** (Style). Des **Styles** (Styles) prêts à l’emploi pour les revues et les présentations, **Copy Look** (Copier l’apparence) vers d’autres graphiques, et **Colour Schemes** (Jeux de couleurs, dont certains adaptés aux daltoniens).
 4. **Share** (Partager). **Export** (Exporter), **Copy Picture** (Copier l’image, à coller directement dans un document ou des diapositives), **Copy Embedded** (Copier en objet incorporé : un graphique que le document peut rouvrir dans Datum Plot) et **Print** (Imprimer).
 
-Les autres groupes règlent les **Error Bars** (Barres d’erreur : la moyenne avec SD, SEM, IC à 95 % ou étendue, ou la médiane avec l’écart interquartile, l’étendue ou un IC à 95 %), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende, fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations.
+Les autres groupes règlent les **Error Bars** (Barres d’erreur : la moyenne avec SD, SEM, IC à 95 % ou étendue, ou la médiane avec l’écart interquartile, l’étendue ou un IC à 95 %), affichent **Each Replicate** (Chaque réplicat), relient les points, affichent la légende (sur un graphique en colonnes, elle nomme chaque groupe par sa couleur), fixent la **Size** (Taille) et ajoutent un ajustement de courbe, des étoiles de significativité ou des annotations. Avec un **Axis Break** (Coupure d’axe), **Format Graph › Y Axis** (Mettre en forme › Axe Y) règle aussi la part de l’axe de chaque côté de la coupure et les graduations au-delà.
 
 ### Mettre en forme un graphique
 
@@ -249,6 +249,7 @@ Choisissez le type de fichier dans la boîte d’enregistrement. Les fichiers .o
 - **Copy Picture** (Copier l’image) reste le choix simple : une image sans lien avec Datum Plot.
 - Sur Mac ou dans un navigateur, le graphique incorporé s’affiche comme une image et ne peut pas être ouvert.
 - Le document montre le premier graphique de la fenêtre.
+- Dans un traitement de texte, collez avec **Paste Special › Datum Plot Graph Object** (Collage spécial ; un collage simple peut donner une image).
 - Si un double-clic ne fait rien, **Help › Check Embedded Graphs** (Aide › Vérifier les graphiques incorporés) fait le test et dit ce qui ne va pas.
 
 ### Impression

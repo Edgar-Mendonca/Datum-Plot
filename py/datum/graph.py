@@ -260,6 +260,22 @@ def thin(xs, ys, n=2000):
     return x[keep], y[keep]
 
 
+def break_shares(a, short_first):
+    """0.3.20 (#34): the axis shares of the two panels of a broken axis. `breakRatio` is the share of the main part
+    (below the gap on Y, before it on X), 0.1–0.9; by default 2.2 : 1 as before."""
+    r = a.get("breakRatio")
+    r = min(0.9, max(0.1, float(r))) if isinstance(r, (int, float)) else 2.2 / 3.2
+    return [1 - r, r] if short_first else [r, 1 - r]
+
+
+def break_ticks(other, a, axis):
+    """Major ticks of the panel beyond the gap (`breakStep`; the main panel follows the axis' own step)."""
+    st = a.get("breakStep")
+    lo, hi = other.get_ylim() if axis == "yaxis" else other.get_xlim()
+    if isinstance(st, (int, float)) and st > 0 and abs(hi - lo) / st <= 200:  # never thousands of ticks
+        getattr(other, axis).set_major_locator(MultipleLocator(st))
+
+
 def with_break(fig, ax, graph, frame, size, draw):
     """`draw(ax)` with a break in the Y axis when one is set: the graph drawn twice, a short panel above
     the gap and a tall one below (column, grouped and nested graphs; XY graphs have their own)."""
@@ -268,7 +284,7 @@ def with_break(fig, ax, graph, frame, size, draw):
     if bf is None or bt is None or bt <= bf or ya.get("scale") == "log" or graph.get("column") in ("heatmap", "percent"):
         return draw(ax)
     fig.clear()
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 2.2], hspace=0.04)
+    gs = fig.add_gridspec(2, 1, height_ratios=break_shares(ya, True), hspace=0.04)
     top = fig.add_subplot(gs[0])
     ax = fig.add_subplot(gs[1], sharex=top)
     for a_ in (top, ax):
@@ -283,6 +299,7 @@ def with_break(fig, ax, graph, frame, size, draw):
     lo = ax.get_ylim()[0]
     ax.set_ylim(lo, bf)
     top.set_ylim(bt, max(top.get_ylim()[1], bt + (bf - lo) * 0.2))
+    break_ticks(top, ya, "yaxis")
     top.set_xlabel(""); top.set_ylabel("")
     top.spines["bottom"].set_visible(False); ax.spines["top"].set_visible(False)
     top.tick_params(axis="x", which="both", bottom=False, labelbottom=False, top=False)
@@ -403,7 +420,7 @@ def build(table, graph, overlays=(), fig=None):
     if broken:
         # An axis break: the same data in a short top panel (above the gap) and a tall bottom one (below it).
         fig.clear()
-        gs = fig.add_gridspec(2, 1, height_ratios=[1, 2.2], hspace=0.04)
+        gs = fig.add_gridspec(2, 1, height_ratios=break_shares(ya, True), hspace=0.04)
         top = fig.add_subplot(gs[0])
         ax = fig.add_subplot(gs[1], sharex=top)
         for a_ in (top, ax):
@@ -417,6 +434,7 @@ def build(table, graph, overlays=(), fig=None):
         lo = ax.get_ylim()[0]
         ax.set_ylim(lo, bf)
         top.set_ylim(bt, max(top.get_ylim()[1], bt + (bf - lo) * 0.2))
+        break_ticks(top, ya, "yaxis")
         top.set_xlabel(""); top.set_ylabel("")
         top.spines["bottom"].set_visible(False); ax.spines["top"].set_visible(False)
         top.tick_params(axis="x", which="both", bottom=False, labelbottom=False, top=False)
@@ -435,7 +453,7 @@ def build(table, graph, overlays=(), fig=None):
     if xf is not None and xt is not None and xt > xf and xa.get("scale") != "log" and not right:
         # An X axis break: a wide left panel (before the gap) and a narrow right one (after it).
         fig.clear()
-        gs = fig.add_gridspec(1, 2, width_ratios=[2.2, 1], wspace=0.04)
+        gs = fig.add_gridspec(1, 2, width_ratios=break_shares(xa, False), wspace=0.04)
         ax = fig.add_subplot(gs[0])
         rt = fig.add_subplot(gs[1], sharey=ax)
         for a_ in (ax, rt):
@@ -449,6 +467,7 @@ def build(table, graph, overlays=(), fig=None):
         lo = ax.get_xlim()[0]
         ax.set_xlim(lo, xf)
         rt.set_xlim(xt, max(rt.get_xlim()[1], xt + (xf - lo) * 0.2))
+        break_ticks(rt, xa, "xaxis")
         rt.set_xlabel(""); rt.set_ylabel("")
         rt.spines["left"].set_visible(False); ax.spines["right"].set_visible(False)
         rt.tick_params(axis="y", which="both", left=False, labelleft=False, right=False)
@@ -651,7 +670,29 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
         draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
     if not points:
         ax.text(0.5, 0.5, "Enter values in the data table", transform=ax.transAxes, ha="center", va="center", color="#8D9AAB")
-    return fig, ax, None, points
+    return fig, ax, group_legend(ax, table, graph, [k for k, *_ in data], colors, kind) if points else None, points
+
+
+def group_legend(ax, table, graph, ks, colors, kind):
+    """0.3.20 (#36): a column graph's legend: each group's colour (a filled box for bars, boxes and violins, its
+    symbol otherwise). Off until switched on (`legend.groups`), so graphs made before stay as they were."""
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    lg = graph.get("legend") or {}
+    if not (lg.get("groups") and lg.get("show", True) and ks):
+        return None
+    handles = []
+    for k in ks:
+        st = style_of(graph, k, colors)
+        if kind in ("bars", "box", "violin"):
+            handles.append(Patch(facecolor=st["fill"], alpha=0.35 if kind != "bars" or st["filled"] else 1, edgecolor=st["edge"], linewidth=1.2))
+        else:
+            handles.append(Line2D([], [], linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"], color=st["color"],
+                                  markerfacecolor=st["color"] if st["filled"] else "white"))
+    labels = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in ks]
+    if lg.get("loc") == "outside":
+        return ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
+    return ax.legend(handles, labels, loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
 
 
 def parts_figure(fig, ax, table, graph, size):

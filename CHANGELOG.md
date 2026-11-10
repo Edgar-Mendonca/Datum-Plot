@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.20 — 2026-11-10
+
+Users' requests.
+
+**Undo from the keyboard**
+- **Ctrl+Z** and **Ctrl+Y** undo and redo while Format Graph or Colour Schemes is open, and after changing a colour, a box or a list. In a text box they still undo your typing.
+
+**Legends on column graphs**
+- Column graphs (scatter, bars, box, violin, mean) can show a legend of their groups, with each group's colour or symbol: **Legend** in the ribbon, or **Format Graph › Graph › Legend › Show**, in the corner you choose or outside. Graphs made before keep no legend until you switch it on.
+
+**Axis breaks where you want them**
+- **Format Graph › Y Axis** (and X Axis on XY graphs): with a break set, choose how much of the axis the part below (or before) the break takes, such as 25 % or 70 %, and the **ticks beyond the break**, separately from the main part.
+
+**Embedded graphs in a word processor**
+- The guide now says it: paste with **Paste Special › Datum Plot Graph Object** (a plain paste may give a picture).
+
 ## 0.3.19 — 2026-11-07
 
 Embedded graphs: the fixes from testing.

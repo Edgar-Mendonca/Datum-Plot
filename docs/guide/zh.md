@@ -175,7 +175,7 @@ Analyze 选项卡的其他组可以直接启动一项分析：**Statistics**（�
 3. **Style**（样式）。适用于期刊和演示文稿的现成 **Styles**（样式），**Copy Look**（复制外观）到其他图表，以及 **Colour Schemes**（配色方案，包括色盲友好的配色）。
 4. **Share**（共享）。**Export**（导出）、**Copy Picture**（复制为图片，可直接粘贴到文档或幻灯片中）、**Copy Embedded**（嵌入式复制：文档可以在 Datum Plot 中再次打开的图表）和 **Print**（打印）。
 
-其他组用于设置 **Error Bars**（误差线：均值加 SD、SEM、95% CI 或范围，或中位数加四分位距、范围或 95% CI）、显示 **Each Replicate**（每个重复值）、连接数据点、显示图例、设置 **Size**（尺寸），以及添加拟合曲线、显著性星号或注释。
+其他组用于设置 **Error Bars**（误差线：均值加 SD、SEM、95% CI 或范围，或中位数加四分位距、范围或 95% CI）、显示 **Each Replicate**（每个重复值）、连接数据点、显示图例（在柱状图上按颜色标出各组）、设置 **Size**（尺寸），以及添加拟合曲线、显著性星号或注释。使用 **Axis Break**（坐标轴断开）时，**Format Graph › Y Axis**（设置图表格式 › Y 轴）还可设置断开处两侧各占坐标轴的比例，以及断开处另一侧的刻度间隔。
 
 ### 设置图表格式
 
@@ -249,6 +249,7 @@ XY 图表也可以绘制成极坐标图（**Format Graph › Graph › Polar**�
 - **Copy Picture**（复制为图片）仍是简单的选择：一张不与 Datum Plot 关联的图片。
 - 在 Mac 上或浏览器中，嵌入的图表显示为图片，无法打开。
 - 文档显示的是窗口中的第一张图表。
+- 在文字处理程序中，请用 **Paste Special › Datum Plot Graph Object**（选择性粘贴 › Datum Plot Graph Object）粘贴（直接粘贴可能得到图片）。
 - 如果双击没有反应，**Help › Check Embedded Graphs**（帮助 › 检查嵌入式图表）会进行测试并说明问题所在。
 
 ### 打印

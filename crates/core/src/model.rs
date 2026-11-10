@@ -447,11 +447,14 @@ pub struct Legend {
     pub show: bool,
     /// best, upper left, upper right, lower left, lower right or outside.
     pub loc: String,
+    /// 0.3.20 (#36): column graphs show a legend of their groups only when this is on (off: graphs made before
+    /// 0.3.20, which had `show` on but no legend, stay as they were).
+    pub groups: bool,
 }
 
 impl Default for Legend {
     fn default() -> Self {
-        Self { show: true, loc: "best".into() }
+        Self { show: true, loc: "best".into(), groups: false }
     }
 }
 
@@ -472,6 +475,10 @@ pub struct Axis {
     /// Y axis break: the values from `break_from` to `break_to` are cut out (both set and from < to).
     pub break_from: Option<f64>,
     pub break_to: Option<f64>,
+    /// 0.3.20 (#34): the share of the axis below (Y) or before (X) the break, 0.1–0.9; none = 2.2 : 1.
+    pub break_ratio: Option<f64>,
+    /// 0.3.20 (#34): major ticks above (Y) or after (X) the break; none = automatic.
+    pub break_step: Option<f64>,
     /// Date X axes: tick labels ("" or auto, daymonth, monthyear, iso, week). Kept since 0.3.12 (0.3.11 lost it).
     pub dates: String,
     /// Date X axes (0.3.12): major tick every "d1", "w1", "w2", "m1", "m3" or "y1"; "" automatic.
@@ -480,7 +487,7 @@ pub struct Axis {
 
 impl Default for Axis {
     fn default() -> Self {
-        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None, dates: String::new(), date_step: String::new() }
+        Self { title: String::new(), scale: "lin".into(), auto: true, min: None, max: None, step: None, minor: false, grid: false, break_from: None, break_to: None, break_ratio: None, break_step: None, dates: String::new(), date_step: String::new() }
     }
 }
 
@@ -634,6 +641,10 @@ impl Project {
             (s.elev, s.azim, s.levels, s.offset) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200), fit(s.offset, 0.0, 1e12, 0.0));
             s.notes.truncate(500);
             s.order.truncate(1000);
+            for a in [&mut s.x, &mut s.y, &mut s.y2] {
+                a.break_ratio = a.break_ratio.filter(|r| r.is_finite()).map(|r| r.clamp(0.1, 0.9));
+                a.break_step = a.break_step.filter(|v| v.is_finite() && *v > 0.0);
+            }
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
             }

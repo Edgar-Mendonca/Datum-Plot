@@ -205,7 +205,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             }
             p.name = "Two factors".into();
             p.info = Info { title: "Alloy and heat treatment".into(), experiment: "Yield strength of three aluminium alloys as received and after ageing, three specimens each. Two-way ANOVA: does ageing help, does the alloy matter, and does ageing help every alloy equally (interaction)? Šidák comparisons within each alloy give the stars.".into(), ..Default::default() };
-            let id = p.add_table(t, Some(GraphSettings { column: "bars".into(), points: "each".into(), legend: Legend { show: true, loc: "upper left".into() }, ..g }));
+            let id = p.add_table(t, Some(GraphSettings { column: "bars".into(), points: "each".into(), legend: Legend { show: true, loc: "upper left".into(), ..Default::default() }, ..g }));
             let aid = p.take_id();
             p.analyses.push(Analysis { id: aid, table: id, name: "Two-way ANOVA".into(), kind: "twoway".into(), sets: vec![], options: serde_json::json!({ "posthoc": "sidak", "compare": "rows", "rowname": "Alloy", "colname": "Treatment", "brackets": "sig" }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);

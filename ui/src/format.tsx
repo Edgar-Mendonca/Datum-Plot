@@ -62,7 +62,12 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
       <Show when={a().scale === "lin" && !isDate()}><label>Major ticks every</label><input type="number" placeholder="Automatic" value={a().step ?? ""} onChange={e => put({ step: num(e.currentTarget.value) && num(e.currentTarget.value)! > 0 ? num(e.currentTarget.value) : null })} /></Show>
       <label>Ticks and grid</label><span class="inline"><Check label="Minor ticks" value={a().minor} set={v => put({ minor: v })} /><Check label="Gridlines" value={a().grid} set={v => put({ grid: v })} /></span>
       <Show when={breaks()} fallback={<Show when={p.k !== "y2"}><label>Axis break</label><span class="muted">{a().scale !== "lin" ? "Breaks need a linear axis." : "Breaks are for the Y axis of XY, column, grouped and nested graphs, and the X axis of XY graphs."}</span></Show>}><label>Axis break</label><span class="inline"><span class="muted">leave out from</span><input type="number" style={{ width: "90px" }} value={a().breakFrom ?? ""} onChange={e => put({ breakFrom: num(e.currentTarget.value) })} />
-        <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span></Show>
+        <span class="muted">to</span><input type="number" style={{ width: "90px" }} value={a().breakTo ?? ""} onChange={e => put({ breakTo: num(e.currentTarget.value) })} /><span class="muted">empty = no break</span></span>
+        <Show when={a().breakFrom != null && a().breakTo != null}>
+          <label>Break position</label><span class="inline"><span class="muted">{p.k === "x" ? "the part before the break takes" : "the part below the break takes"}</span>
+            <input type="number" min="10" max="90" step="5" style={{ width: "70px" }} placeholder="69" value={a().breakRatio != null ? Math.round(a().breakRatio! * 100) : ""} onChange={e => { const v = num(e.currentTarget.value); put({ breakRatio: v === null ? null : Math.min(90, Math.max(10, v)) / 100 }); }} /><span class="muted">% of the axis</span></span>
+          <label>Ticks beyond the break</label><span class="inline"><input type="number" style={{ width: "90px" }} placeholder="Automatic" value={a().breakStep ?? ""} onChange={e => { const v = num(e.currentTarget.value); put({ breakStep: v !== null && v > 0 ? v : null }); }} /><span class="muted">{p.k === "x" ? "after the break; before it, Major ticks every above" : "above the break; below it, Major ticks every above"}</span></span>
+        </Show></Show>
     </div>;
   };
   /** 0.3.15 (#20, #23): lines belong to XY-like graphs; the others take fill and border colours and their own order. */
@@ -163,7 +168,7 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             <label>Font</label><span class="inline"><Pick value={s().font} set={v => set(x => { x.font = v; })} options={FONTS} /><input type="number" min="5" max="36" step="0.5" style={{ width: "64px" }} value={s().fontSize} onChange={e => set(x => { x.fontSize = +e.currentTarget.value; })} /><span class="muted">pt</span>
               <Check label="Bold axis titles" value={s().boldTitles} set={v => set(x => { x.boldTitles = v; })} /></span>
             <label>Axes</label><Pick value={s().style} set={v => set(x => { x.style = v; })} options={[["prism", "Open (left and bottom, ticks out)"], ["frame", "Framed box (ticks in)"]]} />
-            <label>Legend</label><span class="inline"><Check label="Show" value={s().legend.show} set={v => set(x => { x.legend.show = v; })} />
+            <label>Legend</label><span class="inline"><Check label="Show" value={t()?.kind === "column" ? !!s().legend.groups : s().legend.show} set={v => set(x => { if (t()?.kind === "column") { x.legend.groups = v; if (v) x.legend.show = true; } else x.legend.show = v; })} />
               <Pick value={s().legend.loc} set={v => set(x => { x.legend.loc = v; })} options={[["best", "Best place"], ["upper left", "Top left"], ["upper right", "Top right"], ["lower left", "Bottom left"], ["lower right", "Bottom right"], ["outside", "Outside, right"]]} /></span>
           </div>
         </Show>

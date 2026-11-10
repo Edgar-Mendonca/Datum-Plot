@@ -7,6 +7,8 @@ import sys
 import tempfile
 import unittest
 
+import matplotlib
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 from datum import graph, stats  # noqa: E402
@@ -158,6 +160,32 @@ class OrderAndColours(unittest.TestCase):
         svg = graph.render(self.T, {"column": "bars", "sets": [{"fill": "#abcdef", "edge": "#123456"}]})["svg"].lower()
         self.assertIn("#abcdef", svg)
         self.assertIn("#123456", svg)
+
+
+class LegendAndBreak(unittest.TestCase):
+    """0.3.20: column graphs show their groups' legend when it is on (#36); a break's position and ticks (#34)."""
+    T = {"name": "T", "kind": "column", "rows": 3, "sets": [{"title": t, "entry": "rep", "reps": 1} for t in ("Alpha", "Beta")],
+         "cols": [[None] * 3, [1, 2, 3], [20, 30, 40]], "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+    def test_column_legend_only_when_switched_on(self):
+        for kind in ("bars", "scatter", "box", "violin"):
+            on = graph.render(self.T, {"column": kind, "legend": {"show": True, "loc": "lower left", "groups": True}})
+            off = graph.render(self.T, {"column": kind, "legend": {"show": True, "loc": "lower left"}})
+            self.assertIsNotNone(on["legend"], kind)
+            self.assertIsNone(off["legend"], "graphs made before 0.3.20 stay as they were")
+
+    def test_break_shares_and_ticks(self):
+        self.assertEqual(graph.break_shares({"breakRatio": 0.75}, True), [0.25, 0.75])
+        self.assertEqual([round(v, 9) for v in graph.break_shares({"breakRatio": 5}, False)], [0.9, 0.1], "kept within 10–90 %")
+        g = {"column": "bars", "y": {"breakFrom": 5, "breakTo": 15, "breakRatio": 0.3, "breakStep": 5}}
+        r = graph.render(self.T, g)
+        self.assertIn("<svg", r["svg"])
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, *_ = graph.figure(self.T, g)
+        top, low = sorted(fig.axes, key=lambda a: -a.get_position().y0)[:2]
+        share = low.get_position().height / (low.get_position().height + top.get_position().height)
+        self.assertAlmostEqual(share, 0.3, delta=0.04)
+        self.assertTrue(all(abs(t % 5) < 1e-9 for t in top.get_yticks()), "ticks every 5 above the break")
 
 
 class Worker(unittest.TestCase):
