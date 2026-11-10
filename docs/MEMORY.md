@@ -452,7 +452,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ### 2026-11-10: Session 14 (0.3.20)
 - The user asked to check new GitHub issues (#34–#37, one tester presenting Datum Plot to their team on the 17th). Found: #35 every shortcut was off while any dialog was open, docked Format Graph included (and colour pickers counted as typing); #36 column graphs never drew a legend (the tester's screenshot: bars with Legend › Show on); #34 break position fixed at 2.2 : 1; #37 a question (reply drafted for the user). The user agreed to group legends off by default.
-- **0.3.20**: the three fixes; tests (Python: group legend on/off for four column styles, break shares and ticks; core: break fields clamped, older files without group legend; UI: Ctrl+Z/Ctrl+Y with Format Graph open). Roadmap moved by one (wavelets 0.3.21 … Mac and Linux 0.3.24).
+- **0.3.20** (released after CI green on Linux, Windows and macOS; installer, three guides, SHA256SUMS): the three fixes; tests (Python: group legend on/off for four column styles, break shares and ticks; core: break fields clamped, older files without group legend; UI: Ctrl+Z/Ctrl+Y with Format Graph open). Roadmap moved by one (wavelets 0.3.21 … Mac and Linux 0.3.24).
 ---
 
 ## 5. Known limits and next steps
