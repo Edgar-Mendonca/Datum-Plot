@@ -47,7 +47,7 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.21",
+      "v": "0.3.22",
       "title": "Wavelets",
       "when": "Next",
       "items": [
@@ -55,7 +55,7 @@
       ]
     },
     {
-      "v": "0.3.22",
+      "v": "0.3.23",
       "title": "Images",
       "when": "Soon",
       "items": [
@@ -63,7 +63,7 @@
       ]
     },
     {
-      "v": "0.3.23–0.3.24",
+      "v": "0.3.24–0.3.25",
       "title": "Bayes, Mac and Linux",
       "when": "Later",
       "items": [

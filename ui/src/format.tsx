@@ -1,6 +1,6 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
-import { For, Show, createSignal, createEffect, on, JSX } from "solid-js";
+import { For, Show, createSignal, createEffect, on, onCleanup, JSX } from "solid-js";
 import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText } from "./api";
 import { act, out, openDialog, closeDialog, dialogs, toast, item } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
@@ -22,6 +22,28 @@ export const setG = (g: Graph, f: (s: GraphSettings) => GraphSettings) => {
   return act({ GraphSet: { graph: g.id, settings: f(structuredClone(now)) } });
 };
 const num = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
+
+/** 0.3.21 (#38): a colour square that opens a pop-up: the scheme's colours, your own colour, Automatic (back to the
+ *  scheme) and, for fills, the strength. The square shows the colour as drawn (a fill at its strength). */
+const Swatch = (p: { title: string; value: string; auto: string; scheme: string[]; set: (c: string) => void; alpha?: number; setAlpha?: (a: number | null) => void }) => {
+  const [at, setAt] = createSignal<[number, number] | null>(null);
+  let el!: HTMLSpanElement;
+  const shown = () => p.value || p.auto;
+  const off = (e: MouseEvent) => { if (at() && !el.contains(e.target as Node)) setAt(null); };
+  addEventListener("mousedown", off);
+  onCleanup(() => removeEventListener("mousedown", off));
+  const toggle = (e: MouseEvent) => { if (at()) return setAt(null); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setAt([Math.min(r.left, innerWidth - 250), Math.min(r.bottom + 4, innerHeight - 230)]); };
+  return <span class="swatch" ref={el}>
+    <button class="swbtn" title={`${p.title}: ${p.value || "automatic (the colour scheme)"}`} onClick={toggle}><i style={{ background: shown(), opacity: p.alpha ?? 1 }} /><Show when={!p.value}><small>A</small></Show></button>
+    <Show when={at()}>{xy => <div class="swpop" style={{ left: `${xy()[0]}px`, top: `${xy()[1]}px` }}>
+      <b>{p.title}</b>
+      <div class="swset"><For each={p.scheme}>{c => <button style={{ background: c }} title={c} onClick={() => { p.set(c); setAt(null); }} />}</For></div>
+      <label class="inline"><input type="color" value={shown()} onChange={e => p.set(e.currentTarget.value)} /><span>Your own colour</span></label>
+      <Show when={p.setAlpha}><label class="inline"><span>Strength</span><input type="range" min="0" max="100" step="5" value={Math.round((p.alpha ?? 0) * 100)} onChange={e => p.setAlpha!(+e.currentTarget.value / 100)} /><span>{Math.round((p.alpha ?? 0) * 100)} %</span></label></Show>
+      <button class="btn sm" disabled={!p.value && p.alpha === undefined} onClick={() => { p.set(""); p.setAlpha?.(null); setAt(null); }}>Automatic (scheme colour)</button>
+    </div>}</Show>
+  </span>;
+};
 
 /** The open Format Graph window: 0.3.12 reuses it (switching to the page asked for) instead of stacking another;
  *  0.3.14 makes it follow the graph on screen (a user edited a graph they could no longer see) and close without one. */
@@ -73,6 +95,10 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
   /** 0.3.15 (#20, #23): lines belong to XY-like graphs; the others take fill and border colours and their own order. */
   const lined = () => ["xy", "survival", "sheet", "multi"].includes(t()?.kind ?? "xy");
   const ordered = () => ["column", "grouped", "parts", "nested"].includes(t()?.kind ?? "");
+  /** 0.3.21 (#38): graphs with bars, boxes or violins, their scheme colour per data set, and the fill's usual strength. */
+  const bars = () => ["column", "grouped", "nested"].includes(t()?.kind ?? "");
+  const base = (k: number) => { const c = scheme(); return c.length ? c[k % c.length] : OKABE_ITO[k % 8]; };
+  const alpha0 = () => (t()?.kind === "grouped" ? 0.85 : ["box", "violin"].includes(s().column) ? 0.3 : 0.35);
   const rows = () => { const n = t()?.sets.length ?? 0, ks = Array.from({ length: n }, (_, k) => k), o = s().order ?? [];
     return ordered() ? ks.sort((a, b) => (o.includes(a) ? o.indexOf(a) : o.length + a) - (o.includes(b) ? o.indexOf(b) : o.length + b)) : ks; };
   const move = (k: number, d: number) => { const r = rows(), i = r.indexOf(k), j = i + d; if (j < 0 || j >= r.length) return; [r[i], r[j]] = [r[j], r[i]]; set(x => { x.order = r; }); };
@@ -119,26 +145,42 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             </Show>
             <Show when={t()?.kind === "xy"}><label>Connect the points</label><Check label="Line through the means of every data set" value={s().line} set={v => set(x => { x.line = v; })} /></Show>
           </div>
-          <div class="setwrap"><table class="tbl setfmt"><thead><tr><th /><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th><th>Symbol</th><th>Colour</th><th>Size</th><th>Filled</th>
-            <Show when={lined()} fallback={<><th title="The fill of bars, boxes and violins (empty: the data set's colour)">Fill</th><th title="Their border (empty: the data set's colour)">Border</th></>}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show>
+          {/* 0.3.21 (#38): bars, boxes and violins first, then the symbols; every colour opens a pop-up with the scheme's
+              colours, your own colour and Automatic; fills show and set their strength. */}
+          <p class="inline"><button class="btn sm" title="Every colour back to the colour scheme" onClick={() => set(x => { x.sets = x.sets.map(v => ({ ...v, color: "", fill: "", edge: "", markerEdge: "", alpha: null })); })}>Reset all colours</button>
+            <span class="muted">A colour marked A is automatic: it follows the colour scheme.</span></p>
+          <div class="setwrap"><table class="tbl setfmt"><thead>
+            <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={3}>{t()?.kind === "grouped" ? "Bars" : "Bars, boxes and violins"}</th><th colSpan={4}>Symbols</th></tr></Show>
+            <tr><th /><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th>
+            <Show when={bars()} fallback={<><th>Symbol</th><th>Size</th><th title="The symbols and the line">Colour</th><th title="The symbols' outline">Symbol border</th><th title="Filled symbols (or hollow)">Filled</th>
+              <Show when={lined()}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show></>}>
+              <th title="Filled bars, boxes and violins (and symbols), or outlines only">Filled</th><th>Fill</th><th>Border</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th></Show>
             <Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
             <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()) }}>
               <td><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
               <Show when={ordered()}><td class="nowrap"><button class="btn sm" title="Earlier on the graph" disabled={at() === 0} onClick={() => move(k0, -1)}>▲</button><button class="btn sm" title="Later on the graph" disabled={at() === rows().length - 1} onClick={() => move(k0, 1)}>▼</button></td></Show>
               <td><input type="checkbox" checked={st(k()).show} onChange={e => setStyle(k(), { show: e.currentTarget.checked })} /></td>
-              <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
-              <td><span class="inline"><input type="color" value={drawn(k())} onChange={e => setStyle(k(), { color: e.currentTarget.value })} />
-                <span class="swset"><For each={scheme()}>{c => <button style={{ background: c }} title={c} onClick={() => setStyle(k(), { color: c })} />}</For></span></span></td>
-              <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
-              <td><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
-              <Show when={lined()} fallback={<><td><input type="color" value={st(k()).fill || drawn(k())} title="Fill" onChange={e => setStyle(k(), { fill: e.currentTarget.value })} /></td>
-                <td><input type="color" value={st(k()).edge || drawn(k())} title="Border" onChange={e => setStyle(k(), { edge: e.currentTarget.value })} /></td></>}>
-              <td><Pick value={st(k()).line === null ? "" : st(k()).line ? "1" : "0"} set={v => setStyle(k(), { line: v === "" ? null : v === "1" })} options={[["", "As the graph"], ["1", "Line"], ["0", "No line"]]} /></td>
-              <td><input type="number" min="0.25" max="6" step="0.25" style={{ width: "58px" }} value={st(k()).width} onChange={e => setStyle(k(), { width: +e.currentTarget.value })} /></td></Show>
+              <Show when={bars()} fallback={<>
+                <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
+                <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
+                <td><Swatch title="Colour (symbols and line)" value={st(k()).color} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { color: c })} /></td>
+                <td><Swatch title="Symbol border" value={st(k()).markerEdge ?? ""} auto={drawn(k())} scheme={scheme()} set={c => setStyle(k(), { markerEdge: c })} /></td>
+                <td><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
+                <Show when={lined()}>
+                  <td><Pick value={st(k()).line === null ? "" : st(k()).line ? "1" : "0"} set={v => setStyle(k(), { line: v === "" ? null : v === "1" })} options={[["", "As the graph"], ["1", "Line"], ["0", "No line"]]} /></td>
+                  <td><input type="number" min="0.25" max="6" step="0.25" style={{ width: "58px" }} value={st(k()).width} onChange={e => setStyle(k(), { width: +e.currentTarget.value })} /></td></Show></>}>
+                <td><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
+                <td><Swatch title="Fill" value={st(k()).fill ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { fill: c })} alpha={st(k()).alpha ?? alpha0()} setAlpha={a => setStyle(k(), { alpha: a })} /></td>
+                <td><Swatch title="Border" value={st(k()).edge ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { edge: c })} /></td>
+                <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
+                <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
+                <td><Swatch title="Symbol fill" value={st(k()).color} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { color: c })} /></td>
+                <td><Swatch title="Symbol border" value={st(k()).markerEdge ?? ""} auto={drawn(k())} scheme={scheme()} set={c => setStyle(k(), { markerEdge: c })} /></td>
+              </Show>
               <Show when={t()?.kind === "xy"}><td><input type="checkbox" checked={!!st(k()).right} onChange={e => setStyle(k(), { right: e.currentTarget.checked })} /></td></Show>
             </tr>; }}</For>
           </tbody></table></div>
-          <p class="muted">Order changes this graph only; the table keeps its own. Empty colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
+          <p class="muted">Order changes this graph only; the table keeps its own. Automatic colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
         </Show>
         <Show when={tab() === "x"}><AxisPage k="x" /></Show>
         <Show when={tab() === "y"}><AxisPage k="y" /></Show>

@@ -156,7 +156,7 @@ class OrderAndColours(unittest.TestCase):
 
     def test_fill_and_border(self):
         st = graph.style_of({"sets": [{"color": "#111111", "fill": "#ABCDEF"}]}, 0)
-        self.assertEqual((st["color"], st["fill"], st["edge"]), ("#111111", "#ABCDEF", "#111111"))
+        self.assertEqual((st["color"], st["fill"], st["edge"]), ("#111111", "#ABCDEF", graph.OKABE_ITO[0]))  # 0.3.21: the border follows the scheme, not the symbol
         svg = graph.render(self.T, {"column": "bars", "sets": [{"fill": "#abcdef", "edge": "#123456"}]})["svg"].lower()
         self.assertIn("#abcdef", svg)
         self.assertIn("#123456", svg)
@@ -186,6 +186,19 @@ class LegendAndBreak(unittest.TestCase):
         share = low.get_position().height / (low.get_position().height + top.get_position().height)
         self.assertAlmostEqual(share, 0.3, delta=0.04)
         self.assertTrue(all(abs(t % 5) < 1e-9 for t in top.get_yticks()), "ticks every 5 above the break")
+
+
+class Colours(unittest.TestCase):
+    """0.3.21 (#38): bars and symbols take their colours separately; a symbol border; a fill strength."""
+    T = LegendAndBreak.T
+
+    def test_symbol_colour_leaves_the_bars_alone(self):
+        st = graph.style_of({"sets": [{"color": "#ff0000"}]}, 0)
+        self.assertEqual((st["color"], st["fill"], st["edge"]), ("#ff0000", graph.OKABE_ITO[0], graph.OKABE_ITO[0]))
+        svg = graph.render(self.T, {"column": "bars", "points": "each", "sets": [{"color": "#ff0000", "markerEdge": "#00ff00", "alpha": 0.8}]})["svg"].lower()
+        for c in ("#ff0000", "#00ff00"):
+            self.assertIn(c, svg)
+        self.assertIn("opacity: 0.8", svg, "the fill strength")
 
 
 class Worker(unittest.TestCase):

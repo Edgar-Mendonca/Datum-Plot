@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.21 — 2026-11-10
+
+Colours of bars and symbols.
+
+**Each colour on its own**
+- On bar, box and violin graphs, **Format Graph › Data Sets** now lists the bars' settings first (**Filled**, **Fill**, **Border**) and then the symbols' (**Shape**, **Size**, **Fill**, **Border**). Changing a symbol's colour no longer changes the bars' border.
+- Symbols can have their own **border** colour, on every kind of graph.
+
+**A colour pop-up**
+- Each colour is a small square showing the colour as drawn; click it for the colour scheme's colours, a colour of your own, or **Automatic** (back to the scheme). A square marked A is automatic.
+- A fill's square shows its real, lighter colour, and its pop-up sets the fill's **Strength** (35 % for bars by default).
+- **Reset all colours** puts every colour of the graph back to the colour scheme.
+
+Graphs made with earlier versions open looking exactly as before.
+
 ## 0.3.20 — 2026-11-10
 
 Users' requests.

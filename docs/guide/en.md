@@ -194,7 +194,7 @@ Double-click any part of a graph (an axis, a data set, the title) to format it, 
 1. **Schemes.** Click one: the graph changes at once, because the window sits beside the graph. Schemes labelled **colour-blind safe** stay easy to tell apart for people with any of the three common kinds of colour-blindness; the default, Okabe-Ito, is one of them.
 2. **How colour-blind readers see it.** The three columns show each scheme as people with red-, green- and blue-blindness see it.
 
-Your own colours go in the last row (#hex, separated by commas). In **Format Graph › Data Sets**, each data set's colour box shows the colour it is drawn in, and the quick colours beside it are the chosen scheme's. Any window can be moved by dragging its title bar.
+Your own colours go in the last row (#hex, separated by commas). In **Format Graph › Data Sets**, each colour is a small square showing the colour as drawn. Click it for the scheme's colours, a colour of your own, the **Strength** of a fill, or **Automatic** (back to the scheme); a square marked A is automatic. On bar, box and violin graphs the bars' fill and border come first, then the symbols' shape, size, fill and border, each set on its own. **Reset all colours** puts every colour back to the scheme. Any window can be moved by dragging its title bar.
 
 ### Working on the graph
 

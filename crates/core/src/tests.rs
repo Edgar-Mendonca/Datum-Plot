@@ -504,3 +504,27 @@ fn break_position_and_ticks_are_kept_and_checked() {
     assert_eq!((s.x.break_ratio, s.x.break_step, s.legend.groups), (Some(0.25), Some(5.0), true));
     assert!(!Project::from_json(r#"{"name":"o","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{}}],"nextId":3}"#).unwrap().graphs[0].settings.legend.groups, "older graphs: no group legend");
 }
+
+#[test]
+fn older_graphs_keep_their_bar_colours_and_new_ones_are_independent() {
+    // Before 0.3.21 a bar's fill and border followed the data set's colour: an older file keeps its look.
+    let old = Project::from_json(r##"{"name":"o","tables":[{"id":1,"name":"T","kind":"column"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"color":"#123456"},{"color":"#abcdef","edge":"#000000"},{}]}}],"nextId":3}"##).unwrap();
+    let s = &old.graphs[0].settings;
+    assert_eq!((s.sets[0].fill.as_str(), s.sets[0].edge.as_str()), ("#123456", "#123456"));
+    assert_eq!((s.sets[1].fill.as_str(), s.sets[1].edge.as_str()), ("#abcdef", "#000000"), "a border set by hand stays");
+    assert!(s.sets[2].fill.is_empty() && s.colors2);
+    // Saved again and reopened: converted once, never again (a symbol colour chosen later leaves the bars alone).
+    let mut again = Project::from_json(&serde_json::to_string(&old).unwrap()).unwrap();
+    again.graphs[0].settings.sets[2].color = "#ff0000".into();
+    let back = Project::from_json(&serde_json::to_string(&again).unwrap()).unwrap();
+    assert!(back.graphs[0].settings.sets[2].fill.is_empty(), "#38: the symbol colour no longer changes the bar");
+    let alpha = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"alpha":7}]}}],"nextId":3}"##).unwrap();
+    assert_eq!(alpha.graphs[0].settings.sets[0].alpha, Some(1.0));
+}
+
+#[test]
+fn symbol_borders_travel_as_marker_edge() {
+    let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
+    assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");
+    assert!(serde_json::to_string(&p).unwrap().contains(r##""markerEdge":"#010203""##));
+}

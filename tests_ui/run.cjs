@@ -97,14 +97,30 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   check("Format Graph › Y Axis offers an axis break", ((await p.textContent(".dlg .fmtpage")) || "").includes("Axis break"));
   await p.click('.dlg .dtabs button:has-text("Data Sets")');
   await p.waitForTimeout(100);
-  check("each data set's colour box shows the colour the engine drew, and the quick colours are the graph's scheme",
-    JSON.stringify(await p.$$eval('.dlg .setfmt input[type="color"]', is => is.map(i => i.value.toUpperCase()))) === JSON.stringify(render.colors.map(c => c.toUpperCase()))
-    && (await p.$$eval(".dlg .setfmt tbody tr:first-child .swset button", bs => bs.map(b => b.title))).join() === "#0072B2,#E69F00,#009E73,#D55E00,#CC79A7,#56B4E9,#F0E442,#000000", JSON.stringify(render.colors));
+  // 0.3.21: each colour is a square (the colour as drawn) whose pop-up offers the graph's scheme.
+  const hex = (rgb) => "#" + (rgb.match(/\d+/g) || []).slice(0, 3).map(v => (+v).toString(16).padStart(2, "0")).join("").toUpperCase();
+  const squares = (await p.$$eval(".dlg .setfmt tbody tr", rs => rs.map(r => getComputedStyle(r.querySelector(".swbtn i")).backgroundColor)));
+  await p.click(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0"); await p.waitForTimeout(150);
+  const offered = await p.$$eval(".swpop .swset button", bs => bs.map(b => b.title));
+  await p.click(".dlg header", { position: { x: 20, y: 10 } }); await p.waitForTimeout(100);
+  check("each data set's colour shows the colour the engine drew, and its pop-up offers the graph's scheme",
+    JSON.stringify(squares.map(hex)) === JSON.stringify(render.colors.map(c => c.toUpperCase())) && offered.join() === "#0072B2,#E69F00,#009E73,#D55E00,#CC79A7,#56B4E9,#F0E442,#000000", JSON.stringify([squares.map(hex), offered]));
   check("Data Sets can go on a right Y axis", ((await p.textContent(".dlg .setfmt thead")) || "").includes("Right Y"));
   // 0.3.20 (#35): Ctrl+Z and Ctrl+Y work while Format Graph is open (it is docked beside the graph).
   await reset();
   await p.locator(".dlg .dtabs").click(); await p.keyboard.press("Control+z"); await p.keyboard.press("Control+y"); await p.waitForTimeout(150);
   check("Ctrl+Z and Ctrl+Y undo and redo with Format Graph open", (await calls("history")).length === 2, JSON.stringify(await calls("history")));
+  // 0.3.21 (#38): a colour opens a pop-up with the scheme's colours and Automatic; Reset all colours.
+  await p.click('.dlg .dtabs button:has-text("Data Sets")'); await p.waitForTimeout(100);
+  await reset();
+  await p.click(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0"); await p.waitForTimeout(150);
+  await p.click(".swpop .swset button >> nth=3"); await p.waitForTimeout(200);
+  const sw = (await ops()).find(o => o.GraphSet)?.GraphSet.settings.sets[0];
+  check("a colour's pop-up sets a colour from the scheme", sw && /^#[0-9A-Fa-f]{6}$/.test(sw.color), JSON.stringify(sw));
+  await reset();
+  await p.click('.dlg button:has-text("Reset all colours")'); await p.waitForTimeout(200);
+  const rs = (await ops()).find(o => o.GraphSet)?.GraphSet.settings.sets;
+  check("Reset all colours puts every colour back to the scheme", rs && rs.every(v => !v.color && !v.fill && !v.edge && !v.markerEdge && v.alpha == null), JSON.stringify(rs));
   check("Format Graph is docked so the graph stays visible", await p.evaluate(() => { const d = document.querySelector(".dlg").getBoundingClientRect(), g = document.querySelector(".gpaper").getBoundingClientRect(); return g.right <= d.left + 1; }));
   // 0.3.12 (testers): one Format Graph window that switches page; right-click › Format Axes opens the axis clicked.
   const [, gy0] = render.plot, pl = await p.evaluate(() => { const r = document.querySelector(".gpaper").getBoundingClientRect(); return [r.left, r.top]; });  // the graph moved aside for the docked window

@@ -680,3 +680,15 @@ input.mono { font-family: var(--mono) !important; }
 .embedbar span { color: #E3F5F2; }
 .embedbar .btn { background: #fff; color: var(--blue2); border-color: #fff; font-weight: 600; }
 .embedbar .grow { flex: 1; }
+
+/* 0.3.21 (#38): colour squares and their pop-up in Format Graph › Data Sets */
+.swatch { position: relative; display: inline-block; }
+.swbtn { position: relative; width: 30px; height: 22px; padding: 2px; border: 1px solid var(--line3); background: #fff; }
+.swbtn i { display: block; width: 100%; height: 100%; }
+.swbtn small { position: absolute; right: 1px; bottom: 0; font: 600 8px var(--mono); color: #222; background: rgba(255,255,255,.8); padding: 0 1px; }
+.swpop { position: fixed; z-index: 40; width: 236px; padding: 8px; display: flex; flex-direction: column; gap: 7px; background: var(--panel); border: 1px solid var(--line3); box-shadow: 0 6px 22px rgba(12,26,43,.25); }
+.swpop .swset { display: flex; flex-wrap: wrap; gap: 3px; }
+.swpop .swset button { width: 20px; height: 20px; border: 1px solid var(--line3); padding: 0; }
+.swpop label { gap: 6px; font-size: 12px; }
+.swpop input[type="range"] { flex: 1; }
+.setfmt tr.grouphead th { text-align: center; border-bottom: 1px solid var(--line3); color: var(--text2); }
