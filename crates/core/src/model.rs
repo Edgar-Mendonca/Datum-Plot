@@ -421,6 +421,10 @@ pub struct GraphSettings {
     /// the scheme (see `Project::normalize`). Graphs from older files have none: `false`.
     #[serde(default)]
     pub colors3: bool,
+    /// 0.4.3 (#43): set once automatic error bars on bar, box and violin graphs follow the scheme, not the symbols'
+    /// colour. Graphs from older files have none: `false`.
+    #[serde(default)]
+    pub colors4: bool,
     /// Column tables: scatter, bars, box, violin, paired or mean.
     pub column: String,
     /// Annotations drawn on the graph (text, arrows, lines, boxes), in data coordinates.
@@ -443,7 +447,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![], colors2: true, colors3: true,
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![], colors2: true, colors3: true, colors4: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -660,8 +664,27 @@ impl Project {
         for g in &mut self.graphs {
             g.settings.overlays.retain(|o| an.contains(&(*o, g.table)));
         }
+        let kinds: Vec<(u32, String)> = self.tables.iter().map(|t| (t.id, t.kind.clone())).collect();
         for g in &mut self.graphs {
+            let kind = kinds.iter().find(|k| k.0 == g.table).map_or("", |k| k.1.as_str());
             let s = &mut g.settings;
+            // 0.4.3 (#43): where automatic error bars took the symbols' colour (they now take the scheme's), older
+            // graphs keep it: the colour is copied into the error bars' own once.
+            let col = s.column.as_str();
+            let followed = match kind {
+                "column" => matches!(col, "bars" | "mean" | "paired"),
+                "grouped" => matches!(col, "scatter" | "lines"),
+                "nested" => true,
+                _ => false,
+            };
+            if !s.colors4 && followed {
+                for st in &mut s.sets {
+                    if st.err_color.is_empty() && !st.color.is_empty() {
+                        st.err_color = st.color.clone();
+                    }
+                }
+            }
+            s.colors4 = true;
             let fit = |v: f64, lo: f64, hi: f64, d: f64| if v.is_finite() { v.clamp(lo, hi) } else { d };
             (s.width, s.height, s.font_size, s.cap) = (fit(s.width, 10.0, 1000.0, 80.0), fit(s.height, 10.0, 1000.0, 60.0), fit(s.font_size, 4.0, 96.0, 10.0), fit(s.cap, 0.0, 20.0, 3.0));
             (s.elev, s.azim, s.levels, s.offset) = (fit(s.elev, -90.0, 90.0, 28.0), fit(s.azim, -360.0, 360.0, -60.0), s.levels.min(200), fit(s.offset, 0.0, 1e12, 0.0));

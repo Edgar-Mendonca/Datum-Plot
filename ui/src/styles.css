@@ -699,3 +699,8 @@ input.mono { font-family: var(--mono) !important; }
 .digipic svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .digiside { width: 300px; flex: none; }
 .digival { width: 90px; }
+/* 0.4.3 (#43): Format Graph › Data Sets: a line where each group (bars, symbols, error bars) starts, its heading at
+   the start of the group and underlined across its columns */
+.setfmt .gs { border-left: 1px solid var(--line3); padding-left: 8px; }
+.setfmt .grouphead th.gs { text-align: left; border-bottom: 1px solid var(--line3); }
+.setfmt tr.grouphead th:not(.gs) { border-bottom: none; }

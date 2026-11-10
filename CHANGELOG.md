@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.3 — 2026-11-10
+
+Error bars from the colour scheme, and a clearer Data Sets page.
+
+**Error bars**
+- On bar, box and violin graphs, automatic error bars take the colour scheme's colour, so changing a symbol's fill no longer changes them. Scatter dot plots and grouped bars keep their dark grey. The **Error bars** square still sets any colour.
+
+**Format Graph › Data Sets**
+- A line marks where the bars', the symbols' and the error bars' settings start, and each heading sits at the start of its group.
+
+Graphs made with earlier versions open looking exactly as before.
+
 ## 0.4.2 — 2026-11-10
 
 Testers' requests: symbols and error bars on their own, tidier legends, and choosing which analyses each graph shows.

@@ -542,6 +542,23 @@ fn older_graphs_keep_their_symbols_look() {
 }
 
 #[test]
+fn older_graphs_keep_their_error_bar_colours() {
+    // 0.4.3 (#43): on bars, means and before-after graphs automatic error bars took the symbols' colour; on scatter
+    // dot plots they were dark grey (nothing to keep).
+    let json = |column: &str| format!(r##"{{"name":"o","tables":[{{"id":1,"name":"T","kind":"column"}}],"graphs":[{{"id":2,"table":1,"name":"G","settings":{{"colors2":true,"colors3":true,"column":"{column}","sets":[{{"color":"#123456"}},{{"color":"#abcdef","errColor":"#000000"}},{{}}]}}}}],"nextId":3}}"##);
+    let p = Project::from_json(&json("bars")).unwrap();
+    let s = &p.graphs[0].settings;
+    assert_eq!((s.sets[0].err_color.as_str(), s.sets[1].err_color.as_str(), s.sets[2].err_color.as_str()), ("#123456", "#000000", ""));
+    assert!(s.colors4);
+    assert!(Project::from_json(&json("scatter")).unwrap().graphs[0].settings.sets[0].err_color.is_empty());
+    // Converted once: a symbol colour chosen later leaves the automatic error bars to the scheme.
+    let mut again = p.clone();
+    again.graphs[0].settings.sets[2].color = "#ff0000".into();
+    let back = Project::from_json(&serde_json::to_string(&again).unwrap()).unwrap();
+    assert!(back.graphs[0].settings.sets[2].err_color.is_empty());
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");

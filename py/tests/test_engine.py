@@ -233,6 +233,14 @@ class Symbols(unittest.TestCase):
         svg = graph.render(Graphs.T, {"sets": [{"errColor": "#654321"}]})["svg"].lower()
         self.assertIn("#654321", svg, "XY graphs too")
 
+    def test_automatic_error_bars_follow_the_scheme(self):
+        # 0.4.3 (#43): a new symbol fill leaves automatic error bars alone on bar graphs.
+        fig, ax, *_ = self.fig({"column": "bars", "error": "sd", "points": "each", "sets": [{"color": "#ff0000"}]})
+        from matplotlib.collections import LineCollection
+        cols = {matplotlib.colors.to_hex(c) for lc in ax.collections if isinstance(lc, LineCollection) for c in lc.get_colors()}
+        self.assertIn(graph.OKABE_ITO[0].lower(), cols)
+        self.assertNotIn("#ff0000", cols)
+
     def test_legend_border_at_full_strength(self):
         fig, ax, leg, _ = self.fig({"column": "bars", "legend": {"show": True, "groups": True}})
         h = leg.legend_handles[0]

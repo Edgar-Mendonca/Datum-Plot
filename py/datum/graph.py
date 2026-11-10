@@ -689,7 +689,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
             if kind in ("scatter", "paired"):
                 ax.hlines(m, i - 0.26, i + 0.26, color="#222222" if kind == "scatter" else col, linewidth=1.6, zorder=4)
             if err != "none":
-                ax.errorbar(i, m, yerr=yerr, fmt="none" if kind != "mean" else mk, markersize=st["size"], color="#222222" if kind == "scatter" else col, ecolor=st["err"] or ("#222222" if kind == "scatter" else col),
+                ax.errorbar(i, m, yerr=yerr, fmt="none" if kind != "mean" else mk, markersize=st["size"], color="#222222" if kind == "scatter" else col, ecolor=st["err"] or ("#222222" if kind == "scatter" else st["base"]),
                             elinewidth=1.0, capsize=graph.get("cap", 3) * (1.6 if kind != "mean" else 1), capthick=1.0, zorder=4)
             elif kind == "mean":
                 ax.plot(i, m, mk, color=col, markersize=st["size"], zorder=4)
@@ -807,9 +807,9 @@ def nested_figure(fig, ax, table, graph, colors, size):
             gm, lo, hi = spread(mm, err) if m > 1 else (float(mm.mean()), 0.0, 0.0)
             ax.hlines(gm, i - 0.4, i + 0.4, color=st["color"], linewidth=1.8, zorder=2)
             if err == "range" and m > 1:
-                ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["color"], linewidth=1.0)
+                ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["err"] or st["base"], linewidth=1.0)
             elif err != "none" and (lo or hi):
-                ax.errorbar(i + 0.42, gm, yerr=[[lo], [hi]], fmt="none", ecolor=st["err"] or st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+                ax.errorbar(i + 0.42, gm, yerr=[[lo], [hi]], fmt="none", ecolor=st["err"] or st["base"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
     ax.set_xticks(range(len(shown)), labels); ax.tick_params(axis="x", length=0)
     ax.set_xlim(-0.6, len(shown) - 0.4)
     axes(ax, table, graph, points, x=False)
@@ -1040,7 +1040,7 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
             ax.bar(xs, [m - b for m, b in zip(ms_, bs)], bottom=bs, width=w, color=col, edgecolor="white", linewidth=0.6, label=lab, zorder=1)
         else:
             ax.errorbar(xs, ms_, yerr=yerr, marker=mk, markersize=st["size"], linestyle="-" if kind == "lines" else "none", color=col, markerfacecolor=rgba(col, st["malpha"]) if st["mfilled"] else "white",
-                        markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"]), ecolor=st["err"] or col, elinewidth=1.0, capsize=graph.get("cap", 3), linewidth=st["width"], label=lab, zorder=3)
+                        markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"]), ecolor=st["err"] or st["base"], elinewidth=1.0, capsize=graph.get("cap", 3), linewidth=st["width"], label=lab, zorder=3)
     ax.set_xticks(range(len(rows)), labels)
     ax.set_xlim(-0.6, len(rows) - 0.4)
     ax.tick_params(axis="x", length=0)
