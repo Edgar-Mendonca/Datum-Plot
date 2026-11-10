@@ -60,7 +60,18 @@ def style_of(graph, k, colors=OKABE_ITO):
             # 0.3.21 (#38): bars, boxes and violins, and the symbols, each take their colour from the scheme unless set,
             # so changing one leaves the others (older graphs are converted on loading so they look as before).
             "fill": s.get("fill") or colors[k % len(colors)], "edge": s.get("edge") or colors[k % len(colors)],
-            "medge": s.get("markerEdge") or None, "alpha": s.get("alpha") if isinstance(s.get("alpha"), (int, float)) else None}
+            "medge": s.get("markerEdge") or None, "alpha": s.get("alpha") if isinstance(s.get("alpha"), (int, float)) else None,
+            # 0.4.2 (#42, #43): the symbols' own fill switch (bar, box and violin graphs), the strengths of the bars' border
+            # and of the symbols' fill and border, the error bars' colour, and the scheme's colour (an automatic symbol
+            # border on those graphs follows it, not the symbol's fill).
+            "mfilled": s.get("markerFilled") is not False, "ealpha": (s.get("edgeAlpha") if isinstance(s.get("edgeAlpha"), (int, float)) else None), "malpha": (s.get("markerAlpha") if isinstance(s.get("markerAlpha"), (int, float)) else None),
+            "mealpha": (s.get("markerEdgeAlpha") if isinstance(s.get("markerEdgeAlpha"), (int, float)) else None), "err": s.get("errColor") or None, "base": colors[k % len(colors)]}
+
+
+def rgba(c, a=None):
+    """A colour with a strength (0–1; none = full)."""
+    from matplotlib.colors import to_rgba
+    return to_rgba(c, 1.0 if a is None else a)
 
 
 MEDIAN = ("median_iqr", "median_range", "median_ci")
@@ -278,6 +289,29 @@ def break_ticks(other, a, axis):
         getattr(other, axis).set_major_locator(MultipleLocator(st))
 
 
+def both_panels_legend(fig, top, ax, leg, graph):
+    """0.4.2 (#41): the legend of a graph with a Y axis break, placed against both panels together (Top left is the top
+    left of the whole graph), not against the lower panel alone."""
+    from matplotlib.transforms import Bbox, BboxBase, IdentityTransform
+
+    class Both(BboxBase):  # follows the panels when the layout moves them
+        def __init__(self):
+            super().__init__()
+            self.set_children(top.bbox, ax.bbox)
+
+        def get_points(self):
+            return Bbox.union([top.bbox, ax.bbox]).get_points()
+
+    h, labels = leg.legend_handles, [t.get_text() for t in leg.get_texts()]
+    leg.remove()
+    lg = graph.get("legend") or {}
+    if lg.get("loc") == "outside":
+        return top.legend(h, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
+    leg = top.legend(h, labels, loc=LEGEND.get(lg.get("loc", "best"), "best"), bbox_to_anchor=Both(), bbox_transform=IdentityTransform(), frameon=False)
+    leg.set_in_layout(False)  # inside the graph: it must not push the panels apart
+    return leg
+
+
 def with_break(fig, ax, graph, frame, size, draw):
     """`draw(ax)` with a break in the Y axis when one is set: the graph drawn twice, a short panel above
     the gap and a tall one below (column, grouped and nested graphs; XY graphs have their own)."""
@@ -297,6 +331,8 @@ def with_break(fig, ax, graph, frame, size, draw):
     fig, ax, leg, points = draw(ax)
     if top.get_legend():
         top.get_legend().remove()
+    if leg is not None:
+        leg = both_panels_legend(fig, top, ax, leg, graph)
     ax.set_title("")
     lo = ax.get_ylim()[0]
     ax.set_ylim(lo, bf)
@@ -405,7 +441,7 @@ def build(table, graph, overlays=(), fig=None):
                     lo, hi = zip(*(error_of(p, err) for p in pts))
                     yerr = [[0 if direction == "up" else v for v in lo], [0 if direction == "down" else v for v in hi]]
                 ax.errorbar(xs, ys, yerr=yerr, linestyle="-" if line else "none", linewidth=st["width"], marker=mk or None, markersize=st["size"],
-                            markerfacecolor=face, markeredgecolor=st["medge"] or col, color=col, ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
+                            markerfacecolor=face, markeredgecolor=st["medge"] or col, color=col, ecolor=st["err"] or col, elinewidth=1.0, capsize=graph.get("cap", 3), capthick=1.0, label=label, zorder=3)
             points += [[k, p["x"], centre_of(p, err), p["n"], p["sd"], p["sem"]] for p in (pts[::len(pts) // 2000 + 1] if big else pts)]  # hover: a sample of a big set
         return points
 
@@ -627,31 +663,33 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
         yerr = [[0 if graph.get("errorDir") == "up" else lo], [0 if graph.get("errorDir") == "down" else hi]]
         top = max(m + yerr[1][0], float(v.max()) if v is not None else m)
         if kind == "bars":
-            ax.bar(i, m, width=0.62, color=st["fill"] if st["filled"] else "none", alpha=(0.35 if st["alpha"] is None else st["alpha"]) if st["filled"] else 1, edgecolor=st["edge"], linewidth=1.2, zorder=1)
-            ax.bar(i, m, width=0.62, color="none", edgecolor=st["edge"], linewidth=1.2, zorder=1.1)
+            ax.bar(i, m, width=0.62, color=rgba(st["fill"], 0.35 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor="none", linewidth=0, zorder=1)
+            ax.bar(i, m, width=0.62, color="none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2, zorder=1.1)
         elif kind == "box" and v is not None and len(v) > 1:
             b = ax.boxplot(v, positions=[i], widths=0.5, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
-                           boxprops={"facecolor": st["fill"], "alpha": 0.3 if st["alpha"] is None else st["alpha"], "edgecolor": st["edge"]}, medianprops={"color": st["edge"], "linewidth": 1.6}, whiskerprops={"color": st["edge"]}, capprops={"color": st["edge"]}, flierprops={"markeredgecolor": col})
+                           boxprops={"facecolor": rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"]), "edgecolor": rgba(st["edge"], st["ealpha"])},
+                           medianprops={"color": rgba(st["edge"], st["ealpha"]), "linewidth": 1.6}, whiskerprops={"color": rgba(st["edge"], st["ealpha"])}, capprops={"color": rgba(st["edge"], st["ealpha"])}, flierprops={"markeredgecolor": col})
             del b
         elif kind == "violin" and v is not None and len(v) > 2 and np.ptp(v) > 0:
             vp = ax.violinplot(v, [i], widths=0.75, showextrema=False)
             for body in vp["bodies"]:
-                body.set_facecolor(st["fill"]); body.set_edgecolor(st["edge"]); body.set_alpha(0.3 if st["alpha"] is None else st["alpha"])
+                body.set_facecolor(rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"])); body.set_edgecolor(rgba(st["edge"], st["ealpha"]))
             q1, med, q3 = np.percentile(v, [25, 50, 75])
-            ax.vlines(i, q1, q3, color=st["edge"], linewidth=3, zorder=2)
-            ax.plot(i, med, "o", color="white", markeredgecolor=st["edge"], markersize=4, zorder=3)
+            ax.vlines(i, q1, q3, color=rgba(st["edge"], st["ealpha"]), linewidth=3, zorder=2)
+            ax.plot(i, med, "o", color="white", markeredgecolor=rgba(st["edge"], st["ealpha"]), markersize=4, zorder=3)
         dots = v is not None and (kind in ("scatter", "paired") or (each and kind in ("bars", "box", "violin")))
         if dots:
             ms = st["size"] * (1.0 if kind == "scatter" else 0.75 if kind in ("bars", "paired") else 0.55)
             lim = 0.38 if kind == "scatter" else 0.22
             xs = i + (swarm(v, ms / plot_h * (yr or 1.0), ms / plot_w * max(len(data), 1), lim) if kind != "paired" else np.zeros(len(v)))
-            ax.plot(xs, v, linestyle="none", marker=mk, markersize=ms, markerfacecolor=col if st["filled"] else "white", markeredgecolor=st["medge"] or (col if kind in ("scatter", "paired", "bars") else "white"),
-                    markeredgewidth=0.6 if kind in ("box", "violin") else 1.0, alpha=0.9, zorder=3)
+            ax.plot(xs, v, linestyle="none", marker=mk, markersize=ms, markerfacecolor=rgba(col, 0.9 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
+                    markeredgecolor=rgba(st["medge"] or (st["base"] if kind in ("scatter", "paired", "bars") else "white"), 0.9 if st["mealpha"] is None else st["mealpha"]),
+                    markeredgewidth=0.6 if kind in ("box", "violin") else 1.0, zorder=3)
         if kind in ("scatter", "bars", "mean") or (kind == "paired" and err != "none"):
             if kind in ("scatter", "paired"):
                 ax.hlines(m, i - 0.26, i + 0.26, color="#222222" if kind == "scatter" else col, linewidth=1.6, zorder=4)
             if err != "none":
-                ax.errorbar(i, m, yerr=yerr, fmt="none" if kind != "mean" else mk, markersize=st["size"], color="#222222" if kind == "scatter" else col, ecolor="#222222" if kind == "scatter" else col,
+                ax.errorbar(i, m, yerr=yerr, fmt="none" if kind != "mean" else mk, markersize=st["size"], color="#222222" if kind == "scatter" else col, ecolor=st["err"] or ("#222222" if kind == "scatter" else col),
                             elinewidth=1.0, capsize=graph.get("cap", 3) * (1.6 if kind != "mean" else 1), capthick=1.0, zorder=4)
             elif kind == "mean":
                 ax.plot(i, m, mk, color=col, markersize=st["size"], zorder=4)
@@ -688,10 +726,10 @@ def group_legend(ax, table, graph, ks, colors, kind):
         st = style_of(graph, k, colors)
         if kind in ("bars", "box", "violin"):
             a = st["alpha"] if st["alpha"] is not None else 0.35 if kind == "bars" else 0.3
-            handles.append(Patch(facecolor=st["fill"] if kind != "bars" or st["filled"] else "none", alpha=a, edgecolor=st["edge"], linewidth=1.2))
+            handles.append(Patch(facecolor=rgba(st["fill"], a) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2))
         else:
             handles.append(Line2D([], [], linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"], color=st["color"],
-                                  markerfacecolor=st["color"] if st["filled"] else "white"))
+                                  markerfacecolor=rgba(st["color"], st["malpha"]) if st["mfilled"] else "white", markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"])))
     labels = [table["sets"][k].get("title") or f"Data set {chr(65 + k)}" for k in ks]
     if lg.get("loc") == "outside":
         return ax.legend(handles, labels, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0)
@@ -760,8 +798,8 @@ def nested_figure(fig, ax, table, graph, colors, size):
         m = len(subs)
         for j, v in enumerate(subs):
             x = i + (j - (m - 1) / 2) * min(0.8 / max(m, 1), 0.22)
-            ax.plot(np.full(len(v), x), v, linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"] * 0.7, markerfacecolor=st["color"] if st["filled"] else "white",
-                    markeredgecolor=st["medge"] or st["color"], alpha=0.85, zorder=3)
+            ax.plot(np.full(len(v), x), v, linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"] * 0.7, markerfacecolor=rgba(st["color"], 0.85 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
+                    markeredgecolor=rgba(st["medge"] or st["base"], 0.85 if st["mealpha"] is None else st["mealpha"]), zorder=3)
             ax.hlines(v.mean(), x - 0.06, x + 0.06, color="#222222", linewidth=1.0, zorder=4)
             points.append([k, float(x), float(v.mean()), len(v), float(v.std(ddof=1)) if len(v) > 1 else 0.0, float(v.std(ddof=1) / math.sqrt(len(v))) if len(v) > 1 else 0.0])
         if m:
@@ -771,7 +809,7 @@ def nested_figure(fig, ax, table, graph, colors, size):
             if err == "range" and m > 1:
                 ax.vlines(i + 0.42, mm.min(), mm.max(), color=st["color"], linewidth=1.0)
             elif err != "none" and (lo or hi):
-                ax.errorbar(i + 0.42, gm, yerr=[[lo], [hi]], fmt="none", ecolor=st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+                ax.errorbar(i + 0.42, gm, yerr=[[lo], [hi]], fmt="none", ecolor=st["err"] or st["color"], elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
     ax.set_xticks(range(len(shown)), labels); ax.tick_params(axis="x", length=0)
     ax.set_xlim(-0.6, len(shown) - 0.4)
     axes(ax, table, graph, points, x=False)
@@ -988,21 +1026,21 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
                 base[i] += m
             if each and kind in ("bars", "scatter"):
                 ax.plot(x + (np.arange(len(v)) - (len(v) - 1) / 2) * min(w / max(len(v), 1), 0.05), v, linestyle="none", marker=mk, markersize=st["size"] * 0.6,
-                        markerfacecolor="white", markeredgecolor=st["medge"] or col, zorder=3)
+                        markerfacecolor="white", markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"]), zorder=3)
         if not xs:
             continue
         lab = names[j]
         d = graph.get("errorDir", "both")
         yerr = [[0 if d == "up" else e[0] for e in es], [0 if d == "down" else e[1] for e in es]] if err != "none" else None
         if kind == "bars":
-            ax.bar(xs, ms_, width=w * 0.92, color=st["fill"] if st["filled"] else "none", alpha=(0.85 if st["alpha"] is None else st["alpha"]) if st["filled"] else 1, edgecolor=st["edge"], linewidth=1.0, label=lab, zorder=1)
+            ax.bar(xs, ms_, width=w * 0.92, color=rgba(st["fill"], 0.85 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.0, label=lab, zorder=1)
             if yerr:
-                ax.errorbar(xs, ms_, yerr=yerr, fmt="none", ecolor="#222222", elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
+                ax.errorbar(xs, ms_, yerr=yerr, fmt="none", ecolor=st["err"] or "#222222", elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
         elif kind == "stacked":
             ax.bar(xs, [m - b for m, b in zip(ms_, bs)], bottom=bs, width=w, color=col, edgecolor="white", linewidth=0.6, label=lab, zorder=1)
         else:
-            ax.errorbar(xs, ms_, yerr=yerr, marker=mk, markersize=st["size"], linestyle="-" if kind == "lines" else "none", color=col, markerfacecolor=col if st["filled"] else "white",
-                        ecolor=col, elinewidth=1.0, capsize=graph.get("cap", 3), linewidth=st["width"], label=lab, zorder=3)
+            ax.errorbar(xs, ms_, yerr=yerr, marker=mk, markersize=st["size"], linestyle="-" if kind == "lines" else "none", color=col, markerfacecolor=rgba(col, st["malpha"]) if st["mfilled"] else "white",
+                        markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"]), ecolor=st["err"] or col, elinewidth=1.0, capsize=graph.get("cap", 3), linewidth=st["width"], label=lab, zorder=3)
     ax.set_xticks(range(len(rows)), labels)
     ax.set_xlim(-0.6, len(rows) - 0.4)
     ax.tick_params(axis="x", length=0)

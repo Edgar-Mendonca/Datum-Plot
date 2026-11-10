@@ -201,6 +201,53 @@ class Colours(unittest.TestCase):
         self.assertIn("opacity: 0.8", svg, "the fill strength")
 
 
+class Symbols(unittest.TestCase):
+    """0.4.2: the symbols' own fill switch (#42), their border following the scheme, strengths and the error bars'
+    colour (#43), the legend's border (#40) and its place on a graph with an axis break (#41)."""
+    T = LegendAndBreak.T
+
+    def fig(self, g):
+        with matplotlib.rc_context(graph.rc_for(g)):
+            return graph.figure(self.T, g)
+
+    def dots(self, ax):
+        return [l for l in ax.get_lines() if l.get_marker() not in ("None", None, "") and len(l.get_xdata()) == 3]
+
+    def test_unfilled_bars_keep_filled_symbols(self):
+        fig, ax, *_ = self.fig({"column": "bars", "points": "each", "sets": [{"filled": False}, {"filled": False, "markerFilled": False}]})
+        a, b = self.dots(ax)
+        self.assertNotEqual(matplotlib.colors.to_hex(a.get_markerfacecolor()), "#ffffff", "#42: the bars' switch leaves the symbols")
+        self.assertEqual(matplotlib.colors.to_hex(b.get_markerfacecolor()), "#ffffff")
+
+    def test_symbol_border_follows_the_scheme_and_strengths(self):
+        fig, ax, *_ = self.fig({"column": "bars", "points": "each", "sets": [{"color": "#ff0000", "markerAlpha": 0.5, "markerEdgeAlpha": 0.25, "edgeAlpha": 0.6}]})
+        d = self.dots(ax)[0]
+        self.assertEqual(matplotlib.colors.to_hex(d.get_markeredgecolor()), graph.OKABE_ITO[0].lower(), "#43: a new fill leaves the automatic border")
+        self.assertAlmostEqual(matplotlib.colors.to_rgba(d.get_markerfacecolor())[3], 0.5)
+        self.assertAlmostEqual(matplotlib.colors.to_rgba(d.get_markeredgecolor())[3], 0.25)
+        self.assertTrue(any(abs(p.get_edgecolor()[3] - 0.6) < 1e-9 for p in ax.patches), "the bars' border strength")
+
+    def test_error_bar_colour(self):
+        svg = graph.render(self.T, {"column": "bars", "error": "sd", "sets": [{"errColor": "#123456"}]})["svg"].lower()
+        self.assertIn("#123456", svg)
+        svg = graph.render(Graphs.T, {"sets": [{"errColor": "#654321"}]})["svg"].lower()
+        self.assertIn("#654321", svg, "XY graphs too")
+
+    def test_legend_border_at_full_strength(self):
+        fig, ax, leg, _ = self.fig({"column": "bars", "legend": {"show": True, "groups": True}})
+        h = leg.legend_handles[0]
+        self.assertAlmostEqual(h.get_facecolor()[3], 0.35)
+        self.assertAlmostEqual(h.get_edgecolor()[3], 1.0, msg="#40")
+
+    def test_legend_with_a_break_uses_the_whole_graph(self):
+        g = {"column": "bars", "legend": {"show": True, "groups": True, "loc": "upper left"}, "y": {"breakFrom": 5, "breakTo": 15}}
+        fig, ax, leg, _ = self.fig(g)
+        fig.canvas.draw()
+        top = max(fig.axes, key=lambda a: a.get_position().y0)
+        r, box = fig.canvas.get_renderer(), top.get_window_extent()
+        self.assertGreater(leg.get_window_extent(r).y1, box.y0, "#41: at the top of the graph, not of the lower panel")
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

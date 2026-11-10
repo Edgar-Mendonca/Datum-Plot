@@ -417,6 +417,10 @@ pub struct GraphSettings {
     /// Graphs from older files have none: `false`.
     #[serde(default)]
     pub colors2: bool,
+    /// 0.4.2 (#42, #43): set once a graph's symbols have their own fill switch and an automatic symbol border follows
+    /// the scheme (see `Project::normalize`). Graphs from older files have none: `false`.
+    #[serde(default)]
+    pub colors3: bool,
     /// Column tables: scatter, bars, box, violin, paired or mean.
     pub column: String,
     /// Annotations drawn on the graph (text, arrows, lines, boxes), in data coordinates.
@@ -439,7 +443,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![], colors2: true,
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![], colors2: true, colors3: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -540,11 +544,24 @@ pub struct SetStyle {
     #[serde(rename = "markerEdge")]
     pub marker_edge: String,
     pub alpha: Option<f64>,
+    /// 0.4.2 (#42, #43): the symbols' own fill switch on bar, box and violin graphs (none = filled); the strength
+    /// (0–1, none = full) of the bars' border, the symbols' fill and the symbols' border; the error bars' colour
+    /// (empty = the symbol's colour).
+    #[serde(rename = "markerFilled")]
+    pub marker_filled: Option<bool>,
+    #[serde(rename = "edgeAlpha")]
+    pub edge_alpha: Option<f64>,
+    #[serde(rename = "markerAlpha")]
+    pub marker_alpha: Option<f64>,
+    #[serde(rename = "markerEdgeAlpha")]
+    pub marker_edge_alpha: Option<f64>,
+    #[serde(rename = "errColor")]
+    pub err_color: String,
 }
 
 impl Default for SetStyle {
     fn default() -> Self {
-        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None }
+        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None, marker_filled: None, edge_alpha: None, marker_alpha: None, marker_edge_alpha: None, err_color: String::new() }
     }
 }
 
@@ -656,7 +673,19 @@ impl Project {
             }
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
-                st.alpha = st.alpha.filter(|a| a.is_finite()).map(|a| a.clamp(0.0, 1.0));
+                for a in [&mut st.alpha, &mut st.edge_alpha, &mut st.marker_alpha, &mut st.marker_edge_alpha] {
+                    *a = a.filter(|a| a.is_finite()).map(|a| a.clamp(0.0, 1.0));
+                }
+                // 0.4.2 (#42, #43): symbols had no fill switch of their own (they followed the bars'), and an automatic
+                // symbol border followed the symbol's colour. Older graphs keep their look: both are copied once.
+                if !s.colors3 {
+                    if !st.filled {
+                        st.marker_filled = Some(false);
+                    }
+                    if st.marker_edge.is_empty() && !st.color.is_empty() {
+                        st.marker_edge = st.color.clone();
+                    }
+                }
                 // 0.3.21 (#38): until now a bar's fill and border followed the data set's colour when not set; they now
                 // follow the scheme. Graphs saved before keep their look: the colour is copied into fill and border once.
                 if !s.colors2 && !st.color.is_empty() {
@@ -669,6 +698,7 @@ impl Project {
                 }
             }
             s.colors2 = true;
+            s.colors3 = true;
         }
         let gids: Vec<u32> = self.graphs.iter().map(|g| g.id).collect();
         for l in &mut self.layouts {

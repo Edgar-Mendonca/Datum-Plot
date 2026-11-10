@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.2 — 2026-11-10
+
+Testers' requests: symbols and error bars on their own, tidier legends, and choosing which analyses each graph shows.
+
+**Symbols and error bars** (Format Graph › Data Sets)
+- On bar, box and violin graphs the symbols have their own **Filled** tick box: unfilled bars no longer empty the symbols.
+- An automatic symbol border follows the colour scheme, so changing a symbol's fill no longer changes its border.
+- **Strength** for the bars' border and for the symbols' fill and border, in their colour pop-ups.
+- The error bars have their own **colour** (Automatic keeps the usual one).
+
+**Legends**
+- The bars' border always shows in the legend, not only when its colour was chosen by hand.
+- On a graph with a Y axis break the legend sits where you ask (Top left is the top left of the whole graph), no longer in the lower part.
+
+**Analyses on each graph**
+- **Format Graph › Graph › Analyses** lists the table's analyses that can be drawn: tick the ones this graph shows (fits, brackets and stars). Results › Show on [graph] still works.
+- Running an analysis the table already has first offers to **open** it (or tick it on the graph you are on) or **Make Another**, so copies are not made by accident.
+
+Graphs made with earlier versions open looking exactly as before.
+
 ## 0.4.1 — 2026-11-10
 
 The graph digitizer: points from a picture of a graph.

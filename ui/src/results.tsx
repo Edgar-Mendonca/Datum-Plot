@@ -2,7 +2,7 @@
 // plots, and the Explain panel with the answer, checks, methods text and Python code).
 import { For, Show, createSignal, createEffect, on, createResource } from "solid-js";
 import { Analysis, Result, Table, invoke, letter, isEmpty } from "./api";
-import { act, call, out, P, open, openDialog, toast, item } from "./store";
+import { act, call, out, P, open, openDialog, closeDialog, toast, item } from "./store";
 import { Dialog, Pick, Check, Tabs, Icon } from "./ui";
 import { Empty } from "./nav";
 import { Help } from "./help";
@@ -49,8 +49,21 @@ const unpair = (o: Record<string, number> = {}) => Object.entries(o).map(([k, v]
 const optNum = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
 
 /** Analyze: choose the data sets and options, then add (or change) the analysis. */
-export const analysisDialog = (kind: string, t: Table | undefined, existing?: Analysis, preset: Record<string, any> = {}, sets0: number[] = []) => {
+export const analysisDialog = (kind: string, t: Table | undefined, existing?: Analysis, preset: Record<string, any> = {}, sets0: number[] = [], again = false): void => {
   if (!t) return toast("Open a data table or its graph first.");
+  // 0.4.2 (#39): the table already has this analysis: open it (or show it on this graph) rather than make a copy by accident.
+  const same = existing || again ? [] : out()!.project.analyses.filter(a => a.table === t.id && a.kind === kind);
+  if (same.length) {
+    const from = item(), g = from.s === "graphs" ? out()!.project.graphs.find(x => x.id === from.id && x.table === t.id) : undefined;
+    openDialog(() => (
+      <Dialog title={KINDS[kind]?.[0] ?? "Analysis"} cancel="Cancel" extra={<button class="btn" onClick={() => { closeDialog(); analysisDialog(kind, t, undefined, preset, sets0, true); }}>Make Another</button>}>
+        <p>{t.name} already has {same.length === 1 ? "this analysis" : `${same.length} of these analyses`}. Open it to see or change its options, or make another one.</p>
+        <div class="stackr"><For each={same}>{a => <span class="inline"><button class="btn sm pri" onClick={() => { closeDialog(); open("results", a.id); }}>Open {a.name}</button>
+          <Show when={g && draws(kind, t)}><Check label={`Shown on ${g!.name}`} value={!!out()!.project.graphs.find(x => x.id === g!.id)?.settings.overlays.includes(a.id)} set={v => act({ Overlay: { graph: g!.id, analysis: a.id, on: v } })} /></Show></span>}</For></div>
+      </Dialog>
+    ));
+    return;
+  }
   openDialog(() => {
     const [o, setO] = createSignal<Record<string, any>>({ ...DEFAULTS[kind], ...preset, ...(existing?.options ?? {}) });
     // Empty data sets start unticked: only columns with values take part.

@@ -302,6 +302,14 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await reset();
   await p.click('.ribbon .rb.big:has-text("Linear Regression")');
   await p.waitForTimeout(200);
+  // 0.4.2 (#39): the table already has a linear regression: open it, show it on this graph, or make another.
+  {
+    const txt = (await p.textContent(".dlg")) || "";
+    check("an analysis the table already has offers to open it or make another", txt.includes("Open Growth fit") && txt.includes("Make Another"), txt.slice(0, 200));
+    await reset();
+    await p.click('.dlg button:has-text("Make Another")');
+    await p.waitForTimeout(200);
+  }
   check("Linear Regression opens its options", ((await p.textContent(".dlg header")) || "").includes("Linear regression"));
   await p.fill('.dlg input[placeholder="end"]', "10");
   await p.press('.dlg input[placeholder="end"]', "Tab");
@@ -742,6 +750,25 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("a window started by a document shows its graph, not Home", !(await q.$(".bs")) && !!(await q.$(".gview")), String(!!(await q.$(".bs"))));
     check("…with the editing bar and Update", ((await q.textContent(".embedbar").catch(() => "")) || "").includes("the test document") && !!(await q.$('.ribbon .rb:has-text("Update Document")')) || !!(await q.$('.embedbar .btn')));
     await q.close();
+  }
+  // 0.4.2 (#39, #42, #43): Format Graph lists the analyses it can show; symbols have their own Filled; error-bar colour.
+  {
+    await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+    await p.click('.tabs button:text-is("View")'); await p.waitForTimeout(150); await p.click('.ribbon .rb:has-text("Graphs")'); await p.waitForTimeout(300);
+    await p.click('.tabs button:text-is("Graph")'); await p.waitForTimeout(80);
+    await p.click('.ribbon .rb:has-text("Format Axes")'); await p.waitForTimeout(250);
+   
+    await p.click('.dlg .dtabs button:text-is("Graph")'); await p.waitForTimeout(100);
+    const txt = (await p.textContent(".dlg")) || "";
+    check("Format Graph › Graph lists the analyses it can show", txt.includes("Show Growth fit"), txt.slice(0, 300));
+    await reset();
+    await p.click('.dlg label:has-text("Show Growth fit")'); await p.waitForTimeout(100);
+    const ov = (await ops()).find(o => o.Overlay);
+    check("…and ticking one sends Overlay for this graph", !!ov && ov.Overlay.analysis === 99, JSON.stringify(ov));
+    await p.click('.dlg .dtabs button:text-is("Data Sets")'); await p.waitForTimeout(100);
+    const heads = await p.$$eval(".setfmt th", hs => hs.map(h => h.textContent));
+    check("Data Sets has an Error bars colour", heads.some(h => /Error bars|Colour/.test(h || "")), heads.join("|"));
+    await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
   await p.keyboard.press("Escape"); await p.click('.tabs button:text-is("Data")'); await reset();

@@ -151,7 +151,7 @@ The other groups of the Analyze tab start an analysis directly: **Statistics**, 
 2. **The answer.** What the analysis found, in plain words.
 3. **Checks.** Whether the assumptions hold (for example, whether residuals scatter randomly), with a tick or a warning.
 
-Below them are the **Methods** text, ready to paste into a paper (**Copy methods text**), and the figure legend. **Change…** reopens the options; **Python code** shows the Python behind the result so you can repeat it elsewhere. Tick **Show on graph** to draw a fit or the significance stars on the graph.
+Below them are the **Methods** text, ready to paste into a paper (**Copy methods text**), and the figure legend. **Change…** reopens the options; **Python code** shows the Python behind the result so you can repeat it elsewhere. Tick **Show on graph** to draw a fit or the significance stars on the graph. Tick **Show on graph** to draw a fit or the significance stars on the graph. From the graph's side, **Format Graph › Graph › Analyses** lists the table's analyses: tick the ones this graph shows. If you run an analysis the table already has, Datum Plot first offers to open it (or tick it on the graph you are on) or **Make Another**.
 
 > **Tip.** Not sure what a number means? Click **?** beside it, or open **Help › Glossary**.
 
@@ -198,7 +198,7 @@ Double-click any part of a graph (an axis, a data set, the title) to format it, 
 1. **Schemes.** Click one: the graph changes at once, because the window sits beside the graph. Schemes labelled **colour-blind safe** stay easy to tell apart for people with any of the three common kinds of colour-blindness; the default, Okabe-Ito, is one of them.
 2. **How colour-blind readers see it.** The three columns show each scheme as people with red-, green- and blue-blindness see it.
 
-Your own colours go in the last row (#hex, separated by commas). In **Format Graph › Data Sets**, each colour is a small square showing the colour as drawn. Click it for the scheme's colours, a colour of your own, the **Strength** of a fill, or **Automatic** (back to the scheme); a square marked A is automatic. On bar, box and violin graphs the bars' fill and border come first, then the symbols' shape, size, fill and border, each set on its own. **Reset all colours** puts every colour back to the scheme. Any window can be moved by dragging its title bar.
+Your own colours go in the last row (#hex, separated by commas). In **Format Graph › Data Sets**, each colour is a small square showing the colour as drawn. Click it for the scheme's colours, a colour of your own, the **Strength** of a fill, or **Automatic** (back to the scheme); a square marked A is automatic. On bar, box and violin graphs the bars' fill and border come first, then the symbols' shape, size, fill and border, each set on its own. On those graphs the symbols also have their own **Filled** tick box, the bars' border and the symbols' fill and border have a **Strength**, and the **Error bars** square sets the error bars' colour. An automatic symbol border follows the scheme, so a new fill leaves it alone. **Reset all colours** puts every colour back to the scheme. Any window can be moved by dragging its title bar.
 
 ### Working on the graph
 

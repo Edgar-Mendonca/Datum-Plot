@@ -523,6 +523,25 @@ fn older_graphs_keep_their_bar_colours_and_new_ones_are_independent() {
 }
 
 #[test]
+fn older_graphs_keep_their_symbols_look() {
+    // 0.4.2 (#42, #43): unfilled bars emptied the symbols too, and an automatic symbol border took the symbol's colour.
+    let old = Project::from_json(r##"{"name":"o","tables":[{"id":1,"name":"T","kind":"column"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"colors2":true,"sets":[{"color":"#123456","filled":false},{"color":"#abcdef","markerEdge":"#000000"},{}]}}],"nextId":3}"##).unwrap();
+    let s = &old.graphs[0].settings;
+    assert_eq!((s.sets[0].marker_filled, s.sets[0].marker_edge.as_str()), (Some(false), "#123456"));
+    assert_eq!((s.sets[1].marker_filled, s.sets[1].marker_edge.as_str()), (None, "#000000"), "a border set by hand stays");
+    assert!(s.sets[2].marker_edge.is_empty() && s.colors3);
+    // Converted once: a symbol colour chosen later leaves the automatic border to the scheme.
+    let mut again = Project::from_json(&serde_json::to_string(&old).unwrap()).unwrap();
+    again.graphs[0].settings.sets[2].color = "#ff0000".into();
+    again.graphs[0].settings.sets[2].filled = false;
+    let back = Project::from_json(&serde_json::to_string(&again).unwrap()).unwrap();
+    assert!(back.graphs[0].settings.sets[2].marker_edge.is_empty() && back.graphs[0].settings.sets[2].marker_filled.is_none(), "#42, #43");
+    let a = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"edgeAlpha":-1,"markerAlpha":0.4,"markerEdgeAlpha":9,"errColor":"#111111"}]}}],"nextId":3}"##).unwrap();
+    let st = &a.graphs[0].settings.sets[0];
+    assert_eq!((st.edge_alpha, st.marker_alpha, st.marker_edge_alpha, st.err_color.as_str()), (Some(0.0), Some(0.4), Some(1.0), "#111111"));
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");
