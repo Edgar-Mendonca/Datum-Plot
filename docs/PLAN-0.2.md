@@ -235,7 +235,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | ✅ 0.3.9 |
 | B35 | Control charts and design of experiments | ✅ 0.3.10 |
 | B36 | Wavelets and spectrograms (Morlet scalogram with cone of influence, short-time Fourier spectrogram, ridge table) | ✅ 0.4.0 |
-| E8 | Graph digitizer and image tools | 0.4.1 |
+| E8 | Graph digitizer (two marks per axis, linear or log, several curves, tilt-tolerant) | ✅ 0.4.1 |
+| E9 | Image tools (profiles and measurements on images) | 1.0 |
 | B37 | Bayesian tests | 0.4.2 |
 | I7 | Mac and Linux versions | 0.4.3 |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
@@ -412,7 +413,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.20** ✅ | Users' requests (GitHub #34–#36): Ctrl+Z/Ctrl+Y with Format Graph open, column-graph legends, the axis break's position and ticks (D23) |
 | **0.3.21** ✅ | Colours of bars and symbols (D24; GitHub #38) |
 | **0.4.0** ✅ | Wavelets and spectrograms (B36); the user started the 0.4 series here |
-| 0.4.1 | Graph digitizer and image tools (E8) |
+| **0.4.1** ✅ | Graph digitizer (E8); image tools moved to E9 |
 | 0.4.2 | Bayesian tests (B37) |
 | 0.4.3 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

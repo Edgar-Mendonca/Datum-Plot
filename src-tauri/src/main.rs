@@ -120,6 +120,7 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
     let op = match op {
         Op::AddGraph { table, settings: None } => Op::AddGraph { table, settings: Some(Box::new(a.opts.graph())) },
         Op::Import { name, entry, reps, header, rows, graph: None, dates } => Op::Import { name, entry, reps, header, rows, graph: Some(Box::new(a.opts.graph())), dates },
+        Op::Digitize { name, calib, sets, graph: None } => Op::Digitize { name, calib, sets, graph: Some(Box::new(a.opts.graph())) },
         o => o,
     };
     guard(|| a.doc.apply(op))?;
@@ -376,6 +377,20 @@ async fn pick_logo(app: AppHandle) -> R<Option<String>> {
     let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
     let mime = match path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase().as_str() { "svg" => "image/svg+xml", "jpg" | "jpeg" => "image/jpeg", "gif" => "image/gif", _ => "image/png" };
     Ok(Some(format!("data:{mime};base64,{}", base64(&bytes))))
+}
+
+/// 0.4.1 (E8): a picture of a graph to digitize, as a data URL with its file name.
+#[tauri::command]
+async fn pick_picture(app: AppHandle) -> R<Option<Value>> {
+    let Some(path) = pick(&app, "Pictures of graphs", &["png", "jpg", "jpeg", "gif", "bmp", "webp"]) else { return Ok(None) };
+    if std::fs::metadata(&path).map_err(|e| e.to_string())?.len() > 40_000_000 {
+        return Err("Choose a picture smaller than 40 MB.".into());
+    }
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
+    let mime = match ext.as_str() { "jpg" | "jpeg" => "image/jpeg", "gif" => "image/gif", "bmp" => "image/bmp", "webp" => "image/webp", _ => "image/png" };
+    let name = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    Ok(Some(json!({ "name": name, "data": format!("data:{mime};base64,{}", base64(&bytes)) })))
 }
 
 // ---------- graphs: drawn by the Python engine ----------
@@ -832,7 +847,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, embed::copy_embedded, embed::ole_update, embed::ole_close, embed::ole_check, copy_text, read_clipboard, import_file, restart_engine, engine,
+            state, apply, new_table, history, new_project, templates, open, save, save_file, pick_logo, pick_picture, render, render_page, export_page, result, models, formula, import_tables, import_files, region, export_report, console, export_notebook, export_all, export_workbook, export_graph, copy_graph, copy_page, embed::copy_embedded, embed::ole_update, embed::ole_close, embed::ole_check, copy_text, read_clipboard, import_file, restart_engine, engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide, new_design, date_number
         ])
         .run(tauri::generate_context!())

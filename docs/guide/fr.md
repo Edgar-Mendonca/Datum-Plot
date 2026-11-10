@@ -96,7 +96,7 @@ Choisissez le type de tableau qui correspond à votre expérience : **Data › 
 
 ![Un tableau de données (onglet Data).](img/table.png)
 
-1. **Data › Insert** (Données › Insérer). **New Table** (Nouveau tableau), **Import** (Importer), **Several Files** (Plusieurs fichiers), **Add Data Set** (Ajouter une série), **Remove Data Set** (Supprimer une série) et les lignes.
+1. **Data › Insert** (Données › Insérer). **New Table** (Nouveau tableau), **Import** (Importer), **Several Files** (Plusieurs fichiers), **Digitize Graph** (Numériser un graphique), **Add Data Set** (Ajouter une série), **Remove Data Set** (Supprimer une série) et les lignes.
 2. **En-têtes.** Le titre et les unités de X, et le titre de chaque série de données. Double-cliquez sur un en-tête pour le modifier, ainsi que les réplicats ou le mode de saisie des valeurs. Les titres longs passent à la ligne, sur trois lignes au plus. Faites glisser le bord droit d’un en-tête pour élargir sa colonne ; double-cliquez sur ce bord pour l’ajuster au titre et aux valeurs.
 3. **Cellules.** Tapez une valeur et appuyez sur [[Enter]]. Le copier-coller fonctionne avec les tableurs ([[Ctrl+C]], [[Ctrl+V]]) ; [[Ctrl+D]] recopie vers le bas.
 
@@ -113,6 +113,10 @@ Pour exclure une valeur des graphiques et des analyses sans la supprimer, sélec
 ### Importer
 
 **Data › Import** (Données › Importer), ou **File › Import** (Fichier › Importer), lit les fichiers CSV, TXT et TSV, les classeurs .xlsx et les projets .pzfx. Un aperçu montre comment les colonnes seront lues ; choisissez la ligne d’en-tête et les réplicats, puis cliquez sur **Import**. Quand la colonne X contient des dates, **The X column holds dates** (La colonne X contient des dates) est coché pour vous. **Data › Several Files** (Données › Plusieurs fichiers) importe de nombreuses séries de mesures d’un coup : une série de données par fichier dans un seul tableau lorsqu’ils partagent les mêmes valeurs X, sinon un tableau par fichier. Les plans de microplaques (96 et 384 puits) sont reconnus.
+
+### Les points d’une image de graphique
+
+**Data › Digitize Graph** (Données › Numériser un graphique) lit les points d’un graphique publié à partir de son image (PNG, JPG, GIF, BMP ou WebP) dans un nouveau tableau. Cliquez sur **X mark 1** (repère X 1), puis sur une graduation de l’axe X dont vous connaissez la valeur, et tapez cette valeur ; faites de même pour **X mark 2**, **Y mark 1** et **Y mark 2**, en choisissant des repères éloignés. Cochez **Log** pour un axe à échelle logarithmique. Cliquez ensuite sur **Points** puis sur chaque point de la courbe ; un clic droit enlève le dernier, et **＋ Data set** (série) commence une autre courbe dans sa propre couleur. **Make Table** (Créer le tableau) donne une colonne X et une colonne par série, avec un graphique. Une image numérisée un peu de travers se lit quand même correctement, car chaque clic est mesuré le long de la droite qui passe par les deux repères de son axe.
 
 ### Dates et heures
 

@@ -42,6 +42,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     f.state.project.graphs.push({ ...f.state.project.graphs[0], id: 97, name: "Growth copy" });  // 0.3.14: Format Graph follows the graph shown
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, new_design: f.state,
+      pick_picture: { name: "scan", data: "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='400' height='300' fill='white'/></svg>") },
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); if (c in m) return m[c]; if (c === "apply" || c === "history" || (c === "new_table" && window.__newTableReturns)) return f.state; return null; } }, event: { listen: async () => () => {} } };
@@ -741,6 +742,22 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("a window started by a document shows its graph, not Home", !(await q.$(".bs")) && !!(await q.$(".gview")), String(!!(await q.$(".bs"))));
     check("…with the editing bar and Update", ((await q.textContent(".embedbar").catch(() => "")) || "").includes("the test document") && !!(await q.$('.ribbon .rb:has-text("Update Document")')) || !!(await q.$('.embedbar .btn')));
     await q.close();
+  }
+  // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
+  await p.keyboard.press("Escape"); await p.click('.tabs button:text-is("Data")'); await reset();
+  await p.click('.ribbon .rb:has-text("Digitize Graph")'); await p.waitForSelector(".digipic svg");
+  {
+    const box = await p.locator(".digipic svg").boundingBox(), at = (fx, fy) => p.mouse.click(box.x + fx * box.width, box.y + fy * box.height);
+    await at(0.1, 0.9); await at(0.9, 0.9); await at(0.1, 0.9); await at(0.1, 0.1); await at(0.5, 0.5); await at(0.7, 0.3);
+    await p.click(".digipic svg", { button: "right", position: { x: 5, y: 5 } });  // removes the last point
+    const v = await p.$$(".digival");
+    for (const [i, t] of ["0", "10", "0", "100"].entries()) await v[i].fill(t);
+    await p.click('.dlg footer .btn.pri'); await p.waitForTimeout(150);
+    const d = (await ops()).find(o => o.Digitize)?.Digitize;
+    const near = (a, b) => Math.abs(a - b) < 1.5;
+    check("Digitize Graph sends the marks in the picture's pixels with their values",
+      !!d && near(d.calib.x[1].px, 360) && near(d.calib.x[1].py, 270) && d.calib.x[1].value === 10 && near(d.calib.y[1].py, 30) && d.calib.y[1].value === 100 && d.calib.xlog === false, JSON.stringify(d?.calib));
+    check("…and the clicked points (right-click removed the last)", !!d && d.sets.length === 1 && d.sets[0].points.length === 1 && near(d.sets[0].points[0][0], 200) && near(d.sets[0].points[0][1], 150), JSON.stringify(d?.sets));
   }
   check("no script errors", errors.length === 0, errors.join(" | "));
   await b.close(); srv.close();

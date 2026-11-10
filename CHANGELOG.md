@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 — 2026-11-10
+
+The graph digitizer: points from a picture of a graph.
+
+**Digitize Graph** (Data › Insert)
+- Open a picture of a graph (PNG, JPG, GIF, BMP or WebP), click two ticks on each axis and type their values, then click the points.
+- Logarithmic axes, several curves in their own colours; a right-click removes the last point.
+- **Make Table** gives one X column and one column per curve, with a graph. A slightly tilted scan still reads right.
+
 ## 0.4.0 — 2026-11-10
 
 Wavelets and spectrograms: how a signal's frequencies change over time. The 0.4 series begins.

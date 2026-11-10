@@ -365,3 +365,65 @@ export const newDesign = () => openDialog(() => {
     </Dialog>
   );
 });
+
+// ---------- Data › Digitize Graph (E8, 0.4.1) ----------
+type Pt = [number, number];
+const MARKS = [["x0", "X mark 1"], ["x1", "X mark 2"], ["y0", "Y mark 1"], ["y1", "Y mark 2"]] as const;
+const val = (s?: string) => (s ?? "").trim() === "" ? NaN : Number(s!.trim().replace(",", "."));
+const DOT = ["#0E8C7F", "#C0392B", "#E67E22", "#7D3C98", "#1E8449", "#3A4655"];
+/** Points clicked on a picture of a graph become an XY table. The window keeps pixels only; the core works out the
+ *  values from two marks per axis (linear or log, a slightly tilted scan reads right). */
+export const digitize = async () => {
+  const pic = await call<{ name: string; data: string } | null>("pick_picture");
+  if (!pic) return;
+  openDialog(() => {
+    const [size, setSize] = createSignal<Pt>([0, 0]), [mode, setMode] = createSignal<string>("x0");
+    const [marks, setMarks] = createSignal<Record<string, Pt | undefined>>({}), [vals, setVals] = createSignal<Record<string, string>>({});
+    const [log, setLog] = createSignal({ x: false, y: false }), [name, setName] = createSignal(pic.name || "Digitized");
+    const [sets, setSets] = createSignal<{ title: string; points: Pt[] }[]>([{ title: "Data set A", points: [] }]), [cur, setCur] = createSignal(0);
+    const next = (k: string) => (MARKS.find(m => !marks()[m[0]] && m[0] !== k)?.[0] ?? "pts");
+    const click = (e: MouseEvent) => {
+      const r = (e.currentTarget as SVGElement).getBoundingClientRect(), [w, h] = size();
+      const p: Pt = [Math.round((e.clientX - r.left) / r.width * w * 10) / 10, Math.round((e.clientY - r.top) / r.height * h * 10) / 10];
+      const m = mode();
+      if (m === "pts") return setSets(s => s.map((d, i) => i === cur() ? { ...d, points: [...d.points, p] } : d));
+      setMarks({ ...marks(), [m]: p });
+      setMode(next(m));
+    };
+    const undo = (e?: MouseEvent) => { e?.preventDefault(); setSets(s => s.map((d, i) => i === cur() ? { ...d, points: d.points.slice(0, -1) } : d)); };
+    const ok = () => {
+      const miss = MARKS.find(m => !marks()[m[0]] || !isFinite(val(vals()[m[0]])));
+      if (miss) { toast(`Click ${miss[1]} on the picture and type its value.`); setMode(miss[0]); return false; }
+      const mk = (k: string) => ({ px: marks()[k]![0], py: marks()[k]![1], value: val(vals()[k]) });
+      return act({ Digitize: { name: name(), calib: { x: [mk("x0"), mk("x1")], y: [mk("y0"), mk("y1")], xlog: log().x, ylog: log().y }, sets: sets(), graph: null } }).then(done => {
+        if (done) { const t = P().tables[P().tables.length - 1]; open("data", t.id); toast(`${t.rows} points read into "${t.name}".`, true); }
+        return done;
+      });
+    };
+    const r = () => Math.max(2, size()[0] / 160);
+    return (
+      <Dialog title="Digitize Graph" help="digitize" wide okText="Make Table" ok={ok}>
+        <div class="digi">
+          <div class="digipic"><div style={{ position: "relative" }}>
+            <img src={pic.data} onLoad={e => setSize([e.currentTarget.naturalWidth, e.currentTarget.naturalHeight])} />
+            <Show when={size()[0]}><svg viewBox={`0 0 ${size()[0]} ${size()[1]}`} onClick={click} onContextMenu={undo} style={{ cursor: "crosshair" }}>
+              <For each={MARKS.filter(m => marks()[m[0]])}>{m => <g stroke={m[0][0] === "x" ? "#C0392B" : "#2E6FD8"} stroke-width={r() / 2}><line x1={marks()[m[0]]![0] - r() * 3} x2={marks()[m[0]]![0] + r() * 3} y1={marks()[m[0]]![1]} y2={marks()[m[0]]![1]} /><line y1={marks()[m[0]]![1] - r() * 3} y2={marks()[m[0]]![1] + r() * 3} x1={marks()[m[0]]![0]} x2={marks()[m[0]]![0]} /></g>}</For>
+              <For each={sets()}>{(d, k) => <For each={d.points}>{q => <circle cx={q[0]} cy={q[1]} r={r()} fill={DOT[k() % DOT.length]} stroke="#fff" stroke-width={r() / 3} />}</For>}</For>
+            </svg></Show>
+          </div></div>
+          <div class="form digiside">
+            <For each={MARKS}>{([k, l]) => <><label><button class="btn sm" classList={{ pri: mode() === k }} onClick={() => setMode(k)}>{marks()[k] ? "✓ " : ""}{l}</button></label>
+              <input class="digival" placeholder="value" value={vals()[k] ?? ""} onInput={e => setVals({ ...vals(), [k]: e.currentTarget.value })} /></>}</For>
+            <label>Log axes</label><span class="inline"><Check label="X" value={log().x} set={v => setLog({ ...log(), x: v })} /><Check label="Y" value={log().y} set={v => setLog({ ...log(), y: v })} /></span>
+            <label><button class="btn sm" classList={{ pri: mode() === "pts" }} onClick={() => setMode("pts")}>Points</button></label>
+            <span class="stackr"><For each={sets()}>{(d, k) => <span class="inline"><input type="radio" checked={cur() === k()} onChange={() => { setCur(k()); setMode("pts"); }} /><span style={{ color: DOT[k() % DOT.length] }}>●</span>
+              <input value={d.title} onChange={e => { const v = e.currentTarget.value; setSets(s => s.map((x, i) => i === k() ? { ...x, title: v } : x)); }} /><span class="muted">{d.points.length}</span></span>}</For>
+              <span class="inline"><button class="btn sm" onClick={() => { setSets([...sets(), { title: `Data set ${letter(sets().length)}`, points: [] }]); setCur(sets().length - 1); setMode("pts"); }}>＋ Data set</button><button class="btn sm" onClick={() => undo()}>Remove last point</button></span></span>
+            <label>Table</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
+          </div>
+        </div>
+        <p class="muted">{mode() === "pts" ? "Click each point of the chosen data set; right-click removes the last one." : `Click ${MARKS.find(m => m[0] === mode())![1]}: a tick on the ${mode()[0].toUpperCase()} axis whose value you know, then type that value.`} The values are worked out from the two marks of each axis, so pick marks far apart.</p>
+      </Dialog>
+    );
+  });
+};

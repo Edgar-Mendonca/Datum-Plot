@@ -29,6 +29,8 @@ pub enum Op {
     /// 3 for mean/SD/N) per data set. With `header`, the first row holds the titles. `dates` ("date", "datetime")
     /// reads the X column as dates (0.3.12: the Import dialog offers it when the X column looks like dates).
     Import { name: String, entry: Entry, reps: usize, header: bool, rows: Vec<Vec<String>>, graph: Option<Box<GraphSettings>>, #[serde(default)] dates: String },
+    /// 0.4.1 (E8): points clicked on a picture of a graph become an XY table (values worked out in `digitize`).
+    Digitize { name: String, calib: crate::digitize::Calib, sets: Vec<crate::digitize::Traced>, graph: Option<Box<GraphSettings>> },
     Exclude { table: u32, cells: Vec<(usize, usize)>, on: bool },
     /// name, xTitle, xUnits, yTitle, yUnits or notes.
     TableSet { table: u32, field: String, value: String },
@@ -419,6 +421,10 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                     put(t, row.saturating_add(i), col.saturating_add(j as i64), s);
                 }
             }
+        }
+        Op::Digitize { name, calib, sets, graph } => {
+            let t = crate::digitize::table(&name, &calib, &sets)?;
+            p.add_table(t, graph.map(|g| *g));
         }
         Op::Import { name, entry, reps, header, mut rows, graph, dates } => {
             let head = if header && !rows.is_empty() { rows.remove(0) } else { vec![] };

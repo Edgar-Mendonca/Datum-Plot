@@ -528,3 +528,33 @@ fn symbol_borders_travel_as_marker_edge() {
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");
     assert!(serde_json::to_string(&p).unwrap().contains(r##""markerEdge":"#010203""##));
 }
+
+#[test]
+fn digitized_points_become_a_table() {
+    use crate::digitize::{table, value, Calib, Mark, Traced};
+    // A picture where X 0..10 spans pixels 100..600 and Y 0..50 spans pixels 400..100 (pixels grow downwards).
+    let c = Calib { x: [Mark { px: 100.0, py: 400.0, value: 0.0 }, Mark { px: 600.0, py: 400.0, value: 10.0 }], y: [Mark { px: 100.0, py: 400.0, value: 0.0 }, Mark { px: 100.0, py: 100.0, value: 50.0 }], xlog: false, ylog: false };
+    let sets = vec![Traced { title: "A".into(), points: vec![(350.0, 250.0), (100.0, 400.0)] }, Traced { title: "B".into(), points: vec![(600.0, 100.0)] }];
+    let t = table("Paper fig 2", &c, &sets).unwrap();
+    assert_eq!((t.rows, t.sets.len(), t.name.as_str()), (3, 2, "Paper fig 2"));
+    assert_eq!((t.get(0, 0), t.get(0, 1), t.get(1, 0), t.get(1, 1)), (Some(0.0), Some(0.0), Some(5.0), Some(25.0)), "sorted by X within the set");
+    assert_eq!((t.get(2, 0), t.get(2, 1), t.get(2, 2)), (Some(10.0), None, Some(50.0)));
+    // A tilted scan (2° turn): a point on the X axis still reads its value.
+    let a = std::f64::consts::PI / 90.0;
+    let rot = |x: f64, y: f64| (x * a.cos() - y * a.sin(), x * a.sin() + y * a.cos());
+    let (p0, p1, q) = (rot(0.0, 0.0), rot(500.0, 0.0), rot(250.0, 0.0));
+    let v = value(&Mark { px: p0.0, py: p0.1, value: 0.0 }, &Mark { px: p1.0, py: p1.1, value: 10.0 }, false, q).unwrap();
+    assert!((v - 5.0).abs() < 1e-9);
+    // A log axis: halfway between 1 and 100 is 10.
+    let l = value(&Mark { px: 0.0, py: 0.0, value: 1.0 }, &Mark { px: 100.0, py: 0.0, value: 100.0 }, true, (50.0, 0.0)).unwrap();
+    assert!((l - 10.0).abs() < 1e-9);
+    // Mistakes say what to do.
+    let same = Calib { x: [c.x[0], Mark { value: 0.0, ..c.x[1] }], ..c.clone() };
+    assert!(table("", &same, &sets).unwrap_err().contains("different values"));
+    let logneg = Calib { xlog: true, ..c.clone() };
+    assert!(table("", &logneg, &sets).unwrap_err().contains("above zero"));
+    assert!(table("", &c, &[]).unwrap_err().contains("Click some points"));
+    let mut d = Doc::new(Project::new("P"));
+    d.apply(Op::Digitize { name: "Fig".into(), calib: c, sets, graph: Some(Box::default()) }).unwrap();
+    assert_eq!((d.p.tables.len(), d.p.graphs.len()), (1, 1));
+}

@@ -96,7 +96,7 @@ Choose the kind of table that matches your experiment: **Data › New Table**.
 
 ![A data table (Data tab).](img/table.png)
 
-1. **Data › Insert.** **New Table**, **Import**, **Several Files**, **Add Data Set**, **Remove Data Set** and rows.
+1. **Data › Insert.** **New Table**, **Import**, **Several Files**, **Digitize Graph**, **Add Data Set**, **Remove Data Set** and rows.
 2. **Headings.** The X title and units, and each data set's title. Double-click a heading to change it, the replicates or the way values are entered. Long titles wrap onto up to three lines. Drag the right edge of a heading to widen its column; double-click the edge to fit the title and values.
 3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with spreadsheets ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down.
 
@@ -113,6 +113,10 @@ To leave a value out of graphs and analyses without deleting it, select it and p
 ### Import
 
 **Data › Import** (or **File › Import**) reads CSV, TXT and TSV files, .xlsx workbooks and .pzfx projects. A preview shows how the columns will be read; choose the header row and the replicates and click **Import**. When the X column holds dates, **The X column holds dates** is ticked for you. **Data › Several Files** imports many runs at once: one data set per file in one table when they share their X values, otherwise one table per file. Plate-reader layouts (96 and 384 wells) are recognised.
+
+### Points from a picture of a graph
+
+**Data › Digitize Graph** reads the points of a published graph from its picture (PNG, JPG, GIF, BMP or WebP) into a new table. Click **X mark 1** and then a tick on the X axis whose value you know, and type that value; do the same for **X mark 2**, **Y mark 1** and **Y mark 2**, picking marks far apart. Tick **Log** for an axis on a logarithmic scale. Then click **Points** and each point of the curve; a right-click removes the last one, and **＋ Data set** starts another curve in its own colour. **Make Table** gives one X column and one column per data set, with a graph. A slightly tilted scan still reads right, because each click is measured along the line through its axis's two marks.
 
 ### Dates and times
 
