@@ -30,7 +30,7 @@
     "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios); three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar) and bootstrap confidence intervals.",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison, smoothing splines; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Matrices and 3D: contour maps, heat maps, 3D surfaces and 3D scatter, vector fields, polar, ternary, bubble, radar and waterfall graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
-    "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters.",
+    "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters, wavelet scalograms and spectrograms.",
     "Quality: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.",
     "Materials testing: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).",
     "Publication graphs: error bars (mean or median), axis breaks (XY and column graphs), a second Y axis, annotations, colour-blind-safe colours, multi-panel figures and insets.",
@@ -47,27 +47,26 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.22",
-      "title": "Wavelets",
-      "when": "Next",
-      "items": [
-        "Wavelet transforms and short-time spectra"
-      ]
-    },
-    {
-      "v": "0.3.23",
+      "v": "0.4.1",
       "title": "Images",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Graph digitizer and image tools"
       ]
     },
     {
-      "v": "0.3.24–0.3.25",
-      "title": "Bayes, Mac and Linux",
+      "v": "0.4.2",
+      "title": "Bayesian tests",
+      "when": "Soon",
+      "items": [
+        "Bayes factors beside the usual P values"
+      ]
+    },
+    {
+      "v": "0.4.3",
+      "title": "Mac and Linux",
       "when": "Later",
       "items": [
-        "Bayesian tests",
         "Mac and Linux versions"
       ]
     },

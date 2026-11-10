@@ -158,7 +158,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 - **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio), agreement of paired ratings (Cohen's kappa, McNemar's and Bowker's tests).
 - **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits, smoothing splines.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
-- **Signals and spectra:** peak finding, Gaussian, Lorentzian and Voigt peak fits, Fourier spectra and filters.
+- **Signals and spectra:** peak finding, Gaussian, Lorentzian and Voigt peak fits, Fourier spectra and filters, and how the frequencies change over time: a **wavelet scalogram** or a **spectrogram** (Signals › Operation), a heat map of time against frequency with the strongest frequency at each time as a table to graph.
 - **Quality:** control charts (individuals, X̄–R, X̄–S, p) with rule checks and Cp/Cpk; **Analyze › New Design** makes a two-level factorial design (full or half fraction) to fill in, and Factorial Analysis gives the effects, a Pareto chart and the main effects.
 - **Materials:** tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, DSC and TGA thermal analysis.
 

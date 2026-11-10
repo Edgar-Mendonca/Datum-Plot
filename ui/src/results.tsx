@@ -21,7 +21,7 @@ export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; 
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
   B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B35c: ["control", {}], B35d: ["doe", {}], B34a: ["threeway", {}], B34b: ["ancova", {}], B34c: ["agreement", {}], B34d: ["bootstrap", {}], B34s: ["smooth", { method: "spline" }], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
-  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
+  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B36: ["signal", { op: "cwt" }], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
 const DEFAULTS: Record<string, Record<string, any>> = {
@@ -169,9 +169,12 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label /><Check label="Fit against reversals 2N (S = σ'f · (2N)^b) instead of cycles N" value={!!o().reversals} set={v => put("reversals", v)} />
           </Show>
           <Show when={kind === "signal"}>
-            <label>Operation</label><Pick value={o().op} set={v => put("op", v)} options={[["fft", "Fourier spectrum (which frequencies the signal holds)"], ["lowpass", "Low-pass filter (keep slow changes)"], ["highpass", "High-pass filter (keep fast changes)"], ["bandpass", "Band-pass filter (keep a range)"], ["resample", "Resample onto evenly spaced X"]]} />
+            <label>Operation</label><Pick value={o().op} set={v => put("op", v)} options={[["fft", "Fourier spectrum (which frequencies the signal holds)"], ["cwt", "Wavelet scalogram (how the frequencies change over time)"], ["stft", "Spectrogram (short-time Fourier: frequencies over time)"], ["lowpass", "Low-pass filter (keep slow changes)"], ["highpass", "High-pass filter (keep fast changes)"], ["bandpass", "Band-pass filter (keep a range)"], ["resample", "Resample onto evenly spaced X"]]} />
             <Show when={o().op === "highpass" || o().op === "bandpass"}><label>Low cut-off</label><span class="inline"><N k="low" /><span class="muted">cycles per X unit</span></span></Show>
             <Show when={o().op === "lowpass" || o().op === "bandpass"}><label>High cut-off</label><span class="inline"><N k="high" /><span class="muted">cycles per X unit</span></span></Show>
+            {/* 0.4.0 (B36): time–frequency pictures */}
+            <Show when={o().op === "cwt" || o().op === "stft"}><label>Frequencies</label><span class="inline"><span class="muted">from</span><N k="low" ph="auto" /><span class="muted">to</span><N k="high" ph="auto" /><span class="muted">cycles per X unit (auto: two cycles over the record up to half the sampling rate)</span></span></Show>
+            <Show when={o().op === "stft"}><label>Window</label><span class="inline"><N k="window" ph="auto" /><span class="muted">points: shorter follows fast changes, longer separates frequencies</span></span></Show>
             <Show when={o().op === "resample"}><label>Points</label><span class="inline"><N k="n" ph="as many" /><span class="muted">evenly spaced from the first to the last X</span></span></Show>
           </Show>
           <Show when={kind === "contingency"}>

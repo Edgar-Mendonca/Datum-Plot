@@ -683,6 +683,9 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.dlg nav button:has-text("Compare groups")'); await p.waitForTimeout(150);
   const gal = (await p.textContent(".dlg .galitems")) || "";
   check("the Analyze gallery offers Three-way ANOVA and ANCOVA", gal.includes("Three-way ANOVA") && gal.includes("ANCOVA"), gal.slice(0, 200));
+  await p.click('.dlg nav button:has-text("Signals")'); await p.waitForTimeout(150);
+  check("the Analyze gallery offers wavelets and spectrograms (0.4.0)", ((await p.textContent(".dlg .galitems")) || "").includes("Wavelets and spectrograms"));
+  await p.click('.dlg nav button:has-text("Compare groups")'); await p.waitForTimeout(150);
   await p.dblclick('.dlg .galitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
   check("double-clicking ANCOVA opens its options and closes the gallery", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);

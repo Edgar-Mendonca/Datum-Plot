@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 — 2026-11-10
+
+Wavelets and spectrograms: how a signal's frequencies change over time. The 0.4 series begins.
+
+**Time–frequency pictures** (Analyze › Signals and spectra › Wavelets and spectrograms, or Signals › Operation)
+- **Wavelet scalogram** (Morlet wavelet): a heat map of time against frequency, sharp in time for fast events and in frequency for slow ones. The pale area at each end (the cone of influence) is where the start and end of the record distort the power.
+- **Spectrogram** (short-time Fourier transform): the same picture from a sliding window; choose the window's length.
+- Choose the range of frequencies, or let Datum Plot take it from the record.
+- The answer names the strongest frequency and when it happens; the **strongest frequency at each time** becomes a data table to graph.
+
 ## 0.3.21 — 2026-11-10
 
 Colours of bars and symbols.

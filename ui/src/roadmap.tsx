@@ -117,6 +117,7 @@ const ANALYSES: Choice[] = [
   { id: "B19", name: "Survival and reliability", icon: "line", group: "Survival", desc: "Kaplan-Meier survival, median survival with its 95% CI, the log-rank test and hazard ratios (Cox)." },
   { id: "B24", name: "Peak analysis", icon: "curve", group: "Signals and spectra", desc: "Baselines, peaks, widths, areas and multi-peak fits (XRD, Raman, chromatograms)." },
   { id: "B25", name: "Signal processing", icon: "graph", group: "Signals and spectra", desc: "Fourier spectrum, low-, high- and band-pass filters, resampling." },
+  { id: "B36", name: "Wavelets and spectrograms", icon: "graph", group: "Signals and spectra", desc: "How the frequencies of a signal change over time: a Morlet wavelet scalogram or a short-time Fourier spectrogram, and the strongest frequency at each time." },
   { id: "B26", name: "Surface fitting", icon: "grid", group: "Signals and spectra", desc: "Fit Z = f(X, Y): a plane, quadratic or cubic surface, or a 2D Gaussian peak." },
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];

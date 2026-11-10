@@ -234,10 +234,10 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D20 | Vector fields and 3D scatter | ✅ 0.3.8 |
 | B34 | Three-way ANOVA, ANCOVA, kappa, McNemar, bootstrap CIs, spline fits | ✅ 0.3.9 |
 | B35 | Control charts and design of experiments | ✅ 0.3.10 |
-| B36 | Wavelets and short-time spectra | 0.3.22 |
-| E8 | Graph digitizer and image tools | 0.3.23 |
-| B37 | Bayesian tests | 0.3.24 |
-| I7 | Mac and Linux versions | 0.3.25 |
+| B36 | Wavelets and spectrograms (Morlet scalogram with cone of influence, short-time Fourier spectrogram, ridge table) | ✅ 0.4.0 |
+| E8 | Graph digitizer and image tools | 0.4.1 |
+| B37 | Bayesian tests | 0.4.2 |
+| I7 | Mac and Linux versions | 0.4.3 |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
 | A20 | Dates, second step: offer dates on paste and import, axis steps, lines at a date, date functions in formulas, intercepts as dates | ✅ 0.3.12 |
 | A21 | Long column titles wrap onto up to three lines | ✅ 0.3.12 |
@@ -411,8 +411,8 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.3.19** ✅ | Embedded graphs, first fix from testing: the window a document opens shows the graph and its Update bar (it showed Home) |
 | **0.3.20** ✅ | Users' requests (GitHub #34–#36): Ctrl+Z/Ctrl+Y with Format Graph open, column-graph legends, the axis break's position and ticks (D23) |
 | **0.3.21** ✅ | Colours of bars and symbols (D24; GitHub #38) |
-| 0.3.22 | Wavelets and short-time spectra (B36) |
-| 0.3.23 | Graph digitizer and image tools (E8) |
-| 0.3.24 | Bayesian tests (B37) |
-| 0.3.25 | Mac and Linux versions (I7) |
+| **0.4.0** ✅ | Wavelets and spectrograms (B36); the user started the 0.4 series here |
+| 0.4.1 | Graph digitizer and image tools (E8) |
+| 0.4.2 | Bayesian tests (B37) |
+| 0.4.3 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

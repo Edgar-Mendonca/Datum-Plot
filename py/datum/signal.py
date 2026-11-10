@@ -1,6 +1,7 @@
 """Peaks and signals on XY data: peak finding with a baseline, heights, widths and areas, optionally
 fitted as Gaussian, Lorentzian or Voigt peaks (B24); and signal processing: the Fourier spectrum,
-low-, high- and band-pass filters and even resampling (B25)."""
+low-, high- and band-pass filters and even resampling (B25); and time–frequency analysis (B36, 0.4.0): the
+spectrogram (short-time Fourier transform) and the Morlet wavelet scalogram (Torrence & Compo 1998)."""
 import math
 
 import numpy as np
@@ -124,9 +125,101 @@ def even(x, y):
     return xe, np.interp(xe, x, y), True
 
 
+W0 = 6.0  # the Morlet wavelet's frequency: the usual choice, nearly admissible
+FOURIER = 4 * math.pi / (W0 + math.sqrt(2 + W0 ** 2))  # Fourier period of a scale (Torrence & Compo, table 1)
+
+
+def morlet(y, dt, freqs):
+    """Wavelet power |W|² / σ² of the Morlet transform at each frequency (rows) and point (columns), computed by
+    the FFT with zero padding; and the cone of influence (the longest period each point can trust)."""
+    n = len(y)
+    pad = 1 << (int(math.ceil(math.log2(n))) + 1)
+    yf = np.fft.fft(y - y.mean(), pad)
+    w = 2 * math.pi * np.fft.fftfreq(pad, dt)
+    var = float(np.var(y)) or 1.0
+    power = np.empty((len(freqs), n))
+    for i, f in enumerate(freqs):
+        s = 1 / (f * FOURIER)
+        psi = math.sqrt(2 * math.pi * s / dt) * math.pi ** -0.25 * np.exp(-((s * w - W0) ** 2) / 2) * (w > 0)
+        power[i] = np.abs(np.fft.ifft(yf * psi)[:n]) ** 2 / var
+    edge = np.minimum(np.arange(n), np.arange(n)[::-1]) * dt
+    coi = FOURIER / math.sqrt(2) * np.maximum(edge, dt * 0.5)  # periods longer than this feel the ends
+    return power, coi
+
+
+def timefreq(table, ks, o):
+    """Spectrogram or wavelet scalogram of each data set: a heat map of time against frequency, and the strongest
+    frequency at each time (the ridge) as a table to graph."""
+    from scipy.signal import spectrogram
+    op = o.get("op", "cwt")
+    xt = table.get("xTitle") or "X"
+    ridges, plots, ans, uneven, xs = [], [], [], False, None
+    for k in ks:
+        x, y = series(table, k, o)
+        if len(x) < 16:
+            continue
+        name, (x, y, u) = name_of(table, k), even(x, y)
+        uneven |= u
+        dt = float(x[1] - x[0])
+        fs, span = 1 / dt, float(x[-1] - x[0])
+        lo = float(o["low"]) if o.get("low") not in (None, "") else 2 / span
+        hi = float(o["high"]) if o.get("high") not in (None, "") else fs / 2
+        if not 0 < lo < hi:
+            raise ValueError(f"The lowest frequency must be above 0 and below the highest ({g(fs / 2, 4)} per {xt} at most: half the sampling rate).")
+        if op == "stft":
+            m = int(o.get("window") or 0) or 1 << max(4, int(round(math.log2(len(y) / 8))))
+            m = max(8, min(m, len(y)))
+            f, tt, p = spectrogram(y - y.mean(), fs=fs, nperseg=m, noverlap=m * 3 // 4, scaling="spectrum")
+            keep = (f >= lo) & (f <= hi)
+            f, p, t = f[keep], p[keep], x[0] + tt
+            if len(f) < 2:
+                raise ValueError("Too few frequencies in that range for this window: widen the range or lengthen the window.")
+            coi = None
+        else:
+            f = np.geomspace(lo, hi, int(o.get("nfreq") or 64))
+            p, coi = morlet(y, dt, f)
+            t = x
+        ridge = f[np.argmax(p, axis=0)]
+        trusted = p if coi is None else np.where((1 / f)[:, None] <= coi[None, :], p, 0)  # inside the cone of influence
+        i, j = np.unravel_index(int(np.argmax(trusted if trusted.any() else p)), p.shape)
+        ans.append(f"{name}: strongest at {g(f[i], 4)} per {xt} (period {g(1 / f[i], 4)}) around {xt} = {g(t[j], 4)}; "
+                   f"the strongest frequency runs from {g(ridge[0], 3)} to {g(ridge[-1], 3)}")
+        ridges.append((name, t, ridge))
+        xs = t if xs is None or len(t) > len(xs) else xs
+
+        def draw(ax, t=t, f=f, p=p, coi=coi, name=name):
+            mesh = ax.pcolormesh(t, f, p, shading="auto", cmap="viridis", rasterized=True)
+            if coi is not None:  # outside the cone of influence the ends of the record distort the power
+                ax.fill_between(t, 1 / coi, f[0], where=1 / coi > f[0], color="white", alpha=0.45, linewidth=0)
+                ax.set_yscale("log")
+            ax.set_ylim(f[0], f[-1])
+            ax.set_xlabel(xt[:20]); ax.set_ylabel(f"Frequency (per {xt[:10]})")
+            ax.figure.colorbar(mesh, ax=ax, label="Power / variance" if coi is not None else "Power")
+        plots.append(small_plot(f"{'Scalogram' if op == 'cwt' else 'Spectrogram'} · {name}"[:40], draw, w=110, h=60))
+    if not ridges:
+        raise ValueError("Each data set needs at least 16 points for a time–frequency picture.")
+    title = "Wavelet scalogram" if op == "cwt" else "Spectrogram"
+    tb = new_table(table, f"{table.get('name', 'Data')} strongest frequency", [r[0] for r in ridges], xs.tolist(), [np.interp(xs, r[1], r[2]).tolist() for r in ridges],
+                   y_title=f"Strongest frequency (per {xt})")
+    checks = [(None, "The data were not evenly spaced, so they were first interpolated onto even steps.")] if uneven else []
+    if op == "cwt":
+        checks.append((None, "The pale area at the ends (the cone of influence) is where the start and end of the record distort the power: read it with care."))
+    else:
+        checks.append((None, "A short window follows fast changes but blurs frequency; a long one separates frequencies but blurs time (Window, in points)."))
+    how = ("the continuous wavelet transform with the Morlet wavelet (ω0 = 6; Torrence & Compo 1998), power normalised by the variance"
+           if op == "cwt" else "the short-time Fourier transform (Hann window, 75 % overlap)")
+    return result(title, "; ".join(ans) + ". The strongest frequency at each time can become a data table to graph.", [{"name": "Summary", "tables": [preview(tb)]}], checks, plots=plots, table=tb,
+                  methods=f"Time–frequency analysis used {how} in Datum Plot (NumPy, SciPy).",
+                  code="import numpy as np\n# Morlet wavelet power by FFT (Torrence & Compo 1998), w0 = 6\nf = np.geomspace(lo, hi, 64); s = 1 / (f * 4 * np.pi / (6 + np.sqrt(38)))\n"
+                       "# for each s: psi = sqrt(2*pi*s/dt) * pi**-0.25 * exp(-(s*w - 6)**2 / 2) * (w > 0); W = ifft(fft(y - y.mean()) * psi)\n"
+                       "from scipy.signal import spectrogram  # the short-time Fourier alternative")
+
+
 def signal(table, ks, o):
     from scipy.signal import butter, sosfiltfilt
     op = o.get("op", "fft")
+    if op in ("cwt", "stft"):
+        return timefreq(table, ks, o)
     lo, hi = (float(o[k]) if o.get(k) not in (None, "") else None for k in ("low", "high"))
     xt = table.get("xTitle") or "X"
     out, curves, ans, plots, uneven = [], [], [], [], False
