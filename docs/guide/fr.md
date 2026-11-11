@@ -158,7 +158,7 @@ En dessous se trouvent le texte **Methods** (Méthodes), prêt à coller dans un
 ### Ce que Datum Plot sait analyser
 
 - **Statistiques :** statistiques descriptives, tests de normalité, valeurs aberrantes, distributions de fréquences, fractions d’un total, intervalles de confiance bootstrap de la moyenne, de la médiane ou de l’écart-type.
-- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, mesures répétées et modèles à effets mixtes, tests t multiples avec taux de fausses découvertes et graphiques en volcan, tests t et ANOVA imbriqués, tailles d’effet, puissance, ANOVA à trois facteurs, ANCOVA (groupes comparés en tenant compte d’une covariable).
+- **Comparaison de groupes :** tests t (non apparié, de Welch, apparié), tests non paramétriques, ANOVA à un et à deux facteurs avec comparaisons multiples, mesures répétées et modèles à effets mixtes, tests t multiples avec taux de fausses découvertes et graphiques en volcan, tests t et ANOVA imbriqués, tailles d’effet, puissance, ANOVA à trois facteurs, ANCOVA (groupes comparés en tenant compte d’une covariable). Les tests t, l’ANOVA à un facteur et la corrélation donnent aussi un **Bayes factor** (facteur de Bayes, BF₁₀) : combien de fois les données sont plus probables avec une différence que sans ; contrairement à une valeur P, il peut aussi montrer des preuves d’absence de différence.
 - **Relations :** corrélation, comparaison de méthodes de Bland-Altman, courbes ROC, tableaux de contingence (khi-deux, Fisher, risque relatif, rapport des cotes), concordance de jugements appariés (kappa de Cohen, tests de McNemar et de Bowker).
 - **Régression et ajustement :** régression linéaire, ajustement de courbe à partir d’une bibliothèque de modèles ou de votre propre équation, ajustements globaux et comparaison de modèles, interpolation, aire sous la courbe, lissage, régression multiple, logistique et de Poisson, analyse en composantes principales et classification, ajustements de surface, splines de lissage.
 - **Survie :** courbes de Kaplan-Meier, test du log-rank et rapports de risques instantanés (hazard ratios).
@@ -334,6 +334,7 @@ Prêts à l’emploi : `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `sci
 | **SEM** (Erreur-type de la moyenne) | Précision avec laquelle la moyenne est connue (SD/√n). |
 | **95% CI** (Intervalle de confiance à 95 %) | L’intervalle qui contient la vraie valeur avec une confiance de 95 %. |
 | **P value** (Valeur P) | La probabilité d’observer une différence aussi grande s’il n’existait aucune différence réelle. |
+| **Bayes factor (BF₁₀)** (Facteur de Bayes) | Combien de fois les données sont plus probables s’il y a une différence que s’il n’y en a pas ; au-dessus de 3, preuve modérée d’une différence ; en dessous de 1/3, preuve modérée d’absence de différence. |
 | **R²** | La part de la variation expliquée par la droite ou la courbe ajustée. |
 | **Censored** (Censuré) | Un sujet chez qui l’événement ne s’était pas encore produit lors du dernier suivi. |
 | **Residual** (Résidu) | L’écart entre un point et la courbe ajustée. |

@@ -97,6 +97,7 @@ const ANALYSES: Choice[] = [
   { id: "B4", name: "t-tests", icon: "err", group: "Compare groups", desc: "Compare two groups' means: unpaired, paired, ratio or one-sample." },
   { id: "B5", name: "Nonparametric tests", icon: "err", group: "Compare groups", desc: "Compare groups without assuming a normal distribution." },
   { id: "B6", name: "One-way ANOVA", icon: "table", group: "Compare groups", desc: "Compare three or more groups." },
+  { id: "B37", name: "Bayesian tests", icon: "err", group: "Compare groups", desc: "Bayes factors beside the P values of t-tests, one-way ANOVA and correlation: how strongly the data favour a difference, or no difference." },
   { id: "B7", name: "Multiple comparisons", icon: "list", group: "Compare groups", desc: "Which groups differ after ANOVA: Tukey, Dunnett, Holm-Šidák…" },
   { id: "B8", name: "Effect sizes", icon: "sigma", group: "Compare groups", desc: "Cohen's d and Hedges' g with the t-test; η² and ω² with ANOVA." },
   { id: "B15", name: "Two-way ANOVA", icon: "table", group: "Compare groups", desc: "Two factors at once, such as alloy and temperature." },

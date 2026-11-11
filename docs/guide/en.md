@@ -158,7 +158,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 ### What Datum Plot can analyse
 
 - **Statistics:** descriptive statistics, normality tests, outliers, frequency distributions, fractions of a total, bootstrap confidence intervals of the mean, median or SD.
-- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power, three-way ANOVA, ANCOVA (groups compared allowing for a covariate).
+- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power, three-way ANOVA, ANCOVA (groups compared allowing for a covariate). The t-tests, one-way ANOVA and correlation also give a **Bayes factor** (BF₁₀): how many times more likely the data are with a difference than without one; unlike a P value it can also show evidence for no difference.
 - **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio), agreement of paired ratings (Cohen's kappa, McNemar's and Bowker's tests).
 - **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits, smoothing splines.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
@@ -334,6 +334,7 @@ Ready to use: `np` (numpy), `pd` (pandas), `stats` (scipy.stats), `scipy` and `p
 | **SEM** | Standard error of the mean: how precisely the mean is known (SD/√n). |
 | **95% CI** | 95% confidence interval: the range that contains the true value with 95% confidence. |
 | **P value** | How likely a difference this large would be if there were no real difference. |
+| **Bayes factor (BF₁₀)** | How many times more likely the data are if there is a difference than if there is none; above 3 is moderate evidence for a difference, below 1/3 moderate evidence for none. |
 | **R²** | The share of the variation that a fitted line or curve explains. |
 | **Censored** | A subject whose event had not happened when it was last seen. |
 | **Residual** | The distance of a point from the fitted curve. |

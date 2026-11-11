@@ -27,7 +27,7 @@
     "A linked chain: data tables → analyses → results → graphs → layouts. Change a value and every result and graph updates.",
     "Data tables for every kind of experiment (XY, groups, two factors, counts, survival, nested, many variables) and worksheets with units and column formulas that update as the data change; dates and times in the X column, drawn on date axes.",
     "Import CSV, TXT, .xlsx and .pzfx files, plate readers and many runs at once; large data sets stay quick.",
-    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios); three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar) and bootstrap confidence intervals.",
+    "Statistics: descriptive, normality, outliers, t-tests, nonparametric tests, one- and two-way ANOVA with multiple comparisons, Bayes factors, repeated measures and mixed-effects models, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, and survival analysis (Kaplan-Meier, log-rank, hazard ratios); three-way ANOVA, ANCOVA, agreement (Cohen's kappa, McNemar) and bootstrap confidence intervals.",
     "Linear regression and curve fitting with a model library or your own equation, global fits and model comparison, smoothing splines; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables.",
     "Matrices and 3D: contour maps, heat maps, 3D surfaces and 3D scatter, vector fields, polar, ternary, bubble, radar and waterfall graphs, and surface fits (plane, quadratic, cubic, 2D Gaussian).",
     "Peaks and signals: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters, wavelet scalograms and spectrograms.",
@@ -48,17 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.4",
-      "title": "Bayesian tests",
-      "when": "Next",
-      "items": [
-        "Bayes factors beside the usual P values"
-      ]
-    },
-    {
       "v": "0.4.5",
       "title": "Mac and Linux",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Mac and Linux versions"
       ]

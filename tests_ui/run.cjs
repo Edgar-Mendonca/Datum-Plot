@@ -770,6 +770,18 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("Data Sets has an Error bars colour", heads.some(h => /Error bars|Colour/.test(h || "")), heads.join("|"));
     await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   }
+  // 0.4.4 (B37): new t-tests, ANOVAs and correlations show a Bayes factor; the option reaches the engine.
+  {
+    await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+    await p.click('.tabs button:text-is("Analyze")'); await reset();
+    await p.click('.ribbon .rb:has-text("Correlation")'); await p.waitForTimeout(200);
+    const txt = (await p.textContent(".dlg")) || "";
+    check("a new correlation offers the Bayes factor, ticked", txt.includes("Show BF₁₀ beside the P value") && await p.isChecked('.dlg label:has-text("Show BF₁₀") input'), txt.slice(0, 200));
+    await p.click(".dlg .btn.pri"); await p.waitForTimeout(200);
+    const add = (await ops()).find(o => o.AddAnalysis);
+    check("…and sends it with the analysis", !!add && add.AddAnalysis.analysis.kind === "correlation" && add.AddAnalysis.analysis.options.bayes === true, JSON.stringify(add));
+    await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
   await p.keyboard.press("Escape"); await p.click('.tabs button:text-is("Data")'); await reset();
   await p.click('.ribbon .rb:has-text("Digitize Graph")'); await p.waitForSelector(".digipic svg");

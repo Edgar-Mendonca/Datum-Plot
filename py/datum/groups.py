@@ -137,8 +137,21 @@ def forest(title, rows):
 
 
 # ---------- t-tests and effect sizes (B4, B8) ----------
+def bayes_of(o):
+    """0.4.4 (B37): (wanted?, width name, t-test scale, ANOVA scale) from the options."""
+    from .bayes import WIDTH
+    w = o.get("prior") if o.get("prior") in WIDTH else "medium"
+    return bool(o.get("bayes")), w, *WIDTH[w]
+
+
+BAYES_METHODS = (" Bayes factors used the default priors (JZS: a Cauchy prior on the effect size, Rouder et al. 2009 and 2012; "
+                 "a uniform prior on ρ, Ly et al. 2016).")
+
+
 def ttest(table, ks, o):
     test, alpha = o.get("test", "unpaired"), float(o.get("alpha", ALPHA))
+    want_bf, width, r_t, _ = bayes_of(o)
+    from . import bayes
     rows, checks, brackets = [], [], []
     if test == "one":
         mu = float(o.get("mu", 0) or 0)
@@ -153,11 +166,11 @@ def ttest(table, ks, o):
                 r = st.ttest_1samp(v, mu)
                 t, p, df = float(r.statistic), float(r.pvalue), n - 1
             h = st.t.ppf(0.975, df) * sd / math.sqrt(n)
-            out.append([name_of(table, k), g(m), ci_text(m - h, m + h), g(t, 4), g(df), p_text(p), stars(p)])
+            out.append([name_of(table, k), g(m), ci_text(m - h, m + h), g(t, 4), g(df), p_text(p), stars(p)] + ([bayes.text(bf := bayes.t_bf(t, n, df, r_t)), bayes.words(bf)] if want_bf else []))
             rows.append(f"{name_of(table, k)}: mean {g(m, 4)} differs from {g(mu)} ({p_text(p)})." if p < alpha else f"{name_of(table, k)}: no evidence the mean differs from {g(mu)} ({p_text(p)}).")
-        tab = {"title": f"One-sample t-test against {g(mu)}", "columns": ["Data set", "Mean", "95% CI of mean", "t", "df", "P value", "Summary"], "rows": out}
+        tab = {"title": f"One-sample t-test against {g(mu)}", "columns": ["Data set", "Mean", "95% CI of mean", "t", "df", "P value", "Summary"] + (["Bayes factor BF₁₀", "Evidence"] if want_bf else []), "rows": out}
         return result("One-sample t-test", " ".join(rows), [{"name": "Summary", "tables": [tab]}], checks,
-                      methods=f"Each mean was compared with {g(mu)} by a two-tailed one-sample t-test (α = {alpha:g}) in Datum Plot (SciPy).",
+                      methods=f"Each mean was compared with {g(mu)} by a two-tailed one-sample t-test (α = {alpha:g}) in Datum Plot (SciPy)." + (BAYES_METHODS + f" Prior width: {width}." if want_bf else ""),
                       code=f"from scipy import stats\nprint(stats.ttest_1samp(v, {mu}))")
     if len(ks) < 2:
         raise ValueError("Choose two data sets to compare.")
@@ -190,6 +203,7 @@ def ttest(table, ks, o):
         rows = [["Test", "Ratio paired t-test" if test == "ratio" else "Paired t-test"], ["t, df", f"t = {g(t, 4)}, df = {df}"], ["P value (two-tailed)", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"],
                 [f"{what} ({nb} − {na})" if test != "ratio" else f"{what} ({nb} / {na})", diff], ["95% CI", ci], ["Number of pairs", g(n)], ["Correlation of the pairs (r)", g(rc, 4)]]
         eff = effect_rows(x, y, paired=True)
+        bf = bayes.t_bf(t, n, df, r_t) if want_bf else None
         sw = st.shapiro(d) if n >= 3 else None
         if sw is not None:
             checks.append((sw.pvalue > alpha, f"The differences {'look' if sw.pvalue > alpha else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)}).{' Consider the Wilcoxon test.' if sw.pvalue <= alpha else ''}"))
@@ -214,6 +228,10 @@ def ttest(table, ks, o):
             se = math.sqrt(((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / df * (1 / n1 + 1 / n2))
         h = st.t.ppf(0.975, df) * se
         diff = m2 - m1
+        bf = None
+        if want_bf:  # the JZS Bayes factor assumes equal SDs: it uses Student's t
+            sp = math.sqrt(((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / (n1 + n2 - 2))
+            bf = bayes.t_bf(diff / (sp * math.sqrt(1 / n1 + 1 / n2)) if sp > 0 else float("nan"), n1 * n2 / (n1 + n2), n1 + n2 - 2, r_t)
         rows = [["Test", "Welch's t-test (unequal SDs)" if welch else "Student's t-test (equal SDs)"], ["t, df", f"t = {g(t, 4)}, df = {g(df, 4)}"], ["P value (two-tailed)", pv(p)],
                 ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"], [f"Mean of {na}", g(m1)], [f"Mean of {nb}", g(m2)], [f"Difference ({nb} − {na})", g(diff)], ["95% CI of the difference", ci_text(diff - h, diff + h)],
                 ["SD of each", f"{g(s1)}, {g(s2)}"], ["n of each", f"{n1}, {n2}"]]
@@ -236,6 +254,10 @@ def ttest(table, ks, o):
     if eff:
         d = float(eff[0][1]) if eff[0][1] not in ("—",) else float("nan")
         rows.append(["Effect size", f"{eff[0][0]} = {eff[0][1]} ({size_word(d)})" if math.isfinite(d) else "—"])
+    if bf is not None:
+        rows += bayes.rows(bf, width)
+        ans += f" Bayes factor BF₁₀ = {bayes.text(bf)}: {bayes.words(bf)}."
+        methods += BAYES_METHODS + f" Prior width: {width}."
     tabs = [{"name": "Summary", "tables": [{"title": f"{na} vs {nb}", "columns": ["", "Value"], "rows": rows}]}]
     if eff:
         tabs.append({"name": "Effect size", "tables": [{"title": "Effect sizes (95% CI)", "columns": ["", "Value", "95% CI"], "rows": eff}]})
@@ -333,6 +355,7 @@ def nonparam(table, ks, o):
 # ---------- one-way ANOVA, multiple comparisons, effect sizes (B6, B7, B8) ----------
 def anova(table, ks, o):
     kind, post, alpha = o.get("anova", "ordinary"), o.get("posthoc", "tukey"), float(o.get("alpha", ALPHA))
+    want_bf, width, _, r_a = bayes_of(o)
     if len(ks) < 2:
         raise ValueError("Choose at least two data sets.")
     names = [name_of(table, k) for k in ks]
@@ -405,6 +428,15 @@ def anova(table, ks, o):
             rows.append(["Brown-Forsythe test (equal SDs?)", p_text(bf.pvalue)])
     omega = (ssb - df1 * (ssw / max(N - kk, 1))) / (ssb + ssw + ssw / max(N - kk, 1)) if kind != "rm" else float("nan")
     rows += [["R squared (η²)", g(eta, 4)]] + ([["ω²", g(omega, 4)]] if kind != "rm" else [])
+    bf = None
+    if want_bf and kind == "rm":
+        checks.append((None, "Bayes factors are given for independent groups only, not yet for repeated measures."))
+    elif want_bf:
+        from . import bayes
+        bf = bayes.anova_bf(n, m, ssw, r_a)
+        rows += bayes.rows(bf, width)
+        if kind != "ordinary":
+            checks.append((None, "The Bayes factor assumes equal SDs, like the ordinary ANOVA."))
     tabs.insert(0, {"title": "One-way ANOVA", "columns": ["", "Value"], "rows": rows})
     tabs.append({"title": "Groups", "columns": ["", *names], "rows": [["Mean", *[g(x) for x in m]], ["SD", *[g(x) for x in sd]], ["n", *[g(int(x)) for x in n]]]})
     comps = []
@@ -424,8 +456,11 @@ def anova(table, ks, o):
         plots.append(dot_plot("The groups", [s[0] for s in sm_], names))
     sig = [f"{names[i]} vs {names[j]}" for i, j, *_, q in comps if q < alpha]
     ans = f"The means {'differ' if p < alpha else 'do not differ significantly'} ({meth}, F = {g(F, 4)}, {p_text(p)})." + (f" Different pairs: {', '.join(sig)}." if sig else "")
+    if bf is not None:
+        from . import bayes
+        ans += f" Bayes factor BF₁₀ = {bayes.text(bf)}: {bayes.words(bf)}."
     return result("One-way ANOVA", ans, [{"name": "Summary", "tables": tabs}], checks, plots=plots, brackets=brackets,
-                  methods=f"Groups were compared by {meth}{'' if post == 'none' else ' with ' + POSTNAME[post] + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (SciPy, statsmodels).",
+                  methods=f"Groups were compared by {meth}{'' if post == 'none' else ' with ' + POSTNAME[post] + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (SciPy, statsmodels)." + (BAYES_METHODS + f" Prior width: {width}." if bf is not None else ""),
                   legend="Stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="from scipy import stats\nprint(stats.f_oneway(a, b, c))\nprint(stats.tukey_hsd(a, b, c))")
 
@@ -473,6 +508,8 @@ def posthoc(table, ks, sm_, post, mse, dfe, kind):
 # ---------- correlation (B16) ----------
 def correlation(table, ks, o):
     alpha = float(o.get("alpha", ALPHA))
+    want_bf = bool(o.get("bayes"))
+    from . import bayes
     xy = table.get("kind", "xy") == "xy" and not o.get("between")
     pairs = []
     if xy:
@@ -490,24 +527,25 @@ def correlation(table, ks, o):
     for i, (na, nb, x, y) in enumerate(pairs):
         n = len(x)
         if n < 3:
-            rows.append([f"{na} vs {nb}", "—", "—", "—", "—", "—", g(n)]); continue
+            rows.append([f"{na} vs {nb}", "—", "—", "—", "—", "—", g(n)] + (["—", "—"] if want_bf else [])); continue
         r, p = st.pearsonr(x, y)
         z, se = math.atanh(min(max(r, -0.999999), 0.999999)), 1 / math.sqrt(n - 3) if n > 3 else float("inf")
         lo, hi = math.tanh(z - Z95 * se), math.tanh(z + Z95 * se)
         rs, ps = st.spearmanr(x, y)
         tau, pk = st.kendalltau(x, y)
-        rows.append([f"{na} vs {nb}", g(r, 4), ci_text(lo, hi), p_text(p), f"{g(rs, 4)} ({p_text(ps)})", f"{g(tau, 4)} ({p_text(pk)})", g(n)])
-        ans.append(f"{na} vs {nb}: r = {g(r, 4)} (95% CI {g(lo, 3)} to {g(hi, 3)}), {p_text(p)}.")
+        bf = bayes.corr_bf(float(r), n) if want_bf else None
+        rows.append([f"{na} vs {nb}", g(r, 4), ci_text(lo, hi), p_text(p), f"{g(rs, 4)} ({p_text(ps)})", f"{g(tau, 4)} ({p_text(pk)})", g(n)] + ([bayes.text(bf), bayes.words(bf).replace("difference", "correlation")] if want_bf else []))
+        ans.append(f"{na} vs {nb}: r = {g(r, 4)} (95% CI {g(lo, 3)} to {g(hi, 3)}), {p_text(p)}" + (f"; BF₁₀ = {bayes.text(bf)}." if want_bf else "."))
         if i < 6:
             plots.append(small_plot(f"{nb} vs {na}"[:40], lambda ax, x=x, y=y, c=COLORS[i % 8]: (ax.plot(x, y, "o", ms=3.2, color=c), ax.set_xlabel(na[:20]), ax.set_ylabel(nb[:20]))))
-    tabs = [{"title": "Correlation", "columns": ["Pair", "Pearson r", "95% CI of r", "P value", "Spearman rs", "Kendall τ", "Number of pairs"], "rows": rows}]
+    tabs = [{"title": "Correlation", "columns": ["Pair", "Pearson r", "95% CI of r", "P value", "Spearman rs", "Kendall τ", "Number of pairs"] + (["Bayes factor BF₁₀", "Evidence"] if want_bf else []), "rows": rows}]
     if not xy and len(ks) > 2:
         cols = [column(table, k) for k in ks]
         mat = [[name_of(table, a)] + [g(st.pearsonr(*pairs_of(table, a, b))[0], 3) if a != b and len(pairs_of(table, a, b)[0]) > 2 else "1" if a == b else "—" for b in ks] for a in ks]
         tabs.append({"title": "Correlation matrix (Pearson r)", "columns": ["", *[name_of(table, k) for k in ks]], "rows": mat})
         del cols
     return result("Correlation", " ".join(ans) or "Not enough pairs.", [{"name": "Summary", "tables": tabs}], [(None, "Correlation measures how two variables move together; it does not show that one causes the other.")], plots=plots,
-                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank and Kendall's τ correlations were calculated in Datum Plot (SciPy), α = {alpha:g}.",
+                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank and Kendall's τ correlations were calculated in Datum Plot (SciPy), α = {alpha:g}." + (" Bayes factors for Pearson's r used a uniform prior on ρ (Ly, Verhagen & Wagenmakers 2016)." if want_bf else ""),
                   code="from scipy import stats\nprint(stats.pearsonr(x, y), stats.spearmanr(x, y), stats.kendalltau(x, y))")
 
 

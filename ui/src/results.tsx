@@ -21,7 +21,7 @@ export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; 
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
   B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B35c: ["control", {}], B35d: ["doe", {}], B34a: ["threeway", {}], B34b: ["ancova", {}], B34c: ["agreement", {}], B34d: ["bootstrap", {}], B34s: ["smooth", { method: "spline" }], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
-  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B36: ["signal", { op: "cwt" }], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
+  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B36: ["signal", { op: "cwt" }], B37: ["ttest", { bayes: true }], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
 const DEFAULTS: Record<string, Record<string, any>> = {
@@ -29,13 +29,13 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   linear: { model: "line", order: 2, points: "each", weight: "none", compare: true, bands: "ci", label: true, unknowns: "" },
   fit: { model: "exp_decay", equation: "Y = A*exp(-k*X) + C", init: {}, fixed: {}, points: "each", weight: "none", bands: "ci", label: true, unknowns: "" },
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
-  ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
+  ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
   control: { chart: "imr", lsl: "", usl: "" }, doe: {},
   threeway: { rowname: "", bname: "", cname: "", alpha: 0.05 }, ancova: { alpha: 0.05 }, agreement: { weights: "none" }, bootstrap: { stat: "mean", n: 9999 },
   multit: { test: "welch", method: "fdr_bh", q: 0.05, x: "log2", label: 10 },
   parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
-  anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars" }, correlation: { between: false }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
+  anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, correlation: { between: false, bayes: true }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
 };
@@ -89,6 +89,9 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const Unknowns = () => <><label>Unknowns (Y values)</label><input placeholder="e.g. 0.35, 0.82 — read X off the fit" value={o().unknowns ?? ""} onChange={e => put("unknowns", e.currentTarget.value)} /></>;
     const model = () => models()?.find(m => m[0] === o().model);
     const N = (p: { k: string; w?: number; ph?: string }) => <input type="number" style={{ width: `${p.w ?? 90}px` }} placeholder={p.ph} value={o()[p.k] ?? ""} onChange={e => put(p.k, optNum(e.currentTarget.value) ?? "")} />;
+    /** 0.4.4 (B37): a Bayes factor beside the P value, and the width of its default prior. */
+    const Bayes = (q: { width?: boolean }) => <><label>Bayes factor</label><span class="inline"><Check label="Show BF₁₀ beside the P value" value={!!o().bayes} set={v => put("bayes", v)} />
+      <Show when={q.width && o().bayes}><span class="muted">prior</span><Pick value={o().prior ?? "medium"} set={v => put("prior", v)} options={[["medium", "Medium (default)"], ["wide", "Wide"], ["ultrawide", "Ultrawide"]]} /></Show></span></>;
     const Alpha = () => <><label>Significance level α</label><Pick value={String(o().alpha)} set={v => put("alpha", +v)} options={[["0.01", "0.01"], ["0.05", "0.05"], ["0.1", "0.10"]]} /></>;
     const Brackets = () => <Show when={t.kind === "column" || t.kind === "grouped"}><label>On the graph</label><span class="inline"><Pick value={o().brackets} set={v => put("brackets", v)} options={[["sig", "Brackets for significant pairs"], ["all", "Brackets for every pair"], ["none", "No brackets"]]} />
       <Pick value={o().ptext} set={v => put("ptext", v)} options={[["stars", "Stars (*, **, ***)"], ["p", "P values"]]} /></span></Show>;
@@ -102,6 +105,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["unpaired", "Unpaired (two independent groups)"], ["paired", "Paired (the same items twice, row by row)"], ["ratio", "Ratio paired (ratios, not differences)"], ["one", "One sample against a value"]]} />
             <Show when={o().test === "unpaired"}><label /><Check label="Welch's correction (do not assume equal SDs; recommended)" value={!!o().welch} set={v => put("welch", v)} /></Show>
             <Show when={o().test === "one"}><label>Hypothetical value</label><N k="mu" /></Show>
+            <Bayes width />
             <Brackets />
           </Show>
           <Show when={kind === "twoway"}>
@@ -202,8 +206,10 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>ANOVA</label><Pick value={o().anova} set={v => put("anova", v)} options={[["ordinary", "Ordinary (equal SDs)"], ["welch", "Welch (unequal SDs)"], ["bf", "Brown-Forsythe (unequal SDs)"], ["rm", "Repeated measures (rows are subjects)"]]} />
             <label>Multiple comparisons</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["tukey", "Tukey: every pair"], ["dunnett", "Dunnett: each against the first group"], ["holm", "Holm-Šidák: every pair"], ["sidak", "Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "Fisher's LSD (no correction)"], ["none", "None"]]} />
             <label /><Check label="Test for a linear trend across the groups (in their order)" value={!!o().trend} set={v => put("trend", v)} />
+            <Bayes width />
             <Brackets />
           </Show>
+          <Show when={kind === "correlation"}><Bayes /></Show>
           <Show when={kind === "correlation" && t.kind !== "column"}><label>Correlate</label><Pick value={o().between ? "1" : ""} set={v => put("between", !!v)} options={[["", "X with each data set's Y"], ["1", "The data sets with each other (row by row)"]]} /></Show>
           <Show when={kind === "power"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["t2", "Unpaired t-test"], ["paired", "Paired t-test"], ["anova", "One-way ANOVA"], ["prop", "Two proportions (Cohen's h)"]]} />

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.4 — 2026-11-11
+
+Bayesian tests: Bayes factors beside the P values.
+
+**Bayes factors** (t-tests, one-way ANOVA and correlation)
+- The results show the Bayes factor **BF₁₀** (how many times more likely the data are with a difference than without one), its inverse BF₀₁, and the strength of evidence in words, from "anecdotal" to "extreme", for a difference or for no difference.
+- Unlike a P value, a Bayes factor can show evidence that there is **no** difference.
+- The default priors of the Bayesian t-test and ANOVA are used, so the numbers agree with other statistics software; choose a **wide** or **ultrawide** prior in the options.
+- On for new analyses (untick **Show BF₁₀ beside the P value** to hide it); analyses made before stay as they were. Analyze › Bayesian tests starts a t-test with it.
+
 ## 0.4.3 — 2026-11-10
 
 Error bars from the colour scheme, and a clearer Data Sets page.

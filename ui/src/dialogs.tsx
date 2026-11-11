@@ -95,6 +95,7 @@ const GLOSSARY: [string, [string, string][]][] = [
     ["95% CI (confidence interval)", "The range that contains the true mean with 95% confidence: mean ± t × SEM, with t from the t distribution with n − 1 degrees of freedom."],
     ["n", "The number of values (replicates) behind a mean."],
     ["Range", "From the smallest to the largest value."],
+    ["Bayes factor (BF₁₀)", "How many times more likely the data are if there is a difference than if there is none. Above 3: moderate evidence for a difference; below 1/3: moderate evidence for no difference; near 1: the data cannot tell."],
   ]],
   ["Graphs", [
     ["Error bar", "A line through a mean showing SD, SEM, 95% CI or the range. Say which one in your figure legend."],
