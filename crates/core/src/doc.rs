@@ -437,8 +437,8 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             }
             t.normalize();
             if let Some(x) = head.first().map(|h| h.trim()).filter(|h| !h.is_empty()) { t.x_title = x.into(); }
-            for k in 0..n {
-                if let Some(h) = head.get(1 + k * w).map(|h| h.trim()).filter(|h| !h.is_empty()) { t.sets[k].title = h.into(); }
+            for (k, s) in t.sets.iter_mut().enumerate().take(n) {
+                if let Some(h) = head.get(1 + k * w).map(|h| h.trim()).filter(|h| !h.is_empty()) { s.title = h.into(); }
             }
             for (i, l) in rows.iter().enumerate() {
                 for (j, v) in l.iter().enumerate() {

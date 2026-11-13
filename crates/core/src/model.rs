@@ -144,8 +144,8 @@ impl Table {
         let sets = (0..groups).map(|k| DataSet { title: format!("Data set {}", crate::doc::set_letter(k)), entry: Entry::Replicates, reps: 3, ..Default::default() }).collect();
         let mut t = Table { kind: "grouped".into(), x_title: String::new(), y_title: "Value".into(), sets, rows: rows.max(1), ..Default::default() };
         t.normalize();
-        for r in 0..rows {
-            t.row_titles[r] = format!("Row {}", r + 1);
+        for (r, title) in t.row_titles.iter_mut().enumerate().take(rows) {
+            *title = format!("Row {}", r + 1);
         }
         t
     }
