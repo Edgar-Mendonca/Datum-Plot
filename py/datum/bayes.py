@@ -17,6 +17,23 @@ import numpy as np
 WIDTH = {"medium": (math.sqrt(2) / 2, 0.5), "wide": (1.0, math.sqrt(2) / 2), "ultrawide": (math.sqrt(2), 1.0)}  # (t-test r, ANOVA r)
 
 
+def safe(f):
+    """0.4.5 (#50): a Bayes factor that cannot be worked out is "—" (NaN), never an error that stops the analysis."""
+    import functools
+
+    @functools.wraps(f)
+    def run(*a, **k):
+        try:
+            v = float(f(*a, **k))
+            return v if v >= 0 else float("nan")  # NaN stays NaN (comparisons with NaN are false)
+        except (ArithmeticError, ValueError, np.linalg.LinAlgError):
+            return float("nan")
+    return run
+
+
+NOTE = "The Bayes factor could not be worked out for these data (shown as —); the other results are not affected."
+
+
 def _over_g(logf, r):
     """log ∫ exp(logf(g)) p(g) dg with g ~ inverse-gamma(1/2, r²/2), integrated over u = log g around its peak."""
     from scipy.integrate import quad
@@ -33,6 +50,7 @@ def _over_g(logf, r):
     return top + math.log(v)
 
 
+@safe
 def t_bf(t, n_eff, df, r=math.sqrt(2) / 2):
     """JZS BF₁₀ from a t statistic: n_eff = n (one sample, paired) or n₁n₂/(n₁+n₂) (two groups), df its degrees of freedom."""
     if not (math.isfinite(t) and n_eff > 0 and df > 0):
@@ -42,29 +60,30 @@ def t_bf(t, n_eff, df, r=math.sqrt(2) / 2):
     return math.exp(_over_g(lambda gg: -0.5 * math.log1p(n_eff * gg) + a * math.log1p(t * t / ((1 + n_eff * gg) * df)), r) - null)
 
 
+@safe
 def anova_bf(n, means, ssw, r=0.5):
     """BF₁₀ of a one-way design (independent groups) from the group sizes, means and the within-group sum of squares."""
     n, m = np.asarray(n, float), np.asarray(means, float)
     J, N = len(n), float(n.sum())
     if J < 2 or ssw <= 0 or N - J < 1:
         return float("nan")
-    P = np.eye(J) - 1.0 / J  # the effects live in the J − 1 sum-to-zero directions
-    one = np.ones(J)
+    # The effects live in the J − 1 sum-to-zero directions: the group means ~ N(μ1, σ²(D + gP)), D = diag(1/n),
+    # P = I − 11ᵀ/J. Worked out exactly (Sherman–Morrison) the marginal likelihood needs no matrix inverse: with weights
+    # w = 1/(1/n + g), log m(g) = −½ Σ log(1/n + g) − ½ log Σw − (N − 1)/2 · log(SS within + Σ w (m − m̄_w)²), and the
+    # last sum is a sum of squares, never negative (0.4.5, #50: the inverse lost precision and went below zero).
 
     def logm(gg):  # log marginal likelihood (up to a constant shared with the null, g = 0)
-        C = np.diag(1 / n) + gg * P
-        try:
-            Ci = np.linalg.inv(C)
-        except np.linalg.LinAlgError:
-            return -np.inf
-        s = float(one @ Ci @ one)
-        q = float(m @ Ci @ m) - float(one @ Ci @ m) ** 2 / s
-        return -0.5 * np.linalg.slogdet(C)[1] - 0.5 * math.log(s) - (N - 1) / 2 * math.log(ssw + q)
+        A = 1 / n + gg
+        w = 1 / A
+        a = float(w.sum())
+        q = float((w * (m - float((w * m).sum()) / a) ** 2).sum())
+        return -0.5 * float(np.log(A).sum()) - 0.5 * math.log(a) - (N - 1) / 2 * math.log(ssw + q)
 
     null = logm(0.0)
     return math.exp(_over_g(lambda gg: logm(gg) - null, r))
 
 
+@safe
 def corr_bf(r, n, kappa=1.0):
     """BF₁₀ of Pearson's r from n pairs, prior ρ ~ stretched beta(1/κ, 1/κ) (κ = 1: uniform); Ly et al. (2016), with the
     hypergeometric function rewritten by Euler's transformation so large samples stay finite."""

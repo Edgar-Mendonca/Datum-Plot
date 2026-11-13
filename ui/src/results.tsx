@@ -68,14 +68,22 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const [o, setO] = createSignal<Record<string, any>>({ ...DEFAULTS[kind], ...preset, ...(existing?.options ?? {}) });
     // Empty data sets start unticked: only columns with values take part.
     const filled = t.sets.map((_, k) => k).filter(k => !isEmpty(t, k));
-    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? (sets0.length || !filled.length || filled.length === t.sets.length ? sets0 : filled));
+    // 0.4.5 (#50): a two-group t-test starts with the first two data sets ticked, not all of them.
+    const twoOnly = () => kind === "ttest" && (o().test ?? "unpaired") !== "one";
+    const first = twoOnly() && filled.length > 2 ? filled.slice(0, 2) : filled;
+    const [sets, setSets] = createSignal<number[]>(existing?.sets ?? (sets0.length || !first.length || first.length === t.sets.length ? sets0 : first));
     const [name, setName] = createSignal(existing?.name ?? `${KINDS[kind][0]} · ${t.name}`);
     const put = (k: string, v: unknown) => setO({ ...o(), [k]: v });
     const on = (k: number) => !sets().length || sets().includes(k);
-    const toggle = (k: number) => { const all = t.sets.map((_, i) => i), cur = sets().length ? sets() : all, next = on(k) ? cur.filter(x => x !== k) : [...cur, k].sort(); setSets(next.length === all.length ? [] : next); };
+    const toggle = (k: number) => {
+      const all = t.sets.map((_, i) => i), cur = sets().length ? sets() : all, next = on(k) ? cur.filter(x => x !== k) : [...cur, k].sort();
+      if (twoOnly() && !on(k) && cur.length >= 2) return toast("A t-test compares two data sets: untick one first (One-way ANOVA compares three or more).");
+      setSets(next.length === all.length ? [] : next);
+    };
     // 0.3.15 (#33): started from a graph, it is drawn on that graph only; from the table, on all of its graphs.
     const from = item(), here = () => (from.s === "graphs" && out()!.project.graphs.some(g => g.id === from.id && g.table === t.id) ? from.id : null);
     const ok = async () => {
+      if (twoOnly() && (sets().length ? sets() : t.sets.map((_, i) => i)).length > 2) { toast("A t-test compares two data sets: tick only two (One-way ANOVA compares three or more)."); return false; }
       const a = { id: existing?.id ?? 0, table: t.id, name: name(), kind, sets: sets(), options: o() };
       const done = existing ? await act({ SetAnalysis: { analysis: a } }) : await act({ AddAnalysis: { analysis: a, overlay: draws(kind, t), graph: here() } });
       if (done && !existing) { const as = out()!.project.analyses; open("results", as[as.length - 1].id); }

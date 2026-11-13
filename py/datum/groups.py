@@ -255,6 +255,8 @@ def ttest(table, ks, o):
         d = float(eff[0][1]) if eff[0][1] not in ("—",) else float("nan")
         rows.append(["Effect size", f"{eff[0][0]} = {eff[0][1]} ({size_word(d)})" if math.isfinite(d) else "—"])
     if bf is not None:
+        if math.isnan(bf):
+            checks.append((None, bayes.NOTE))
         rows += bayes.rows(bf, width)
         ans += f" Bayes factor BF₁₀ = {bayes.text(bf)}: {bayes.words(bf)}."
         methods += BAYES_METHODS + f" Prior width: {width}."
@@ -434,6 +436,8 @@ def anova(table, ks, o):
     elif want_bf:
         from . import bayes
         bf = bayes.anova_bf(n, m, ssw, r_a)
+        if math.isnan(bf):
+            checks.append((None, bayes.NOTE))
         rows += bayes.rows(bf, width)
         if kind != "ordinary":
             checks.append((None, "The Bayes factor assumes equal SDs, like the ordinary ANOVA."))

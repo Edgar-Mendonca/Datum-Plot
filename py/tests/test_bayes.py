@@ -69,6 +69,29 @@ class BayesFactors(unittest.TestCase):
         res = A.run("correlation", tab, [], {"bayes": True})
         self.assertIn("Bayes factor BF₁₀", res["tabs"][0]["tables"][0]["columns"])
 
+    def test_identical_groups_do_not_stop_the_anova(self):
+        # 0.4.5 (#50): four groups of 1, 2, 3 (and a fifth with a 4 added) gave "math domain error": the old matrix
+        # inverse lost precision. The tester's own data too (two identical groups, one far higher).
+        for sets in ([[1, 2, 3]] * 4, [[1, 2, 3]] * 4 + [[1, 2, 3, 4]], [[1, 2, 3]] * 10):
+            r = A.run("anova", column(*sets), [], {"posthoc": "tukey", "bayes": True})
+            self.assertLess(float(value(r, "Bayes factor BF₁₀")), 1, "identical groups: evidence for no difference")
+        ctrl = [1, 2, 5, 6, 8, 2, 3, 5, 1, 4, 5, 2, 6, 5, 2, 1, 1]
+        a_ = [5, 8, 9, 12, 11, 6, 7, 4, 6, 5, 4, 8, 11, 12, 10, 10, 10]
+        b_ = [12, 20, 21, 19, 18, 16, 17, 22, 26, 30, 24, 23, 25, 25, 22, 21, 21]
+        r = A.run("anova", column(ctrl, a_, b_, ctrl), [], {"posthoc": "tukey", "bayes": True})
+        self.assertGreater(float(value(r, "Bayes factor BF₁₀")), 1e20)
+        self.assertIn("extreme evidence for a difference", r["answer"])
+
+    def test_same_values_as_before_where_it_worked(self):
+        # The stable formula is the old one rewritten exactly: the values from 0.4.4 stay.
+        self.assertAlmostEqual(bayes.anova_bf([5, 5, 5], [1, 2, 3], 8, 0.5), 6.939054833662717, places=9)
+        self.assertAlmostEqual(bayes.anova_bf([10, 7], [np.mean(D1), np.mean(D2[:7])], float(np.var(D1) * 10 + np.var(D2[:7]) * 7)), 0.7138180168741699, places=9)
+
+    def test_a_bayes_factor_that_cannot_be_worked_out_is_a_dash(self):
+        self.assertTrue(math.isnan(bayes.t_bf(float("inf"), 10, 9)))
+        self.assertTrue(math.isnan(bayes.anova_bf([3, 3], [1, 2], 0.0)))
+        self.assertEqual(bayes.text(float("nan")), "—")
+
     def test_off_unless_asked(self):
         r = A.run("ttest", column(D1, D2), [], {"test": "paired"})
         with self.assertRaises(KeyError):

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.5 — 2026-11-13
+
+A fix for one-way ANOVA with a Bayes factor, and t-tests take two data sets.
+
+**Fixes**
+- One-way ANOVA could stop with "math domain error" when some groups held the same values (for example 1, 2, 3 in several columns). The Bayes factor is now worked out in a way that cannot fail, and gives the same values as before wherever it worked.
+- If a Bayes factor ever cannot be worked out, it shows as "—" with a note; the rest of the analysis is never stopped by it.
+- A t-test now starts with the first two data sets ticked (it compares two) and says so if you tick a third; one-way ANOVA compares three or more.
+
 ## 0.4.4 — 2026-11-11
 
 Bayesian tests: Bayes factors beside the P values.
