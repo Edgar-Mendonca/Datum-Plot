@@ -289,7 +289,9 @@ class Pages(unittest.TestCase):
         import io as _io
         from PIL import Image
         t = xy([0, 1, 2, 3], [1, 4, 2, 5])
-        panels = {"1": {"table": t, "graph": {}, "overlays": []}, "2": {"table": col(CTRL, TRT1), "graph": {"column": "bars"}, "overlays": []}}
+        panels = {"1": {"table": t, "graph": {}, "overlays": []}, "2": {"table": col(CTRL, TRT1), "graph": {"column": "bars"},
+                  # 0.4.6 (#52): brackets inside a layout (a sub-figure has no size of its own; the guide caught it)
+                  "overlays": [{"kind": "ttest", "sets": [], "options": {"brackets": "all"}}]}}
         L = {"width": 174, "height": 70, "letters": "A", "items": [{"kind": "graph", "graph": 1, "x": 0, "y": 0, "w": 85, "h": 70}, {"kind": "graph", "graph": 2, "x": 89, "y": 0, "w": 85, "h": 70},
                                                                {"kind": "graph", "graph": 9, "x": 0, "y": 0, "w": 50, "h": 50}, {"kind": "text", "x": 1, "y": 66, "text": "Figure 1"}]}
         svg = graph.page(L, panels)["svg"]

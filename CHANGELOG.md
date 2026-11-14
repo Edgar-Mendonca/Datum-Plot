@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.6 — 2026-11-14
+
+Many significance brackets stay readable, and columns resize from their titles.
+
+**Fixes**
+- With many groups, significance brackets no longer crowd together: each label stays clear of the other brackets' lines, so you can always see which stars belong to which bracket. When there are more brackets than the graph's height can hold, the labels get smaller instead of overlapping; a taller graph shows them full size again.
+- "ns" is drawn a little smaller, in proportion to the stars.
+- A data set's column can be widened by dragging the right edge of its title, not only the row below it.
+
 ## 0.4.5 — 2026-11-13
 
 A fix for one-way ANOVA with a Bayes factor, and t-tests take two data sets.

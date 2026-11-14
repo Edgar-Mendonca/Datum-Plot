@@ -501,6 +501,18 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   const ui = (await ops()).find(o => o.Ui);
   check("dragging a heading's edge saves the column's width in the project", ui && ui.Ui.key.startsWith("colw.") && Object.values(ui.Ui.value)[0] >= 120, JSON.stringify(ui));
   await p.keyboard.press("Escape");
+  // 0.4.6 (#49): the data set's title row resizes too: its right edge is the set's last sub-column.
+  await reset();
+  {
+    const subs = (await p.$$(".dhead .hset >> nth=0 >> .hc.sub")).length;
+    const tz = await (await p.$(".dhead .hset .hc.st .rsz")).boundingBox();
+    await p.mouse.move(tz.x + 3, tz.y + 5); await p.mouse.down(); await p.mouse.move(tz.x + 53, tz.y + 5, { steps: 4 }); await p.mouse.up();
+    await p.waitForTimeout(150);
+    const u2 = (await ops()).find(o => o.Ui);
+    const keys = u2 ? Object.keys(u2.Ui.value).map(Number) : [];
+    check("dragging a data set title's edge resizes its last sub-column", !!u2 && u2.Ui.key.startsWith("colw.") && keys.includes(1 + subs), JSON.stringify(u2) + " subs " + subs);
+    await p.keyboard.press("Escape");
+  }
   await reset();
   await p.click('.ribbon .rb.big:has-text("Import")');
   await p.waitForTimeout(250);

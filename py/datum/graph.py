@@ -146,21 +146,49 @@ def draw_brackets(ax, brackets, pos, tops, size, o):
     br = [(pos[ka], pos[kb], b[2]) for b in brackets for ka, kb in [keys(b)] if ka in pos and kb in pos and show != "none" and (show == "all" or b[2] < 0.05)]
     if not br:
         return
+    # 0.4.6 (#52): levels are spaced in printed points (a label's height plus a gap), not in data units, so many
+    # brackets no longer squeeze their labels onto each other's lines once the axis grows to fit them. Each bracket
+    # goes just above the data under it and above every bracket it overlaps; touching ends count as overlapping.
+    br = [(min(a, b), max(a, b), p) for a, b, p in br]
+    br.sort(key=lambda t: (t[1] - t[0], t[0]))
     lo, hi = ax.get_ylim()
-    h = hi - lo
-    placed, top = [], hi
-    for x1, x2, p in sorted(br, key=lambda t: (abs(t[1] - t[0]), min(t[:2]))):
-        x1, x2 = sorted((x1, x2))
-        y = max(t for x, t in tops.items() if x1 - 1e-9 <= x <= x2 + 1e-9) + 0.06 * h
-        for a, b, yy in placed:
-            if a <= x2 and x1 <= b:
-                y = max(y, yy + 0.12 * h)
-        ax.plot([x1, x1, x2, x2], [y - 0.025 * h, y, y, y - 0.025 * h], color="#222222", linewidth=0.9, zorder=4)
+    fs = size * 0.85
+    level, under = [], []
+    for i, (x1, x2, _) in enumerate(br):  # how many brackets stack below each one (to size the labels)
+        level.append(1 + max((level[j] for j in range(i) if br[j][0] <= x2 and x1 <= br[j][1]), default=-1))
+        under.append(max(t for x, t in tops.items() if x1 - 1e-9 <= x <= x2 + 1e-9))
+    room = ax.bbox.height * 72 / ax.figure.dpi  # the plot's height in points (also inside a layout's sub-figure)
+    # The brackets take at most 70 % of the plot's height: with many levels on a short graph the labels shrink (to 55 %
+    # at least) and, if they must, so does the spacing; so the axis always settles. A taller graph gives full size.
+    shrink = min(1.0, 0.7 * room / (fs * (0.7 + 1.35 * (max(level) + 1))))
+    step_pt, gap_pt, tick_pt = fs * 1.35 * shrink, fs * 0.4 * shrink, fs * 0.3 * shrink
+    fs *= max(0.55, shrink)
+
+    def place(span):
+        per_pt = span / room
+        out = []
+        for (x1, x2, p), base in zip(br, under):
+            y = base + (gap_pt + tick_pt) * per_pt
+            for a, b, yy, _ in out:
+                if a <= x2 and x1 <= b:
+                    y = max(y, yy + step_pt * per_pt)
+            out.append((x1, x2, y, p))
+        return out, max(y for *_, y, _ in out) + step_pt * per_pt
+
+    span = hi - lo
+    for _ in range(30):  # the axis top depends on the spacing and the spacing on the axis: settle both
+        placed, top = place(span)
+        new = max(top, hi) - lo
+        if abs(new - span) <= 1e-6 * span:
+            break
+        span = new
+    per_pt = span / room
+    for x1, x2, y, p in placed:
+        ax.plot([x1, x1, x2, x2], [y - tick_pt * per_pt, y, y, y - tick_pt * per_pt], color="#222222", linewidth=0.9, zorder=4)
         text = stars(p) if o.get("ptext") != "p" else (f"P {pv(p)}" if pv(p).startswith("<") else f"P = {pv(p)}")
-        ax.text((x1 + x2) / 2, y + 0.005 * h, text, ha="center", va="bottom", fontsize=size * 0.85, zorder=4)
-        placed.append((x1, x2, y))
-        top = max(top, y + 0.1 * h)
-    ax.set_ylim(lo, top)
+        # "ns" is letters, the stars are small glyphs: ns a little smaller so neither crowds the other (#52)
+        ax.text((x1 + x2) / 2, y + 0.4 * per_pt, text, ha="center", va="bottom", fontsize=fs * (0.85 if text == "ns" else 1.0), zorder=4)
+    ax.set_ylim(lo, lo + span)
 
 
 def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, tops=None, twin=None, label=True):

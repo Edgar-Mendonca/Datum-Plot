@@ -239,7 +239,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | E8 | Graph digitizer (two marks per axis, linear or log, several curves, tilt-tolerant) | ✅ 0.4.1 |
 | E9 | Image tools (profiles and measurements on images) | 1.0 |
 | B37 | Bayesian tests: Bayes factors beside the P values of t-tests, one-way ANOVA (independent groups) and correlation | ✅ 0.4.4 |
-| I7 | Mac and Linux versions | 0.4.6 |
+| I7 | Mac and Linux versions | 0.4.7 |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
 | A20 | Dates, second step: offer dates on paste and import, axis steps, lines at a date, date functions in formulas, intercepts as dates | ✅ 0.3.12 |
 | A21 | Long column titles wrap onto up to three lines | ✅ 0.3.12 |
@@ -421,5 +421,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.3** ✅ | Error bars from the scheme, clearer Data Sets (D26; #43) |
 | **0.4.4** ✅ | Bayesian tests (B37) |
 | **0.4.5** ✅ | Fix: one-way ANOVA with a Bayes factor ("math domain error"), a t-test takes two data sets (GitHub #50) |
-| 0.4.6 | Mac and Linux versions (I7) |
+| **0.4.6** ✅ | Fixes: many significance brackets stay readable (GitHub #52); resize columns from their titles (#49) |
+| 0.4.7 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

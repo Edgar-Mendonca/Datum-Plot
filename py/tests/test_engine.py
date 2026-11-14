@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 import matplotlib
+import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
@@ -254,6 +255,43 @@ class Symbols(unittest.TestCase):
         top = max(fig.axes, key=lambda a: a.get_position().y0)
         r, box = fig.canvas.get_renderer(), top.get_window_extent()
         self.assertGreater(leg.get_window_extent(r).y1, box.y0, "#41: at the top of the graph, not of the lower panel")
+
+
+class Brackets(unittest.TestCase):
+    """0.4.6 (#52): many groups and brackets: labels never overlap one another, and the axis stays sensible."""
+
+    def fig(self, k, height=60):
+        rng = np.random.default_rng(1)
+        means = [2, 2.2, 3, 3.1, 5, 2.1, 4, 6][:k]
+        T = {"name": "T", "kind": "column", "rows": 5, "sets": [{"title": f"G{i + 1}", "entry": "rep", "reps": 1} for i in range(k)],
+             "cols": [[None] * 5] + [list(m + rng.normal(0, 0.4, 5)) for m in means], "excluded": [], "xTitle": "", "yTitle": "Y"}
+        g = {"column": "bars", "points": "each", "width": 80, "height": height}
+        ov = [{"kind": "anova", "sets": [], "options": {"posthoc": "tukey", "brackets": "all"}}]
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, *_ = graph.figure(T, g, ov)
+        fig.canvas.draw()
+        return fig, ax
+
+    def test_labels_do_not_overlap(self):
+        for k, h in ((4, 60), (6, 60), (8, 130)):
+            fig, ax = self.fig(k, h)
+            r = fig.canvas.get_renderer()
+            boxes = [t.get_window_extent(r) for t in ax.texts if t.get_text() in ("ns", "*", "**", "***", "****")]
+            self.assertEqual(len(boxes), k * (k - 1) // 2)
+            for i, a in enumerate(boxes):
+                for b in boxes[i + 1:]:
+                    self.assertFalse(a.overlaps(b), f"{k} groups: two labels overlap")
+            # no label crosses another bracket's line (its own line lies just below it)
+            lines = [ax.transData.transform([(l.get_xdata()[1], l.get_ydata()[1]), (l.get_xdata()[2], l.get_ydata()[2])])
+                     for l in ax.get_lines() if len(l.get_xdata()) == 4]
+            for t in boxes:  # every line above a label, over the same columns, leaves a clear gap (old: touching)
+                for (x1, y), (x2, _) in lines:
+                    if y > t.y0 + 1 and min(x1, x2) < t.x1 and t.x0 < max(x1, x2):
+                        self.assertGreaterEqual(y - t.y1, 1.5, f"{k} groups: a label touches another bracket's line")
+
+    def test_the_axis_stays_sensible(self):
+        fig, ax = self.fig(8)  # 28 brackets on a 60 mm graph: smaller labels, not a runaway axis
+        self.assertLess(ax.get_ylim()[1], 40)
 
 
 class Worker(unittest.TestCase):
