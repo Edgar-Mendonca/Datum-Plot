@@ -379,6 +379,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                     }
                     for mut g in p.graphs.iter().filter(|g| g.table == id).cloned().collect::<Vec<_>>() {
                         g.settings.overlays = g.settings.overlays.iter().map(|o| *map.get(o).unwrap_or(o)).collect();
+                        g.settings.bracket_opts = std::mem::take(&mut g.settings.bracket_opts).into_iter().map(|(o, v)| (*map.get(&o).unwrap_or(&o), v)).collect();
                         let gid = p.take_id();
                         p.graphs.push(Graph { id: gid, table: nid, name: format!("{} copy", g.name), ..g });
                     }

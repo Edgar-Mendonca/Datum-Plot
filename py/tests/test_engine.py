@@ -289,6 +289,21 @@ class Brackets(unittest.TestCase):
                     if y > t.y0 + 1 and min(x1, x2) < t.x1 and t.x0 < max(x1, x2):
                         self.assertGreaterEqual(y - t.y1, 1.5, f"{k} groups: a label touches another bracket's line")
 
+    def test_a_graph_chooses_its_own_brackets(self):
+        # 0.4.7 (#51): the analysis says "significant pairs, stars"; this graph says "all pairs, P values"
+        rng = np.random.default_rng(2)
+        T = {"name": "T", "kind": "column", "rows": 6, "sets": [{"title": f"G{i}", "entry": "rep", "reps": 1} for i in range(4)],
+             "cols": [[None] * 6] + [list(m + rng.normal(0, 0.3, 6)) for m in (1, 1.1, 3, 5)], "excluded": [], "xTitle": "", "yTitle": "Y"}
+        ov = [{"id": 7, "kind": "anova", "sets": [], "options": {"posthoc": "tukey", "brackets": "sig", "ptext": "stars"}}]
+        labels = lambda g: [t.get_text() for t in graph.figure(T, g, ov)[1].texts if t.get_text() == "ns" or t.get_text().startswith(("*", "P"))]
+        own = labels({"column": "bars"})
+        self.assertTrue(own and all(x.startswith("*") for x in own) and len(own) < 6, own)
+        mine = labels({"column": "bars", "bracketOpts": {"7": {"brackets": "all", "ptext": "p"}}})
+        self.assertEqual(len(mine), 6)
+        self.assertTrue(all(x.startswith("P") for x in mine), mine)
+        self.assertFalse(labels({"column": "bars", "bracketOpts": {"7": {"brackets": "none"}}}))
+        self.assertEqual(labels({"column": "bars", "bracketOpts": {"8": {"brackets": "none"}}}), own, "another analysis's choice changes nothing")
+
     def test_the_axis_stays_sensible(self):
         fig, ax = self.fig(8)  # 28 brackets on a 60 mm graph: smaller labels, not a runaway axis
         self.assertLess(ax.get_ylim()[1], 40)

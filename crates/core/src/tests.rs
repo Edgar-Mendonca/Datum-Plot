@@ -559,6 +559,26 @@ fn older_graphs_keep_their_error_bar_colours() {
 }
 
 #[test]
+fn a_graph_keeps_its_own_bracket_choice() {
+    // 0.4.7 (#51): per graph, by analysis id; kept only for analyses the graph shows and with known values.
+    let p = Project::from_json(r##"{"name":"b","tables":[{"id":1,"name":"T","kind":"column"}],"analyses":[{"id":3,"table":1,"name":"A","kind":"anova"},{"id":4,"table":1,"name":"B","kind":"ttest"}],
+        "graphs":[{"id":2,"table":1,"name":"G","settings":{"overlays":[3],"bracketOpts":{"3":{"brackets":"all","ptext":"p"},"4":{"brackets":"sig"},"9":{"brackets":"all"}}}}],"nextId":5}"##).unwrap();
+    let s = &p.graphs[0].settings;
+    assert_eq!(s.bracket_opts.len(), 1);
+    assert_eq!((s.bracket_opts[&3].brackets.as_str(), s.bracket_opts[&3].ptext.as_str()), ("all", "p"));
+    assert!(serde_json::to_string(&p).unwrap().contains(r##""bracketOpts":{"3":{"brackets":"all","ptext":"p"}}"##));
+    let bad = Project::from_json(r##"{"name":"b","tables":[{"id":1,"name":"T"}],"analyses":[{"id":3,"table":1,"name":"A","kind":"anova"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"overlays":[3],"bracketOpts":{"3":{"brackets":"<script>"}}}}],"nextId":5}"##).unwrap();
+    assert!(bad.graphs[0].settings.bracket_opts.is_empty(), "unknown values are dropped");
+    // Duplicating the table with its graphs and results carries the choice to the copied analysis.
+    let mut d = Doc::new(p);
+    d.apply(Op::Duplicate { id: 1, only: false }).unwrap();
+    let g = d.p.graphs.last().unwrap();
+    let a = *g.settings.overlays.first().unwrap();
+    assert_ne!(a, 3);
+    assert_eq!(g.settings.bracket_opts[&a].brackets, "all");
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");

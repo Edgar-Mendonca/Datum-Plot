@@ -202,6 +202,9 @@ def draw_overlays(ax, table, graph, overlays, size, colors=OKABE_ITO, pos=None, 
         except Exception:
             continue
         o = ov.get("options", {})
+        # 0.4.7 (#51): the graph's own choice of brackets (which pairs, stars or P values) wins over the analysis's
+        view = (graph.get("bracketOpts") or {}).get(str(ov.get("id")), {})
+        o = {**o, **{k: v for k, v in view.items() if k in ("brackets", "ptext") and v}}
         if pos is not None:
             draw_brackets(ax, res.get("brackets", []), pos, tops, size, o)
             continue

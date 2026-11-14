@@ -15,7 +15,7 @@ sys.path.insert(0, sys.argv[1])
 from datum import graph, analysis, console
 p = json.load(open(sys.argv[2]))["state"]["project"]
 T = {t["id"]: t for t in p["tables"]}
-ov = lambda s: [{"kind": a["kind"], "sets": a["sets"], "options": a["options"]} for a in p["analyses"] if a["id"] in s.get("overlays", [])]
+ov = lambda s: [{"id": a["id"], "kind": a["kind"], "sets": a["sets"], "options": a["options"]} for a in p["analyses"] if a["id"] in s.get("overlays", [])]
 r = {"render": {g["id"]: graph.render(T[g["table"]], g["settings"], ov(g["settings"])) for g in p["graphs"]},
      "result": {a["id"]: analysis.run(a["kind"], T[a["table"]], a["sets"], a["options"]) for a in p["analyses"]},
      "page": {l["id"]: graph.page(l, {str(g["id"]): {"table": T[g["table"]], "graph": g["settings"], "overlays": ov(g["settings"])} for g in p["graphs"]}, "svg", None) for l in p["layouts"]},

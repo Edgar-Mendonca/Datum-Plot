@@ -400,7 +400,7 @@ fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
     let a = st.0.lock().unwrap_or_else(PoisonError::into_inner);
     let g = a.doc.p.graph(id).ok_or("That graph no longer exists.")?;
     let t = a.doc.p.table(g.table).ok_or("The graph's data table no longer exists.")?;
-    let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| a.doc.p.analysis(*o)).map(|x| json!({ "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
+    let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| a.doc.p.analysis(*o)).map(|x| json!({ "id": x.id, "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
     Ok(json!({ "cmd": cmd, "table": t, "graph": g.settings, "overlays": overlays }))
 }
 
@@ -414,7 +414,7 @@ fn page_req(st: &State<St>, id: u32) -> R<Value> {
     for i in l.items.iter().filter(|i| i.kind == "graph") {
         let Some(g) = p.graph(i.graph) else { continue };
         let Some(t) = p.table(g.table) else { continue };
-        let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| p.analysis(*o)).map(|x| json!({ "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
+        let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| p.analysis(*o)).map(|x| json!({ "id": x.id, "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
         panels.insert(g.id.to_string(), json!({ "table": t, "graph": g.settings, "overlays": overlays }));
     }
     Ok(json!({ "cmd": "page", "layout": l, "panels": panels, "fmt": "svg" }))

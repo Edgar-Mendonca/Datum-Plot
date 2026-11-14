@@ -410,6 +410,8 @@ pub struct GraphSettings {
     pub sets: Vec<SetStyle>,
     /// Analyses whose fitted curves (or significance brackets) are drawn on this graph.
     pub overlays: Vec<u32>,
+    /// 0.4.7 (#51): this graph's own way of showing an analysis's brackets (by analysis id); empty = as the analysis.
+    pub bracket_opts: BTreeMap<u32, BracketView>,
     /// The order of the data sets along a column, grouped or pie graph (indices into the table's sets); empty or
     /// missing ones follow in table order. 0.3.15: a graph's own order, the table unchanged (#23).
     pub order: Vec<usize>,
@@ -447,7 +449,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], order: vec![], colors2: true, colors3: true, colors4: true,
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), order: vec![], colors2: true, colors3: true, colors4: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -525,6 +527,15 @@ impl Default for Note {
     fn default() -> Self {
         Self { kind: "text".into(), x: 0.0, y: 0.0, x2: 0.0, y2: 0.0, text: String::new(), color: String::new(), size: 0.0, bold: false }
     }
+}
+
+/// 0.4.7 (#51): which brackets a graph shows for one analysis ("all", "sig", "none") and how ("stars", "p");
+/// empty = as the analysis's own options.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BracketView {
+    pub brackets: String,
+    pub ptext: String,
 }
 
 /// The look of one data set; empty values mean the default for its position.
@@ -619,6 +630,7 @@ impl Project {
         for g in &mut self.graphs {
             g.table = tid(&map, g.table);
             g.settings.overlays = g.settings.overlays.iter().filter_map(|o| map.get(&(2, *o)).copied()).collect();
+            g.settings.bracket_opts = std::mem::take(&mut g.settings.bracket_opts).into_iter().filter_map(|(o, v)| Some((*map.get(&(2, o))?, v))).collect();
         }
         for l in &mut self.layouts {
             for i in &mut l.items {
@@ -663,6 +675,18 @@ impl Project {
         let an: Vec<(u32, u32)> = self.analyses.iter().map(|a| (a.id, a.table)).collect();
         for g in &mut self.graphs {
             g.settings.overlays.retain(|o| an.contains(&(*o, g.table)));
+            // 0.4.7 (#51): only analyses the graph shows, and only known values
+            let shown = g.settings.overlays.clone();
+            g.settings.bracket_opts.retain(|o, _| shown.contains(o));
+            for v in g.settings.bracket_opts.values_mut() {
+                if !matches!(v.brackets.as_str(), "all" | "sig" | "none") {
+                    v.brackets.clear();
+                }
+                if !matches!(v.ptext.as_str(), "stars" | "p") {
+                    v.ptext.clear();
+                }
+            }
+            g.settings.bracket_opts.retain(|_, v| !v.brackets.is_empty() || !v.ptext.is_empty());
         }
         let kinds: Vec<(u32, String)> = self.tables.iter().map(|t| (t.id, t.kind.clone())).collect();
         for g in &mut self.graphs {

@@ -35,7 +35,7 @@ def main(fixture):
     with tempfile.TemporaryDirectory() as d:
         for i, p in enumerate(projects):
             tables = {t["id"]: t for t in p["tables"]}
-            overlays = lambda s: [{"kind": a["kind"], "sets": a["sets"], "options": a["options"]} for a in p["analyses"] if a["id"] in s.get("overlays", [])]
+            overlays = lambda s: [{"id": a["id"], "kind": a["kind"], "sets": a["sets"], "options": a["options"]} for a in p["analyses"] if a["id"] in s.get("overlays", [])]
             name = p["tables"][0]["name"] if p["tables"] else f"project {i}"
             for a in p["analyses"]:
                 ask(f"{name} › {a['kind']}", {"cmd": "analyze", "kind": a["kind"], "table": tables[a["table"]], "sets": a["sets"], "options": a["options"]})

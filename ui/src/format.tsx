@@ -6,7 +6,7 @@ import { act, out, openDialog, closeDialog, dialogs, toast, item } from "./store
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES, ORDERED, paletteName } from "./tools";
 import { lastRender } from "./graph";
-import { draws } from "./results";
+import { draws, KINDS } from "./results";
 
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
@@ -102,6 +102,8 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
   /** 0.4.2 (#43): the error bars' automatic colour: dark grey on scatter dot plots and grouped bars; 0.4.3: the scheme's
    *  on the other bar, box and violin graphs (no longer the symbols' fill), the data set's colour on XY graphs. */
   const errAuto = (k: number) => (t()?.kind === "grouped" ? (s().column || "bars") === "bars" : t()?.kind === "column" && (s().column || "scatter") === "scatter") ? "#222222" : bars() ? base(k) : drawn(k);
+  /** 0.4.7 (#51): set (or clear, with "") this graph's own bracket choice for an analysis. */
+  const bracket = (id: number, k: "brackets" | "ptext", v: string) => set(x => { const o = { ...(x.bracketOpts ?? {}) }, cur = { ...(o[id] ?? {}), [k]: v }; if (!cur.brackets && !cur.ptext) delete o[id]; else o[id] = cur; x.bracketOpts = o; });
   const drawable = () => (out()?.project.analyses ?? []).filter(a => a.table === g().table && draws(a.kind, t()));
   const alpha0 = () => (t()?.kind === "grouped" ? 0.85 : ["box", "violin"].includes(s().column) ? 0.3 : 0.35);
   const rows = () => { const n = t()?.sets.length ?? 0, ks = Array.from({ length: n }, (_, k) => k), o = s().order ?? [];
@@ -221,8 +223,14 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             <label>Legend</label><span class="inline"><Check label="Show" value={t()?.kind === "column" ? !!s().legend.groups : s().legend.show} set={v => set(x => { if (t()?.kind === "column") { x.legend.groups = v; if (v) x.legend.show = true; } else x.legend.show = v; })} />
               <Pick value={s().legend.loc} set={v => set(x => { x.legend.loc = v; })} options={[["best", "Best place"], ["upper left", "Top left"], ["upper right", "Top right"], ["lower left", "Bottom left"], ["lower right", "Bottom right"], ["outside", "Outside, right"]]} /></span>
             {/* 0.4.2 (#39): which of the table's analyses this graph shows (fitted curves, brackets and stars) */}
-            <Show when={drawable().length}><label>Analyses</label><span class="stackr"><For each={drawable()}>{a => <Check label={`Show ${a.name.split(" · ")[0]}`} value={s().overlays.includes(a.id)} set={v => act({ Overlay: { graph: g().id, analysis: a.id, on: v } })} />}</For>
-              <span class="muted">Ticked analyses are drawn on this graph only; the others keep their own choice.</span></span></Show>
+            <Show when={drawable().length}><label>Analyses</label><span class="stackr"><For each={drawable()}>{a => <span class="inline">
+              <Check label={`Show ${a.name.split(" · ")[0]}`} value={s().overlays.includes(a.id)} set={v => act({ Overlay: { graph: g().id, analysis: a.id, on: v } })} />
+              {/* 0.4.7 (#51): this graph's own brackets for the analysis; "As the analysis" follows its options */}
+              <Show when={KINDS[a.kind]?.[2] === "brackets" && s().overlays.includes(a.id)}>
+                <Pick value={s().bracketOpts?.[a.id]?.brackets ?? ""} set={v => bracket(a.id, "brackets", v)} options={[["", `As the analysis (${({ all: "every pair", none: "no brackets" } as Record<string, string>)[a.options?.brackets] ?? "significant pairs"})`], ["sig", "Significant pairs"], ["all", "Every pair"], ["none", "No brackets"]]} />
+                <Pick value={s().bracketOpts?.[a.id]?.ptext ?? ""} set={v => bracket(a.id, "ptext", v)} options={[["", `As the analysis (${a.options?.ptext === "p" ? "P values" : "stars"})`], ["stars", "Stars"], ["p", "P values"]]} />
+              </Show></span>}</For>
+              <span class="muted">Ticked analyses are drawn on this graph only; the others keep their own choice. Brackets can differ from graph to graph.</span></span></Show>
           </div>
         </Show>
       </div>

@@ -794,6 +794,37 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("…and sends it with the analysis", !!add && add.AddAnalysis.analysis.kind === "correlation" && add.AddAnalysis.analysis.options.bayes === true, JSON.stringify(add));
     await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   }
+  // 0.4.7 (#51): a graph chooses its own brackets for an analysis, without changing the analysis. Its own window, with
+  // a project of one column table, its one-way ANOVA and its graph (opened on the graph, as a document's window is).
+  {
+    const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
+    await q.addInitScript(([f, rd]) => {
+      const p0 = f.state.project, t0 = p0.tables[0];
+      const project = { ...p0, tables: [{ ...t0, id: 90, name: "Groups", kind: "column" }], layouts: [],
+        analyses: [{ id: 92, table: 90, name: "One-way ANOVA · Groups", kind: "anova", sets: [], options: { posthoc: "tukey", brackets: "sig", ptext: "stars" } }],
+        graphs: [{ ...p0.graphs[0], id: 91, table: 90, name: "Group means", settings: { ...p0.graphs[0].settings, column: "bars", overlays: [92] } }] };
+      const st = { ...f.state, project, embedded: "a test" };
+      const m = { state: st, options: { theme: "light", autosave: 0, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, dpi: 300, paper: "A4", dateOrder: "dmy" }, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd };
+      try { localStorage.setItem("guide-hint", "1"); } catch {}
+      window.__calls = [];
+      window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); return c in m ? m[c] : c === "apply" ? st : null; } }, event: { listen: async () => () => {} } };
+    }, [fix, render]);
+    await q.goto(url); await q.waitForTimeout(900);
+    await q.click('.tabs button:text-is("Graph")'); await q.waitForTimeout(150);
+    const fa = await q.$('.ribbon .rb:has-text("Format Axes")');
+    if (fa && !(await fa.isVisible())) await fa.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
+    await q.click('.ribbon .rb:has-text("Format Axes")'); await q.waitForTimeout(250);
+    await q.click('.dlg .dtabs button:text-is("Graph")'); await q.waitForTimeout(150);
+    const sel = '.dlg .stackr .inline:has-text("Show One-way ANOVA") select';
+    const opts = await q.$$eval(sel + " >> nth=0 >> option", os => os.map(o => o.textContent)).catch(() => []);
+    check("Format Graph › Graph offers this graph's own brackets for the ANOVA", opts.some(o => o.startsWith("As the analysis")) && opts.includes("Every pair"), opts.join("|"));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.selectOption(sel + " >> nth=0", "all").catch(() => {}); await q.waitForTimeout(150);
+    const qops = await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op));
+    const gs = qops.find(o => o.GraphSet);
+    check("…and choosing Every pair sets it on this graph only", !!gs && gs.GraphSet.graph === 91 && gs.GraphSet.settings.bracketOpts?.["92"]?.brackets === "all" && !qops.some(o => o.SetAnalysis), JSON.stringify(qops));
+    await q.close();
+  }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
   await p.keyboard.press("Escape"); await p.click('.tabs button:text-is("Data")'); await reset();
   await p.click('.ribbon .rb:has-text("Digitize Graph")'); await p.waitForSelector(".digipic svg");

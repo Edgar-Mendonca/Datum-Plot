@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.7 — 2026-11-14
+
+Each graph chooses its own significance brackets.
+
+**Brackets per graph** (Format Graph › Graph › Analyses)
+- Beside each analysis a graph shows, choose which brackets this graph draws (**every pair**, **significant pairs** or **none**) and **stars** or **P values**. The same analysis can show every pair on one graph and only the significant ones on another, without changing the analysis.
+- **As the analysis** (the default) keeps following the analysis's own options.
+
 ## 0.4.6 — 2026-11-14
 
 Many significance brackets stay readable, and columns resize from their titles.
