@@ -32,7 +32,9 @@ const widen = (e: MouseEvent) => {
  *  (Ctrl/Shift+click), collapsed folders and the family view are this window's state only. */
 /** 0.4.8 (#44): also `fill` (an item's background, a light tint of the colour) and `fcolor` (a folder's colour, by
  *  "section:folder"). */
-type NavUi = { folder?: Record<string, string>; color?: Record<string, string>; fill?: Record<string, string>; fcolor?: Record<string, string> };
+type NavUi = { folder?: Record<string, string>; color?: Record<string, string>; fill?: Record<string, string>; fcolor?: Record<string, string>;
+  /** 0.4.10 (#44): your own order of each section's items (ids; items it does not name follow in creation order). */
+  order?: Record<string, number[]> };
 const navUi = (): NavUi => (P().ui?.nav ?? {}) as NavUi;
 const setNav = (f: (n: NavUi) => NavUi) => act({ Ui: { key: "nav", value: f(structuredClone({ folder: {}, color: {}, fill: {}, fcolor: {}, ...navUi() })) } });
 /** A light tint of a colour, readable under the text in both themes. */
@@ -40,6 +42,9 @@ const tint = (c?: string) => (c ? `${c}2E` : undefined);
 const COLOURS: [string, string][] = [["", "No colour"], ["#D55E00", "Red"], ["#E69F00", "Orange"], ["#009E73", "Green"], ["#0072B2", "Blue"], ["#CC79A7", "Pink"], ["#8A94A6", "Grey"]];
 const [sel, setSel] = createSignal<number[]>([]), [anchor, setAnchor] = createSignal<number | null>(null);
 const [shut, setShut] = createSignal<string[]>([]);
+/** 0.4.10 (#44): the items being dragged, and where they would land (before or after an item, or into a folder). */
+const [dragging, setDragging] = createSignal<{ s: Section; ids: number[] } | null>(null);
+const [dropAt, setDropAt] = createSignal<{ id: number; after: boolean } | { folder: string } | null>(null);
 export const [family, setFamily] = createSignal<number | null>(null);
 type Entry = { id: number; name: string; icon: string };
 
@@ -78,7 +83,8 @@ export const Navigator = () => {
       ...(s === "graphs" ? [{ label: "Copy Picture", icon: "copy", run: () => copyGraph(id) }, { label: "Copy Embedded", icon: "copy", run: () => copyEmbedded(id) }, { label: "Export…", icon: "export", run: () => { const g = P().graphs.find(x => x.id === id); if (g) exportGraph(g); } },
         { label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, { label: thumbs() ? "Hide Previews" : "Show Previews", icon: "image", run: () => setThumbs(!thumbs()) }, "-" as const] : []),
       ...(s === "layouts" ? [{ label: "Copy Picture", icon: "copy", run: () => copyPage(id) }, { label: "Export…", icon: "export", run: () => { const l = P().layouts?.find(x => x.id === id); if (l) exportLayout(l); } }, "-" as const] : []),
-      ...organise([id], s), "-" as const,
+      ...organise([id], s),
+      { label: "Move Up", icon: "up", run: () => nudge(s, id, -1) }, { label: "Move Down", icon: "down", run: () => nudge(s, id, 1) }, "-" as const,
       { label: "Rename…", icon: "rename", run: C.rename },
       ...(s === "data" ? [{ label: "Duplicate with Graphs and Results", icon: "copy", run: () => C.duplicate(false) }, { label: "Duplicate Table Only", icon: "copy", run: () => C.duplicate(true) }] : [{ label: "Duplicate", icon: "copy", run: () => C.duplicate() }]),
       { label: "Delete", icon: "del", run: C.del },
@@ -89,6 +95,30 @@ export const Navigator = () => {
     if (e.ctrlKey || e.metaKey) { const cur = sel().length ? sel() : item().s === s && item().id ? [item().id] : []; setSel(cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]); setAnchor(id); return; }
     if (e.shiftKey && anchor() !== null) { const ids = list(s).map(x => x.id), a = ids.indexOf(anchor()!), b = ids.indexOf(id); if (a >= 0 && b >= 0) { setSel(ids.slice(Math.min(a, b), Math.max(a, b) + 1)); return; } }
     setSel([]); setAnchor(id); open(s, id);
+  };
+  /** 0.4.10 (#44): move items before or after another (taking its folder), or into a folder; one undo step. */
+  const place = (s: Section, ids: number[], to: { id: number; after: boolean } | { folder: string }) => {
+    const all = list(s, true).map(e => e.id), moving = all.filter(i => ids.includes(i)), rest = all.filter(i => !ids.includes(i));
+    const folder = "folder" in to ? to.folder : navUi().folder?.[to.id] ?? "";
+    let at: number;
+    if ("folder" in to) { const inside = rest.filter(i => navUi().folder?.[i] === to.folder); at = inside.length ? rest.indexOf(inside[inside.length - 1]) + 1 : rest.length; }
+    else { if (ids.includes(to.id)) return; at = rest.indexOf(to.id) + (to.after ? 1 : 0); }
+    const order = [...rest.slice(0, at), ...moving, ...rest.slice(at)];
+    setNav(n => { n.order = { ...(n.order ?? {}), [s]: order }; moving.forEach(i => { if (folder) n.folder![i] = folder; else delete n.folder![i]; }); return n; });
+  };
+  const nudge = (s: Section, id: number, d: number) => {
+    const same = list(s, true).filter(e => (navUi().folder?.[e.id] ?? "") === (navUi().folder?.[id] ?? "")).map(e => e.id), i = same.indexOf(id), j = i + d;
+    if (j >= 0 && j < same.length) place(s, [id], { id: same[j], after: d > 0 });
+  };
+  const drag = {
+    start: (e: DragEvent, id: number, s: Section) => { if (family() !== null) return e.preventDefault(); setDragging({ s, ids: picked(id) }); e.dataTransfer?.setData("text/plain", String(id)); if (e.dataTransfer) e.dataTransfer.effectAllowed = "move"; },
+    over: (e: DragEvent, s: Section, to: { id: number; after?: boolean } | { folder: string }) => {
+      const d = dragging(); if (!d || d.s !== s) return;
+      e.preventDefault();
+      if ("id" in to) { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setDropAt({ id: to.id, after: e.clientY > r.top + r.height / 2 }); } else setDropAt(to);
+    },
+    drop: (e: DragEvent, s: Section) => { e.preventDefault(); const d = dragging(), at = dropAt(); if (d && at && d.s === s) place(s, d.ids, at); drag.end(); },
+    end: () => { setDragging(null); setDropAt(null); },
   };
   const folderMenu = (e: MouseEvent, s: Section, f: string) => { e.preventDefault(); openMenu(e, [
     { label: "Rename Folder…", icon: "rename", run: () => { const n = prompt("Folder name", f); if (n?.trim()) setNav(x => { Object.keys(x.folder!).forEach(i => { if (x.folder![i] === f && list(s).some(y => String(y.id) === i)) x.folder![i] = n.trim().slice(0, 80); }); const c = x.fcolor?.[`${s}:${f}`]; if (c) { delete x.fcolor![`${s}:${f}`]; x.fcolor![`${s}:${n.trim().slice(0, 80)}`] = c; } return x; }); } },
@@ -101,7 +131,10 @@ export const Navigator = () => {
     ...P().tables.map(t => ({ label: `New Graph of “${t.name}”`, icon: "graph", run: () => newGraph(t.id) })),
   ]);
   const Row = (q: { e: Entry; s: Section }) => (
-    <button class="nitem" classList={{ on: item().s === q.s && item().id === q.e.id, sel: sel().includes(q.e.id), infold: !!navUi().folder?.[q.e.id] }} style={{ color: navUi().color?.[q.e.id] || undefined, background: tint(navUi().fill?.[q.e.id]) }}
+    <button class="nitem" classList={{ on: item().s === q.s && item().id === q.e.id, sel: sel().includes(q.e.id), infold: !!navUi().folder?.[q.e.id],
+      dropb: (dropAt() as { id?: number; after?: boolean })?.id === q.e.id && !(dropAt() as { after?: boolean }).after, dropa: (dropAt() as { id?: number; after?: boolean })?.id === q.e.id && !!(dropAt() as { after?: boolean }).after }}
+      style={{ color: navUi().color?.[q.e.id] || undefined, background: tint(navUi().fill?.[q.e.id]) }} draggable={true} title="Drag to move it; right-click for more"
+      onDragStart={e => drag.start(e, q.e.id, q.s)} onDragOver={e => drag.over(e, q.s, { id: q.e.id })} onDrop={e => drag.drop(e, q.s)} onDragEnd={drag.end}
       onClick={e => click(e, q.e.id, q.s)} onContextMenu={e => ctx(e, q.e.id, q.s)} onDblClick={C.rename}><Icon n={q.e.icon} /><span title={q.e.name}>{q.e.name}</span></button>
   );
   const Items = (q: { s: Section; none?: string }) => {
@@ -110,7 +143,8 @@ export const Navigator = () => {
       <Show when={q.s === "graphs" && thumbs()}><div class="nthumbs" classList={{ infold: !!navUi().folder?.[r.e.id] }} onContextMenu={e => ctx(e, r.e.id, "graphs")}><Thumb id={r.e.id} on={item().s === "graphs" && item().id === r.e.id} /></div></Show></>;
     return <>
       <For each={folders(q.s)}>{f => { const key = `${q.s}:${f}`, open_ = () => !shut().includes(key); return <>
-        <button class="nfolder" style={{ color: navUi().fcolor?.[key] || undefined }} onClick={() => setShut(open_() ? [...shut(), key] : shut().filter(x => x !== key))} onContextMenu={e => folderMenu(e, q.s, f)} title="Click to open or close; right-click to rename, colour or remove">
+        <button class="nfolder" classList={{ dropin: (dropAt() as { folder?: string })?.folder === f }} style={{ color: navUi().fcolor?.[key] || undefined }}
+          onDragOver={e => drag.over(e, q.s, { folder: f })} onDrop={e => drag.drop(e, q.s)} onClick={() => setShut(open_() ? [...shut(), key] : shut().filter(x => x !== key))} onContextMenu={e => folderMenu(e, q.s, f)} title="Click to open or close; right-click to rename, colour or remove">
           <span class="caret">{open_() ? "▾" : "▸"}</span><Icon n="folder" /><span>{f}</span><small>{list(q.s).filter(e => navUi().folder?.[e.id] === f).length}</small></button>
         {/* 0.4.8 (#44): an open folder's items sit in a shaded block edged in the folder's colour, so its end is clear */}
         <Show when={open_()}><div class="nfoldbox" style={{ "--fc": navUi().fcolor?.[key] || "var(--line3)" }}><For each={list(q.s).filter(e => navUi().folder?.[e.id] === f)}>{e => <Each e={e} />}</For></div></Show>
@@ -142,8 +176,13 @@ export const Navigator = () => {
 };
 
 /** The items of a section, filtered to one table's family when that view is on. */
-const list = (s: Section): Entry[] => {
-  const f = family() !== null && P().tables.some(t => t.id === family()) ? family() : null;
+const list = (s: Section, all = false): Entry[] => {
+  const ord = navUi().order?.[s] ?? [], at = (i: number, k: number) => { const j = ord.indexOf(i); return j < 0 ? ord.length + k : j; };
+  return listed(s, all).map((e, k) => [e, at(e.id, k)] as const).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+};
+/** The section's items in creation order (all of them, or only the family shown). */
+const listed = (s: Section, all: boolean): Entry[] => {
+  const f = !all && family() !== null && P().tables.some(t => t.id === family()) ? family() : null;
   const fg = f === null ? [] : P().graphs.filter(g => g.table === f).map(g => g.id);
   if (s === "data") return P().tables.filter(t => f === null || t.id === f).map(t => ({ id: t.id, name: t.name, icon: t.kind === "column" ? "table" : "sheet" }));
   if (s === "results") return (P().analyses ?? []).filter(a => f === null || a.table === f).map(a => ({ id: a.id, name: a.name, icon: "results" }));

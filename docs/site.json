@@ -48,17 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.10",
-      "title": "Navigator",
-      "when": "Next",
-      "items": [
-        "Drag items into your own order"
-      ]
-    },
-    {
       "v": "0.4.11",
       "title": "Mac and Linux",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Mac and Linux versions"
       ]

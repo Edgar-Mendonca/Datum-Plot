@@ -255,7 +255,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D23 | Breaks and legends: the share of the axis each side of a break takes, ticks beyond it; group legends on column graphs | ✅ 0.3.20 |
 | D22 | A graph's own order of data sets; fill and border colours for bars, boxes and violins | ✅ 0.3.15 |
 | A23 | Navigator colours: item fill, folder colour, shaded folder contents (#44) | ✅ 0.4.8 |
-| A24 | Drag to reorder the navigator (#44) | 0.4.10 |
+| A24 | Drag to reorder the navigator; right-click › Move Up / Move Down (#44) | ✅ 0.4.10 |
 | A22 | Organising the navigator: multiple selection, folders, coloured names, a family view | ✅ 0.3.16 |
 | I8 | Smaller screens: ribbon groups fold into named buttons; the File page and Home fit small windows | ✅ 0.3.17 |
 | J8 | A tidier Home: three blank starts (XY table and graph, XY table, column table) and a Samples folder under headings | ✅ 0.3.13 |
@@ -429,6 +429,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.7** ✅ | Brackets per graph (C11; GitHub #51) |
 | **0.4.8** ✅ | Format Graph on the Graph tab, duplicates on the Format tab only (#45); folder and item colours, folder shading (A23, #44); typed strengths (#46) |
 | **0.4.9** ✅ | Your style for new graphs; several data sets at once (D27, #46) |
-| 0.4.10 | Drag to reorder the navigator (A24, #44) |
+| **0.4.10** ✅ | Drag to reorder the navigator (A24, #44) |
 | 0.4.11 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

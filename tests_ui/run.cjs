@@ -194,6 +194,17 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.menu button:has-text("Orange")'); await p.waitForTimeout(250);
   const fc = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
   check("a folder's Colour › Orange colours the folder", fc && fc.Ui.value.fcolor?.["layouts:Figures"] === "#E69F00", JSON.stringify(fc));
+  // 0.4.10 (#44): your own order: right-click › Move Up, or drag an item above another
+  await reset();
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Move Up")'); await p.waitForTimeout(250);
+  const mu = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("Move Up puts the graph before the one above it", mu && JSON.stringify(mu.Ui.value.order?.graphs) === JSON.stringify([97, 2]), JSON.stringify(mu?.Ui.value.order));
+  await reset();
+  await p.locator('.nav .nitem:has(span:text-is("Growth copy"))').dragTo(p.locator('.nav .nitem:has(span:text-is("Growth")) >> nth=1'), { targetPosition: { x: 20, y: 3 } });
+  await p.waitForTimeout(250);
+  const dg = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("dragging a graph above another puts it first", dg && JSON.stringify(dg.Ui.value.order?.graphs) === JSON.stringify([97, 2]), JSON.stringify(dg?.Ui.value.order));
   await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=0', { button: "right" }); await p.waitForTimeout(150);
   await p.click('.menu button:has-text("Show Only This Family")'); await p.waitForTimeout(200);
   check("Show Only This Family filters the navigator", ((await p.textContent(".nav .nfamily")) || "").includes("Family of") && (await p.$$(".nav .nitem:has(span:text-is('Figure 1'))")).length === 1);

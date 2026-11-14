@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.10 — 2026-11-14
+
+Put the navigator in your own order.
+
+**Navigator**
+- Drag a table, result, graph or layout up or down to put it where you want; a line shows where it will land. Several picked items move together.
+- Drop it next to an item in a folder to put it in that folder, or onto a folder to add it at the end.
+- Or right-click › **Move Up** / **Move Down**. Every move can be undone, and the order is saved in the project.
+
 ## 0.4.9 — 2026-11-14
 
 Your own style for every new graph, and several data sets changed at once.
