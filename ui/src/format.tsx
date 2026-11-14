@@ -40,7 +40,9 @@ const Swatch = (p: { title: string; value: string; auto: string; scheme: string[
       <b>{p.title}</b>
       <div class="swset"><For each={p.scheme}>{c => <button style={{ background: c }} title={c} onClick={() => { p.set(c); setAt(null); }} />}</For></div>
       <label class="inline"><input type="color" value={shown()} onChange={e => p.set(e.currentTarget.value)} /><span>Your own colour</span></label>
-      <Show when={p.setAlpha}><label class="inline"><span>Strength</span><input type="range" min="0" max="100" step="5" value={Math.round((p.alpha ?? 0) * 100)} onChange={e => p.setAlpha!(+e.currentTarget.value / 100)} /><span>{Math.round((p.alpha ?? 0) * 100)} %</span></label></Show>
+      <Show when={p.setAlpha}><label class="inline"><span>Strength</span><input type="range" min="0" max="100" step="5" value={Math.round((p.alpha ?? 0) * 100)} onChange={e => p.setAlpha!(+e.currentTarget.value / 100)} />
+        {/* 0.4.8 (#46): or type it */}
+        <input type="number" class="swpct" min="0" max="100" step="1" title="Strength in %" value={Math.round((p.alpha ?? 0) * 100)} onChange={e => { const v = +e.currentTarget.value; if (e.currentTarget.value.trim() !== "" && isFinite(v)) p.setAlpha!(Math.min(100, Math.max(0, v)) / 100); }} /><span>%</span></label></Show>
       <button class="btn sm" disabled={!p.value && p.alpha === undefined} onClick={() => { p.set(""); p.setAlpha?.(null); setAt(null); }}>Automatic (scheme colour)</button>
     </div>}</Show>
   </span>;

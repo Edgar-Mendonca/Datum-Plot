@@ -30,9 +30,13 @@ const widen = (e: MouseEvent) => {
 /** 0.3.16 (#31, #32): organising the navigator. Folders and name colours live in the project (ui.nav, undoable):
  *  `folder` maps an item's id to its folder's name (folders are per section), `color` to a colour. Selection
  *  (Ctrl/Shift+click), collapsed folders and the family view are this window's state only. */
-type NavUi = { folder?: Record<string, string>; color?: Record<string, string> };
+/** 0.4.8 (#44): also `fill` (an item's background, a light tint of the colour) and `fcolor` (a folder's colour, by
+ *  "section:folder"). */
+type NavUi = { folder?: Record<string, string>; color?: Record<string, string>; fill?: Record<string, string>; fcolor?: Record<string, string> };
 const navUi = (): NavUi => (P().ui?.nav ?? {}) as NavUi;
-const setNav = (f: (n: NavUi) => NavUi) => act({ Ui: { key: "nav", value: f(structuredClone({ folder: {}, color: {}, ...navUi() })) } });
+const setNav = (f: (n: NavUi) => NavUi) => act({ Ui: { key: "nav", value: f(structuredClone({ folder: {}, color: {}, fill: {}, fcolor: {}, ...navUi() })) } });
+/** A light tint of a colour, readable under the text in both themes. */
+const tint = (c?: string) => (c ? `${c}2E` : undefined);
 const COLOURS: [string, string][] = [["", "No colour"], ["#D55E00", "Red"], ["#E69F00", "Orange"], ["#009E73", "Green"], ["#0072B2", "Blue"], ["#CC79A7", "Pink"], ["#8A94A6", "Grey"]];
 const [sel, setSel] = createSignal<number[]>([]), [anchor, setAnchor] = createSignal<number | null>(null);
 const [shut, setShut] = createSignal<string[]>([]);
@@ -45,13 +49,16 @@ export const Navigator = () => {
   const folders = (s: Section) => [...new Set(list(s).map(e => navUi().folder?.[e.id]).filter((f): f is string => !!f))];
   const moveTo = (ids: number[], folder: string) => setNav(n => { ids.forEach(i => { if (folder) n.folder![i] = folder; else delete n.folder![i]; }); return n; });
   const colour = (ids: number[], c: string) => setNav(n => { ids.forEach(i => { if (c) n.color![i] = c; else delete n.color![i]; }); return n; });
+  const fill = (ids: number[], c: string) => setNav(n => { n.fill ??= {}; ids.forEach(i => { if (c) n.fill![i] = c; else delete n.fill![i]; }); return n; });
+  const folderColour = (s: Section, f: string, c: string) => setNav(n => { n.fcolor ??= {}; if (c) n.fcolor[`${s}:${f}`] = c; else delete n.fcolor[`${s}:${f}`]; return n; });
   const organise = (ids: number[], s: Section) => [
     { label: "Move to Folder", icon: "folder", sub: [
       ...folders(s).map(f => ({ label: f, run: () => moveTo(ids, f) })),
       { label: "New Folder…", run: () => { const f = prompt("Folder name", ""); if (f?.trim()) moveTo(ids, f.trim().slice(0, 80)); } },
       ...(ids.some(i => navUi().folder?.[i]) ? [{ label: "Out of the Folder", run: () => moveTo(ids, "") }] : []),
     ] },
-    { label: "Colour", icon: "paint", sub: COLOURS.map(([c, l]) => ({ label: l, on: ids.every(i => (navUi().color?.[i] ?? "") === c), run: () => colour(ids, c) })) },
+    { label: "Text Colour", icon: "paint", sub: COLOURS.map(([c, l]) => ({ label: l, on: ids.every(i => (navUi().color?.[i] ?? "") === c), run: () => colour(ids, c) })) },
+    { label: "Fill Colour", icon: "bucket", sub: COLOURS.map(([c, l]) => ({ label: l, on: ids.every(i => (navUi().fill?.[i] ?? "") === c), run: () => fill(ids, c) })) },
   ];
   const delMany = (ids: number[]) => {
     const names = ids.map(i => one(i)?.name).filter(Boolean);
@@ -84,8 +91,9 @@ export const Navigator = () => {
     setSel([]); setAnchor(id); open(s, id);
   };
   const folderMenu = (e: MouseEvent, s: Section, f: string) => { e.preventDefault(); openMenu(e, [
-    { label: "Rename Folder…", icon: "rename", run: () => { const n = prompt("Folder name", f); if (n?.trim()) setNav(x => { Object.keys(x.folder!).forEach(i => { if (x.folder![i] === f && list(s).some(y => String(y.id) === i)) x.folder![i] = n.trim().slice(0, 80); }); return x; }); } },
-    { label: "Remove Folder (keeps its items)", icon: "del", run: () => moveTo(list(s).filter(x => navUi().folder?.[x.id] === f).map(x => x.id), "") },
+    { label: "Rename Folder…", icon: "rename", run: () => { const n = prompt("Folder name", f); if (n?.trim()) setNav(x => { Object.keys(x.folder!).forEach(i => { if (x.folder![i] === f && list(s).some(y => String(y.id) === i)) x.folder![i] = n.trim().slice(0, 80); }); const c = x.fcolor?.[`${s}:${f}`]; if (c) { delete x.fcolor![`${s}:${f}`]; x.fcolor![`${s}:${n.trim().slice(0, 80)}`] = c; } return x; }); } },
+    { label: "Colour", icon: "paint", sub: COLOURS.map(([c, l]) => ({ label: l, on: (navUi().fcolor?.[`${s}:${f}`] ?? "") === c, run: () => folderColour(s, f, c) })) },
+    { label: "Remove Folder (keeps its items)", icon: "del", run: () => { folderColour(s, f, ""); moveTo(list(s).filter(x => navUi().folder?.[x.id] === f).map(x => x.id), ""); } },
   ]); };
   /** 0.3.15 (#29): the Graphs ＋ asks: a new graph of a table, or a copy of the open graph with all its formatting. */
   const addGraph = (e: MouseEvent) => openMenu(e, [
@@ -93,7 +101,7 @@ export const Navigator = () => {
     ...P().tables.map(t => ({ label: `New Graph of “${t.name}”`, icon: "graph", run: () => newGraph(t.id) })),
   ]);
   const Row = (q: { e: Entry; s: Section }) => (
-    <button class="nitem" classList={{ on: item().s === q.s && item().id === q.e.id, sel: sel().includes(q.e.id), infold: !!navUi().folder?.[q.e.id] }} style={{ color: navUi().color?.[q.e.id] || undefined }}
+    <button class="nitem" classList={{ on: item().s === q.s && item().id === q.e.id, sel: sel().includes(q.e.id), infold: !!navUi().folder?.[q.e.id] }} style={{ color: navUi().color?.[q.e.id] || undefined, background: tint(navUi().fill?.[q.e.id]) }}
       onClick={e => click(e, q.e.id, q.s)} onContextMenu={e => ctx(e, q.e.id, q.s)} onDblClick={C.rename}><Icon n={q.e.icon} /><span title={q.e.name}>{q.e.name}</span></button>
   );
   const Items = (q: { s: Section; none?: string }) => {
@@ -102,9 +110,10 @@ export const Navigator = () => {
       <Show when={q.s === "graphs" && thumbs()}><div class="nthumbs" classList={{ infold: !!navUi().folder?.[r.e.id] }} onContextMenu={e => ctx(e, r.e.id, "graphs")}><Thumb id={r.e.id} on={item().s === "graphs" && item().id === r.e.id} /></div></Show></>;
     return <>
       <For each={folders(q.s)}>{f => { const key = `${q.s}:${f}`, open_ = () => !shut().includes(key); return <>
-        <button class="nfolder" onClick={() => setShut(open_() ? [...shut(), key] : shut().filter(x => x !== key))} onContextMenu={e => folderMenu(e, q.s, f)} title="Click to open or close; right-click to rename or remove">
+        <button class="nfolder" style={{ color: navUi().fcolor?.[key] || undefined }} onClick={() => setShut(open_() ? [...shut(), key] : shut().filter(x => x !== key))} onContextMenu={e => folderMenu(e, q.s, f)} title="Click to open or close; right-click to rename, colour or remove">
           <span class="caret">{open_() ? "▾" : "▸"}</span><Icon n="folder" /><span>{f}</span><small>{list(q.s).filter(e => navUi().folder?.[e.id] === f).length}</small></button>
-        <Show when={open_()}><For each={list(q.s).filter(e => navUi().folder?.[e.id] === f)}>{e => <Each e={e} />}</For></Show>
+        {/* 0.4.8 (#44): an open folder's items sit in a shaded block edged in the folder's colour, so its end is clear */}
+        <Show when={open_()}><div class="nfoldbox" style={{ "--fc": navUi().fcolor?.[key] || "var(--line3)" }}><For each={list(q.s).filter(e => navUi().folder?.[e.id] === f)}>{e => <Each e={e} />}</For></div></Show>
       </>; }}</For>
       <For each={loose()} fallback={folders(q.s).length || !q.none ? null : <p class="nnone">{q.none}</p>}>{e => <Each e={e} />}</For>
     </>;

@@ -99,7 +99,7 @@ const srv = http.createServer((q, r) => {
   await nav(9);
   const tabsBox = await p.evaluate(() => { const t = [...document.querySelectorAll(".tabs > button")]; const a = t[0].getBoundingClientRect(), z = t[t.length - 1].getBoundingClientRect(); return { x: a.x + 2, y: a.y + 2, width: z.right - a.x - 2, height: a.height - 4 }; });
   await shot("window", [[tabsBox, 1, 0, "right"], [".ribbon", 2], [".side", 3, 0, "in"], [".nav", 4], [".gpaper", 5]]);
-  await tab("Graph"); await shot("graph-tab", [["grp:Graph", 1], ["grp:Axes", 2], ["grp:Style", 3], ["grp:Share", 4]], TOP);
+  await tab("Graph"); await shot("graph-tab", [["grp:Graph", 1, 0, "in"], ["grp:Axes", 2], ["grp:Style", 3], ["grp:Share", 4]], TOP);
   await p.click('.ribbon .rb.big:has-text("Format Axes")'); await wait(400);
   await shot("format", [[".dlg .dtabs", 1], [".dlg .fmtpage", 2], [".gpaper", 3]]);
   await p.keyboard.press("Escape"); await wait(200);

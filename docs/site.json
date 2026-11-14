@@ -48,9 +48,26 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.8",
-      "title": "Mac and Linux",
+      "v": "0.4.9",
+      "title": "Your own look",
       "when": "Next",
+      "items": [
+        "Your style for every new graph",
+        "Change several data sets at once"
+      ]
+    },
+    {
+      "v": "0.4.10",
+      "title": "Navigator",
+      "when": "Soon",
+      "items": [
+        "Drag items into your own order"
+      ]
+    },
+    {
+      "v": "0.4.11",
+      "title": "Mac and Linux",
+      "when": "Later",
       "items": [
         "Mac and Linux versions"
       ]

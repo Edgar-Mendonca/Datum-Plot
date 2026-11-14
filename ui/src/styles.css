@@ -704,3 +704,7 @@ input.mono { font-family: var(--mono) !important; }
 .setfmt .gs { border-left: 1px solid var(--line3); padding-left: 8px; }
 .setfmt .grouphead th.gs { text-align: left; border-bottom: 1px solid var(--line3); }
 .setfmt tr.grouphead th:not(.gs) { border-bottom: none; }
+.swpop .swpct { width: 54px; }
+/* 0.4.8 (#44): an open folder's items in a shaded block, edged in the folder's colour */
+.nfoldbox { background: color-mix(in srgb, var(--fc) 9%, transparent); border-left: 2px solid var(--fc); margin: 0 6px 4px 14px; border-radius: 0 3px 3px 0; padding: 1px 0; }
+.nfoldbox .nitem.infold, .nfoldbox .nthumbs.infold { padding-left: 8px; }

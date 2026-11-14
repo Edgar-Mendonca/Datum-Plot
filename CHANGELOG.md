@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.8 — 2026-11-14
+
+Format Graph on the Graph tab, colours in the navigator, and strengths you can type.
+
+**Graph tab**
+- **Format Graph** is now on the Graph tab, beside New Graph and Graph Type.
+- Each tab has a clear job: the Graph tab makes, analyses and shares a graph; the Format tab holds its look (text, notes, axis break, size, legend, framed axes), which no longer appear twice.
+
+**Navigator**
+- Right-click an item › **Fill Colour** gives it a light background colour (beside **Text Colour**).
+- Right-click a folder › **Colour** colours the folder.
+- An open folder's items sit in a lightly shaded block edged in the folder's colour, so you can see where the folder ends.
+
+**Colours**
+- A strength (of a fill, a border or a symbol) can be typed in % beside its slider.
+
 ## 0.4.7 — 2026-11-14
 
 Each graph chooses its own significance brackets.

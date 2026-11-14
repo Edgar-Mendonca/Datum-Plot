@@ -39,6 +39,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     f.state.project.analyses = [{ id: 99, table: f.state.project.tables[0].id, name: "Growth fit", kind: "linear", sets: [], options: { xmax: 10 } }];
     f.state.project.layouts = [{ id: 98, name: "Figure 1", width: 174, height: 70, letters: "A", letterSize: 10, font: "Arial", fontSize: 8,
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
+    f.state.project.ui = { ...(f.state.project.ui ?? {}), nav: { folder: { "98": "Figures" }, color: {} } };  // 0.4.8 (#44): a folder to colour
     f.state.project.graphs.push({ ...f.state.project.graphs[0], id: 97, name: "Growth copy" });  // 0.3.14: Format Graph follows the graph shown
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, new_design: f.state,
@@ -175,10 +176,24 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   check("Move to Folder › New Folder saves the folder in the project", fo && fo.Ui.value.folder["97"] === "Drafts", JSON.stringify(fo));
   await reset();
   await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
-  await p.hover('.menu button:has-text("Colour")'); await p.waitForTimeout(150);
+  await p.hover('.menu button:has-text("Text Colour")'); await p.waitForTimeout(150);
   await p.click('.menu button:has-text("Green")'); await p.waitForTimeout(250);
   const co = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
-  check("Colour › Green colours the name", co && co.Ui.value.color["97"] === "#009E73", JSON.stringify(co));
+  check("Text Colour › Green colours the name", co && co.Ui.value.color["97"] === "#009E73", JSON.stringify(co));
+  // 0.4.8 (#44): a fill colour for an item, a colour for a folder, and an open folder's items in a shaded block
+  await reset();
+  await p.click('.nav .nitem:has(span:text-is("Growth copy"))', { button: "right" }); await p.waitForTimeout(150);
+  await p.hover('.menu button:has-text("Fill Colour")'); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Blue")'); await p.waitForTimeout(250);
+  const fl = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("Fill Colour › Blue fills the item", fl && fl.Ui.value.fill?.["97"] === "#0072B2", JSON.stringify(fl));
+  check("an open folder's items sit in a shaded block", !!(await p.$('.nav .nfoldbox .nitem:has(span:text-is("Figure 1"))')));
+  await reset();
+  await p.click('.nav .nfolder:has-text("Figures")', { button: "right" }); await p.waitForTimeout(150);
+  await p.hover('.menu button:has-text("Colour")'); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Orange")'); await p.waitForTimeout(250);
+  const fc = (await ops()).find(o => o.Ui && o.Ui.key === "nav");
+  check("a folder's Colour › Orange colours the folder", fc && fc.Ui.value.fcolor?.["layouts:Figures"] === "#E69F00", JSON.stringify(fc));
   await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=0', { button: "right" }); await p.waitForTimeout(150);
   await p.click('.menu button:has-text("Show Only This Family")'); await p.waitForTimeout(200);
   check("Show Only This Family filters the navigator", ((await p.textContent(".nav .nfamily")) || "").includes("Family of") && (await p.$$(".nav .nitem:has(span:text-is('Figure 1'))")).length === 1);
@@ -823,6 +838,13 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     const qops = await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op));
     const gs = qops.find(o => o.GraphSet);
     check("…and choosing Every pair sets it on this graph only", !!gs && gs.GraphSet.graph === 91 && gs.GraphSet.settings.bracketOpts?.["92"]?.brackets === "all" && !qops.some(o => o.SetAnalysis), JSON.stringify(qops));
+    // 0.4.8 (#46): a strength can be typed in a colour's pop-up
+    await q.click('.dlg .dtabs button:text-is("Data Sets")'); await q.waitForTimeout(150);
+    await q.click(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0"); await q.waitForTimeout(150);
+    await q.evaluate(() => { window.__calls = []; });
+    await q.fill(".swpop .swpct", "42"); await q.press(".swpop .swpct", "Tab"); await q.waitForTimeout(150);
+    const typed = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet);
+    check("a fill's strength can be typed (42 %)", !!typed && Math.abs(typed.GraphSet.settings.sets[0].alpha - 0.42) < 1e-9, JSON.stringify(typed?.GraphSet.settings.sets[0]));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
