@@ -242,6 +242,15 @@ class Symbols(unittest.TestCase):
         self.assertIn(graph.OKABE_ITO[0].lower(), cols)
         self.assertNotIn("#ff0000", cols)
 
+    def test_a_styles_look_for_every_data_set(self):
+        # 0.4.9 (#46): black error bars and 35 % symbol fills for every data set, unless one sets its own
+        look = {"errColor": "#000000", "markerAlpha": 0.35, "markerFilled": True}
+        st = graph.style_of({"setLook": look, "sets": [{}, {"errColor": "#ff0000", "markerAlpha": None}]}, 1)
+        self.assertEqual((st["err"], st["malpha"]), ("#ff0000", 0.35))
+        st = graph.style_of({"setLook": look}, 4)
+        self.assertEqual((st["err"], st["malpha"], st["mfilled"]), ("#000000", 0.35, True), "a data set added later too")
+        self.assertIsNone(graph.style_of({}, 0)["err"])
+
     def test_legend_border_at_full_strength(self):
         fig, ax, leg, _ = self.fig({"column": "bars", "legend": {"show": True, "groups": True}})
         h = leg.legend_handles[0]

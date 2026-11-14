@@ -412,6 +412,9 @@ pub struct GraphSettings {
     pub overlays: Vec<u32>,
     /// 0.4.7 (#51): this graph's own way of showing an analysis's brackets (by analysis id); empty = as the analysis.
     pub bracket_opts: BTreeMap<u32, BracketView>,
+    /// 0.4.9 (#46): the data sets' look from a style (error-bar colour, strengths, symbols filled): used by every data
+    /// set that has no value of its own, data sets added later included.
+    pub set_look: SetLook,
     /// The order of the data sets along a column, grouped or pie graph (indices into the table's sets); empty or
     /// missing ones follow in table order. 0.3.15: a graph's own order, the table unchanged (#23).
     pub order: Vec<usize>,
@@ -449,7 +452,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), order: vec![], colors2: true, colors3: true, colors4: true,
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), set_look: SetLook::default(), order: vec![], colors2: true, colors3: true, colors4: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -536,6 +539,18 @@ impl Default for Note {
 pub struct BracketView {
     pub brackets: String,
     pub ptext: String,
+}
+
+/// 0.4.9 (#46): a style's look for all data sets; empty = the usual default.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SetLook {
+    pub err_color: String,
+    pub alpha: Option<f64>,
+    pub edge_alpha: Option<f64>,
+    pub marker_alpha: Option<f64>,
+    pub marker_edge_alpha: Option<f64>,
+    pub marker_filled: Option<bool>,
 }
 
 /// The look of one data set; empty values mean the default for its position.
@@ -717,6 +732,13 @@ impl Project {
             for a in [&mut s.x, &mut s.y, &mut s.y2] {
                 a.break_ratio = a.break_ratio.filter(|r| r.is_finite()).map(|r| r.clamp(0.1, 0.9));
                 a.break_step = a.break_step.filter(|v| v.is_finite() && *v > 0.0);
+            }
+            {
+                let l = &mut s.set_look;
+                for a in [&mut l.alpha, &mut l.edge_alpha, &mut l.marker_alpha, &mut l.marker_edge_alpha] {
+                    *a = a.filter(|a| a.is_finite()).map(|a| a.clamp(0.0, 1.0));
+                }
+                l.err_color.truncate(32);
             }
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));

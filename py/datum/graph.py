@@ -55,6 +55,10 @@ def palette(graph, n):
 def style_of(graph, k, colors=OKABE_ITO):
     """A data set's look: saved settings over the defaults for its position."""
     s = (graph.get("sets") or [])[k] if k < len(graph.get("sets") or []) else {}
+    # 0.4.9 (#46): a style's look for all data sets fills what a data set leaves empty (later data sets included)
+    look = graph.get("setLook") or {}
+    s = {**s, **{k_: v for k_, v in look.items() if k_ in ("errColor", "alpha", "edgeAlpha", "markerAlpha", "markerEdgeAlpha", "markerFilled")
+                 and v not in (None, "") and s.get(k_) in (None, "")}}
     return {"show": s.get("show", True), "color": s.get("color") or colors[k % len(colors)], "symbol": s.get("symbol") or SYMBOL_ORDER[k % 8],
             "size": s.get("size") or 6, "filled": s.get("filled", True), "line": s.get("line"), "width": s.get("width") or 1.0,
             # 0.3.21 (#38): bars, boxes and violins, and the symbols, each take their colour from the scheme unless set,

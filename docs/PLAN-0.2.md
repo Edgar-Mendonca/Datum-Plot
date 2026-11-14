@@ -249,7 +249,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J7 | Medical and engineering samples: survival study, method comparison, diagnostic test, response surface, polar pattern | ✅ 0.3.2 |
 | J9 | Starts and copies: empty project start (opens on Home), duplicate a table alone or with its family, layouts copied and exported from the navigator | ✅ 0.3.15 |
 | D26 | Automatic error bars from the scheme on bar, box and violin graphs; group lines in Data Sets (#43, second round) | ✅ 0.4.3 |
-| D27 | Your style for new graphs (data-set look in saved styles; Options › Style for new graphs); several data sets at once; typed strengths (#46) | 0.4.9 (typed strengths ✅ 0.4.8) |
+| D27 | Your style for new graphs (data-set look in saved styles; Options › Style for new graphs); several data sets at once; typed strengths (#46) | ✅ 0.4.9 (typed strengths 0.4.8) |
 | D25 | Symbols and error bars on their own: symbols' Filled, strengths of borders and symbol fills, error-bar colour, legend borders, legends with an axis break (#40–#43) | ✅ 0.4.2 |
 | D24 | Colours of bars and symbols: each on its own, Automatic, Reset all colours, symbol borders, fill strength | ✅ 0.3.21 |
 | D23 | Breaks and legends: the share of the axis each side of a break takes, ticks beyond it; group legends on column graphs | ✅ 0.3.20 |
@@ -428,7 +428,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.6** ✅ | Fixes: many significance brackets stay readable (GitHub #52); resize columns from their titles (#49) |
 | **0.4.7** ✅ | Brackets per graph (C11; GitHub #51) |
 | **0.4.8** ✅ | Format Graph on the Graph tab, duplicates on the Format tab only (#45); folder and item colours, folder shading (A23, #44); typed strengths (#46) |
-| 0.4.9 | Your style for new graphs; several data sets at once (D27, #46) |
+| **0.4.9** ✅ | Your style for new graphs; several data sets at once (D27, #46) |
 | 0.4.10 | Drag to reorder the navigator (A24, #44) |
 | 0.4.11 | Mac and Linux versions (I7) |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

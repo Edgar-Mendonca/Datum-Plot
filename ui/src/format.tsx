@@ -1,7 +1,7 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
 import { For, Show, createSignal, createEffect, on, onCleanup, JSX } from "solid-js";
-import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText } from "./api";
+import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText, LOOK_SET_KEYS } from "./api";
 import { act, out, openDialog, closeDialog, dialogs, toast, item } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
 import { PALETTES, ORDERED, paletteName } from "./tools";
@@ -64,8 +64,26 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
   const g = () => (last = out()!.project.graphs.find(x => x.id === gid()) ?? last)!, s = () => g().settings;
   const t = () => out()!.project.tables.find(x => x.id === g().table);
   const set = (f: (s: GraphSettings) => void) => setG(g(), x => { f(x); return x; });
-  const setStyle = (k: number, patch: Partial<SetStyle>) => set(x => { while (x.sets.length <= k) x.sets.push({ ...DEF_SET }); x.sets[k] = { ...x.sets[k], ...patch }; });
-  const st = (k: number) => ({ ...DEF_SET, ...(s().sets[k] ?? {}) });
+  /** 0.4.9 (#46): rows picked (Ctrl/Shift+click a row's letter): a change to one of them applies to all of them. */
+  const [picked, setPicked] = createSignal<number[]>([]);
+  const pick = (e: MouseEvent, k: number) => {
+    const r = rows();
+    if (e.shiftKey && picked().length) { const a = r.indexOf(picked()[picked().length - 1]), b = r.indexOf(k); setPicked([...new Set([...picked(), ...r.slice(Math.min(a, b), Math.max(a, b) + 1)])]); }
+    else if (e.ctrlKey || e.metaKey) setPicked(picked().includes(k) ? picked().filter(x => x !== k) : [...picked(), k]);
+    else setPicked(picked().length === 1 && picked()[0] === k ? [] : [k]);
+  };
+  const setStyle = (k: number, patch: Partial<SetStyle>) => set(x => {
+    for (const j of picked().includes(k) && picked().length > 1 ? picked() : [k]) {
+      while (x.sets.length <= j) x.sets.push({ ...DEF_SET });
+      x.sets[j] = { ...x.sets[j], ...patch };
+    }
+  });
+  /** A data set's settings as drawn: its own, else the style's look for all data sets (0.4.9), else the defaults. */
+  const st = (k: number) => {
+    const own: Record<string, unknown> = { ...DEF_SET, ...(s().sets[k] ?? {}) }, look = (s().setLook ?? {}) as Record<string, unknown>;
+    for (const key of LOOK_SET_KEYS) if ((own[key] === undefined || own[key] === null || own[key] === "") && look[key] !== undefined && look[key] !== null && look[key] !== "") own[key] = look[key];
+    return own as unknown as SetStyle;
+  };
   /** The colour each data set is drawn in (the engine's answer), and the scheme's colours to pick from. */
   const drawn = (k: number) => st(k).color || lastRender(g().id)?.colors?.[k] || OKABE_ITO[k % 8];
   const scheme = () => { const p = s().palette || "okabe"; return p.includes("#") ? p.split(",").map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{6}$/.test(c)) : (!ORDERED.includes(p) && PALETTES.find(x => x[0] === p)?.[2]) || (lastRender(g().id)?.colors ?? OKABE_ITO); };
@@ -156,17 +174,18 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
           </div>
           {/* 0.3.21 (#38): bars, boxes and violins first, then the symbols; every colour opens a pop-up with the scheme's
               colours, your own colour and Automatic; fills show and set their strength. */}
-          <p class="inline"><button class="btn sm" title="Every colour back to the colour scheme" onClick={() => set(x => { x.sets = x.sets.map(v => ({ ...v, color: "", fill: "", edge: "", markerEdge: "", errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null })); })}>Reset all colours</button>
+          <p class="inline"><button class="btn sm" title="Every colour back to the colour scheme" onClick={() => set(x => { x.sets = x.sets.map(v => ({ ...v, color: "", fill: "", edge: "", markerEdge: "", errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null })); x.setLook = { ...(x.setLook ?? {}), errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null }; })}>Reset all colours</button>
             <span class="muted">A colour marked A is automatic: it follows the colour scheme.</span></p>
+          <Show when={picked().length > 1}><p class="pickhint"><b>{picked().length} data sets picked</b>: a change to one of them applies to all of them. <button class="btn sm" onClick={() => setPicked([])}>Unpick</button></p></Show>
           <div class="setwrap"><table class="tbl setfmt"><thead>
             <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={3} class="gs">{t()?.kind === "grouped" ? "Bars" : "Bars, boxes and violins"}</th><th colSpan={5} class="gs">Symbols</th><th class="gs">Error bars</th></tr></Show>
-            <tr><th /><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th>
+            <tr><th class="pickrow" title="Pick every data set (click again to pick none)" onClick={() => setPicked(picked().length === rows().length ? [] : [...rows()])}>All</th><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th>
             <Show when={bars()} fallback={<><th>Symbol</th><th>Size</th><th title="The symbols and the line">Colour</th><th title="The symbols' outline">Symbol border</th><th title="Filled symbols (or hollow)">Filled</th>
               <Show when={lined()}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show><th title="The error bars' colour">Error bars</th></>}>
               <th class="gs" title="Filled bars, or outlines only">Filled</th><th>Fill</th><th>Border</th><th class="gs" title="Filled symbols, or hollow">Filled</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th><th class="gs" title="The error bars' colour">Colour</th></Show>
             <Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
-            <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()) }}>
-              <td><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
+            <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()), picked: picked().includes(k()) }}>
+              <td class="pickrow" title="Click to pick this data set; Ctrl+click or Shift+click to pick several, then any change applies to all of them" onClick={e => pick(e, k())}><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
               <Show when={ordered()}><td class="nowrap"><button class="btn sm" title="Earlier on the graph" disabled={at() === 0} onClick={() => move(k0, -1)}>▲</button><button class="btn sm" title="Later on the graph" disabled={at() === rows().length - 1} onClick={() => move(k0, 1)}>▼</button></td></Show>
               <td><input type="checkbox" checked={st(k()).show} onChange={e => setStyle(k(), { show: e.currentTarget.checked })} /></td>
               <Show when={bars()} fallback={<>

@@ -41,7 +41,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
       items: [{ kind: "graph", graph: f.state.project.graphs[0].id, x: 0, y: 0, w: 85, h: 70, text: "", size: 0, bold: false }, { kind: "text", graph: 0, x: 90, y: 60, w: 80, h: 8, text: "Caption", size: 0, bold: false }] }];
     f.state.project.ui = { ...(f.state.project.ui ?? {}), nav: { folder: { "98": "Figures" }, color: {} } };  // 0.4.8 (#44): a folder to colour
     f.state.project.graphs.push({ ...f.state.project.graphs[0], id: 97, name: "Growth copy" });  // 0.3.14: Format Graph follows the graph shown
-    const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: {} };
+    const opts = { theme: "light", autosave: 0, beta: false, openLast: false, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, style: "prism", dpi: 300, paper: "A4", landscape: false, company: "", logo: "", styles: { "Black bars": { palette: "okabe", setLook: { errColor: "#000000", markerAlpha: 0.35 } } } };
     const m = { state: f.state, options: opts, startup_file: null, recovery: null, check_update: null, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd, console: { out: "42", figures: [], tables: [], error: false, state: f.state }, result: ln.result, models: { models: ln.models }, engine: { versions: { python: "3", numpy: "2" }, error: null }, new_project: f.state, new_design: f.state,
       pick_picture: { name: "scan", data: "data:image/svg+xml," + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='400' height='300' fill='white'/></svg>") },
       import_file: { name: "tensile", sheets: [{ name: "tensile", rows: [["Strain", "Sample 1", "", "Sample 2", ""], ["0", "0", "0.2", "0", "0.1"], ["0.002", "140", "138", "150", "148"]] }] } };
@@ -612,6 +612,12 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.waitForTimeout(200);
   const optRows = await p.evaluate(() => [...document.querySelectorAll(".options .opt")].map(o => o.children.length));
   check("Options: every row has a name and a control", optRows.length > 10 && optRows.every(n => n === 2), JSON.stringify(optRows));
+  // 0.4.9 (#46): a style for every new graph, chosen from the built-in and your own styles
+  await reset();
+  await p.selectOption('.options .opt:has-text("Style for new graphs") select', "Black bars"); await p.waitForTimeout(100);
+  await p.click('.options button:has-text("Save options")'); await p.waitForTimeout(200);
+  const nso = (await calls("set_options")).pop()?.opts;
+  check("Options › Style for new graphs saves the style's settings, data-set look included", nso && nso.newStyle === "Black bars" && nso.newLook?.setLook?.errColor === "#000000", JSON.stringify(nso && [nso.newStyle, nso.newLook]));
   await p.click(".bs aside .back");
 
   // 7. A results sheet: tables, the answer, checks and methods; outliers would offer to exclude.
@@ -845,6 +851,14 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.fill(".swpop .swpct", "42"); await q.press(".swpop .swpct", "Tab"); await q.waitForTimeout(150);
     const typed = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet);
     check("a fill's strength can be typed (42 %)", !!typed && Math.abs(typed.GraphSet.settings.sets[0].alpha - 0.42) < 1e-9, JSON.stringify(typed?.GraphSet.settings.sets[0]));
+    // 0.4.9 (#46): pick every data set, then one change applies to all of them
+    await q.click(".dlg header", { position: { x: 20, y: 10 } }); await q.waitForTimeout(100);
+    await q.click('.dlg .setfmt thead th.pickrow'); await q.waitForTimeout(100);
+    const n = (await q.$$(".dlg .setfmt tbody tr.picked")).length;
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .setfmt tbody tr >> nth=0 >> td.gs >> nth=1 >> input[type=checkbox]"); await q.waitForTimeout(150);
+    const many = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets;
+    check("with every data set picked, unticking one symbol's Filled unticks them all", n >= 2 && many && many.length >= n && many.slice(0, n).every(v => v.markerFilled === false), JSON.stringify([n, many?.map(v => v.markerFilled)]));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

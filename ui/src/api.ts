@@ -18,7 +18,7 @@ export interface Axis { title: string; scale: "lin" | "log"; auto: boolean; min:
 export interface SetStyle { show: boolean; color: string; symbol: string; size: number; filled: boolean; line: boolean | null; width: number; right?: boolean; /** Bars, boxes, violins: fill and border colours (0.3.15). */ fill?: string; edge?: string; /** 0.3.21: symbol border; fill strength 0–1. */ markerEdge?: string; alpha?: number | null; /** 0.4.2 (#42, #43): symbols' own fill switch; strengths of the bar border, symbol fill and symbol border; error-bar colour. */ markerFilled?: boolean | null; edgeAlpha?: number | null; markerAlpha?: number | null; markerEdgeAlpha?: number | null; errColor?: string }
 export interface GraphSettings {
   error: string; errorDir: string; points: string; line: boolean; cap: number; width: number; height: number; font: string; fontSize: number; boldTitles: boolean;
-  style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string; /** 0.3.20: column graphs: a legend of the groups. */ groups?: boolean }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[]; /** 0.4.7 (#51): this graph's own brackets per analysis id (empty = as the analysis). */ bracketOpts?: Record<string, { brackets?: string; ptext?: string }>;
+  style: string; title: string; showTitle: boolean; legend: { show: boolean; loc: string; /** 0.3.20: column graphs: a legend of the groups. */ groups?: boolean }; x: Axis; y: Axis; sets: SetStyle[]; overlays: number[]; /** 0.4.7 (#51): this graph's own brackets per analysis id (empty = as the analysis). */ bracketOpts?: Record<string, { brackets?: string; ptext?: string }>; /** 0.4.9 (#46): a style's look for every data set (empty = the usual). */ setLook?: SetLook;
   /** Column tables: scatter, bars, box, violin, paired or mean. */ column: string; /** Colour scheme name or "#hex, #hex…". */ palette: string; /** The right Y axis. */ y2: Axis; /** Annotations. */ notes: Note[]; /** 0.3.15: the order of the data sets along the graph. */ order?: number[];
   /** XY: polar axes. Matrix: contour levels and the 3D view. */ polar?: boolean; levels?: number; elev?: number; azim?: number; /** Waterfall: lift between curves (0 = automatic). */ offset?: number;
 }
@@ -46,12 +46,16 @@ export interface Render {
   svg: string; w: number; h: number; plot: [number, number, number, number]; all: [number, number, number, number]; legend: [number, number, number, number] | null;
   xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; /** Each data set's colour as drawn. */ colors?: string[]; points: ([number, number, number, number, number, number, number?] | null)[];
 }
+/** 0.4.9 (#46): a style's look for all data sets: used where a data set has no value of its own. */
+export type SetLook = { errColor?: string; alpha?: number | null; edgeAlpha?: number | null; markerAlpha?: number | null; markerEdgeAlpha?: number | null; markerFilled?: boolean | null };
+export const LOOK_SET_KEYS = ["errColor", "alpha", "edgeAlpha", "markerAlpha", "markerEdgeAlpha", "markerFilled"] as const;
 export interface Options {
   theme: string; autosave: number; beta: boolean; openLast: boolean; decimals: number; reps: number; entry: string; error: string; width: number; height: number;
   font: string; fontSize: number; style: string; dpi: number; paper: string; landscape: boolean; company: string; logo: string;
   /** Graph styles the user saved: name → settings. */ styles: Record<string, Partial<GraphSettings>>;
   /** My Analyses: console code the user saved (name → code); kept with the app, never in projects. */ snippets?: Record<string, string>;
   /** How dates are written: "dmy" day first, "mdy" month first ("" = from the system's language). */ dateOrder?: string;
+  /** 0.4.9 (#46): the style every new graph starts with (its name, and its settings). */ newStyle?: string; newLook?: Record<string, unknown>;
 }
 
 /** Spreadsheet-style column letters: A, B, … Z, AA. */

@@ -52,6 +52,9 @@ struct Options {
     snippets: Value,
     /// How dates are written (0.3.11): "dmy" day first, "mdy" month first, "" not chosen yet (the window picks from the system).
     date_order: String,
+    /// 0.4.9 (#46): the style every new graph starts with: its name (for the Options page) and its settings.
+    new_style: String,
+    new_look: Value,
 }
 
 impl Default for Options {
@@ -59,6 +62,7 @@ impl Default for Options {
         Self {
             theme: "auto".into(), autosave: 5, beta: false, open_last: false, decimals: -1, reps: 3, entry: "rep".into(), error: "sd".into(), width: 80.0, height: 60.0,
             font: "Arial".into(), font_size: 10.0, style: "prism".into(), dpi: 300, paper: "A4".into(), landscape: false, company: String::new(), logo: String::new(), styles: json!({}), snippets: json!({}), date_order: String::new(),
+            new_style: String::new(), new_look: json!({}),
         }
     }
 }
@@ -66,12 +70,31 @@ impl Default for Options {
 impl Options {
     /// Graph settings for a new graph.
     fn graph(&self) -> GraphSettings {
-        GraphSettings { error: self.error.clone(), width: self.width, height: self.height, font: self.font.clone(), font_size: self.font_size, style: self.style.clone(), ..Default::default() }
+        let g = GraphSettings { error: self.error.clone(), width: self.width, height: self.height, font: self.font.clone(), font_size: self.font_size, style: self.style.clone(), ..Default::default() };
+        styled(g, &self.new_look)
     }
     fn table(&self) -> Table {
         let entry = match self.entry.as_str() { "msn" => Entry::MeanSdN, "mesn" => Entry::MeanSemN, _ => Entry::Replicates };
         Table { sets: vec![DataSet { title: "Data set A".into(), entry, reps: self.reps.clamp(1, 50), ..Default::default() }], ..Default::default() }
     }
+}
+
+/// 0.4.9 (#46): a graph with a style's settings on top (the keys a style may set; anything else is ignored).
+fn styled(g: GraphSettings, look: &Value) -> GraphSettings {
+    let (Some(l), Ok(mut v)) = (look.as_object(), serde_json::to_value(&g)) else { return g };
+    for k in ["font", "fontSize", "width", "height", "style", "boldTitles", "palette", "cap", "error", "setLook"] {
+        if let Some(x) = l.get(k).filter(|x| !x.is_null()) {
+            v[k] = x.clone();
+        }
+    }
+    for (a, k) in [("x", "xa"), ("y", "ya")] {
+        for f in ["minor", "grid"] {
+            if let Some(x) = l.get(k).and_then(|o| o.get(f)).filter(|x| x.is_boolean()) {
+                v[a][f] = x.clone();
+            }
+        }
+    }
+    serde_json::from_value(v).unwrap_or(g)
 }
 
 struct App {
@@ -852,4 +875,24 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("Datum Plot failed to start");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_style_for_new_graphs() {
+        // 0.4.9 (#46): the chosen style's settings and data-set look on top of the Options' defaults
+        let o = Options { new_look: json!({ "fontSize": 7, "palette": "grey", "setLook": { "errColor": "#000000", "markerAlpha": 0.35 }, "ya": { "grid": true }, "overlays": [5] }), ..Default::default() };
+        let g = o.graph();
+        assert_eq!((g.font_size, g.palette.as_str(), g.font.as_str()), (7.0, "grey", "Arial"));
+        assert_eq!((g.set_look.err_color.as_str(), g.set_look.marker_alpha), ("#000000", Some(0.35)));
+        assert!(g.y.grid && !g.x.grid);
+        assert!(g.overlays.is_empty(), "only the keys a style may set");
+        let plain = Options::default().graph();
+        assert_eq!(plain.set_look, Default::default());
+        let bad = Options { new_look: json!({ "fontSize": "big" }), ..Default::default() }.graph();
+        assert_eq!(bad.font_size, 10.0, "a broken style leaves the defaults");
+    }
 }

@@ -1,7 +1,7 @@
 // Data tools (sort, find, exclude rows by a rule), the test chooser and statistics guide, graph
 // styles, colour schemes and Copy Look, and exporting every graph or the whole project as a workbook.
 import { For, Show, createSignal, createMemo } from "solid-js";
-import { Graph, GraphSettings, Table, letter, num, spans, invoke } from "./api";
+import { Graph, GraphSettings, Table, letter, num, spans, invoke, SetLook, LOOK_SET_KEYS } from "./api";
 import { act, call, curTable, graph, opts, setOpts, setOut, toast, openDialog, closeDialog, P, setGoto, openMenu, open } from "./store";
 import { Out } from "./api";
 import { setG } from "./format";
@@ -157,15 +157,30 @@ export const STYLES: [string, Look][] = [
 const LOOK_KEYS: (keyof GraphSettings)[] = ["font", "fontSize", "width", "height", "style", "boldTitles", "palette", "cap", "error", "column"];
 export const applyStyle = (g: Graph, l: Look) => setG(g, s => {
   const { xa, ya, ...rest } = l;
-  return { ...s, ...rest, x: { ...s.x, ...(xa ?? {}) }, y: { ...s.y, ...(ya ?? {}) } };
+  // 0.4.9 (#46): a style's look for all data sets replaces what each data set had for those settings
+  const keys = Object.entries(l.setLook ?? {}).filter(([, v]) => v !== undefined && v !== null && v !== "").map(([k]) => k);
+  const sets = keys.length ? s.sets.map(v => ({ ...v, ...Object.fromEntries(keys.map(k => [k, k === "errColor" ? "" : null])) })) : s.sets;
+  return { ...s, ...rest, sets, setLook: { ...(s.setLook ?? {}), ...(l.setLook ?? {}) }, x: { ...s.x, ...(xa ?? {}) }, y: { ...s.y, ...(ya ?? {}) } };
 });
+/** 0.4.9 (#46): the data sets' look worth keeping in a style: the graph's own look for all data sets, and any value
+ *  every data set shares (error-bar colour, strengths, symbols filled). */
+const lookOf = (s: GraphSettings): SetLook => {
+  const out: Record<string, unknown> = { ...(s.setLook ?? {}) };
+  const shown = s.sets.filter(v => v?.show !== false);
+  for (const k of LOOK_SET_KEYS) {
+    const vals = shown.map(v => (v as unknown as Record<string, unknown>)[k]);
+    if (vals.length && vals.every(v => v !== undefined && v !== null && v !== "" && v === vals[0])) out[k] = vals[0];
+  }
+  return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== undefined && v !== null && v !== "")) as SetLook;
+};
 export const saveStyle = () => {
   const g = needG();
   if (!g) return;
   const name = prompt("Name of the style", "My style")?.trim();
   if (!name) return;
-  const s = g.settings, look: Look = { ...Object.fromEntries(LOOK_KEYS.map(k => [k, s[k]])), xa: { minor: s.x.minor, grid: s.x.grid }, ya: { minor: s.y.minor, grid: s.y.grid } };
-  const o = { ...opts(), styles: { ...(opts().styles ?? {}), [name]: look } };
+  const s = g.settings, look: Look = { ...Object.fromEntries(LOOK_KEYS.map(k => [k, s[k]])), setLook: lookOf(s), xa: { minor: s.x.minor, grid: s.x.grid }, ya: { minor: s.y.minor, grid: s.y.grid } };
+  // 0.4.9: saving again under the name chosen for new graphs updates what new graphs get
+  const o = { ...opts(), styles: { ...(opts().styles ?? {}), [name]: look }, ...(opts().newStyle === name ? { newLook: look as Record<string, unknown> } : {}) };
   setOpts(o);
   invoke("set_options", { opts: o }).then(() => toast(`Style “${name}” saved. It is in Graph › Styles.`, true)).catch(e => toast(String(e)));
 };
@@ -173,7 +188,7 @@ export const styleMenu = () => {
   const g = graph();
   const saved = Object.entries(opts().styles ?? {}) as [string, Look][];
   return [...STYLES, ...saved].map(([l, v]) => ({ label: l, run: () => g ? applyStyle(g, v) : toast("Open a graph first.") }) as const)
-    .concat([{ label: "Save This Graph's Style…", run: saveStyle } as any, ...(saved.length ? [{ label: "Delete Saved Styles", run: () => { const o = { ...opts(), styles: {} }; setOpts(o); invoke("set_options", { opts: o }); } } as any] : [])]);
+    .concat([{ label: "Save This Graph's Style…", run: saveStyle } as any, ...(saved.length ? [{ label: "Delete Saved Styles", run: () => { const o = { ...opts(), styles: {}, ...(opts().newStyle && !STYLES.some(x => x[0] === opts().newStyle) ? { newStyle: "", newLook: {} } : {}) }; setOpts(o); invoke("set_options", { opts: o }); } } as any] : [])]);
 };
 
 /** Colour schemes: key, name, colours, and whether colour-blind readers can tell the colours apart (checked with

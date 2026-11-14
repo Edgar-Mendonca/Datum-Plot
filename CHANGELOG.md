@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.9 — 2026-11-14
+
+Your own style for every new graph, and several data sets changed at once.
+
+**Your style for new graphs**
+- **Graph › Styles › Save This Graph's Style** now also keeps the data sets' look: the error bars' colour, the strengths of fills and borders, and whether symbols are filled.
+- **File › Options › Style for new graphs**: choose one of the built-in styles or your own, and every new graph starts with it, for example black error bars and symbol fills at 35 %. Data sets added later follow it too.
+
+**Several data sets at once** (Format Graph › Data Sets)
+- Click a data set's letter to pick it; Ctrl+click or Shift+click picks several, and **All** picks every one. Any change to a picked data set (a colour, a strength, Filled, Automatic) then applies to all of them.
+
 ## 0.4.8 — 2026-11-14
 
 Format Graph on the Graph tab, colours in the navigator, and strengths you can type.

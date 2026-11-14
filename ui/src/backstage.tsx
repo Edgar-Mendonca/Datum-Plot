@@ -8,6 +8,7 @@ import * as D from "./dialogs";
 import { Icon, Text, Pick, Check } from "./ui";
 import { listen, invoke } from "./api";
 import { ERRORS, FONTS, SIZES } from "./format";
+import { STYLES } from "./tools";
 import { RoadmapPage, importFile, newTable } from "./roadmap";
 
 type Tpl = { id: string; group: string; name: string; desc: string; dots: [number, number][] };
@@ -157,6 +158,11 @@ const OptionsPage = () => {
           <Pick value="" set={v => { const z = SIZES.find(q => q[0] === v); if (z) setO({ ...o(), width: z[1], height: z[2] }); }} options={[["", "Journal sizes…"], ...SIZES.map(z => [z[0], z[0]] as [string, string])]} /></span></Opt>
         <Opt l="Font" hint="One font and size for the whole graph."><span class="inline"><Pick value={o().font} set={v => put("font", v)} options={FONTS} /><input type="number" min="5" max="36" step="0.5" style={{ width: "64px" }} value={o().fontSize} onChange={e => put("fontSize", +e.currentTarget.value)} /> pt</span></Opt>
         <Opt l="Axes" hint="Open axes, or a framed box."><Pick value={o().style} set={v => put("style", v)} options={[["prism", "Open, ticks out"], ["frame", "Framed box, ticks in"]]} /></Opt>
+        {/* 0.4.9 (#46): one of the Graph › Styles (built-in or your own) that every new graph starts with */}
+        <Opt l="Style for new graphs" hint="Every new graph starts with this style: its fonts, size and colours, and your own styles' look for the data sets (error-bar colour, strengths). Save one from a graph with Graph › Styles › Save This Graph's Style."><Pick value={o().newStyle ?? ""} set={v => {
+          const look = v ? (STYLES.find(x => x[0] === v)?.[1] ?? (o().styles ?? {})[v]) : undefined;
+          setO({ ...o(), newStyle: look ? v : "", newLook: (look ?? {}) as Record<string, unknown> });
+        }} options={[["", "None (the settings above)"], ...STYLES.map(x => [x[0], x[0]] as [string, string]), ...Object.keys(o().styles ?? {}).map(n => [n, `${n} (yours)`] as [string, string])]} /></Opt>
         <Opt l="Picture resolution" hint="For PNG and TIFF export and copied pictures."><Pick value={String(o().dpi)} set={v => put("dpi", +v)} options={[["150", "150 dpi"], ["300", "300 dpi"], ["600", "600 dpi"], ["1200", "1200 dpi"]]} /></Opt>
       </Sec>
       <Sec t="Printing and branding" about="Your organisation and logo can go in page headers (File › Print).">
