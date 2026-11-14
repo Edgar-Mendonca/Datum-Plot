@@ -71,13 +71,13 @@ class BayesFactors(unittest.TestCase):
 
     def test_identical_groups_do_not_stop_the_anova(self):
         # 0.4.5 (#50): four groups of 1, 2, 3 (and a fifth with a 4 added) gave "math domain error": the old matrix
-        # inverse lost precision. The tester's own data too (two identical groups, one far higher).
+        # inverse lost precision. Also made-up values of the same shape (two identical groups, one far higher), which broke it too.
         for sets in ([[1, 2, 3]] * 4, [[1, 2, 3]] * 4 + [[1, 2, 3, 4]], [[1, 2, 3]] * 10):
             r = A.run("anova", column(*sets), [], {"posthoc": "tukey", "bayes": True})
             self.assertLess(float(value(r, "Bayes factor BF₁₀")), 1, "identical groups: evidence for no difference")
-        ctrl = [1, 2, 5, 6, 8, 2, 3, 5, 1, 4, 5, 2, 6, 5, 2, 1, 1]
-        a_ = [5, 8, 9, 12, 11, 6, 7, 4, 6, 5, 4, 8, 11, 12, 10, 10, 10]
-        b_ = [12, 20, 21, 19, 18, 16, 17, 22, 26, 30, 24, 23, 25, 25, 22, 21, 21]
+        ctrl = [7, 6, 5, 3, 3, 1, 1, 1, 2, 7, 6, 8, 5, 5, 8, 6, 6]
+        a_ = [8, 9, 12, 6, 11, 10, 4, 7, 11, 8, 4, 10, 10, 11, 5, 4, 11]
+        b_ = [15, 23, 16, 19, 22, 21, 21, 15, 15, 16, 15, 25, 23, 25, 19, 24, 27]
         r = A.run("anova", column(ctrl, a_, b_, ctrl), [], {"posthoc": "tukey", "bayes": True})
         self.assertGreater(float(value(r, "Bayes factor BF₁₀")), 1e20)
         self.assertIn("extreme evidence for a difference", r["answer"])
