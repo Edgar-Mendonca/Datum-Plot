@@ -87,6 +87,7 @@ const ANALYSES: Choice[] = [
   { id: "A15", name: "Transform", icon: "fx", group: "Statistics", desc: "A new table of transformed values: log, 1/X, °C → K, baseline subtracted, normalised." },
   { id: "B9", name: "Linear regression", icon: "line", group: "Regression and fitting", desc: "Fit a straight line (or a polynomial) and get slope, intercept, R² with confidence intervals; compare lines." },
   { id: "B10", name: "Nonlinear curve fit", icon: "curve", group: "Regression and fitting", desc: "Fit an equation from the model library or your own." },
+  { id: "B38", name: "IC50 / EC50 (dose-response)", icon: "curve", group: "Regression and fitting", desc: "Fit dose-response curves and get each compound's IC50 or EC50 with its 95% CI, the Hill slope and pIC50; X as concentration or log concentration; normalise to 0–100 %." },
   { id: "B12", name: "Global fit and model comparison", icon: "curve", group: "Regression and fitting", desc: "Share parameters between data sets; choose between two models." },
   { id: "B13", name: "Interpolate a standard curve", icon: "xy", group: "Regression and fitting", desc: "Read unknown samples off a calibration curve." },
   { id: "B28", name: "Arrhenius / activation energy", icon: "log", group: "Regression and fitting", desc: "Rates at several temperatures give the activation energy and the pre-factor." },

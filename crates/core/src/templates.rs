@@ -151,8 +151,12 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let (a, b) = (hill(8.0, 98.0, 1.1), hill(60.0, 85.0, 0.9));
             let t = table(["Dose-response", "Concentration", "nM", "Response", "% of max"], &xs, &[("Compound A", &a), ("Compound B", &b)], 3, 0.05, 1);
             p.name = "Dose-response".into();
-            p.info = Info { title: "Dose-response".into(), experiment: "Response of cells to compounds A and B, nine concentrations in triplicate. Curve fitting arrives in Datum Plot 0.2.".into(), ..Default::default() };
-            p.add_table(t, Some(GraphSettings { line: true, x: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
+            p.info = Info { title: "Dose-response".into(), experiment: "Response of cells to compounds A and B, nine concentrations in triplicate. Analyze › IC50 / EC50 fits each curve and gives its EC50 with a 95% confidence interval.".into(), ..Default::default() };
+            let id = p.add_table(t, Some(GraphSettings { line: false, x: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
+            // 0.4.11 (B38): the fitted curves and their EC50s
+            let aid = p.take_id();
+            p.analyses.push(Analysis { id: aid, table: id, name: "EC50 · Dose-response".into(), kind: "ic50".into(), sets: vec![], options: serde_json::json!({ "direction": "auto", "model": "4", "unit": "nM" }) });
+            p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("modulus") => {
             let xs: Vec<f64> = (0..=14).map(|i| i as f64 / 1000.0).collect();

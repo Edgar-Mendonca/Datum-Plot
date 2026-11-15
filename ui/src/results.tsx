@@ -13,7 +13,7 @@ export const KINDS: Record<string, [string, string, boolean | "brackets"]> = {
   linear: ["Linear regression", "B9", true], fit: ["Nonlinear curve fit", "B10", true], arrhenius: ["Arrhenius analysis", "B28", true],
   ttest: ["t-test", "B4", "brackets"], multit: ["Multiple t-tests", "B33", false], threeway: ["Three-way ANOVA", "B34", false], control: ["Control chart", "B35", false], doe: ["Factorial design", "B35", false], ancova: ["ANCOVA", "B34", true], agreement: ["Agreement (kappa, McNemar)", "B34", false], bootstrap: ["Bootstrap confidence intervals", "B34", false], twoway: ["Two-way ANOVA", "B15", "brackets"], contingency: ["Contingency", "B17", false], parts: ["Fractions of total", "A6", false], blandaltman: ["Bland-Altman", "B18", false], roc: ["ROC curve", "B18", false], nonparam: ["Nonparametric test", "B5", "brackets"], anova: ["One-way ANOVA", "B6", "brackets"], correlation: ["Correlation", "B16", false], multireg: ["Multiple regression", "B21", false], pca: ["Principal components", "B22", false], survival: ["Survival analysis", "B19", false], nested: ["Nested t-test or ANOVA", "B20", false], peaks: ["Peak analysis", "B24", true], signal: ["Signal processing", "B25", true], thermal: ["Thermal analysis", "B31", true], surface: ["Surface fit", "B26", true], sn: ["S–N curve", "B30", true], cluster: ["Cluster analysis", "B22", false], power: ["Power and sample size", "B23", false],
   transform: ["Transform", "A15", false], check: ["Data checks", "A18", false], frequency: ["Frequency distribution", "D4", false], auc: ["Area under the curve", "B14", true], smooth: ["Smooth, differentiate or integrate", "B14", true],
-  tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false],
+  tensile: ["Tensile test", "B27", true], weibull: ["Weibull analysis", "B29", false], ic50: ["IC50 / EC50", "B38", true],
 };
 /** Does this analysis draw on the graphs of table `t`? */
 export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; return d === "brackets" ? (kind === "twoway" ? t?.kind === "grouped" : t?.kind === "column") : !!d && ["xy", "multi", "sheet", "matrix"].includes(t?.kind ?? ""); };
@@ -21,7 +21,7 @@ export const draws = (kind: string, t?: Table) => { const d = KINDS[kind]?.[2]; 
 export const BY_ID: Record<string, [string, Record<string, any>]> = {
   B1: ["describe", {}], B2: ["normality", {}], B3: ["outliers", {}], A16: ["outliers", {}], B9: ["linear", {}], B13: ["linear", { unknowns: "" }],
   B10: ["fit", {}], B11: ["fit", {}], B12: ["fit", { shared: "" }], B28: ["arrhenius", {}], B4: ["ttest", {}], B8: ["ttest", {}], B5: ["nonparam", {}], B6: ["anova", {}], B15: ["twoway", {}], B33: ["multit", {}], D18: ["multit", {}], B35c: ["control", {}], B35d: ["doe", {}], B34a: ["threeway", {}], B34b: ["ancova", {}], B34c: ["agreement", {}], B34d: ["bootstrap", {}], B34s: ["smooth", { method: "spline" }], B17: ["contingency", {}], A6: ["parts", {}], B18: ["blandaltman", {}], B18r: ["roc", {}], B7: ["anova", { posthoc: "tukey" }],
-  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B36: ["signal", { op: "cwt" }], B37: ["ttest", { bayes: true }], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
+  B16: ["correlation", {}], B21: ["multireg", {}], B22: ["pca", {}], B19: ["survival", {}], B20: ["nested", {}], B24: ["peaks", {}], B25: ["signal", {}], B36: ["signal", { op: "cwt" }], B37: ["ttest", { bayes: true }], B38: ["ic50", {}], B31: ["thermal", {}], B26: ["surface", {}], B30: ["sn", {}], B22c: ["cluster", {}], B23: ["power", {}], A15: ["transform", {}], A18: ["check", {}], D4: ["frequency", {}], B14: ["auc", {}], B14s: ["smooth", {}], B27: ["tensile", {}], B29: ["weibull", {}],
 };
 
 const DEFAULTS: Record<string, Record<string, any>> = {
@@ -29,6 +29,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   linear: { model: "line", order: 2, points: "each", weight: "none", compare: true, bands: "ci", label: true, unknowns: "" },
   fit: { model: "exp_decay", equation: "Y = A*exp(-k*X) + C", init: {}, fixed: {}, points: "each", weight: "none", bands: "ci", label: true, unknowns: "" },
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
+  ic50: { direction: "auto", model: "4", xlog: false, unit: "", normalize: "none", zero: "", hundred: "", fix: false },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
   control: { chart: "imr", lsl: "", usl: "" }, doe: {},
@@ -261,6 +262,16 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Weighting</label><Pick value={o().weight} set={v => put("weight", v)} options={[["none", "None (ordinary least squares)"], ["1/y2", "1/Y² (relative errors)"]]} />
             <label>Compare</label><Check label="Test whether the lines of the data sets differ (slopes, then intercepts)" value={!!o().compare} set={v => put("compare", v)} />
             <Show_ /><Unknowns />
+          </Show>
+          {/* 0.4.11 (B38): IC50 / EC50 */}
+          <Show when={kind === "ic50"}>
+            <label>Curve</label><Pick value={o().direction} set={v => put("direction", v)} options={[["auto", "From the data (falling: IC50, rising: EC50)"], ["inhibit", "Inhibition: the response falls (IC50)"], ["stimulate", "Stimulation: the response rises (EC50)"]]} />
+            <label>Model</label><Pick value={o().model} set={v => put("model", v)} options={[["4", "4 parameters: Bottom, Top, IC50/EC50, Hill slope (variable slope)"], ["3", "3 parameters: the Hill slope fixed at 1 (few points)"]]} />
+            <label>X</label><span class="inline"><Check label="X is log10 of the concentration" value={!!o().xlog} set={v => put("xlog", v)} />
+              <span class="muted">unit</span><Pick value={o().unit} set={v => put("unit", v)} options={[["", "—"], ["M", "M"], ["mM", "mM"], ["µM", "µM"], ["nM", "nM"], ["pM", "pM"]]} /><span class="muted">(gives pIC50)</span></span>
+            <label>Normalise</label><span class="inline"><Pick value={o().normalize} set={v => put("normalize", v)} options={[["none", "No: fit the responses as they are"], ["range", "0–100 % of each data set's own lowest and highest mean"], ["values", "0–100 % of control responses I type"]]} />
+              <Show when={o().normalize === "values"}><span class="muted">0 % =</span><N k="zero" w={80} /><span class="muted">100 % =</span><N k="hundred" w={80} /></Show></span>
+            <Show when={o().normalize !== "none"}><label /><Check label="Fix Bottom at 0 % and Top at 100 %" value={!!o().fix} set={v => put("fix", v)} /></Show>
           </Show>
           <Show when={kind === "fit"}>
             <label>Model</label><Pick value={o().model} set={v => put("model", v)} options={[...(models() ?? []).map(m => [m[0], m[1]] as [string, string]), ["custom", "Your own equation…"]]} />

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.11 — 2026-11-15
+
+IC50 and EC50: dose-response curves.
+
+**IC50 / EC50** (Analyze › Regression › IC50 / EC50)
+- Put the concentrations in X and each compound's responses in a data set; each curve is fitted and drawn with its 95% confidence band.
+- The results give the **IC50** (falling response) or **EC50** (rising) with its 95% confidence interval, taken from its logarithm so it is uneven around the value, as dose-response results should be; the Hill slope, Top, Bottom, R²; and **pIC50** when you give the concentration unit.
+- **4 parameters** (variable slope) or **3** (Hill slope fixed at 1); X as the concentration or its log10; zero concentrations (blanks) are used.
+- **Normalise** to 0–100 % of each data set's own range or of control responses you type, and fix Bottom at 0 % and Top at 100 % if you like.
+- Checked against reference results of a widely used open-source dose-response package.
+
+**Samples**
+- The Dose-response sample now shows its fitted curves and EC50s.
+
 ## 0.4.10 — 2026-11-14
 
 Put the navigator in your own order.

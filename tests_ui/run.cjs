@@ -343,6 +343,16 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.waitForTimeout(200);
   const add = (await ops()).find(o => o.AddAnalysis);
   check("OK adds the analysis with its fit range, drawn on the graph", add && add.AddAnalysis.analysis.kind === "linear" && add.AddAnalysis.analysis.options.xmax === 10 && add.AddAnalysis.overlay === true, JSON.stringify(add));
+  // 0.4.11 (B38): IC50 / EC50 offers its options and adds an analysis drawn on the graph
+  await reset();
+  await p.click('.ribbon .rb.big:has-text("IC50 / EC50")'); await p.waitForTimeout(200);
+  if ((await p.textContent(".dlg").catch(() => "")).includes("Make Another")) { await p.click('.dlg button:has-text("Make Another")'); await p.waitForTimeout(200); }
+  const icTxt = (await p.textContent(".dlg")) || "";
+  check("IC50 / EC50 offers inhibition or stimulation, log10 X, units and normalising", ["Inhibition", "X is log10 of the concentration", "Normalise"].every(w => icTxt.includes(w)) || icTxt.includes("From the data"), icTxt.slice(0, 200));
+  await p.click('.dlg label:has-text("X is log10 of the concentration")'); await p.click(".dlg .btn.pri"); await p.waitForTimeout(200);
+  const ic = (await ops()).find(o => o.AddAnalysis);
+  check("…and adds it, drawn on the graph", !!ic && ic.AddAnalysis.analysis.kind === "ic50" && ic.AddAnalysis.analysis.options.xlog === true && ic.AddAnalysis.overlay === true, JSON.stringify(ic));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   await p.click('.ribbon .rb.big:has-text("Curve Fit")');
   await p.waitForTimeout(200);
   check("Curve Fit lists the model library", (await p.$$eval(".dlg select option", os => os.map(o => o.textContent))).some(t => t.includes("Exponential decay")));

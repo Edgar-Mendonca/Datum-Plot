@@ -104,6 +104,8 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B7 | Multiple comparisons: Tukey, Dunnett, Šidák, Bonferroni, Holm-Šidák, Fisher LSD, Dunn; test for trend | scipy.stats, statsmodels, scikit-posthocs | ✅ 0.2.2 |
 | B8 | Effect sizes with 95 % CI: mean difference, Cohen's d, Hedges' g, η², ω² | numpy, scipy (bootstrap) | ✅ 0.2.2 |
 | B9 | Linear regression: slope, intercept, R², CIs, runs test, compare slopes and intercepts, through origin, Deming | scipy.stats, statsmodels | 0.3 |
+| B38 | IC50 / EC50: dose-response (4PL as drc LL.4; uneven CI from log X50; 3 or 4 parameters; log10 X; normalising; pIC50) | ✅ 0.4.11 |
+| B39 | Compare IC50s: extra sum-of-squares F test, ratios | 0.4.12 |
 | B10 | Nonlinear curve fitting: bounds, fixed and shared parameters, weighting, CIs (asymptotic and profile), robust fit | **lmfit** (on scipy.optimize) | 0.3 |
 | B11 | Model library: dose-response 3/4/5-parameter, Hill, binding (one site, two sites, competition), enzyme kinetics (Michaelis-Menten, substrate inhibition, allosteric), exponential growth/decay 1–2 phases, Gaussian, Lorentzian, Voigt, logistic, Gompertz, polynomial 1–6, sine, power, user equations | lmfit models + ours | 0.3 |
 | B12 | Global fitting, compare models (extra sum-of-squares F test, AICc), compare a parameter between data sets | lmfit, scipy | ✅ 0.2.2 |
@@ -240,7 +242,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | E8 | Graph digitizer (two marks per axis, linear or log, several curves, tilt-tolerant) | ✅ 0.4.1 |
 | E9 | Image tools (profiles and measurements on images) | 1.0 |
 | B37 | Bayesian tests: Bayes factors beside the P values of t-tests, one-way ANOVA (independent groups) and correlation | ✅ 0.4.4 |
-| I7 | Mac and Linux versions | 0.4.11 |
+| I7 | Mac and Linux versions | 0.4.13 (on hold; modules first) |
 | A19 | Dates and times: the X column as dates (days since 1970), typed and pasted in many forms, shown as chosen, date axes, fits per day, real dates in workbooks, Datum Plan's hand-off | ✅ 0.3.11 |
 | A20 | Dates, second step: offer dates on paste and import, axis steps, lines at a date, date functions in formulas, intercepts as dates | ✅ 0.3.12 |
 | A21 | Long column titles wrap onto up to three lines | ✅ 0.3.12 |
@@ -430,5 +432,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.8** ✅ | Format Graph on the Graph tab, duplicates on the Format tab only (#45); folder and item colours, folder shading (A23, #44); typed strengths (#46) |
 | **0.4.9** ✅ | Your style for new graphs; several data sets at once (D27, #46) |
 | **0.4.10** ✅ | Drag to reorder the navigator (A24, #44) |
-| 0.4.11 | Mac and Linux versions (I7) |
+| **0.4.11** ✅ | IC50 / EC50 (B38; GitHub #53) |
+| 0.4.12 | Compare IC50s (B39) |
+| 0.4.13 | Mac and Linux versions (I7), on hold: the modules come first |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |
