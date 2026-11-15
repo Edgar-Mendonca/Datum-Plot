@@ -433,6 +433,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.9** ✅ | Your style for new graphs; several data sets at once (D27, #46) |
 | **0.4.10** ✅ | Drag to reorder the navigator (A24, #44) |
 | **0.4.11** ✅ | IC50 / EC50 (B38; GitHub #53) |
-| **0.4.12** ✅ | Compare IC50s (B39) |
+| **0.4.12** ✅ | Compare IC50s (B39); equal values centred on their column (GitHub #54) |
 | 0.4.13 | Mac and Linux versions (I7), on hold: the modules come first |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

@@ -2,11 +2,14 @@
 
 ## 0.4.12 — 2026-11-15
 
-Compare IC50s between compounds.
+Compare IC50s between compounds; equal values centred on their column.
 
 **IC50 / EC50**
 - **Compare** (on by default): do the data sets' IC50s or EC50s differ? An extra sum-of-squares F test of one shared IC50 against one per compound, with each compound's ratio to the first (for example "Compound B / Compound A = 7.3, less potent").
 - The Dose-response sample shows it.
+
+**Fix**
+- On column graphs that show each value, an even number of equal values (two, four…) sat half a dot to the right of the column's centre. Every row of dots is now centred.
 
 ## 0.4.11 — 2026-11-15
 

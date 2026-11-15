@@ -141,6 +141,16 @@ class Swarm(unittest.TestCase):
         few = graph.swarm(np.array([1.0, 1, 1, 5]), 0.5, 0.1, 0.38)
         self.assertEqual(list(few), [0.0, 0.1, -0.1, 0.0])  # small groups: unchanged spacing
 
+    def test_equal_values_are_centred(self):
+        # 0.4.13 (#54): an even number of equal values sat half a dot to the right; odd numbers were already centred
+        import numpy as np
+        for n in (2, 3, 4, 5):
+            off = graph.swarm(np.array([3.0] * n + [2.0]), 0.2, 0.1, 0.38)
+            row = off[:n]
+            self.assertAlmostEqual(row.max() + row.min(), 0.0, places=12, msg=f"{n} equal values")
+            self.assertAlmostEqual(sorted(row)[1] - sorted(row)[0], 0.1, places=12, msg="still a dot apart")
+            self.assertEqual(off[n], 0.0, "a lone dot stays in the middle")
+
 
 class OrderAndColours(unittest.TestCase):
     """0.3.15: a column graph's own order of data sets (#23), and fill and border colours (#20)."""

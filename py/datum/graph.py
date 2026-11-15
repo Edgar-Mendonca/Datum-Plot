@@ -663,6 +663,15 @@ def swarm(v, h, step, lim):
         x = next(j for k in range(len(v) + 1) for j in ((k, -k) if k else (0,)) if j not in near)  # nearest free place, right first
         off[i] = x * step
         placed.append((v[i], off[i]))
+    # 0.4.13 (#54): centre each run of dots close enough in height to touch: right-first placing left an even number
+    # of equal values half a dot to the right. Dots of different runs never touch, so moving a run is safe.
+    order = np.argsort(v, kind="stable")
+    start = 0
+    for j in range(1, len(order) + 1):
+        if j == len(order) or v[order[j]] - v[order[j - 1]] >= h:
+            run = order[start:j]
+            off[run] -= (off[run].max() + off[run].min()) / 2
+            start = j
     wide = np.abs(off).max() if len(off) else 0.0
     return off * (lim / wide) if wide > lim else off
 
