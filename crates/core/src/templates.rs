@@ -155,7 +155,7 @@ pub fn build(id: Option<&str>) -> Option<Project> {
             let id = p.add_table(t, Some(GraphSettings { line: false, x: Axis { scale: "log".into(), ..Axis::default() }, ..g }));
             // 0.4.11 (B38): the fitted curves and their EC50s
             let aid = p.take_id();
-            p.analyses.push(Analysis { id: aid, table: id, name: "EC50 · Dose-response".into(), kind: "ic50".into(), sets: vec![], options: serde_json::json!({ "direction": "auto", "model": "4", "unit": "nM" }) });
+            p.analyses.push(Analysis { id: aid, table: id, name: "EC50 · Dose-response".into(), kind: "ic50".into(), sets: vec![], options: serde_json::json!({ "direction": "auto", "model": "4", "unit": "nM", "compare": true }) });
             p.graphs.last_mut().unwrap().settings.overlays.push(aid);
         }
         Some("modulus") => {

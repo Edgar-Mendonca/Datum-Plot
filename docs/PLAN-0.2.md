@@ -105,7 +105,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | B8 | Effect sizes with 95 % CI: mean difference, Cohen's d, Hedges' g, η², ω² | numpy, scipy (bootstrap) | ✅ 0.2.2 |
 | B9 | Linear regression: slope, intercept, R², CIs, runs test, compare slopes and intercepts, through origin, Deming | scipy.stats, statsmodels | 0.3 |
 | B38 | IC50 / EC50: dose-response (4PL as drc LL.4; uneven CI from log X50; 3 or 4 parameters; log10 X; normalising; pIC50) | ✅ 0.4.11 |
-| B39 | Compare IC50s: extra sum-of-squares F test, ratios | 0.4.12 |
+| B39 | Compare IC50s: extra sum-of-squares F test, ratios | ✅ 0.4.12 |
 | B10 | Nonlinear curve fitting: bounds, fixed and shared parameters, weighting, CIs (asymptotic and profile), robust fit | **lmfit** (on scipy.optimize) | 0.3 |
 | B11 | Model library: dose-response 3/4/5-parameter, Hill, binding (one site, two sites, competition), enzyme kinetics (Michaelis-Menten, substrate inhibition, allosteric), exponential growth/decay 1–2 phases, Gaussian, Lorentzian, Voigt, logistic, Gompertz, polynomial 1–6, sine, power, user equations | lmfit models + ours | 0.3 |
 | B12 | Global fitting, compare models (extra sum-of-squares F test, AICc), compare a parameter between data sets | lmfit, scipy | ✅ 0.2.2 |
@@ -433,6 +433,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.9** ✅ | Your style for new graphs; several data sets at once (D27, #46) |
 | **0.4.10** ✅ | Drag to reorder the navigator (A24, #44) |
 | **0.4.11** ✅ | IC50 / EC50 (B38; GitHub #53) |
-| 0.4.12 | Compare IC50s (B39) |
+| **0.4.12** ✅ | Compare IC50s (B39) |
 | 0.4.13 | Mac and Linux versions (I7), on hold: the modules come first |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

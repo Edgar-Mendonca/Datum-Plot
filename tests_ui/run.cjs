@@ -352,6 +352,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.dlg label:has-text("X is log10 of the concentration")'); await p.click(".dlg .btn.pri"); await p.waitForTimeout(200);
   const ic = (await ops()).find(o => o.AddAnalysis);
   check("…and adds it, drawn on the graph", !!ic && ic.AddAnalysis.analysis.kind === "ic50" && ic.AddAnalysis.analysis.options.xlog === true && ic.AddAnalysis.overlay === true, JSON.stringify(ic));
+  check("…comparing the data sets' IC50s by default (0.4.12)", !!ic && ic.AddAnalysis.analysis.options.compare === true && icTxt.includes("Do the IC50s"), JSON.stringify(ic?.AddAnalysis.analysis.options));
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   await p.click('.ribbon .rb.big:has-text("Curve Fit")');
   await p.waitForTimeout(200);

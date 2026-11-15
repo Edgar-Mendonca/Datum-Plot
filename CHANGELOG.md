@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.12 — 2026-11-15
+
+Compare IC50s between compounds.
+
+**IC50 / EC50**
+- **Compare** (on by default): do the data sets' IC50s or EC50s differ? An extra sum-of-squares F test of one shared IC50 against one per compound, with each compound's ratio to the first (for example "Compound B / Compound A = 7.3, less potent").
+- The Dose-response sample shows it.
+
 ## 0.4.11 — 2026-11-15
 
 IC50 and EC50: dose-response curves.

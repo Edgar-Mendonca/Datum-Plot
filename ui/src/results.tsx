@@ -29,7 +29,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   linear: { model: "line", order: 2, points: "each", weight: "none", compare: true, bands: "ci", label: true, unknowns: "" },
   fit: { model: "exp_decay", equation: "Y = A*exp(-k*X) + C", init: {}, fixed: {}, points: "each", weight: "none", bands: "ci", label: true, unknowns: "" },
   arrhenius: { tunit: "C", eunit: "kJ/mol", points: "each", label: true },
-  ic50: { direction: "auto", model: "4", xlog: false, unit: "", normalize: "none", zero: "", hundred: "", fix: false },
+  ic50: { direction: "auto", model: "4", xlog: false, unit: "", normalize: "none", zero: "", hundred: "", fix: false, compare: true },
   ttest: { test: "unpaired", welch: true, mu: 0, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, nonparam: { test: "mw", alpha: 0.05, brackets: "sig", ptext: "stars" },
   twoway: { posthoc: "sidak", compare: "rows", interaction: true, rm: "none", gg: true, rowname: "", colname: "", alpha: 0.05, brackets: "sig", ptext: "stars" },
   control: { chart: "imr", lsl: "", usl: "" }, doe: {},
@@ -272,6 +272,8 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Normalise</label><span class="inline"><Pick value={o().normalize} set={v => put("normalize", v)} options={[["none", "No: fit the responses as they are"], ["range", "0–100 % of each data set's own lowest and highest mean"], ["values", "0–100 % of control responses I type"]]} />
               <Show when={o().normalize === "values"}><span class="muted">0 % =</span><N k="zero" w={80} /><span class="muted">100 % =</span><N k="hundred" w={80} /></Show></span>
             <Show when={o().normalize !== "none"}><label /><Check label="Fix Bottom at 0 % and Top at 100 %" value={!!o().fix} set={v => put("fix", v)} /></Show>
+            {/* 0.4.12 (B39) */}
+            <label>Compare</label><Check label="Do the IC50s / EC50s of the data sets differ? (F test, and each one's ratio to the first)" value={!!o().compare} set={v => put("compare", v)} />
           </Show>
           <Show when={kind === "fit"}>
             <label>Model</label><Pick value={o().model} set={v => put("model", v)} options={[...(models() ?? []).map(m => [m[0], m[1]] as [string, string]), ["custom", "Your own equation…"]]} />
