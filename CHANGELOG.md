@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.16 — 2026-11-17
+
+Box plots and violins for grouped tables, and their rows per graph.
+
+**Grouped graphs**
+- Grouped (and contingency) tables can now be drawn as **Grouped box and whiskers** or **Grouped violins**: one box or violin per data set inside each row's group, with each value on top if you like, and a legend.
+- **Format Graph › Data Sets › Rows**: show or hide each row (the groups along the X axis) and change their order on this graph; the table keeps its own.
+
 ## 0.4.15 — 2026-11-17
 
 Fixes for colours.

@@ -48,17 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.16",
-      "title": "Grouped graphs",
-      "when": "Next",
-      "items": [
-        "Box plots and violins for grouped tables"
-      ]
-    },
-    {
       "v": "0.4.17",
       "title": "Patterns",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Fill patterns for bars, boxes and violins"
       ]
