@@ -236,7 +236,10 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
         </Show>
         <Show when={tab() === "graph"}>
           <div class="form">
-            <label>Title</label><span class="inline"><input value={s().title} placeholder="No title" onChange={e => set(x => { x.title = e.currentTarget.value; })} /><Check label="Show" value={s().showTitle} set={v => set(x => { x.showTitle = v; })} /></span>
+            {/* 0.4.14 (#56): the graph's name as its title (it follows a rename), and a subtitle; long titles wrap */}
+            <label>Title</label><span class="inline"><input value={s().titleFromName ? g().name : s().title} disabled={!!s().titleFromName} placeholder="No title" onChange={e => set(x => { x.title = e.currentTarget.value; })} /><Check label="Show" value={s().showTitle} set={v => set(x => { x.showTitle = v; })} />
+              <Check label="Use the graph's name" value={!!s().titleFromName} set={v => set(x => { x.titleFromName = v; if (!v && !x.title) x.title = g().name; })} /></span>
+            <label>Subtitle</label><input value={s().subtitle ?? ""} placeholder="Optional, smaller, under the title" onChange={e => set(x => { x.subtitle = e.currentTarget.value; })} />
             <label>Size (mm)</label><span class="inline"><input type="number" min="10" max="1000" style={{ width: "80px" }} value={s().width} onChange={e => set(x => { x.width = +e.currentTarget.value; })} /><span class="muted">×</span>
               <input type="number" min="10" max="1000" style={{ width: "80px" }} value={s().height} onChange={e => set(x => { x.height = +e.currentTarget.value; })} />
               <Pick value="" set={v => { const z = SIZES.find(q => q[0] === v); if (z) set(x => { x.width = z[1]; x.height = z[2]; }); }} options={[["", "Journal sizes…"], ...SIZES.map(z => [z[0], z[0]] as [string, string])]} /></span>

@@ -18,6 +18,8 @@ def parts(project):
         if not t:
             continue
         s = gr.get("settings", {})
+        if s.get("titleFromName"):  # 0.4.14 (#56): the title is the graph's name
+            s = {**s, "title": gr.get("name") or ""}
         ovs = [a for a in project.get("analyses", []) if a["id"] in (s.get("overlays") or [])]
         out.append((gr.get("name") or t.get("name") or "Graph", base64.b64decode(graph.export(t, s, "png", None, 300, False, ovs)["data"]), s))
     return out

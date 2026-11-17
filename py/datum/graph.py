@@ -308,6 +308,45 @@ def texts(ax, graph):
             a.title.set_fontsize(title)
         if axt > 0:
             a.xaxis.label.set_fontsize(axt); a.yaxis.label.set_fontsize(axt)
+    # 0.4.14 (#56): a subtitle under the title, and long titles wrapped to the plot's width (axis titles to its height)
+    sub = (graph.get("subtitle") or "").strip() if graph.get("showTitle", True) else ""
+    if sub:
+        holder = next((a for a in fig.axes if a.get_title()), None) or max(fig.axes, key=lambda a: a.get_position().y1)
+        size = holder.title.get_fontsize() if holder.get_title() else float(graph.get("fontSize") or 10) * 1.15
+        sz = max(5.0, size * 0.78)
+        if holder.get_title():
+            holder.set_title(holder.get_title(), fontweight="bold", fontsize=size, pad=6 + sz * 1.35)
+        from matplotlib.transforms import offset_copy
+        holder.text(0.5, 1.0, sub, transform=offset_copy(holder.transAxes, fig=fig, y=4, units="points"), ha="center", va="bottom", fontsize=sz, color="#3B4859")
+    try:
+        r = fig.get_figure(root=True).canvas.get_renderer() if hasattr(fig, "get_figure") else fig.canvas.get_renderer()
+    except Exception:
+        return
+    fb = fig.bbox
+    heads = []  # (title or subtitle, its text, its axes): centred over the plot, so they may need a second look
+    for a in fig.axes:
+        ab = a.bbox
+        mid = (ab.x0 + ab.x1) / 2
+        room = 2 * min(mid - fb.x0, fb.x1 - mid) * 0.96  # a title is centred over the plot: as wide as fits both ways
+        for t, width in [(a.title, room), (a.xaxis.label, ab.width), (a.yaxis.label, ab.height)] + [(x, room) for x in a.texts if sub and x.get_text() == sub]:
+            if t is a.title or t in a.texts:
+                heads.append((t, t.get_text(), room))
+            wrap_to(t, width, r)
+    # The final layout moves the plot (to make room for the axis titles), so a long title can still stick out: lay out
+    # once, and wrap narrower by what sticks out (only graphs with a long title pay for this).
+    for _ in range(3):
+        if not any("\n" in t.get_text() for t, *_ in heads):
+            break
+        root = fig.get_figure(root=True) if hasattr(fig, "get_figure") else fig
+        root.canvas.draw()
+        out = [(t, text, room, max(0.0, fb.x0 - t.get_window_extent(r).x0, t.get_window_extent(r).x1 - fb.x1)) for t, text, room in heads if t.get_text()]
+        if not any(o > 1 for *_, o in out):
+            break
+        heads = []
+        for t, text, room, o in out:
+            room = room - 2 * o - 4 if o > 1 else room
+            t.set_text(text); wrap_to(t, room, r)
+            heads.append((t, text, room))
     labels = [t for t in ax.get_xticklabels() if t.get_text()]
     angle = graph.get("xAngle") or ""
     if angle == "":
@@ -332,6 +371,25 @@ def texts(ax, graph):
         t.set_rotation(deg)
         t.set_ha("center" if deg in (0, 90) else "right")
         t.set_rotation_mode("anchor" if deg not in (0, 90) else "default")
+
+
+def wrap_to(t, room, r):
+    """Wrap a title onto more lines when it is wider than `room` (display pixels), measuring each line; words stay whole."""
+    s = t.get_text()
+    if not s or "\n" in s or room <= 0:
+        return
+    fp = t.get_fontproperties()
+    wide = lambda line: r.get_text_width_height_descent(line, fp, ismath=False)[0]
+    if wide(s) <= room:
+        return
+    lines, cur = [], ""
+    for w in s.split():
+        if cur and wide(cur + " " + w) > room:
+            lines.append(cur); cur = w
+        else:
+            cur = (cur + " " + w).strip()
+    lines.append(cur)
+    t.set_text("\n".join(lines))
 
 
 BIG = 5000  # points in a data set from which drawing is thinned (D17)

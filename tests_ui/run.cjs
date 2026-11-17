@@ -825,6 +825,15 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await p.fill('.dlg .textsizes input >> nth=0', "14"); await p.press('.dlg .textsizes input >> nth=0', "Tab"); await p.waitForTimeout(150);
     const ts = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
     check("Format Graph › Graph sets the title's own size", ts?.titleSize === 14, JSON.stringify(ts && [ts.titleSize, ts.axisTitleSize]));
+    // 0.4.14 (#56): the graph's name as the title, and a subtitle
+    await reset();
+    await p.click('.dlg label:has-text("Use the graph\'s name")'); await p.waitForTimeout(150);
+    const tn = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
+    check("Use the graph's name sets the title from the name", tn?.titleFromName === true, JSON.stringify(tn && [tn.titleFromName, tn.title]));
+    await reset();
+    await p.fill('.dlg input[placeholder^="Optional, smaller"]', "n = 3"); await p.press('.dlg input[placeholder^="Optional, smaller"]', "Tab"); await p.waitForTimeout(150);
+    const sb = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
+    check("…and a subtitle", sb?.subtitle === "n = 3", JSON.stringify(sb?.subtitle));
     await p.click('.dlg .dtabs button:text-is("X Axis")'); await p.waitForTimeout(100);
     await reset();
     await p.selectOption('.dlg .fmtpage .form > select >> nth=1', "45").catch(() => {});

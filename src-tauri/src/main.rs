@@ -70,7 +70,8 @@ impl Default for Options {
 impl Options {
     /// Graph settings for a new graph.
     fn graph(&self) -> GraphSettings {
-        let g = GraphSettings { error: self.error.clone(), width: self.width, height: self.height, font: self.font.clone(), font_size: self.font_size, style: self.style.clone(), ..Default::default() };
+        // 0.4.14 (#56): a new graph's title is its name, hidden until the user shows it
+        let g = GraphSettings { error: self.error.clone(), width: self.width, height: self.height, font: self.font.clone(), font_size: self.font_size, style: self.style.clone(), title_from_name: true, show_title: false, ..Default::default() };
         styled(g, &self.new_look)
     }
     fn table(&self) -> Table {
@@ -424,7 +425,7 @@ fn graph_req(st: &State<St>, id: u32, cmd: &str) -> R<Value> {
     let g = a.doc.p.graph(id).ok_or("That graph no longer exists.")?;
     let t = a.doc.p.table(g.table).ok_or("The graph's data table no longer exists.")?;
     let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| a.doc.p.analysis(*o)).map(|x| json!({ "id": x.id, "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
-    Ok(json!({ "cmd": cmd, "table": t, "graph": g.settings, "overlays": overlays }))
+    Ok(json!({ "cmd": cmd, "table": t, "graph": g.drawn(), "overlays": overlays }))
 }
 
 /// The engine's request for a page layout: the layout and, for each of its graphs, the graph's
@@ -438,7 +439,7 @@ fn page_req(st: &State<St>, id: u32) -> R<Value> {
         let Some(g) = p.graph(i.graph) else { continue };
         let Some(t) = p.table(g.table) else { continue };
         let overlays: Vec<Value> = g.settings.overlays.iter().filter_map(|o| p.analysis(*o)).map(|x| json!({ "id": x.id, "kind": x.kind, "sets": x.sets, "options": x.options })).collect();
-        panels.insert(g.id.to_string(), json!({ "table": t, "graph": g.settings, "overlays": overlays }));
+        panels.insert(g.id.to_string(), json!({ "table": t, "graph": g.drawn(), "overlays": overlays }));
     }
     Ok(json!({ "cmd": "page", "layout": l, "panels": panels, "fmt": "svg" }))
 }
@@ -890,6 +891,7 @@ mod tests {
         assert_eq!((g.set_look.err_color.as_str(), g.set_look.marker_alpha), ("#000000", Some(0.35)));
         assert!(g.y.grid && !g.x.grid);
         assert!(g.overlays.is_empty(), "only the keys a style may set");
+        assert!(g.title_from_name && !g.show_title, "0.4.14 (#56): the name as the title, hidden until shown");
         let plain = Options::default().graph();
         assert_eq!(plain.set_look, Default::default());
         let bad = Options { new_look: json!({ "fontSize": "big" }), ..Default::default() }.graph();

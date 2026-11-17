@@ -359,6 +359,38 @@ class LabelsAndSizes(unittest.TestCase):
         self.assertEqual(plain[1].yaxis.label.get_fontsize(), 10, "unchanged when not set")
 
 
+class Titles(unittest.TestCase):
+    """0.4.14 (#56): a subtitle, and long titles wrapped so they stay inside the graph."""
+    T = {"name": "T", "kind": "column", "rows": 3, "sets": [{"title": t, "entry": "rep", "reps": 1} for t in ("Control", "Drug X", "Drug Y")],
+         "cols": [[None] * 3, [1, 1.2, 0.9], [1.6, 1.8, 1.7], [2.6, 2.4, 2.9]], "excluded": [], "xTitle": "", "yTitle": "Relative expression of the target gene (fold change)"}
+
+    def fig(self, g):
+        g = {"column": "bars", "width": 70, "height": 65, **g}
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, *_ = graph.figure(self.T, g)
+        fig.canvas.draw()
+        return fig, ax
+
+    def test_long_titles_wrap_inside_the_graph(self):
+        fig, ax = self.fig({"title": "Effect of drug X and drug Y on gene expression after 24 hours", "subtitle": "HeLa cells, n = 3 per group"})
+        r, fb = fig.canvas.get_renderer(), fig.bbox
+        self.assertIn("\n", ax.get_title())
+        self.assertIn("\n", ax.yaxis.label.get_text(), "the long axis title too")
+        subs = [t for t in ax.texts if t.get_text() == "HeLa cells, n = 3 per group"]
+        self.assertEqual(len(subs), 1)
+        for t in (ax.title, subs[0]):
+            b = t.get_window_extent(r)
+            self.assertTrue(fb.x0 - 1 <= b.x0 and b.x1 <= fb.x1 + 1, "inside the graph")
+        self.assertLess(subs[0].get_window_extent(r).y1, ax.title.get_window_extent(r).y0 + 1, "the subtitle sits under the title")
+
+    def test_short_titles_and_hidden_titles_stay(self):
+        fig, ax = self.fig({"title": "Short", "subtitle": "Sub"})
+        self.assertEqual(ax.get_title(), "Short")
+        fig, ax = self.fig({"title": "Short", "subtitle": "Sub", "showTitle": False})
+        self.assertEqual(ax.get_title(), "")
+        self.assertFalse([t for t in ax.texts if t.get_text() == "Sub"], "no subtitle when the title is hidden")
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

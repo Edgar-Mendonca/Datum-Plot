@@ -589,6 +589,18 @@ fn label_angle_and_text_sizes_are_kept_clean() {
 }
 
 #[test]
+fn a_title_from_the_graphs_name() {
+    // 0.4.14 (#56): drawn with the graph's current name; older graphs keep their own title
+    let mut p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"Growth","settings":{"title":"Old","titleFromName":true,"subtitle":"24 h"}},{"id":3,"table":1,"name":"B","settings":{"title":"Mine"}}],"nextId":4}"##).unwrap();
+    assert_eq!(p.graphs[0].drawn().title, "Growth");
+    assert_eq!(p.graphs[0].drawn().subtitle, "24 h");
+    p.graphs[0].name = "Renamed".into();
+    assert_eq!(p.graphs[0].drawn().title, "Renamed", "follows a rename");
+    assert_eq!(p.graphs[1].drawn().title, "Mine");
+    assert!(!p.graphs[1].settings.title_from_name, "older graphs: off");
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");
