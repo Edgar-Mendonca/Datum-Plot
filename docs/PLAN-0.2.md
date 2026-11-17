@@ -253,7 +253,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D26 | Automatic error bars from the scheme on bar, box and violin graphs; group lines in Data Sets (#43, second round) | ✅ 0.4.3 |
 | D27 | Your style for new graphs (data-set look in saved styles; Options › Style for new graphs); several data sets at once; typed strengths (#46) | ✅ 0.4.9 (typed strengths 0.4.8) |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
-| D29 | Titles: the graph's name, a subtitle, long titles wrap (#56) | 0.4.14 |
+| D29 | Titles: the graph's name, a subtitle, long titles wrap (#56) | ✅ 0.4.14 |
 | D25 | Symbols and error bars on their own: symbols' Filled, strengths of borders and symbol fills, error-bar colour, legend borders, legends with an axis break (#40–#43) | ✅ 0.4.2 |
 | D24 | Colours of bars and symbols: each on its own, Automatic, Reset all colours, symbol borders, fill strength | ✅ 0.3.21 |
 | D23 | Breaks and legends: the share of the axis each side of a break takes, ticks beyond it; group legends on column graphs | ✅ 0.3.20 |
@@ -437,6 +437,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.11** ✅ | IC50 / EC50 (B38; GitHub #53) |
 | **0.4.12** ✅ | Compare IC50s (B39); equal values centred on their column (GitHub #54) |
 | **0.4.13** ✅ | Label angles and text sizes (D28; GitHub #55) |
-| 0.4.14 | Titles: the graph's name, a subtitle, long titles wrap (D29; #56) |
+| **0.4.14** ✅ | Titles: the graph's name, a subtitle, long titles wrap (D29; #56) |
 | 0.4.15 | Mac and Linux versions (I7), on hold: the modules come first |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

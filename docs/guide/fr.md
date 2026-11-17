@@ -187,7 +187,7 @@ Double-cliquez sur n’importe quelle partie d’un graphique (un axe, une séri
 
 ![Format Graph, ancré à côté du graphique.](img/format.png)
 
-1. **Pages.** **Data Sets** (Séries de données : symboles, couleurs, lignes, barres d’erreur, axe Y de droite), **X Axis** (Axe X), **Y Axis** (Axe Y), **Graph** (Graphique : taille et polices ; des tailles à part pour le titre, les titres d’axes, les nombres des axes et la légende) et les notes. **X Axis › Label angle** (Axe X › Angle des étiquettes) incline les noms des groupes : automatiquement s’ils se chevauchent, ou toujours à 30°, 45° ou 90°.
+1. **Pages.** **Data Sets** (Séries de données : symboles, couleurs, lignes, barres d’erreur, axe Y de droite), **X Axis** (Axe X), **Y Axis** (Axe Y), **Graph** (Graphique : taille et polices ; des tailles à part pour le titre, les titres d’axes, les nombres des axes et la légende) et les notes. À côté du titre, **Use the graph's name** (utiliser le nom du graphique) en fait le titre (c’est le cas des nouveaux graphiques, masqué tant que **Show** n’est pas coché), et **Subtitle** (sous-titre) ajoute une ligne plus petite dessous ; les titres longs passent à la ligne. **X Axis › Label angle** (Axe X › Angle des étiquettes) incline les noms des groupes : automatiquement s’ils se chevauchent, ou toujours à 30°, 45° ou 90°.
 2. **Réglages.** Les modifications s’appliquent immédiatement.
 3. **Le graphique** reste visible pendant que vous travaillez.
 

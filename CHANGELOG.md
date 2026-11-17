@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.14 — 2026-11-17
+
+Titles: the graph's name, a subtitle, and long titles that wrap.
+
+**Titles** (Format Graph › Graph)
+- **Use the graph's name**: the title is the graph's name and follows when you rename it. New graphs start with it, hidden until you tick **Show**; graphs you made before keep their own title.
+- **Subtitle**: a smaller line under the title.
+- Long titles and axis titles wrap onto more lines instead of running off the graph.
+
 ## 0.4.13 — 2026-11-17
 
 Label angles and text sizes of their own.
