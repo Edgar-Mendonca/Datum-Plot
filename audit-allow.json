@@ -1,0 +1,11 @@
+{
+  "about": "Security advisories accepted for a short time, with the reason and a review date; scripts/audit.cjs fails again after that date. Keep this list empty whenever possible.",
+  "advisories": [
+    {
+      "id": "GHSA-fc5q-39xc-vjpf",
+      "package": "picomatch (through vite, the build tool)",
+      "reason": "published 2026-11-17 with no fixed version; only in the build tool (vite > tinyglobby > fdir > picomatch), which runs on our own files; nothing of it ships in the app (npm audit --omit=dev finds 0)",
+      "until": "2026-12-17"
+    }
+  ]
+}

@@ -103,7 +103,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm audit --audit-level=high
+      # npm audit, with the dated exceptions in audit-allow.json (each fails again after its review date)
+      - run: node scripts/audit.cjs
       - run: npm audit --omit=dev --audit-level=high
       - uses: actions/setup-python@v5
         with:
