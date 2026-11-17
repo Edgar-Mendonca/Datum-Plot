@@ -1,6 +1,7 @@
 // Format Graph: data sets, axes and the whole graph. Every change applies at once (with undo),
 // so the graph behind the dialog shows it.
 import { For, Show, createSignal, createEffect, on, onCleanup, JSX } from "solid-js";
+import { Portal } from "solid-js/web";
 import { Graph, GraphSettings, Axis, SetStyle, Note, letter, isEmpty, invoke, dateText, LOOK_SET_KEYS } from "./api";
 import { act, out, openDialog, closeDialog, dialogs, toast, item } from "./store";
 import { Dialog, Tabs, Pick, Check } from "./ui";
@@ -30,13 +31,15 @@ const Swatch = (p: { title: string; value: string; auto: string; scheme: string[
   const [at, setAt] = createSignal<[number, number] | null>(null);
   let el!: HTMLSpanElement;
   const shown = () => p.value || p.auto;
-  const off = (e: MouseEvent) => { if (at() && !el.contains(e.target as Node)) setAt(null); };
+  let pop: HTMLDivElement | undefined;
+  const off = (e: MouseEvent) => { if (at() && !el.contains(e.target as Node) && !pop?.contains(e.target as Node)) setAt(null); };
   addEventListener("mousedown", off);
   onCleanup(() => removeEventListener("mousedown", off));
   const toggle = (e: MouseEvent) => { if (at()) return setAt(null); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setAt([Math.min(r.left, innerWidth - 250), Math.min(r.bottom + 4, innerHeight - 230)]); };
   return <span class="swatch" ref={el}>
     <button class="swbtn" title={`${p.title}: ${p.value || "automatic (the colour scheme)"}`} onClick={toggle}><i style={{ background: shown(), opacity: p.alpha ?? 1 }} /><Show when={!p.value}><small>A</small></Show></button>
-    <Show when={at()}>{xy => <div class="swpop" style={{ left: `${xy()[0]}px`, top: `${xy()[1]}px` }}>
+    {/* 0.4.15 (#58): drawn at the top of the window, so moving Format Graph (a transform) cannot shift or hide it */}
+    <Show when={at()}>{xy => <Portal mount={document.body}><div class="swpop" ref={pop} style={{ left: `${xy()[0]}px`, top: `${xy()[1]}px` }}>
       <b>{p.title}</b>
       <div class="swset"><For each={p.scheme}>{c => <button style={{ background: c }} title={c} onClick={() => { p.set(c); setAt(null); }} />}</For></div>
       <label class="inline"><input type="color" value={shown()} onChange={e => p.set(e.currentTarget.value)} /><span>Your own colour</span></label>
@@ -44,7 +47,7 @@ const Swatch = (p: { title: string; value: string; auto: string; scheme: string[
         {/* 0.4.8 (#46): or type it */}
         <input type="number" class="swpct" min="0" max="100" step="1" title="Strength in %" value={Math.round((p.alpha ?? 0) * 100)} onChange={e => { const v = +e.currentTarget.value; if (e.currentTarget.value.trim() !== "" && isFinite(v)) p.setAlpha!(Math.min(100, Math.max(0, v)) / 100); }} /><span>%</span></label></Show>
       <button class="btn sm" disabled={!p.value && p.alpha === undefined} onClick={() => { p.set(""); p.setAlpha?.(null); setAt(null); }}>Automatic (scheme colour)</button>
-    </div>}</Show>
+    </div></Portal>}</Show>
   </span>;
 };
 

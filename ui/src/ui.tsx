@@ -88,8 +88,11 @@ export const Text = (p: { value: string | number | null | undefined; set: (v: st
   <input type={p.type ?? "text"} value={p.value ?? ""} disabled={p.disabled} placeholder={p.placeholder} list={p.list} onChange={e => p.set(e.currentTarget.value)} />
 );
 export const Pick = (p: { value: string; set: (v: string) => void; options: (string | [string, string])[]; disabled?: boolean }) => (
+  // 0.4.15 (#57): each option marks itself selected, so a rebuilt list (new options, e.g. after the colour scheme changed)
+  // still shows the value; the select's own value alone fell back to the first option (Okabe-Ito), and picking that
+  // option again then changed nothing
   <select value={p.value} disabled={p.disabled} onChange={e => p.set(e.currentTarget.value)}>
-    <For each={p.options}>{o => typeof o === "string" ? <option value={o}>{o}</option> : <option value={o[0]}>{o[1]}</option>}</For>
+    <For each={p.options}>{o => { const v = typeof o === "string" ? o : o[0]; return <option value={v} selected={v === p.value}>{typeof o === "string" ? o : o[1]}</option>; }}</For>
   </select>
 );
 export const Check = (p: { label: string; value: boolean; set: (v: boolean) => void; disabled?: boolean }) => (

@@ -866,12 +866,14 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
       const p0 = f.state.project, t0 = p0.tables[0];
       const project = { ...p0, tables: [{ ...t0, id: 90, name: "Groups", kind: "column" }], layouts: [],
         analyses: [{ id: 92, table: 90, name: "One-way ANOVA · Groups", kind: "anova", sets: [], options: { posthoc: "tukey", brackets: "sig", ptext: "stars" } }],
-        graphs: [{ ...p0.graphs[0], id: 91, table: 90, name: "Group means", settings: { ...p0.graphs[0].settings, column: "bars", overlays: [92] } }] };
+        graphs: [{ ...p0.graphs[0], id: 91, table: 90, name: "Group means", settings: { ...p0.graphs[0].settings, column: "bars", overlays: [92], palette: "bright" } }] };
       const st = { ...f.state, project, embedded: "a test" };
       const m = { state: st, options: { theme: "light", autosave: 0, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, dpi: 300, paper: "A4", dateOrder: "dmy" }, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd };
       try { localStorage.setItem("guide-hint", "1"); } catch {}
       window.__calls = [];
-      window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); return c in m ? m[c] : c === "apply" ? st : null; } }, event: { listen: async () => () => {} } };
+      // graph changes are applied, as the engine does, so the window sees its own edits (0.4.15, #57)
+      const apply = (op) => { if (op && op.GraphSet) { const g = st.project.graphs.find(x => x.id === op.GraphSet.graph); if (g) g.settings = op.GraphSet.settings; } return structuredClone(st); };
+      window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); return c in m ? m[c] : c === "apply" ? apply(a && a.op) : null; } }, event: { listen: async () => () => {} } };
     }, [fix, render]);
     await q.goto(url); await q.waitForTimeout(900);
     await q.click('.tabs button:text-is("Graph")'); await q.waitForTimeout(150);
@@ -887,6 +889,25 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     const qops = await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op));
     const gs = qops.find(o => o.GraphSet);
     check("…and choosing Every pair sets it on this graph only", !!gs && gs.GraphSet.graph === 91 && gs.GraphSet.settings.bracketOpts?.["92"]?.brackets === "all" && !qops.some(o => o.SetAnalysis), JSON.stringify(qops));
+    // 0.4.15 (#57): the Colours box shows the graph's scheme, and Okabe-Ito can be chosen again
+    await q.click('.dlg .dtabs button:text-is("Data Sets")'); await q.waitForTimeout(150);
+    const pal = '.dlg .form .inline:has(button:has-text("Colour schemes")) select';
+    check("Format Graph shows the graph's colour scheme (not always Okabe-Ito)", (await q.inputValue(pal).catch(() => "")) === "bright", await q.inputValue(pal).catch(() => "none"));
+    await q.selectOption(pal, "muted"); await q.waitForTimeout(250);
+    check("…and after changing the scheme with Format Graph open, it shows the new one", (await q.inputValue(pal).catch(() => "")) === "muted", await q.inputValue(pal).catch(() => "none"));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.selectOption(pal, "okabe"); await q.waitForTimeout(150);
+    const ok57 = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet);
+    check("…and choosing Okabe-Ito again changes it", ok57?.GraphSet.settings.palette === "okabe", JSON.stringify(ok57?.GraphSet.settings.palette));
+    // 0.4.15 (#58): after dragging Format Graph, a colour pop-up still opens under its square
+    const hd = await (await q.$(".dlg header")).boundingBox();
+    await q.mouse.move(hd.x + 40, hd.y + 8); await q.mouse.down(); await q.mouse.move(hd.x - 260, hd.y + 120, { steps: 6 }); await q.mouse.up(); await q.waitForTimeout(150);
+    const sq = await (await q.$(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0")).boundingBox();
+    await q.click(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0"); await q.waitForTimeout(150);
+    const pp = await (await q.$(".swpop")).boundingBox();
+    const vw = await q.evaluate(() => [innerWidth, innerHeight]);
+    check("after moving Format Graph, a colour pop-up opens under its square, on screen", !!pp && Math.abs(pp.y - (sq.y + sq.height + 4)) < 40 && Math.abs(pp.x - sq.x) < 260 && pp.x >= 0 && pp.y >= 0 && pp.x + pp.width <= vw[0] + 1, JSON.stringify([sq, pp]));
+    await q.click(".dlg header", { position: { x: 20, y: 10 } }); await q.waitForTimeout(100);
     // 0.4.8 (#46): a strength can be typed in a colour's pop-up
     await q.click('.dlg .dtabs button:text-is("Data Sets")'); await q.waitForTimeout(150);
     await q.click(".dlg .setfmt tbody tr >> nth=0 >> .swbtn >> nth=0"); await q.waitForTimeout(150);

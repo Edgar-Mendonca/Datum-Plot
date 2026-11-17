@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.15 — 2026-11-17
+
+Fixes for colours.
+
+**Fixes**
+- Format Graph's **Colours** box always showed Okabe-Ito, whatever scheme the graph used, and choosing Okabe-Ito again did nothing. It now shows the graph's scheme, and every scheme can be chosen again. (The same fix applies to every drop-down list.)
+- After moving the Format Graph window, a colour's pop-up could open far from its square, even off the screen. It now always opens next to it.
+
 ## 0.4.14 — 2026-11-17
 
 Titles: the graph's name, a subtitle, and long titles that wrap.
