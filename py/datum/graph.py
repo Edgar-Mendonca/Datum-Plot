@@ -137,6 +137,12 @@ def rc_for(graph):
           "xtick.top": frame, "ytick.right": frame, "svg.fonttype": "none", "svg.hashsalt": "datum-plot", "axes.unicode_minus": True}
     if font in ("Times New Roman", "Georgia", "Cambria"):
         rc["font.family"] = "serif"
+    # 0.4.13 (#55): the axis numbers' and the legend's own sizes (the legend's boxes scale with its text)
+    tick, leg = float(graph.get("tickSize") or 0), float(graph.get("legendSize") or 0)
+    if tick > 0:
+        rc["xtick.labelsize"] = rc["ytick.labelsize"] = tick
+    if leg > 0:
+        rc["legend.fontsize"] = leg
     return rc
 
 
@@ -284,11 +290,48 @@ def figure(table, graph, overlays=(), fig=None):
     """Builds the matplotlib figure (call inside `rc_context(rc_for(graph))`), or draws into `fig` (a
     panel of a page layout); returns (fig, ax, legend, points)."""
     fig, ax, leg, points = build(table, graph, overlays, fig)
+    texts(ax, graph)
     if graph.get("notes"):
         lims = ax.get_xlim(), ax.get_ylim()
         draw_notes(ax, graph, float(graph.get("fontSize") or 10))
         ax.set_xlim(*lims[0]); ax.set_ylim(*lims[1])  # notes never move the axes
     return fig, ax, leg, points
+
+
+def texts(ax, graph):
+    """0.4.13 (#55): the title's and the axis titles' own sizes, and the angle of the X axis labels: as chosen, or
+    (automatic) tilted to 30° only when names such as group names would overlap their neighbours."""
+    fig = ax.figure
+    title, axt = float(graph.get("titleSize") or 0), float(graph.get("axisTitleSize") or 0)
+    for a in fig.axes:
+        if title > 0 and a.get_title():
+            a.title.set_fontsize(title)
+        if axt > 0:
+            a.xaxis.label.set_fontsize(axt); a.yaxis.label.set_fontsize(axt)
+    labels = [t for t in ax.get_xticklabels() if t.get_text()]
+    angle = graph.get("xAngle") or ""
+    if angle == "":
+        def number(s):
+            try:
+                float(s.replace("\u2212", "-").replace(",", ""))
+                return True
+            except ValueError:
+                return False
+        if len(labels) < 2 or all(number(t.get_text()) for t in labels) or any(t.get_rotation() for t in labels):
+            return
+        try:
+            r = fig.get_figure(root=True).canvas.get_renderer() if hasattr(fig, "get_figure") else fig.canvas.get_renderer()
+            boxes = sorted((t.get_window_extent(r) for t in labels), key=lambda b: b.x0)
+        except Exception:
+            return
+        if not any(a.x1 + 2 > b.x0 for a, b in zip(boxes, boxes[1:])):
+            return
+        angle = "30"
+    deg = int(angle)
+    for t in labels:
+        t.set_rotation(deg)
+        t.set_ha("center" if deg in (0, 90) else "right")
+        t.set_rotation_mode("anchor" if deg not in (0, 90) else "default")
 
 
 BIG = 5000  # points in a data set from which drawing is thinned (D17)
@@ -745,9 +788,6 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
     ax.set_xlim(-0.6, len(data) - 0.4)
     ax.tick_params(axis="x", length=0)
     axes(ax, table, graph, [[0, 0, float(allv.min()) if len(allv) else 0]], only_y=True)
-    if sum(len(n) for n in names) * size * 0.7 > (graph.get("width") or 80) * 2.4:
-        for lab in ax.get_xticklabels():
-            lab.set_rotation(30); lab.set_ha("right")
     if graph.get("title") and graph.get("showTitle", True):
         ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
     if overlays and points:

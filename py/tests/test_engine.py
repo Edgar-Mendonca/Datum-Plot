@@ -328,6 +328,37 @@ class Brackets(unittest.TestCase):
         self.assertLess(ax.get_ylim()[1], 40)
 
 
+class LabelsAndSizes(unittest.TestCase):
+    """0.4.13 (#55): the X labels' angle (automatic only when names would overlap, or as chosen) and text sizes."""
+
+    def fig(self, names, g):
+        T = {"name": "T", "kind": "column", "rows": 3, "sets": [{"title": n, "entry": "rep", "reps": 1} for n in names],
+             "cols": [[None] * 3] + [[1, 2, 3]] * len(names), "excluded": [], "xTitle": "", "yTitle": "Response (units)"}
+        g = {"column": "bars", "title": "Title", "legend": {"show": True, "groups": True}, **g}
+        with matplotlib.rc_context(graph.rc_for(g)):
+            return graph.figure(T, g)
+
+    def angles(self, ax):
+        return {t.get_rotation() for t in ax.get_xticklabels() if t.get_text()}
+
+    def test_automatic_tilts_only_when_names_overlap(self):
+        long = ["Untreated control", "Low dose treatment", "High dose treatment", "Vehicle only control", "Positive control"]
+        self.assertEqual(self.angles(self.fig(long, {"width": 60})[1]), {30.0})
+        self.assertEqual(self.angles(self.fig(["A", "B", "C"], {"width": 80})[1]), {0.0})
+
+    def test_a_chosen_angle_always_applies(self):
+        for a in ("0", "45", "90"):
+            self.assertEqual(self.angles(self.fig(["A", "B", "C"], {"xAngle": a})[1]), {float(a)})
+
+    def test_text_sizes(self):
+        fig, ax, leg, _ = self.fig(["A", "B"], {"fontSize": 10, "titleSize": 14, "axisTitleSize": 12, "tickSize": 7, "legendSize": 6})
+        self.assertEqual((ax.title.get_fontsize(), ax.yaxis.label.get_fontsize()), (14, 12))
+        self.assertEqual(ax.get_xticklabels()[0].get_fontsize(), 7)
+        self.assertEqual(leg.get_texts()[0].get_fontsize(), 6)
+        plain = self.fig(["A", "B"], {"fontSize": 10})
+        self.assertEqual(plain[1].yaxis.label.get_fontsize(), 10, "unchanged when not set")
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

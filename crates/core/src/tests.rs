@@ -579,6 +579,16 @@ fn a_graph_keeps_its_own_bracket_choice() {
 }
 
 #[test]
+fn label_angle_and_text_sizes_are_kept_clean() {
+    // 0.4.13 (#55)
+    let p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"xAngle":"45","titleSize":14,"axisTitleSize":-3,"tickSize":1e9,"legendSize":7}}],"nextId":3}"##).unwrap();
+    let s = &p.graphs[0].settings;
+    assert_eq!((s.x_angle.as_str(), s.title_size, s.axis_title_size, s.tick_size, s.legend_size), ("45", 14.0, 0.0, 96.0, 7.0));
+    let q = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"xAngle":"17"}}],"nextId":3}"##).unwrap();
+    assert_eq!(q.graphs[0].settings.x_angle, "", "only the offered angles");
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.13 — 2026-11-17
+
+Label angles and text sizes of their own.
+
+**Group names and X axis labels**
+- **Format Graph › X Axis › Label angle**: **Automatic** tilts the labels only when they would overlap (now measured, so long group names no longer collide), or choose **Horizontal**, **30°**, **45°** or **90°** to keep all your graphs alike.
+
+**Text sizes** (Format Graph › Graph)
+- The **title**, the **axis titles**, the **axis numbers and group names** and the **legend** can each have their own size; empty follows the font size. The legend's boxes grow and shrink with its text.
+
 ## 0.4.12 — 2026-11-15
 
 Compare IC50s between compounds; equal values centred on their column.

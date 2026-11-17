@@ -187,7 +187,7 @@ Double-click any part of a graph (an axis, a data set, the title) to format it, 
 
 ![Format Graph, docked beside the graph.](img/format.png)
 
-1. **Pages.** **Data Sets** (symbols, colours, lines, error bars, the right Y axis), **X Axis**, **Y Axis**, **Graph** (size and fonts) and notes.
+1. **Pages.** **Data Sets** (symbols, colours, lines, error bars, the right Y axis), **X Axis**, **Y Axis**, **Graph** (size and fonts; separate sizes for the title, axis titles, axis numbers and the legend) and notes. **X Axis › Label angle** tilts the group names: automatically when they would overlap, or always at 30°, 45° or 90°.
 2. **Settings.** Changes apply at once.
 3. **The graph** stays visible while you work.
 

@@ -820,6 +820,18 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await p.click('.dlg label:has-text("Show Growth fit")'); await p.waitForTimeout(100);
     const ov = (await ops()).find(o => o.Overlay);
     check("…and ticking one sends Overlay for this graph", !!ov && ov.Overlay.analysis === 99, JSON.stringify(ov));
+    // 0.4.13 (#55): text sizes of their own, and the X labels' angle
+    await reset();
+    await p.fill('.dlg .textsizes input >> nth=0', "14"); await p.press('.dlg .textsizes input >> nth=0', "Tab"); await p.waitForTimeout(150);
+    const ts = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
+    check("Format Graph › Graph sets the title's own size", ts?.titleSize === 14, JSON.stringify(ts && [ts.titleSize, ts.axisTitleSize]));
+    await p.click('.dlg .dtabs button:text-is("X Axis")'); await p.waitForTimeout(100);
+    await reset();
+    await p.selectOption('.dlg .fmtpage .form > select >> nth=1', "45").catch(() => {});
+    await p.waitForTimeout(150);
+    const xa = (await ops()).find(o => o.GraphSet)?.GraphSet.settings;
+    check("Format Graph › X Axis sets the labels' angle", xa?.xAngle === "45", JSON.stringify(xa?.xAngle));
+    await p.click('.dlg .dtabs button:text-is("Graph")'); await p.waitForTimeout(100);
     await p.click('.dlg .dtabs button:text-is("Data Sets")'); await p.waitForTimeout(100);
     const heads = await p.$$eval(".setfmt th", hs => hs.map(h => h.textContent));
     check("Data Sets has an Error bars colour", heads.some(h => /Error bars|Colour/.test(h || "")), heads.join("|"));
