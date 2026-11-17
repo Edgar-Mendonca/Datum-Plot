@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.17 — 2026-11-17
+
+Fill patterns.
+
+**Patterns** (Format Graph › Data Sets)
+- Bars, boxes and violins can have a **Pattern** over their fill: diagonal stripes either way, horizontal or vertical stripes, cross-hatching, diagonal cross-hatching, dots, circles or stars, so many groups stay apart even in one colour or in black and white.
+- **Pattern colour**: automatic (a darker shade of the border) or any colour. The legend shows the patterns too.
+
 ## 0.4.16 — 2026-11-17
 
 Box plots and violins for grouped tables, and their rows per graph.
