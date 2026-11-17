@@ -366,9 +366,9 @@ class Titles(unittest.TestCase):
 
     def fig(self, g):
         g = {"column": "bars", "width": 70, "height": 65, **g}
-        with matplotlib.rc_context(graph.rc_for(g)):
+        with matplotlib.rc_context(graph.rc_for(g)):  # drawn inside the graph's settings, as the app does
             fig, ax, *_ = graph.figure(self.T, g)
-        fig.canvas.draw()
+            fig.canvas.draw()
         return fig, ax
 
     def test_long_titles_wrap_inside_the_graph(self):

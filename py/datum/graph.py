@@ -327,7 +327,7 @@ def texts(ax, graph):
     for a in fig.axes:
         ab = a.bbox
         mid = (ab.x0 + ab.x1) / 2
-        room = 2 * min(mid - fb.x0, fb.x1 - mid) * 0.96  # a title is centred over the plot: as wide as fits both ways
+        room = 2 * min(mid - fb.x0, fb.x1 - mid) * 0.92  # a title is centred over the plot: as wide as fits both ways, with a margin
         for t, width in [(a.title, room), (a.xaxis.label, ab.width), (a.yaxis.label, ab.height)] + [(x, room) for x in a.texts if sub and x.get_text() == sub]:
             if t is a.title or t in a.texts:
                 heads.append((t, t.get_text(), room))
@@ -340,11 +340,11 @@ def texts(ax, graph):
         root = fig.get_figure(root=True) if hasattr(fig, "get_figure") else fig
         root.canvas.draw()
         out = [(t, text, room, max(0.0, fb.x0 - t.get_window_extent(r).x0, t.get_window_extent(r).x1 - fb.x1)) for t, text, room in heads if t.get_text()]
-        if not any(o > 1 for *_, o in out):
+        if not any(o > 0 for *_, o in out):
             break
         heads = []
         for t, text, room, o in out:
-            room = room - 2 * o - 4 if o > 1 else room
+            room = room - 2 * o - 8 if o > 0 else room
             t.set_text(text); wrap_to(t, room, r)
             heads.append((t, text, room))
     labels = [t for t in ax.get_xticklabels() if t.get_text()]
