@@ -391,6 +391,30 @@ class Titles(unittest.TestCase):
         self.assertFalse([t for t in ax.texts if t.get_text() == "Sub"], "no subtitle when the title is hidden")
 
 
+class GroupedShapes(unittest.TestCase):
+    """0.4.16 (#60): grouped tables as box plots or violins, and the rows' own order and hidden rows."""
+    T = {"name": "T", "kind": "grouped", "rows": 3, "rowTitles": ["Tissue 1", "Tissue 2", "Tissue 3"],
+         "sets": [{"title": "Low", "entry": "rep", "reps": 3}, {"title": "High", "entry": "rep", "reps": 3}],
+         "cols": [[None] * 3, [1, 2, 3], [1.5, 2.5, 3.5], [1.2, 2.2, 3.2], [4, 5, 6], [4.4, 5.4, 6.4], [4.2, 5.2, 6.2]], "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+    def fig(self, g):
+        with matplotlib.rc_context(graph.rc_for(g)):
+            return graph.figure(self.T, g)
+
+    def test_box_and_violin(self):
+        fig, ax, leg, pts = self.fig({"column": "box", "points": "each"})
+        self.assertEqual(len(pts), 6, "one box per data set in each row")
+        self.assertEqual([t.get_text() for t in leg.get_texts()], ["Low", "High"])
+        self.assertTrue(any(p.__class__.__name__ == "PathPatch" for p in ax.patches), "boxes drawn")
+        fig, ax, leg, pts = self.fig({"column": "violin"})
+        self.assertEqual(len(pts), 6)
+        self.assertTrue(ax.collections, "violins drawn")
+
+    def test_rows_in_their_own_order_and_hidden(self):
+        fig, ax, *_ = self.fig({"column": "bars", "rowOrder": [2, 0, 1], "rowHide": [1]})
+        self.assertEqual([t.get_text() for t in ax.get_xticklabels()], ["Tissue 3", "Tissue 1"])
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

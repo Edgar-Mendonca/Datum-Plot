@@ -133,6 +133,14 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
   const alpha0 = () => (t()?.kind === "grouped" ? 0.85 : ["box", "violin"].includes(s().column) ? 0.3 : 0.35);
   const rows = () => { const n = t()?.sets.length ?? 0, ks = Array.from({ length: n }, (_, k) => k), o = s().order ?? [];
     return ordered() ? ks.sort((a, b) => (o.includes(a) ? o.indexOf(a) : o.length + a) - (o.includes(b) ? o.indexOf(b) : o.length + b)) : ks; };
+  /** 0.4.16 (#60): a grouped table's rows that hold values, in this graph's order. */
+  const rowList = () => {
+    const tb = t(); if (!tb) return [] as number[];
+    const has = (r: number) => tb.cols.some((c, j) => j > 0 && c[r] !== null && c[r] !== undefined);
+    const rs = Array.from({ length: tb.rows }, (_, r) => r).filter(has), o = s().rowOrder ?? [];
+    return rs.sort((a, b) => (o.includes(a) ? o.indexOf(a) : o.length + a) - (o.includes(b) ? o.indexOf(b) : o.length + b));
+  };
+  const moveRow = (r: number, d: number) => { const l = rowList(), i = l.indexOf(r), j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; set(x => { x.rowOrder = l; }); };
   const move = (k: number, d: number) => { const r = rows(), i = r.indexOf(k), j = i + d; if (j < 0 || j >= r.length) return; [r[i], r[j]] = [r[j], r[i]]; set(x => { x.order = r; }); };
   /** 0.3.12: a vertical line at a typed X value or date, with an optional label. */
   const lineAt = async () => {
@@ -164,7 +172,7 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
               <Show when={s().column === "scatter3d"}><span class="muted">tilt</span><input type="number" min="-90" max="90" style={{ width: "60px" }} value={s().elev ?? 28} onChange={e => set(x => { x.elev = +e.currentTarget.value; })} /><span class="muted">turn</span><input type="number" min="-180" max="180" style={{ width: "60px" }} value={s().azim ?? -60} onChange={e => set(x => { x.azim = +e.currentTarget.value; })} /></Show></span></Show>
             <Show when={["xy", "sheet"].includes(t()?.kind ?? "")}><label>Axes</label><Check label="Polar: X is the angle in degrees, Y the radius" value={!!s().polar} set={v => set(x => { x.polar = v; })} /></Show>
             <Show when={!["xy", "multi", "survival", "nested", "sheet", "matrix"].includes(t()?.kind ?? "")}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
-                ? [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"], ["radar", "Radar"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
+                ? [["bars", "Grouped bars"], ["box", "Grouped box and whiskers"], ["violin", "Grouped violins"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"], ["radar", "Radar"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
               <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
             <Show when={t()?.kind === "xy"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
@@ -216,6 +224,15 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
               <Show when={t()?.kind === "xy"}><td><input type="checkbox" checked={!!st(k()).right} onChange={e => setStyle(k(), { right: e.currentTarget.checked })} /></td></Show>
             </tr>; }}</For>
           </tbody></table></div>
+          {/* 0.4.16 (#60): grouped tables: the rows (the groups along X) shown, hidden and ordered on this graph */}
+          <Show when={(t()?.kind === "grouped" || t()?.kind === "contingency") && rowList().length > 1}>
+            <h4>Rows</h4>
+            <table class="tbl setfmt rowsfmt"><thead><tr><th>Row</th><th>Order</th><th>Show</th></tr></thead><tbody>
+              <For each={rowList()}>{(r, i) => <tr><td>{t()!.rowTitles?.[r] || `Row ${r + 1}`}</td>
+                <td class="nowrap"><button class="btn sm" title="Earlier on the graph" disabled={i() === 0} onClick={() => moveRow(r, -1)}>▲</button><button class="btn sm" title="Later on the graph" disabled={i() === rowList().length - 1} onClick={() => moveRow(r, 1)}>▼</button></td>
+                <td><input type="checkbox" checked={!(s().rowHide ?? []).includes(r)} onChange={e => { const on = e.currentTarget.checked; set(x => { const h = new Set(x.rowHide ?? []); if (on) h.delete(r); else h.add(r); x.rowHide = [...h]; }); }} /></td></tr>}</For>
+            </tbody></table>
+          </Show>
           <p class="muted">Order changes this graph only; the table keeps its own. Automatic colours follow the colour scheme (Okabe-Ito by default, readable with colour-blindness); other empty settings follow the data set's position.</p>
         </Show>
         <Show when={tab() === "x"}><AxisPage k="x" /></Show>

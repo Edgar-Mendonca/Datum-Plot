@@ -437,6 +437,9 @@ pub struct GraphSettings {
     /// 0.4.14 (#56): the title is the graph's name (new graphs: on, but hidden until shown), and a smaller subtitle.
     pub title_from_name: bool,
     pub subtitle: String,
+    /// 0.4.16 (#60): grouped graphs: this graph's own order of the rows (row indices; others follow) and rows it hides.
+    pub row_order: Vec<usize>,
+    pub row_hide: Vec<usize>,
     /// The order of the data sets along a column, grouped or pie graph (indices into the table's sets); empty or
     /// missing ones follow in table order. 0.3.15: a graph's own order, the table unchanged (#23).
     pub order: Vec<usize>,
@@ -474,7 +477,7 @@ impl Default for GraphSettings {
     fn default() -> Self {
         Self {
             error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
-            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), set_look: SetLook::default(), x_angle: String::new(), title_size: 0.0, axis_title_size: 0.0, tick_size: 0.0, legend_size: 0.0, title_from_name: false, subtitle: String::new(), order: vec![], colors2: true, colors3: true, colors4: true,
+            bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), set_look: SetLook::default(), x_angle: String::new(), title_size: 0.0, axis_title_size: 0.0, tick_size: 0.0, legend_size: 0.0, title_from_name: false, subtitle: String::new(), row_order: vec![], row_hide: vec![], order: vec![], colors2: true, colors3: true, colors4: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
     }
@@ -756,6 +759,8 @@ impl Project {
                 a.break_step = a.break_step.filter(|v| v.is_finite() && *v > 0.0);
             }
             s.subtitle = s.subtitle.chars().take(300).collect();
+            s.row_order.truncate(100_000);
+            s.row_hide.truncate(100_000);
             if !matches!(s.x_angle.as_str(), "" | "0" | "30" | "45" | "90") {
                 s.x_angle.clear();
             }

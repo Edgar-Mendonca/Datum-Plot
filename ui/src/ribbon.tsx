@@ -145,7 +145,7 @@ const errorMenu = (): Item[] => { const xy = ["xy", "multi", "sheet"].includes(c
   return ERRORS.map(([k, l]) => ({ label: l, on: gs()?.error === k && (!xy || gs()?.points !== "each"), run: () => setGS(s => { s.error = k; if (xy) s.points = "mean"; }) })); };
 const sizeMenu = (): Item[] => SIZES.map(([l, w, h]) => ({ label: l, on: gs()?.width === w && gs()?.height === h, run: () => setGS(s => { s.width = w; s.height = h; }) }));
 const COLUMNS: [string, string][] = [["scatter", "Scatter dot plot (mean ± error)"], ["bars", "Bars (mean ± error)"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after (rows joined)"]];
-const GROUPED: [string, string][] = [["bars", "Grouped bars"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots (mean ± error)"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map of the means"], ["radar", "Radar (the rows are the spokes)"]];
+const GROUPED: [string, string][] = [["bars", "Grouped bars"], ["box", "Grouped box and whiskers"], ["violin", "Grouped violins"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots (mean ± error)"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map of the means"], ["radar", "Radar (the rows are the spokes)"]];
 const PARTS: [string, string][] = [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]];
 /** D19: XY tables can be a waterfall; tables of many variables a scatter, a ternary or a bubble graph. */
 const XYTYPES: [string, string][] = [["scatter", "Points and lines"], ["waterfall", "Waterfall (each curve lifted above the last)"]];

@@ -925,6 +925,40 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("with every data set picked, unticking one symbol's Filled unticks them all", n >= 2 && many && many.length >= n && many.slice(0, n).every(v => v.markerFilled === false), JSON.stringify([n, many?.map(v => v.markerFilled)]));
     await q.close();
   }
+  // 0.4.16 (#60): a grouped table: box and violin in the graph types, and its rows shown, hidden and ordered per graph
+  {
+    const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
+    await q.addInitScript(([f, rd]) => {
+      const p0 = f.state.project, t0 = p0.tables[0];
+      const n = t0.rows;
+      const project = { ...p0, layouts: [], analyses: [],
+        tables: [{ ...t0, id: 80, name: "Tissues", kind: "grouped", rowTitles: Array.from({ length: n }, (_, r) => `Tissue ${r + 1}`) }],
+        graphs: [{ ...p0.graphs[0], id: 81, table: 80, name: "Tissues graph", settings: { ...p0.graphs[0].settings, column: "box", overlays: [] } }] };
+      const st = { ...f.state, project, embedded: "a test" };
+      const m = { state: st, options: { theme: "light", autosave: 0, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, dpi: 300, paper: "A4", dateOrder: "dmy" }, templates: f.templates, recent: [], version: "test", render: rd, render_page: rd };
+      try { localStorage.setItem("guide-hint", "1"); } catch {}
+      window.__calls = [];
+      window.__TAURI__ = { core: { invoke: async (c, a) => { window.__calls.push([c, a]); return c in m ? m[c] : c === "apply" ? st : null; } }, event: { listen: async () => () => {} } };
+    }, [fix, render]);
+    await q.goto(url); await q.waitForTimeout(900);
+    await q.click('.tabs button:text-is("Graph")'); await q.waitForTimeout(150);
+    const fg = await q.$('.ribbon .rb:has-text("Format Graph")');
+    if (fg && !(await fg.isVisible())) await fg.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
+    await q.click('.ribbon .rb:has-text("Format Graph")'); await q.waitForTimeout(250);
+    const types = await q.$$eval(".dlg .fmtpage select >> nth=0 >> option", os => os.map(o => o.textContent)).catch(() => []);
+    check("grouped graphs offer box and whiskers and violins", types.includes("Grouped box and whiskers") && types.includes("Grouped violins"), types.join("|"));
+    const rowsTxt = (await q.textContent(".dlg .rowsfmt").catch(() => "")) || "";
+    check("Format Graph › Data Sets lists the grouped table's rows", rowsTxt.includes("Tissue 1") && rowsTxt.includes("Tissue 2"), rowsTxt.slice(0, 120));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .rowsfmt tbody tr >> nth=0 >> input[type=checkbox]"); await q.waitForTimeout(150);
+    const hid = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings;
+    check("…unticking a row hides it on this graph", JSON.stringify(hid?.rowHide) === "[0]", JSON.stringify(hid?.rowHide));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .rowsfmt tbody tr >> nth=0 >> button:has-text('▼')"); await q.waitForTimeout(150);
+    const ord = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings;
+    check("…and ▼ moves it later", ord?.rowOrder?.[0] === 1 && ord?.rowOrder?.[1] === 0, JSON.stringify(ord?.rowOrder));
+    await q.close();
+  }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.
   await p.keyboard.press("Escape"); await p.click('.tabs button:text-is("Data")'); await reset();
   await p.click('.ribbon .rb:has-text("Digitize Graph")'); await p.waitForSelector(".digipic svg");

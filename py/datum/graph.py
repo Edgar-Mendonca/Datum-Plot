@@ -1109,10 +1109,14 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
     from .groups import cells
     from scipy import stats as sst
     kind, err = graph.get("column") or "bars", graph.get("error", "sd")
-    if kind not in ("bars", "stacked", "percent", "scatter", "lines", "heatmap"):
+    if kind not in ("bars", "stacked", "percent", "scatter", "lines", "heatmap", "box", "violin"):
         kind = "bars"
     each = graph.get("points", "mean") == "each"
     rows, cv = cells(table)
+    # 0.4.16 (#60): this graph's own order of the rows, and rows it hides
+    hide, order = set(graph.get("rowHide") or []), list(graph.get("rowOrder") or [])
+    rows = [x for x in rows if x[0] not in hide]
+    rows.sort(key=lambda x: (order.index(x[0]) if x[0] in order else len(order) + x[0]))
     if kind == "percent":  # stacked to 100 % of each row
         tot = {r: sum(sum(cv.get((k, r), [])) for k in range(len(table["sets"]))) for r, _ in rows}
         cv = {(k, r): [100 * sum(v) / tot[r]] for (k, r), v in cv.items() if tot[r]}
@@ -1146,6 +1150,8 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
     w = 0.8 / n if kind != "stacked" else 0.62
     base = np.zeros(len(rows))
     allv = [0.0]
+    if kind in ("box", "violin"):
+        return grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv, shown, names, labels, w, each)
     for j, k in enumerate(shown):
         st = style_of(graph, k, colors)
         col, mk = st["color"], SYMBOLS.get(st["symbol"], "o") or "o"
@@ -1196,6 +1202,56 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
     if lg.get("show", True) and n > 1:
         leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" or (pct and lg.get("loc", "best") == "best") else ax.legend(loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
     if overlays and points and kind not in ("stacked", "lines"):
+        draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
+    return fig, ax, leg, points
+
+
+def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv, shown, names, labels, w, each):
+    """0.4.16 (#60): a grouped table as box-and-whisker plots or violins: one per data set in each row's group, in the
+    data set's fill and border colours, each value on top when shown; a legend of the data sets."""
+    from matplotlib.patches import Patch
+    points, pos, tops, allv, handles = [], {}, {}, [0.0], []
+    for j, k in enumerate(shown):
+        st = style_of(graph, k, colors)
+        mk = SYMBOLS.get(st["symbol"], "o") or "o"
+        a = 0.3 if st["alpha"] is None else st["alpha"]
+        face, edge = rgba(st["fill"], a), rgba(st["edge"], st["ealpha"])
+        for i, (r, _) in enumerate(rows):
+            v = np.asarray(cv.get((k, r), []), float)
+            if not len(v):
+                continue
+            x = i - 0.4 + w * (j + 0.5)
+            pos[(k, r)], tops[x] = x, float(v.max())
+            sd = float(v.std(ddof=1)) if len(v) > 1 else 0.0
+            points.append([k, float(x), float(np.median(v) if kind == "box" else v.mean()), len(v), sd, sd / math.sqrt(len(v)) if len(v) > 1 else 0.0])
+            allv += list(v)
+            if kind == "box" or len(v) < 3 or np.ptp(v) == 0:
+                ax.boxplot(v, positions=[x], widths=w * 0.7, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+                           boxprops={"facecolor": face, "edgecolor": edge}, medianprops={"color": edge, "linewidth": 1.6},
+                           whiskerprops={"color": edge}, capprops={"color": edge}, flierprops={"markeredgecolor": st["color"], "markersize": 3})
+            else:
+                vp = ax.violinplot(v, [x], widths=w * 0.9, showextrema=False)
+                for body in vp["bodies"]:
+                    body.set_facecolor(face); body.set_edgecolor(edge)
+                q1, med, q3 = np.percentile(v, [25, 50, 75])
+                ax.vlines(x, q1, q3, color=edge, linewidth=3, zorder=2)
+                ax.plot(x, med, "o", color="white", markeredgecolor=edge, markersize=3.5, zorder=3)
+            if each:
+                xs = x + swarm(v, (max(allv) - min(allv) or 1) * 0.02, w * 0.08, w * 0.3)
+                ax.plot(xs, v, linestyle="none", marker=mk, markersize=st["size"] * 0.5, markerfacecolor=rgba(st["color"], 0.9 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
+                        markeredgecolor=rgba(st["medge"] or st["base"], 0.9 if st["mealpha"] is None else st["mealpha"]), markeredgewidth=0.6, zorder=3)
+        handles.append(Patch(facecolor=face, edgecolor=edge, linewidth=1.2, label=names[j]))
+    ax.set_xticks(range(len(rows)), labels)
+    ax.set_xlim(-0.6, len(rows) - 0.4)
+    ax.tick_params(axis="x", length=0)
+    axes(ax, table, graph, [[0, 0, float(min(allv))]], only_y=True)
+    if graph.get("title") and graph.get("showTitle", True):
+        ax.set_title(graph["title"], fontweight="bold", fontsize=size * 1.15)
+    lg, leg = graph.get("legend") or {}, None
+    if lg.get("show", True) and len(shown) > 1:
+        leg = ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.02, 1), frameon=False, borderaxespad=0) if lg.get("loc") == "outside" \
+            else ax.legend(handles=handles, loc=LEGEND.get(lg.get("loc", "best"), "best"), frameon=False)
+    if overlays and points:
         draw_overlays(ax, table, graph, overlays, size, colors, pos, tops)
     return fig, ax, leg, points
 
