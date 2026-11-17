@@ -415,6 +415,26 @@ class GroupedShapes(unittest.TestCase):
         self.assertEqual([t.get_text() for t in ax.get_xticklabels()], ["Tissue 3", "Tissue 1"])
 
 
+class Patterns(unittest.TestCase):
+    """0.4.17 (#59): fill patterns on bars, boxes and violins, in the legend too; their colour."""
+
+    def test_patterns_everywhere(self):
+        T = GroupedShapes.T
+        sets = [{"pattern": "diag", "patternColor": "#ff0000"}, {"pattern": "dots"}]
+        for kind in ("bars", "box", "violin"):
+            g = {"column": kind, "sets": sets}
+            with matplotlib.rc_context(graph.rc_for(g)):
+                fig, ax, leg, _ = graph.figure(T, g)
+            arts = list(ax.patches) + list(ax.collections)
+            hatches = {a.get_hatch() for a in arts if a.get_hatch()}
+            self.assertEqual(hatches, {"///", "..."}, kind)
+            self.assertEqual({h.get_hatch() for h in leg.legend_handles}, {"///", "..."}, f"{kind}: in the legend")
+        red = [a for a in arts if a.get_hatch() == "///"]
+        self.assertEqual(matplotlib.colors.to_hex(red[0].get_hatchcolor()), "#ff0000")
+        st = graph.style_of({"sets": [{"pattern": "nope"}]}, 0)
+        self.assertIsNone(st["hatch"], "unknown patterns draw nothing")
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

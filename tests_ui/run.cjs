@@ -957,6 +957,13 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.click(".dlg .rowsfmt tbody tr >> nth=0 >> button:has-text('▼')"); await q.waitForTimeout(150);
     const ord = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings;
     check("…and ▼ moves it later", ord?.rowOrder?.[0] === 1 && ord?.rowOrder?.[1] === 0, JSON.stringify(ord?.rowOrder));
+    // 0.4.17 (#59): a fill pattern per data set
+    const pats = await q.$$eval(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=0 >> option", os => os.map(o => o.value)).catch(() => []);
+    check("Data Sets offers fill patterns", ["diag", "dots", "xcross"].every(v => pats.includes(v)), pats.join("|"));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.selectOption(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=0", "dots"); await q.waitForTimeout(150);
+    const pt = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets?.[0];
+    check("…and choosing one sets it for the data set", pt?.pattern === "dots", JSON.stringify(pt?.pattern));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

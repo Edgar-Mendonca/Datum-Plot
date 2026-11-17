@@ -601,6 +601,14 @@ fn a_title_from_the_graphs_name() {
 }
 
 #[test]
+fn fill_patterns_are_kept_clean() {
+    // 0.4.17 (#59)
+    let p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"pattern":"diag","patternColor":"#000000"},{"pattern":"<x>"}]}}],"nextId":3}"##).unwrap();
+    let s = &p.graphs[0].settings.sets;
+    assert_eq!((s[0].pattern.as_str(), s[0].pattern_color.as_str(), s[1].pattern.as_str()), ("diag", "#000000", ""));
+}
+
+#[test]
 fn symbol_borders_travel_as_marker_edge() {
     let p = Project::from_json(r##"{"name":"m","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"markerEdge":"#010203"}]}}],"nextId":3}"##).unwrap();
     assert_eq!(p.graphs[0].settings.sets[0].marker_edge, "#010203");

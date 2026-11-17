@@ -11,6 +11,8 @@ import { draws, KINDS } from "./results";
 
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
+/** 0.4.17 (#59): the fill patterns (the engine draws each as a hatch). */
+export const PATTERNS: [string, string][] = [["", "None"], ["diag", "/// Diagonal"], ["rdiag", "\\\\\\ Diagonal"], ["horiz", "≡ Horizontal"], ["vert", "||| Vertical"], ["cross", "+ Cross-hatch"], ["xcross", "× Diagonal cross"], ["dots", "· Dots"], ["circles", "○ Circles"], ["stars", "★ Stars"]];
 export const FONTS = ["Arial", "Helvetica", "Calibri", "Segoe UI", "Verdana", "Times New Roman", "Georgia", "Cambria"];
 export const MATRIX: [string, string][] = [["contour", "Contour map"], ["heatmap", "Heat map"], ["surface", "3D surface"], ["wireframe", "3D wireframe"]];
 export const ERRORS: [string, string][] = [["sd", "Mean ± SD"], ["sem", "Mean ± SEM"], ["ci", "Mean ± 95% CI"], ["range", "Mean and range"], ["median_iqr", "Median and interquartile range"], ["median_range", "Median and range"], ["median_ci", "Median ± 95% CI"], ["none", "Mean only"]];
@@ -187,15 +189,15 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
           </div>
           {/* 0.3.21 (#38): bars, boxes and violins first, then the symbols; every colour opens a pop-up with the scheme's
               colours, your own colour and Automatic; fills show and set their strength. */}
-          <p class="inline"><button class="btn sm" title="Every colour back to the colour scheme" onClick={() => set(x => { x.sets = x.sets.map(v => ({ ...v, color: "", fill: "", edge: "", markerEdge: "", errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null })); x.setLook = { ...(x.setLook ?? {}), errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null }; })}>Reset all colours</button>
+          <p class="inline"><button class="btn sm" title="Every colour back to the colour scheme" onClick={() => set(x => { x.sets = x.sets.map(v => ({ ...v, color: "", fill: "", edge: "", markerEdge: "", errColor: "", patternColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null })); x.setLook = { ...(x.setLook ?? {}), errColor: "", alpha: null, edgeAlpha: null, markerAlpha: null, markerEdgeAlpha: null }; })}>Reset all colours</button>
             <span class="muted">A colour marked A is automatic: it follows the colour scheme.</span></p>
           <Show when={picked().length > 1}><p class="pickhint"><b>{picked().length} data sets picked</b>: a change to one of them applies to all of them. <button class="btn sm" onClick={() => setPicked([])}>Unpick</button></p></Show>
           <div class="setwrap"><table class="tbl setfmt"><thead>
-            <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={3} class="gs">{t()?.kind === "grouped" ? "Bars" : "Bars, boxes and violins"}</th><th colSpan={5} class="gs">Symbols</th><th class="gs">Error bars</th></tr></Show>
+            <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={5} class="gs">Bars, boxes and violins</th><th colSpan={5} class="gs">Symbols</th><th class="gs">Error bars</th></tr></Show>
             <tr><th class="pickrow" title="Pick every data set (click again to pick none)" onClick={() => setPicked(picked().length === rows().length ? [] : [...rows()])}>All</th><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th>
             <Show when={bars()} fallback={<><th>Symbol</th><th>Size</th><th title="The symbols and the line">Colour</th><th title="The symbols' outline">Symbol border</th><th title="Filled symbols (or hollow)">Filled</th>
               <Show when={lined()}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show><th title="The error bars' colour">Error bars</th></>}>
-              <th class="gs" title="Filled bars, or outlines only">Filled</th><th>Fill</th><th>Border</th><th class="gs" title="Filled symbols, or hollow">Filled</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th><th class="gs" title="The error bars' colour">Colour</th></Show>
+              <th class="gs" title="Filled bars, or outlines only">Filled</th><th>Fill</th><th>Border</th><th title="A fill pattern: stripes, cross-hatching, dots…">Pattern</th><th title="The pattern's colour (automatic: a darker shade of the border)">Pattern colour</th><th class="gs" title="Filled symbols, or hollow">Filled</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th><th class="gs" title="The error bars' colour">Colour</th></Show>
             <Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
             <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()), picked: picked().includes(k()) }}>
               <td class="pickrow" title="Click to pick this data set; Ctrl+click or Shift+click to pick several, then any change applies to all of them" onClick={e => pick(e, k())}><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
@@ -214,6 +216,9 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
                 <td class="gs"><input type="checkbox" checked={st(k()).filled} onChange={e => setStyle(k(), { filled: e.currentTarget.checked })} /></td>
                 <td><Swatch title="Fill" value={st(k()).fill ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { fill: c })} alpha={st(k()).alpha ?? alpha0()} setAlpha={a => setStyle(k(), { alpha: a })} /></td>
                 <td><Swatch title="Border" value={st(k()).edge ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { edge: c })} alpha={st(k()).edgeAlpha ?? 1} setAlpha={a => setStyle(k(), { edgeAlpha: a })} /></td>
+                {/* 0.4.17 (#59): fill patterns */}
+                <td><Pick value={st(k()).pattern ?? ""} set={v => setStyle(k(), { pattern: v })} options={PATTERNS} /></td>
+                <td><Swatch title="Pattern colour" value={st(k()).patternColor ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { patternColor: c })} /></td>
                 <td class="gs"><input type="checkbox" title="Filled symbols" checked={st(k()).markerFilled !== false} onChange={e => setStyle(k(), { markerFilled: e.currentTarget.checked })} /></td>
                 <td><Pick value={st(k()).symbol || SYMBOLS[k() % 8][0]} set={v => setStyle(k(), { symbol: v })} options={SYMBOLS} /></td>
                 <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>

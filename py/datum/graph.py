@@ -69,7 +69,27 @@ def style_of(graph, k, colors=OKABE_ITO):
             # and of the symbols' fill and border, the error bars' colour, and the scheme's colour (an automatic symbol
             # border on those graphs follows it, not the symbol's fill).
             "mfilled": s.get("markerFilled") is not False, "ealpha": (s.get("edgeAlpha") if isinstance(s.get("edgeAlpha"), (int, float)) else None), "malpha": (s.get("markerAlpha") if isinstance(s.get("markerAlpha"), (int, float)) else None),
-            "mealpha": (s.get("markerEdgeAlpha") if isinstance(s.get("markerEdgeAlpha"), (int, float)) else None), "err": s.get("errColor") or None, "base": colors[k % len(colors)]}
+            "mealpha": (s.get("markerEdgeAlpha") if isinstance(s.get("markerEdgeAlpha"), (int, float)) else None), "err": s.get("errColor") or None, "base": colors[k % len(colors)],
+            # 0.4.17 (#59): a fill pattern (a hatch) and its colour (the border's unless set)
+            "hatch": HATCH.get(s.get("pattern") or ""), "hcol": s.get("patternColor") or darker(s.get("edge") or colors[k % len(colors)])}
+
+
+def darker(c, f=0.6):
+    """A darker shade of a colour: a pattern's default colour, so it shows over a fill of the same colour."""
+    from matplotlib.colors import to_rgb
+    return tuple(x * f for x in to_rgb(c))
+
+
+HATCH = {"diag": "///", "rdiag": "\\\\\\", "horiz": "---", "vert": "|||", "cross": "+++", "xcross": "xxx", "dots": "...", "circles": "ooo", "stars": "**"}
+
+
+def hatched(artist, st):
+    """0.4.17 (#59): put a data set's fill pattern on a bar, box, violin or legend patch."""
+    if st.get("hatch"):
+        artist.set_hatch(st["hatch"])
+        artist.set_hatchcolor(st["hcol"])
+        artist.set_hatch_linewidth(0.8)
+    return artist
 
 
 def rgba(c, a=None):
@@ -808,17 +828,19 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
         yerr = [[0 if graph.get("errorDir") == "up" else lo], [0 if graph.get("errorDir") == "down" else hi]]
         top = max(m + yerr[1][0], float(v.max()) if v is not None else m)
         if kind == "bars":
-            ax.bar(i, m, width=0.62, color=rgba(st["fill"], 0.35 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor="none", linewidth=0, zorder=1)
+            for bar in ax.bar(i, m, width=0.62, color=rgba(st["fill"], 0.35 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor="none", linewidth=0, zorder=1):
+                hatched(bar, st)
             ax.bar(i, m, width=0.62, color="none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2, zorder=1.1)
         elif kind == "box" and v is not None and len(v) > 1:
             b = ax.boxplot(v, positions=[i], widths=0.5, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
                            boxprops={"facecolor": rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"]), "edgecolor": rgba(st["edge"], st["ealpha"])},
                            medianprops={"color": rgba(st["edge"], st["ealpha"]), "linewidth": 1.6}, whiskerprops={"color": rgba(st["edge"], st["ealpha"])}, capprops={"color": rgba(st["edge"], st["ealpha"])}, flierprops={"markeredgecolor": col})
-            del b
+            for box in b["boxes"]:
+                hatched(box, st)
         elif kind == "violin" and v is not None and len(v) > 2 and np.ptp(v) > 0:
             vp = ax.violinplot(v, [i], widths=0.75, showextrema=False)
             for body in vp["bodies"]:
-                body.set_facecolor(rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"])); body.set_edgecolor(rgba(st["edge"], st["ealpha"]))
+                body.set_facecolor(rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"])); body.set_edgecolor(rgba(st["edge"], st["ealpha"])); hatched(body, st)
             q1, med, q3 = np.percentile(v, [25, 50, 75])
             ax.vlines(i, q1, q3, color=rgba(st["edge"], st["ealpha"]), linewidth=3, zorder=2)
             ax.plot(i, med, "o", color="white", markeredgecolor=rgba(st["edge"], st["ealpha"]), markersize=4, zorder=3)
@@ -868,7 +890,7 @@ def group_legend(ax, table, graph, ks, colors, kind):
         st = style_of(graph, k, colors)
         if kind in ("bars", "box", "violin"):
             a = st["alpha"] if st["alpha"] is not None else 0.35 if kind == "bars" else 0.3
-            handles.append(Patch(facecolor=rgba(st["fill"], a) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2))
+            handles.append(hatched(Patch(facecolor=rgba(st["fill"], a) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2), st))
         else:
             handles.append(Line2D([], [], linestyle="none", marker=SYMBOLS.get(st["symbol"], "o") or "o", markersize=st["size"], color=st["color"],
                                   markerfacecolor=rgba(st["color"], st["malpha"]) if st["mfilled"] else "white", markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"])))
@@ -1181,7 +1203,8 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
         d = graph.get("errorDir", "both")
         yerr = [[0 if d == "up" else e[0] for e in es], [0 if d == "down" else e[1] for e in es]] if err != "none" else None
         if kind == "bars":
-            ax.bar(xs, ms_, width=w * 0.92, color=rgba(st["fill"], 0.85 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.0, label=lab, zorder=1)
+            for bar in ax.bar(xs, ms_, width=w * 0.92, color=rgba(st["fill"], 0.85 if st["alpha"] is None else st["alpha"]) if st["filled"] else "none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.0, label=lab, zorder=1):
+                hatched(bar, st)
             if yerr:
                 ax.errorbar(xs, ms_, yerr=yerr, fmt="none", ecolor=st["err"] or "#222222", elinewidth=1.0, capsize=graph.get("cap", 3), zorder=2)
         elif kind == "stacked":
@@ -1226,13 +1249,15 @@ def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv
             points.append([k, float(x), float(np.median(v) if kind == "box" else v.mean()), len(v), sd, sd / math.sqrt(len(v)) if len(v) > 1 else 0.0])
             allv += list(v)
             if kind == "box" or len(v) < 3 or np.ptp(v) == 0:
-                ax.boxplot(v, positions=[x], widths=w * 0.7, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+                bx = ax.boxplot(v, positions=[x], widths=w * 0.7, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
                            boxprops={"facecolor": face, "edgecolor": edge}, medianprops={"color": edge, "linewidth": 1.6},
                            whiskerprops={"color": edge}, capprops={"color": edge}, flierprops={"markeredgecolor": st["color"], "markersize": 3})
+                for box in bx["boxes"]:
+                    hatched(box, st)
             else:
                 vp = ax.violinplot(v, [x], widths=w * 0.9, showextrema=False)
                 for body in vp["bodies"]:
-                    body.set_facecolor(face); body.set_edgecolor(edge)
+                    body.set_facecolor(face); body.set_edgecolor(edge); hatched(body, st)
                 q1, med, q3 = np.percentile(v, [25, 50, 75])
                 ax.vlines(x, q1, q3, color=edge, linewidth=3, zorder=2)
                 ax.plot(x, med, "o", color="white", markeredgecolor=edge, markersize=3.5, zorder=3)
@@ -1240,7 +1265,7 @@ def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv
                 xs = x + swarm(v, (max(allv) - min(allv) or 1) * 0.02, w * 0.08, w * 0.3)
                 ax.plot(xs, v, linestyle="none", marker=mk, markersize=st["size"] * 0.5, markerfacecolor=rgba(st["color"], 0.9 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
                         markeredgecolor=rgba(st["medge"] or st["base"], 0.9 if st["mealpha"] is None else st["mealpha"]), markeredgewidth=0.6, zorder=3)
-        handles.append(Patch(facecolor=face, edgecolor=edge, linewidth=1.2, label=names[j]))
+        handles.append(hatched(Patch(facecolor=face, edgecolor=edge, linewidth=1.2, label=names[j]), st))
     ax.set_xticks(range(len(rows)), labels)
     ax.set_xlim(-0.6, len(rows) - 0.4)
     ax.tick_params(axis="x", length=0)

@@ -612,11 +612,19 @@ pub struct SetStyle {
     pub marker_edge_alpha: Option<f64>,
     #[serde(rename = "errColor")]
     pub err_color: String,
+    /// 0.4.17 (#59): a fill pattern for bars, boxes and violins ("" none, or one of `PATTERNS`) and its colour
+    /// (empty = the border's).
+    pub pattern: String,
+    #[serde(rename = "patternColor")]
+    pub pattern_color: String,
 }
+
+/// 0.4.17 (#59): the fill patterns offered (the engine draws each as a hatch).
+pub const PATTERNS: [&str; 9] = ["diag", "rdiag", "horiz", "vert", "cross", "xcross", "dots", "circles", "stars"];
 
 impl Default for SetStyle {
     fn default() -> Self {
-        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None, marker_filled: None, edge_alpha: None, marker_alpha: None, marker_edge_alpha: None, err_color: String::new() }
+        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None, marker_filled: None, edge_alpha: None, marker_alpha: None, marker_edge_alpha: None, err_color: String::new(), pattern: String::new(), pattern_color: String::new() }
     }
 }
 
@@ -776,6 +784,10 @@ impl Project {
             }
             for st in &mut s.sets {
                 (st.size, st.width) = (fit(st.size, 0.0, 60.0, 6.0), fit(st.width, 0.0, 20.0, 1.0));
+                if !st.pattern.is_empty() && !PATTERNS.contains(&st.pattern.as_str()) {
+                    st.pattern.clear();
+                }
+                st.pattern_color.truncate(32);
                 for a in [&mut st.alpha, &mut st.edge_alpha, &mut st.marker_alpha, &mut st.marker_edge_alpha] {
                     *a = a.filter(|a| a.is_finite()).map(|a| a.clamp(0.0, 1.0));
                 }
