@@ -1,7 +1,7 @@
 // The feature catalogue (docs/PLAN-0.2.md §4, in the release order agreed in session 6). Every
 // planned command in the window points at one of these IDs, so the whole app is laid out now and
 // fills in release by release. Keep this list and the plan in step.
-export const VERSION_NOW = "0.4.18";
+export const VERSION_NOW = "0.4.19";
 export const RELEASES: Record<string, string> = {
   "0.1": "The application, XY tables and graphs", "0.1.1": "Fixes, one installer, import and the full layout", "0.2.0": "Results, statistics, regression and curve fitting", "0.2.1": "? help beside every tool",
   "0.2.2": "Compare groups, materials analyses, data tools, graph styles, export", "0.2.3": "Grouped tables and two-way ANOVA", "0.2.4": "Contingency tables and tests", "0.2.5": "Parts of whole, pie and donut",
@@ -157,7 +157,7 @@ export const FEATURES: Feature[] = [
   ["E10", "Enter keeps Format Graph open", "0.4.18", "In Format Graph and the other windows that apply changes as you go, Enter confirms the value typed and keeps the window open.", ""],
   ["D32", "Pattern strength and thickness", "0.4.18", "A pattern's own strength and line thickness, so it shows even in the colour of its fill.", ""],
   ["A25", "Families and names", "0.4.18", "Show Only This Family from a graph or a result too; renaming a table renames its graphs and results that carry its name.", ""],
-  ["C12", "Brackets across rows", "0.4.19", "Two-way ANOVA compares the data sets within each row, the rows within each data set, or both, with brackets between any two boxes or bars, above or below the data.", ""],
+  ["C12", "Brackets across rows", "0.4.19", "Two-way ANOVA compares the data sets within each row, the rows within each data set, or both, with brackets between any two boxes or bars, stacked above the data.", ""],
   ["E11", "Hover a replicate", "0.4.19", "Hovering one point shows its value and its place in the table (data set, row, replicate).", ""],
   ["B40", "The Comparisons page", "0.4.20", "What to compare, shown on a live diagram of the table (within rows, within data sets, every cell, main effects), and how many: every pair, against a control, or chosen pairs; for one- and two-way ANOVA.", ""],
   ["J10", "The Analyze Data window", "0.4.21", "One window: search, analyses grouped by table type with the ones that fit first, the data sets to tick, and an explanation with a picture; the options in tabs.", ""],

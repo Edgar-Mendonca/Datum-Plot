@@ -158,7 +158,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 ### What Datum Plot can analyse
 
 - **Statistics:** descriptive statistics, normality tests, outliers, frequency distributions, fractions of a total, bootstrap confidence intervals of the mean, median or SD.
-- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power, three-way ANOVA, ANCOVA (groups compared allowing for a covariate). The t-tests, one-way ANOVA and correlation also give a **Bayes factor** (BF₁₀): how many times more likely the data are with a difference than without one; unlike a P value it can also show evidence for no difference.
+- **Compare groups:** t-tests (unpaired, Welch, paired), nonparametric tests, one-way and two-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, multiple t-tests with the false discovery rate and volcano plots, nested t-tests and ANOVA, effect sizes, power, three-way ANOVA, ANCOVA (groups compared allowing for a covariate). The t-tests, one-way ANOVA and correlation also give a **Bayes factor** (BF₁₀): how many times more likely the data are with a difference than without one; unlike a P value it can also show evidence for no difference. In two-way ANOVA, **Compare** can test **the data sets within each row**, **the rows within each data set** (across rows), or both; their brackets are drawn on the graph.
 - **Relationships:** correlation, Bland-Altman method comparison, ROC curves, contingency tables (chi-square, Fisher, relative risk, odds ratio), agreement of paired ratings (Cohen's kappa, McNemar's and Bowker's tests).
 - **Regression and fitting:** linear regression, curve fitting from a model library or your own equation, **IC50 / EC50** (dose-response curves with each IC50 or EC50, its 95% CI, the Hill slope and pIC50; normalising to 0–100 %; whether the compounds' IC50s differ, and by how much), global fits and model comparison, interpolation, area under the curve, smoothing, multiple, logistic and Poisson regression, principal components and clustering, surface fits, smoothing splines.
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
@@ -202,7 +202,7 @@ Your own colours go in the last row (#hex, separated by commas). In **Format Gra
 
 ### Working on the graph
 
-- Hover a point to see its values.
+- Hover a point to see its values: on a mean, the mean, n, SD and SEM; on a single value (when the graph shows each value), that value with its row and replicate in the table.
 - Drag a note to move it; double-click it to edit.
 - Right-click a point to exclude it.
 - **Zoom to a Box**, **Pan** and **Statistics of a Region** are in the graph's right-click menu; [[Ctrl]] and the mouse wheel zoom the view.

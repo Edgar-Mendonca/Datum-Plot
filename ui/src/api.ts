@@ -45,6 +45,7 @@ export interface Out { project: Project; path: string | null; dirty: boolean; un
 export interface Render {
   svg: string; w: number; h: number; plot: [number, number, number, number]; all: [number, number, number, number]; legend: [number, number, number, number] | null;
   xlim: [number, number]; ylim: [number, number]; xlog: boolean; ylog: boolean; /** Each data set's colour as drawn. */ colors?: string[]; points: ([number, number, number, number, number, number, number?] | null)[];
+  /** 0.4.19 (#65): each value drawn as its own point: [set, x, y, row, column] (column null when unknown). */ dots?: [number, number, number, number | null, number | null][];
 }
 /** 0.4.9 (#46): a style's look for all data sets: used where a data set has no value of its own. */
 export type SetLook = { errColor?: string; alpha?: number | null; edgeAlpha?: number | null; markerAlpha?: number | null; markerEdgeAlpha?: number | null; markerFilled?: boolean | null };

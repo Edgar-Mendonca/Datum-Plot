@@ -229,25 +229,32 @@ def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs):
     row = lambda a, s: dmatrix(design, pd.DataFrame({"A": [a], "B": [s]}), return_type="dataframe").to_numpy()[0]
     dfw = {k: d2 for k, _, _, d2, _, w_ in tests if w_}
     dfb = {k: d2 for k, _, _, d2, _, w_ in tests if not w_}
-    comps = []
-    if within == "rows":
-        for r in rlab:
-            for i, j in combinations(range(len(slab)), 2):
-                comps.append((f"{r}: {slab[i]} vs {slab[j]}", r, slab[i], r, slab[j], ks[i], ks[j], rix[rlab.index(r)], "B"))
+    from .groups import families, FAMILY
+    brackets = []
+    for fam in families(within):  # 0.4.19 (#61): rows, data sets or both, each family corrected on its own
+        brackets += family(fam, b, V, row, rm, ks, rlab, slab, rix, dfw, dfb, post, tabs)
+    return brackets
+
+
+def family(fam, b, V, row, rm, ks, rlab, slab, rix, dfw, dfb, post, tabs):
+    """One family of comparisons of cell means from the mixed model, with its table; returns its brackets."""
+    from .groups import FAMILY
+    if fam == "rows":
+        comps = [(f"{r}: {slab[i]} vs {slab[j]}", r, slab[i], r, slab[j], [ks[i], ks[j], None, rix[rlab.index(r)]], "B")
+                 for r in rlab for i, j in combinations(range(len(slab)), 2)]
     else:
-        for s in slab:
-            for i, j in combinations(range(len(rlab)), 2):
-                comps.append((f"{s}: {rlab[i]} vs {rlab[j]}", rlab[i], s, rlab[j], s, None, None, None, "A"))
+        comps = [(f"{s}: {rlab[i]} vs {rlab[j]}", rlab[i], s, rlab[j], s, [ks[si], ks[si], None, rix[i], rix[j]], "A")
+                 for si, s in enumerate(slab) for i, j in combinations(range(len(rlab)), 2)]
     out, raw = [], []
     for c in comps:
         L = row(c[3], c[4]) - row(c[1], c[2])
         d, se = float(L @ b), float(math.sqrt(max(L @ V @ L, 0)))
-        rep = c[8] in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
-        ddf = (dfw.get(c[8]) if rep else dfb.get(c[8])) or min(list(dfw.values()) + list(dfb.values()))
+        rep = c[6] in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
+        ddf = (dfw.get(c[6]) if rep else dfb.get(c[6])) or min(list(dfw.values()) + list(dfb.values()))
         raw.append(2 * float(st.t.sf(abs(d / se), ddf)) if se > 0 else float("nan"))
         out.append((c, d, se, ddf))
     adj = adjust(raw, post)
     q = 1 - 0.95 ** (1 / len(out)) if post in ("sidak", "holm") else 0.05 / len(out) if post == "bonferroni" else 0.05
-    tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {'within each row' if within == 'rows' else 'within each data set'}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
+    tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {FAMILY[fam]}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
                  "rows": [[c[0], g(d), ci_text(d - st.t.ppf(1 - q / 2, ddf) * se, d + st.t.ppf(1 - q / 2, ddf) * se), pv(p), stars(p)] for (c, d, se, ddf), p in zip(out, adj)]})
-    return [[c[5], c[6], float(p), c[7]] for (c, d, se, ddf), p in zip(out, adj) if c[5] is not None]
+    return [[*c[5][:2], float(p), *c[5][3:]] for (c, d, se, ddf), p in zip(out, adj)]

@@ -472,6 +472,14 @@ def anova(table, ks, o):
 POSTNAME = {"tukey": "Tukey's", "dunnett": "Dunnett's (each against the first group)", "bonferroni": "Bonferroni", "sidak": "Šidák", "holm": "Holm-Šidák", "lsd": "Fisher's LSD (unadjusted)"}
 
 
+FAMILY = {"rows": "within each row", "sets": "within each data set"}
+
+
+def families(compare):
+    """0.4.19 (#61): the families of two-way comparisons asked for ("rows", "sets" or "both")."""
+    return {"rows": ["rows"], "sets": ["sets"], "both": ["rows", "sets"]}.get(compare, ["rows"])
+
+
 def posthoc(table, ks, sm_, post, mse, dfe, kind):
     """Multiple comparisons after ANOVA: [(i, j, difference, CI text, adjusted P)] and a title."""
     kk = len(ks)
@@ -665,24 +673,23 @@ def twoway(table, ks, o):
         sw = st.shapiro(m.resid)
         checks.append((sw.pvalue > alpha, f"The residuals {'look' if sw.pvalue > alpha else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)})."))
     if post != "none":
-        comps = []
-        if within == "rows":
-            for r, lab in rows:
-                for i, j in combinations(range(len(ks)), 2):
-                    a_, b_ = cv[(ks[i], r)], cv[(ks[j], r)]
-                    comps.append((f"{lab}: {name_of(table, ks[i])} vs {name_of(table, ks[j])}", ks[i], ks[j], r, np.mean(b_) - np.mean(a_), math.sqrt(res_ms * (1 / len(a_) + 1 / len(b_)))))
-        else:
-            for k in ks:
-                for (ri, li), (rj, lj) in combinations(rows, 2):
-                    a_, b_ = cv[(k, ri)], cv[(k, rj)]
-                    comps.append((f"{name_of(table, k)}: {li} vs {lj}", None, None, None, np.mean(b_) - np.mean(a_), math.sqrt(res_ms * (1 / len(a_) + 1 / len(b_)))))
-        raw = [2 * float(st.t.sf(abs(d / se), dfe)) if se > 0 else float("nan") for *_, d, se in comps]
-        adj = adjust(raw, post)
-        q = 1 - 0.95 ** (1 / len(comps)) if post in ("sidak", "holm") else 0.05 / len(comps) if post == "bonferroni" else 0.05
-        tt = st.t.ppf(1 - q / 2, dfe)
-        tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {'within each row' if within == 'rows' else 'within each data set'}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
-                     "rows": [[c[0], g(c[4]), ci_text(c[4] - tt * c[5], c[4] + tt * c[5]), pv(p), stars(p)] for c, p in zip(comps, adj)]})
-        brackets = [[c[1], c[2], float(p), c[3]] for c, p in zip(comps, adj) if c[1] is not None]
+        # 0.4.19 (#61): the data sets within each row, the rows within each data set, or both; each family is
+        # corrected on its own. A bracket is [set, set, P, row] within a row, [set, set, P, row, row] across rows.
+        diff = lambda a_, b_: (np.mean(b_) - np.mean(a_), math.sqrt(res_ms * (1 / len(a_) + 1 / len(b_))))
+        for fam in families(within):
+            if fam == "rows":
+                comps = [(f"{lab}: {name_of(table, ks[i])} vs {name_of(table, ks[j])}", [ks[i], ks[j], None, r], *diff(cv[(ks[i], r)], cv[(ks[j], r)]))
+                         for r, lab in rows for i, j in combinations(range(len(ks)), 2)]
+            else:
+                comps = [(f"{name_of(table, k)}: {li} vs {lj}", [k, k, None, ri, rj], *diff(cv[(k, ri)], cv[(k, rj)]))
+                         for k in ks for (ri, li), (rj, lj) in combinations(rows, 2)]
+            raw = [2 * float(st.t.sf(abs(d / se), dfe)) if se > 0 else float("nan") for *_, d, se in comps]
+            adj = adjust(raw, post)
+            q = 1 - 0.95 ** (1 / len(comps)) if post in ("sidak", "holm") else 0.05 / len(comps) if post == "bonferroni" else 0.05
+            tt = st.t.ppf(1 - q / 2, dfe)
+            tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {FAMILY[fam]}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
+                         "rows": [[c[0], g(c[2]), ci_text(c[2] - tt * c[3], c[2] + tt * c[3]), pv(p), stars(p)] for c, p in zip(comps, adj)]})
+            brackets += [[*c[1][:2], float(p), *c[1][3:]] for c, p in zip(comps, adj)]
     return result("Two-way ANOVA", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
                   methods=f"Data were analysed by two-way ANOVA ({rowname} × {colname}{'' if inter else ', main effects only'}; Type III sums of squares){'' if post == 'none' else ' with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (statsmodels).",
                   legend="Bars show mean and SD; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",

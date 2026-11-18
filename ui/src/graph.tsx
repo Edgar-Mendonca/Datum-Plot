@@ -57,7 +57,15 @@ export const GraphView = (p: { g: Graph }) => {
     if (!inside(px, py, R.plot) || gs.polar || (tb?.kind === "matrix" && ["surface", "wireframe"].includes(gs.column))) { setCross(null); setTip(null); return; }
     setCross([px, py]);
     const near = R.points.filter(Boolean).map(q => { const [qx, qy] = toPt(q![1], q![6] ?? q![2]); return { q: q!, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
-    if (near && near.d * k() < 12) {
+    // 0.4.19 (#65): a single value under the mouse (closer than the mean) says which value it is and where it sits.
+    const dot = (R.dots ?? []).map(q => { const [qx, qy] = toPt(q[1], q[2]); return { q, d: Math.hypot(qx - px, qy - py) }; }).sort((a, b) => a.d - b.d)[0];
+    if (dot && dot.d * k() < 8 && !(near && near.d < dot.d && near.d * k() < 12)) {
+      const [s, x, y, r, c] = dot.q, name = tb?.sets[s]?.title || `Data set ${String.fromCharCode(65 + s)}`;
+      const row = r === null ? "" : tb?.kind === "grouped" || tb?.kind === "contingency" ? (tb.rowTitles?.[r] || `Row ${r + 1}`) : `row ${r + 1}`;
+      const rep = c !== null && tb && (tb.kind === "grouped" || tb.kind === "xy") && spans(tb)[s]?.[1] > 1 ? `replicate ${c - spans(tb)[s][0] + 1}` : "";
+      const where = [tb?.kind === "xy" || tb?.kind === "multi" ? `X ${xt(x)}` : "", row, rep].filter(Boolean).join(" · ");
+      setTip({ x: e.clientX, y: e.clientY, text: [name, `value ${num(+y.toPrecision(6))}`, where ? `${where[0].toUpperCase()}${where.slice(1)} in ${tb?.name ?? "the table"}` : ""].filter(Boolean) });
+    } else if (near && near.d * k() < 12) {
       const [s, x, y, n, sd, sem] = near.q;
       setTip({ x: e.clientX, y: e.clientY, text: [tb?.sets[s]?.title || `Data set ${s + 1}`, tb?.kind === "survival" ? `X ${xt(x)} · ${num(+y.toPrecision(4))}% survival` : tb?.kind === "column" || tb?.kind === "nested" ? `mean ${num(+y.toPrecision(6))}` : `X ${xt(x)} · mean ${num(+y.toPrecision(6))}`, tb?.kind === "survival" ? `${n} at risk` : n > 1 ? `n ${n} · SD ${num(+sd.toPrecision(4))} · SEM ${num(+sem.toPrecision(4))}` : `n ${n}`] });
     } else { const [x, y] = toData(px, py); setTip({ x: e.clientX, y: e.clientY, text: [tb?.kind === "column" || tb?.kind === "nested" ? `Y ${num(+y.toPrecision(4))}` : `X ${tb?.xFormat ? xt(x) : num(+x.toPrecision(4))}   Y ${num(+y.toPrecision(4))}`] }); }

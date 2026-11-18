@@ -201,6 +201,36 @@ class TwoWay(unittest.TestCase):
         for kind in ["bars", "stacked", "scatter", "lines", "heatmap"]:
             self.assertIn("<svg", graph.render(t, {"column": kind, "points": "each"}, [{"kind": "twoway", "options": {"brackets": "all"}}])["svg"])
 
+    def test_rows_within_each_data_set_and_both(self):
+        """0.4.19 (#61): the rows compared within each data set (across rows), alone or with the data sets within each
+        row; each family corrected on its own; brackets across rows. Checked by hand: pooled t with the residual
+        mean square (48 df) and Šidák over the family's comparisons."""
+        from scipy import stats as st
+        A_ = [[26, 30, 54, 25, 70, 52, 51, 26, 67], [18, 21, 29, 17, 12, 18, 35, 30, 36], [36, 21, 24, 18, 10, 43, 28, 15, 26]]
+        B_ = [[27, 14, 29, 19, 29, 31, 41, 20, 44], [42, 26, 19, 16, 39, 28, 21, 39, 29], [20, 21, 24, 17, 13, 15, 15, 16, 28]]
+        cols = [[None] * 3] + [[A_[r][j] for r in range(3)] for j in range(9)] + [[B_[r][j] for r in range(3)] for j in range(9)]
+        t = {"kind": "grouped", "rows": 3, "rowTitles": ["L", "M", "H"], "sets": [{"title": "A", "entry": "rep", "reps": 9}, {"title": "B", "entry": "rep", "reps": 9}], "cols": cols, "excluded": []}
+        r = A.run("twoway", t, [], {"compare": "sets", "posthoc": "sidak"})
+        self.assertEqual(len(r["brackets"]), 6)
+        self.assertTrue(all(len(b) == 5 and b[0] == b[1] for b in r["brackets"]), r["brackets"])
+        d = np.mean(A_[1]) - np.mean(A_[0])
+        p = 2 * st.t.sf(abs(d) / np.sqrt(5745.1111 / 48 * 2 / 9), 48)
+        sid = 1 - (1 - p) ** 6
+        ab = [b for b in r["brackets"] if b[0] == 0 and {b[3], b[4]} == {0, 1}][0]
+        self.assertAlmostEqual(ab[2], sid, places=6)
+        both = A.run("twoway", t, [], {"compare": "both", "brackets": "all"})
+        titles = [x["title"] for x in both["tabs"][0]["tables"]]
+        self.assertTrue(any("within each row" in x for x in titles) and any("within each data set" in x for x in titles), titles)
+        self.assertEqual(len(both["brackets"]), 3 + 6)
+        # Drawn: each across-row bracket joins the same data set in two rows (its ends a whole group apart).
+        import matplotlib
+        g = {"column": "box"}
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, _, _ = graph.figure(t, g, [{"kind": "twoway", "options": {"compare": "sets", "brackets": "all"}}])
+        spans = sorted(round(max(x) - min(x), 3) for x in (l.get_xdata() for l in ax.lines) if len(x) == 4 and min(x) != max(x))
+        self.assertEqual(len(spans), 6, spans)
+        self.assertGreater(spans[0], 0.9, "each joins boxes in different rows")
+
 
 class Contingency(unittest.TestCase):
     @staticmethod

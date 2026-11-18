@@ -122,7 +122,15 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Repeated measures</label><Pick value={o().rm ?? "none"} set={v => put("rm", v)} options={[["none", "No: every value is a different subject"], ["rows", "Each sub-column is one subject, measured in every row"], ["sets", "Each row's sub-column is one subject, measured in every data set"], ["both", "Each sub-column is one subject, measured in every row and data set"]]} />
             <Show when={(o().rm ?? "none") === "none"}><label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} /></Show>
             <Show when={(o().rm ?? "none") !== "none"}><label>Sphericity</label><Check label="Geisser-Greenhouse correction (missing values: a mixed-effects model is used instead)" value={o().gg !== false} set={v => put("gg", v)} /></Show>
-            <label>Compare</label><Pick value={o().compare} set={v => put("compare", v)} options={[["rows", "The data sets within each row"], ["sets", "The rows within each data set"]]} />
+            {/* 0.4.19 (#61): either family of comparisons, or both (each corrected on its own) */}
+            <label>Compare</label><span class="inline twofam">{(() => {
+              const has = (f: string) => o().compare === f || o().compare === "both", setF = (f: string, v: boolean) => {
+                const r = f === "rows" ? v : has("rows"), c = f === "sets" ? v : has("sets");
+                if (!r && !c) return toast("Keep at least one kind of comparison (or choose Correction › No comparisons).");
+                put("compare", r && c ? "both" : r ? "rows" : "sets");
+              };
+              return <><Check label="The data sets within each row" value={has("rows")} set={v => setF("rows", v)} /><Check label="The rows within each data set (across rows)" value={has("sets")} set={v => setF("sets", v)} /></>;
+            })()}</span>
             <label>Correction</label><Pick value={o().posthoc} set={v => put("posthoc", v)} options={[["sidak", "Šidák"], ["holm", "Holm-Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]]} />
             <Brackets />
           </Show>

@@ -69,6 +69,10 @@ class RepeatedMeasures(unittest.TestCase):
         for rm in ("rows", "sets", "both"):
             r = A.run("twoway", grouped(v, 3, 2, 3), [], {"rm": rm, "posthoc": "holm", "compare": "sets"})
             self.assertTrue(r["answer"])
+            # 0.4.19 (#61): across rows (one data set in two rows), and both families at once
+            self.assertEqual(sorted({len(b) for b in r["brackets"]}), [5])
+            both = A.run("twoway", grouped(v, 3, 2, 3), [], {"rm": rm, "posthoc": "holm", "compare": "both"})
+            self.assertEqual(len(both["brackets"]), 3 + 2 * 3, rm)
         with self.assertRaises(ValueError):
             A.run("twoway", grouped([[[1.0]] * 2] * 2, 2, 2, 1), [], {"rm": "rows"})  # one subject per group
 

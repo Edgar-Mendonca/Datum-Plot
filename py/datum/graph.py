@@ -99,6 +99,23 @@ def hatched(artist, st):
     return artist
 
 
+def mark_dots(ax, k, xs, ys, cells):
+    """0.4.19 (#65): remember where each value of data set k was drawn, and its cell in the table ([row, column], the
+    column None when unknown), so hovering one point in the window can say which value it is."""
+    f = ax.get_figure(root=True)
+    if not hasattr(f, "datum_dots"):
+        f.datum_dots = []
+    f.datum_dots += [[k, float(x), float(y), *c] for x, y, c in zip(xs, ys, cells)]
+
+
+def cell_cols(table, k, r):
+    """The table columns holding data set k's values in row r, in order (missing and excluded ones left out)."""
+    c0, w = stats.set_columns(table)[k]
+    ex = {tuple(e) for e in table.get("excluded", [])}
+    vs = ((c, stats.value(table, r, c, ex)) for c in range(c0, c0 + (w if table["sets"][k]["entry"] == "rep" else 1)))
+    return [c for c, v in vs if v is not None and math.isfinite(v)]
+
+
 def rgba(c, a=None):
     """A colour with a strength (0–1; none = full)."""
     from matplotlib.colors import to_rgba
@@ -175,11 +192,13 @@ def rc_for(graph):
 
 def draw_brackets(ax, brackets, pos, tops, size, o):
     """Significance brackets over a column or grouped graph: stars (or P values), stacked so they never
-    overlap. A bracket is [set, set, P], or [set, set, P, row] within a row of a grouped graph; `pos`
+    overlap. A bracket is [set, set, P], [set, set, P, row] within a row of a grouped graph, or
+    [set, set, P, row, row] across its rows; `pos`
     maps set (or (set, row)) to its x position and `tops` maps x positions to the top of the data."""
     from .analysis import pv, stars
     show = o.get("brackets", "sig")
-    keys = lambda b: ((b[0], b[3]), (b[1], b[3])) if len(b) > 3 else (b[0], b[1])
+    # 0.4.19 (#61): [set, set, P, row, row] joins one data set (or two) across rows of a grouped graph
+    keys = lambda b: ((b[0], b[3]), (b[1], b[4])) if len(b) > 4 else ((b[0], b[3]), (b[1], b[3])) if len(b) > 3 else (b[0], b[1])
     br = [(pos[ka], pos[kb], b[2]) for b in brackets for ka, kb in [keys(b)] if ka in pos and kb in pos and show != "none" and (show == "all" or b[2] < 0.05)]
     if not br:
         return
@@ -595,6 +614,7 @@ def build(table, graph, overlays=(), fig=None):
             elif each:
                 ex = [p["x"] for p in pts for _ in p["values"]]
                 ey = [v for p in pts for v in p["values"]]
+                mark_dots(ax, k, ex, ey, [[p.get("row"), None] for p in pts for _ in p["values"]])
                 ax.plot(ex, ey, linestyle="none", marker=mk or "o", markersize=st["size"], markerfacecolor=face, markeredgecolor=st["medge"] or col, color=col, label=label, zorder=3)
                 if line:
                     ax.plot(xs, ys, color=col, linewidth=st["width"], zorder=2)
@@ -856,6 +876,8 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
             ms = st["size"] * (1.0 if kind == "scatter" else 0.75 if kind in ("bars", "paired") else 0.55)
             lim = 0.38 if kind == "scatter" else 0.22
             xs = i + (swarm(v, ms / plot_h * (yr or 1.0), ms / plot_w * max(len(data), 1), lim) if kind != "paired" else np.zeros(len(v)))
+            from .analysis import values
+            mark_dots(ax, k, xs, v, [cell for _, cell in values(table, k)])
             ax.plot(xs, v, linestyle="none", marker=mk, markersize=ms, markerfacecolor=rgba(col, 0.9 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
                     markeredgecolor=rgba(st["medge"] or (st["base"] if kind in ("scatter", "paired", "bars") else "white"), 0.9 if st["mealpha"] is None else st["mealpha"]),
                     markeredgewidth=0.6 if kind in ("box", "violin") else 1.0, zorder=3)
@@ -1202,7 +1224,9 @@ def grouped_figure(fig, ax, table, graph, overlays, colors, size):
             if kind == "stacked":
                 base[i] += m
             if each and kind in ("bars", "scatter"):
-                ax.plot(x + (np.arange(len(v)) - (len(v) - 1) / 2) * min(w / max(len(v), 1), 0.05), v, linestyle="none", marker=mk, markersize=st["size"] * 0.6,
+                dx = x + (np.arange(len(v)) - (len(v) - 1) / 2) * min(w / max(len(v), 1), 0.05)
+                mark_dots(ax, k, dx, v, [[r, c] for c in cell_cols(table, k, r)])
+                ax.plot(dx, v, linestyle="none", marker=mk, markersize=st["size"] * 0.6,
                         markerfacecolor="white", markeredgecolor=rgba(st["medge"] or st["base"], st["mealpha"]), zorder=3)
         if not xs:
             continue
@@ -1270,6 +1294,7 @@ def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv
                 ax.plot(x, med, "o", color="white", markeredgecolor=edge, markersize=3.5, zorder=3)
             if each:
                 xs = x + swarm(v, (max(allv) - min(allv) or 1) * 0.02, w * 0.08, w * 0.3)
+                mark_dots(ax, k, xs, v, [[r, c] for c in cell_cols(table, k, r)])
                 ax.plot(xs, v, linestyle="none", marker=mk, markersize=st["size"] * 0.5, markerfacecolor=rgba(st["color"], 0.9 if st["malpha"] is None else st["malpha"]) if st["mfilled"] else "white",
                         markeredgecolor=rgba(st["medge"] or st["base"], 0.9 if st["mealpha"] is None else st["mealpha"]), markeredgewidth=0.6, zorder=3)
         handles.append(hatched(Patch(facecolor=face, edgecolor=edge, linewidth=1.2, label=names[j]), st))
@@ -1309,7 +1334,9 @@ def render(table, graph, overlays=()):
         fig.savefig(buf, format="svg", metadata={"Date": None, "Creator": "Datum Plot"})
     n = len(table.get("sets") or [])
     cols = palette(graph, n)  # each data set's colour as drawn, for Format Graph
-    return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], "colors": [style_of(graph, k, cols)["color"] for k in range(n)], **g}
+    # 0.4.19 (#65): each drawn value with its cell, for hovering one point (at most 20 000, enough for any graph read by eye)
+    dts = [d for d in getattr(fig, "datum_dots", []) if math.isfinite(d[1]) and math.isfinite(d[2])][:20000]
+    return {"svg": buf.getvalue(), "points": [p if all(math.isfinite(v) for v in p[1:3]) else None for p in points], "colors": [style_of(graph, k, cols)["color"] for k in range(n)], "dots": dts, **g}
 
 
 LETTERS = {"A": lambda i: chr(65 + i), "a": lambda i: chr(97 + i), "(a)": lambda i: f"({chr(97 + i)})", "none": lambda i: ""}

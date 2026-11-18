@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.19 — 2026-11-18
+
+Brackets across rows, and the value behind each point.
+
+**Two-way ANOVA**
+- **Compare** now has two tick boxes: **The data sets within each row** and **The rows within each data set (across rows)**. Tick one or both; each kind is corrected for its own number of comparisons and has its own table in the results.
+- Brackets can now join the same data set in two different rows (for example Control in Row 1 and Row 3), stacked over the graph with the others so none overlap. This works on grouped bars, dots, box plots and violins, with or without repeated measures.
+
+**Hover**
+- On a graph that shows each value, hovering one point shows that value and where it is in the table (its row, and its replicate on grouped and XY tables). Hovering a mean still shows the mean, SD and n.
+
 ## 0.4.18 — 2026-11-18
 
 Testers' fixes: Enter in Format Graph, stronger patterns, and families that are easier to follow.

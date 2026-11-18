@@ -9,6 +9,8 @@ const P = fix.state.project;
 // The graph as the Python engine draws it (numpy, scipy, matplotlib must be installed).
 const py = `import json,sys; sys.path.insert(0, sys.argv[1]); from datum import graph; p = json.load(open(sys.argv[2]))["state"]["project"]; print(json.dumps(graph.render(p["tables"][0], p["graphs"][0]["settings"])))`;
 const render = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["-c", py, path.join(__dirname, "../py"), path.join(__dirname, "fixture.json")], { maxBuffer: 1 << 26 }).toString());
+// 0.4.19 (#65): one single value drawn on its own (made up, away from the means), to hover.
+render.dots = [[0, render.points.find(Boolean)[1], (render.ylim[0] + render.ylim[1]) * 0.5, 1, 2]];
 // A real linear regression of the sample's first data set, for the results sheet.
 const pyr = `import json,sys; sys.path.insert(0, sys.argv[1]); from datum import analysis; p = json.load(open(sys.argv[2]))["state"]["project"]; print(json.dumps({"result": analysis.run("linear", p["tables"][0], [], {"xmax": 10}), "models": analysis.model_list()}))`;
 const lin = JSON.parse(execFileSync(process.env.PYTHON || "python3", ["-c", pyr, path.join(__dirname, "../py"), path.join(__dirname, "fixture.json")], { maxBuffer: 1 << 26 }).toString());
@@ -226,6 +228,10 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.mouse.move(hx, hy);
   await p.waitForTimeout(150);
   check("hovering a point shows its data set, mean and n", ((await p.textContent(".gtip").catch(() => "")) || "").includes("mean"), await p.textContent(".gtip").catch(() => "none"));
+  const [dx, dy] = toPx(render.dots[0][1], render.dots[0][2]);
+  await p.mouse.move(dx, dy); await p.waitForTimeout(150);
+  const dtip = (await p.textContent(".gtip").catch(() => "")) || "";
+  check("hovering a single value shows it and its place in the table (0.4.19)", dtip.includes("value") && dtip.includes("row 2") && dtip.includes("replicate 2") && !dtip.includes("mean"), dtip);
 
   await reset();
   await p.mouse.click(hx, hy, { button: "right" });
@@ -978,6 +984,17 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.selectOption(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=1", "1.6"); await q.waitForTimeout(150);
     const pw = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets?.[0];
     check("…and its lines can be made thicker", pw?.patternWidth === 1.6, JSON.stringify(pw?.patternWidth));
+    // 0.4.19 (#61): two-way ANOVA compares within rows, across rows, or both
+    await q.keyboard.press("Escape"); await q.waitForTimeout(150);
+    await q.click('.tabs button:text-is("Analyze")'); await q.waitForTimeout(150);
+    const tw = await q.$('.ribbon .rb:has-text("Two-way ANOVA")');
+    if (tw && !(await tw.isVisible())) await tw.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
+    await q.click('.ribbon .rb:has-text("Two-way ANOVA")'); await q.waitForTimeout(250);
+    await q.click('.dlg label:has-text("The rows within each data set")'); await q.waitForTimeout(100);
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
+    const twa = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.AddAnalysis)?.AddAnalysis.analysis;
+    check("Two-way ANOVA can compare within each row and across rows at once", twa?.kind === "twoway" && twa?.options.compare === "both", JSON.stringify(twa?.options));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

@@ -442,6 +442,30 @@ class Patterns(unittest.TestCase):
         self.assertIsNone(st["hatch"], "unknown patterns draw nothing")
 
 
+class Dots(unittest.TestCase):
+    """0.4.19 (#65): every value drawn as its own point is reported with where it was drawn and its cell in the table."""
+
+    def test_grouped_column_and_xy(self):
+        T = GroupedShapes.T
+        for kind in ("box", "violin", "bars", "scatter"):
+            r = graph.render(T, {"column": kind, "points": "each"})
+            d = r["dots"]
+            self.assertEqual(len(d), 18, kind)
+            # the value in Tissue 2, data set High, replicate 3 is 5.2, drawn in that group
+            hit = [x for x in d if x[0] == 1 and x[3] == 1 and x[4] == 6]
+            self.assertEqual(len(hit), 1, kind)
+            self.assertAlmostEqual(hit[0][2], 5.2)
+            self.assertTrue(0.5 < hit[0][1] < 1.5, f"{kind}: in the second row's group")
+        self.assertEqual(graph.render(T, {"column": "bars", "points": "mean"})["dots"], [], "no single values drawn, none reported")
+        C = {"name": "C", "kind": "column", "rows": 3, "sets": [{"title": "A", "entry": "rep", "reps": 1}, {"title": "B", "entry": "rep", "reps": 1}],
+             "cols": [[None] * 3, [1, 2, None], [7, 8, 9]], "excluded": [[1, 2]], "xTitle": "", "yTitle": "Y"}
+        d = graph.render(C, {"column": "scatter"})["dots"]
+        self.assertEqual(sorted((x[0], x[2], x[3], x[4]) for x in d), [(0, 1, 0, 1), (0, 2, 1, 1), (1, 7, 0, 2), (1, 9, 2, 2)], "excluded and empty cells are not reported")
+        X = {"name": "X", "kind": "xy", "rows": 2, "sets": [{"title": "S", "entry": "rep", "reps": 2}], "cols": [[0, 1], [1, 2], [3, 4]], "excluded": [], "xTitle": "", "yTitle": ""}
+        d = graph.render(X, {"points": "each"})["dots"]
+        self.assertEqual(sorted((x[1], x[2], x[3]) for x in d), [(0, 1, 0), (0, 3, 0), (1, 2, 1), (1, 4, 1)])
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
