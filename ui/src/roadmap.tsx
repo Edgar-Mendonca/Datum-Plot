@@ -124,9 +124,76 @@ const ANALYSES: Choice[] = [
   { id: "B23", name: "Power and sample size", icon: "sigma", group: "Planning", desc: "How many specimens you need." },
 ];
 /** Analyze: every analysis; the ready ones open their options. */
-export const analyze = (first?: string) => openDialog(() => <Gallery title="Analyze Data" help="analyze" items={ANALYSES} ok="Next…" first={first} run={c => { setTimeout(() => runAnalysis(c.key ?? c.id)); }} />);
-/** Opens the options of the analysis behind a catalogue id, for the open table. */
-export const runAnalysis = (id: string) => { const [kind, preset] = BY_ID[id] ?? []; if (kind) analysisDialog(kind, curTable(), undefined, preset); else soon(id); };
+/** 0.4.21 (J10, #61): the analyses that suit each kind of table, listed first as "Suggested" (the others stay available). */
+const SUITS: Record<string, string[]> = {
+  xy: ["B9", "B10", "B38", "B12", "B13", "B28", "B14", "B14s", "B34s", "B34b", "B27", "B24", "B25", "B36", "B16", "B1"],
+  column: ["B1", "B2", "B3", "B4", "B5", "B6", "B37", "B7", "B8", "B34d", "D4", "B29", "B18", "B18r", "B16", "B35c"],
+  grouped: ["B15", "B34a", "B33", "B1"], contingency: ["B17", "B34c", "A6"], parts: ["A6"], survival: ["B19"], multi: ["B21", "B22", "B16", "B35d"],
+  matrix: ["B26"], worksheet: ["B9", "B10", "B24", "B25", "B36", "B14", "B16"], nested: ["B1"],
+};
+const KIND_NAME: Record<string, string> = { xy: "XY", column: "column", grouped: "grouped", contingency: "contingency", parts: "parts-of-whole", survival: "survival", multi: "many-variables", matrix: "matrix", worksheet: "worksheet", nested: "nested" };
+
+/** 0.4.21 (J10, #61): Analyze Data in one window: search, the analyses grouped (those that suit the open table first),
+ *  the data sets to analyse, and what the chosen one does; Next opens its options. */
+const AnalyzeData = (p: { first?: string }) => {
+  const t = curTable(), keyOf = (c: Choice) => c.key ?? c.id;
+  const suits = SUITS[t?.kind ?? ""] ?? [];
+  const [q, setQ] = createSignal(""), [sel, setSel] = createSignal(ANALYSES.find(c => keyOf(c) === p.first || c.id === p.first) ?? ANALYSES.find(c => keyOf(c) === suits.find(id => ANALYSES.some(x => keyOf(x) === id))) ?? ANALYSES[0]);
+  const [sets, setSets] = createSignal<number[]>(t ? t.sets.map((_, k) => k) : []);
+  const match = (c: Choice) => !q().trim() || `${c.name} ${c.desc} ${c.group}`.toLowerCase().includes(q().trim().toLowerCase());
+  const sections = createMemo(() => {
+    const sug = ANALYSES.filter(c => suits.includes(keyOf(c)) && match(c)).sort((a, b) => suits.indexOf(keyOf(a)) - suits.indexOf(keyOf(b)));
+    const groups = [...new Set(ANALYSES.map(c => c.group))].map(g => [g, ANALYSES.filter(c => c.group === g && match(c))] as [string, Choice[]]).filter(([, cs]) => cs.length);
+    return [...(sug.length ? [[`Suggested for ${t ? `this ${KIND_NAME[t.kind] ?? t.kind} table` : "this table"}`, sug] as [string, Choice[]]] : []), ...groups];
+  });
+  // a search that hides the chosen analysis chooses the first match, so Enter opens the top hit
+  createEffect(() => { const flat = sections().flatMap(([, cs]) => cs); if (flat.length && !flat.includes(sel())) setSel(flat[0]); });
+  const go = () => {
+    const c = sel(), f = feature(c.id);
+    if (f && !ready(f[0])) { soon(f[0]); return false; }
+    if (t && !sets().length) { toast("Tick at least one data set."); return false; }
+    const all = !t || sets().length === t.sets.length;
+    setTimeout(() => runAnalysis(keyOf(c), all ? [] : sets()));
+  };
+  const key = (e: KeyboardEvent) => {  // arrows move through the list as it is shown
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const flat = sections().flatMap(([, cs]) => cs), i = flat.indexOf(sel());
+    const n = flat[Math.max(0, Math.min(flat.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
+    if (n) setSel(n);
+  };
+  return (
+    <Dialog title="Analyze Data" help="analyze" wide okText={ready(sel().id) ? "Next…" : `In ${rel(feature(sel().id)?.[2] ?? "")}`} ok={go}>
+      <div class="anw">
+        <div class="anlist">
+          <input class="ansearch" placeholder="Search analyses (e.g. ANOVA, IC50, peaks)" value={q()} onInput={e => setQ(e.currentTarget.value)} onKeyDown={key} ref={el => setTimeout(() => el.focus())} />
+          <div class="anitems">
+            <For each={sections()}>{([g, cs]) => <><div class="angroup">{g}</div>
+              <For each={cs}>{c => <button classList={{ anitem: true, on: sel() === c, soon: !ready(c.id) }} onClick={() => setSel(c)} onDblClick={() => { if (go() !== false) closeDialog(); }}>
+                <Icon n={c.icon} size={16} /><span>{c.name}</span><Show when={!ready(c.id)}><Chip id={c.id} /></Show></button>}</For></>}</For>
+            <Show when={!sections().length}><p class="muted">No analysis matches “{q()}”.</p></Show>
+          </div>
+        </div>
+        <div class="ansets">
+          <h4>Analyze which data sets?</h4>
+          <Show when={t} fallback={<p class="muted">Open a data table (or its graph) first: the analysis works on it.</p>}>
+            <p class="muted small">{t!.name}</p>
+            <div class="ansetlist"><For each={t!.sets}>{(s, k) => <Check label={`${String.fromCharCode(65 + k())}: ${s.title || `Data set ${String.fromCharCode(65 + k())}`}`} value={sets().includes(k())} set={v => setSets(v ? [...sets(), k()].sort((a, b) => a - b) : sets().filter(x => x !== k()))} />}</For></div>
+            <span class="inline"><button class="btn sm" onClick={() => setSets(t!.sets.map((_, k) => k))}>Select All</button><button class="btn sm" onClick={() => setSets([])}>Deselect All</button></span>
+          </Show>
+        </div>
+      </div>
+      <div class="anabout">
+        <div class="anpic"><Icon n={sel().icon} size={40} /></div>
+        <div><h3>{sel().name}</h3><p>{sel().desc}</p><Show when={feature(sel().id)?.[3] && feature(sel().id)![3] !== sel().desc}><p class="muted">{feature(sel().id)?.[3]}</p></Show>
+          <p class="muted small">{t && !suits.includes(keyOf(sel())) && suits.length ? `Usually used with other kinds of table than this ${KIND_NAME[t.kind] ?? t.kind} table; it may ask for a different one. ` : ""}Next opens its options; the result stays linked to the data.</p></div>
+      </div>
+    </Dialog>
+  );
+};
+export const analyze = (first?: string) => openDialog(() => <AnalyzeData first={first} />);
+/** Opens the options of the analysis behind a catalogue id, for the open table (0.4.21: with the data sets chosen). */
+export const runAnalysis = (id: string, sets: number[] = []) => { const [kind, preset] = BY_ID[id] ?? []; if (kind) analysisDialog(kind, curTable(), undefined, preset, sets); else soon(id); };
 
 const GRAPHS: Choice[] = [
   { id: "D1", name: "XY: points and lines", icon: "xy", group: "XY", desc: "Means with error bars or every replicate, joined or not." },

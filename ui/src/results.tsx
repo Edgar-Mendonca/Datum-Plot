@@ -76,6 +76,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
     const [sets, setSets] = createSignal<number[]>(existing?.sets ?? (sets0.length || !first.length || first.length === t.sets.length ? sets0 : first));
     const [name, setName] = createSignal(existing?.name ?? `${KINDS[kind][0]} · ${t.name}`);
     const put = (k: string, v: unknown) => setO({ ...o(), [k]: v });
+    const tabbed = kind === "anova" || kind === "twoway", [tab, setTab] = createSignal("model");
     const on = (k: number) => !sets().length || sets().includes(k);
     const toggle = (k: number) => {
       const all = t.sets.map((_, i) => i), cur = sets().length ? sets() : all, next = on(k) ? cur.filter(x => x !== k) : [...cur, k].sort();
@@ -110,7 +111,9 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
         <div class="form">
           <label>Name</label><input value={name()} onInput={e => setName(e.currentTarget.value)} />
           <label>Data sets</label><span class="inline"><For each={t.sets}>{(s, k) => <span classList={{ dimset: isEmpty(t, k()) }}><Check label={`${letter(k())}: ${s.title || `Data set ${letter(k())}`}${isEmpty(t, k()) ? " (empty)" : ""}`} value={on(k())} set={() => toggle(k())} /></span>}</For></span>
-          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "contingency", "power", "multireg", "survival", "nested"].includes(kind)}><Alpha /></Show>
+          {/* 0.4.21 (J10, #61): the long windows (one- and two-way ANOVA) in tabs */}
+          <Show when={tabbed}><div class="ftabs"><For each={[["model", "Model"], ["compare", "Comparisons"], ["graph", "Graph"]]}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For></div></Show>
+          <Show when={["normality", "outliers", "ttest", "nonparam", "anova", "twoway", "contingency", "power", "multireg", "survival", "nested"].includes(kind) && tab() === "model"}><Alpha /></Show>
           <Show when={kind === "ttest"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["unpaired", "Unpaired (two independent groups)"], ["paired", "Paired (the same items twice, row by row)"], ["ratio", "Ratio paired (ratios, not differences)"], ["one", "One sample against a value"]]} />
             <Show when={o().test === "unpaired"}><label /><Check label="Welch's correction (do not assume equal SDs; recommended)" value={!!o().welch} set={v => put("welch", v)} /></Show>
@@ -119,13 +122,15 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <Brackets />
           </Show>
           <Show when={kind === "twoway"}>
+            <Show when={tab() === "model"}>
             <label>Factor names</label><span class="inline"><input placeholder="Rows, e.g. Alloy" value={o().rowname} onChange={e => put("rowname", e.currentTarget.value)} /><input placeholder="Data sets, e.g. Treatment" value={o().colname} onChange={e => put("colname", e.currentTarget.value)} /></span>
             <label>Repeated measures</label><Pick value={o().rm ?? "none"} set={v => put("rm", v)} options={[["none", "No: every value is a different subject"], ["rows", "Each sub-column is one subject, measured in every row"], ["sets", "Each row's sub-column is one subject, measured in every data set"], ["both", "Each sub-column is one subject, measured in every row and data set"]]} />
             <Show when={(o().rm ?? "none") === "none"}><label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} /></Show>
             <Show when={(o().rm ?? "none") !== "none"}><label>Sphericity</label><Check label="Geisser-Greenhouse correction (missing values: a mixed-effects model is used instead)" value={o().gg !== false} set={v => put("gg", v)} /></Show>
-            {/* 0.4.20 (B40, #61): the Comparisons page: what to compare, how many, a diagram, the correction */}
-            <div class="fsub">Comparisons</div><Comparisons t={t} two o={o} put={put} sets={sets} />
-            <Brackets />
+            </Show>
+            {/* 0.4.20 (B40, #61): the Comparisons page; 0.4.21 (J10): in its own tab */}
+            <Show when={tab() === "compare"}><Comparisons t={t} two o={o} put={put} sets={sets} /></Show>
+            <Show when={tab() === "graph"}><Brackets /></Show>
           </Show>
           <Show when={kind === "control"}>
             <label>Chart</label><Pick value={o().chart} set={v => put("chart", v)} options={[["imr", "Individuals and moving range (one value per row)"], ["xbar", "X̄ and R (each row a subgroup in the sub-columns)"], ["xbar_s", "X̄ and S (larger subgroups)"], ["p", "p chart (defective, then inspected, per row)"]]} />
@@ -213,11 +218,15 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <Brackets />
           </Show>
           <Show when={kind === "anova"}>
+            <Show when={tab() === "model"}>
             <label>ANOVA</label><Pick value={o().anova} set={v => put("anova", v)} options={[["ordinary", "Ordinary (equal SDs)"], ["welch", "Welch (unequal SDs)"], ["bf", "Brown-Forsythe (unequal SDs)"], ["rm", "Repeated measures (rows are subjects)"]]} />
-            <div class="fsub">Comparisons</div><Comparisons t={t} two={false} o={o} put={put} sets={sets} />
+            </Show>
+            <Show when={tab() === "compare"}><Comparisons t={t} two={false} o={o} put={put} sets={sets} /></Show>
+            <Show when={tab() === "model"}>
             <label /><Check label="Test for a linear trend across the groups (in their order)" value={!!o().trend} set={v => put("trend", v)} />
             <Bayes width />
-            <Brackets />
+            </Show>
+            <Show when={tab() === "graph"}><Brackets /></Show>
           </Show>
           <Show when={kind === "correlation"}><Bayes /></Show>
           <Show when={kind === "correlation" && t.kind !== "column"}><label>Correlate</label><Pick value={o().between ? "1" : ""} set={v => put("between", !!v)} options={[["", "X with each data set's Y"], ["1", "The data sets with each other (row by row)"]]} /></Show>

@@ -138,10 +138,20 @@ XY 表的 X 列可以存放日期。右键单击其列标题（或在单元格�
 
 Analyze 选项卡的其他组可以直接启动一项分析：**Statistics**（统计）、**Compare Groups**（组间比较）、**Regression**（回归）、**Materials**（材料）等。
 
-![Analyze…：按组列出的全部分析方法。](img/analyze.png)
+![Analyze…：搜索、全部分析方法和数据集。](img/analyze.png)
 
-1. **分组。** 统计、回归与拟合、材料、组间比较、相关关系、生存分析、信号与光谱。
-2. **分析方法。** 单击某一项可阅读它的作用以及所用的 Python 库；**Next…**（下一步…）会询问要包括哪些数据集以及分析选项。
+1. **搜索。** 输入名称的一部分或想做的事（如 “ANOVA”“IC50”“peaks”）；方向键可在列表中移动。
+2. **分析方法。** 适合当前数据表的分析排在最前（**Suggested for this … table**，为此表推荐），其后是各组：统计、回归与拟合、材料、组间比较、相关关系、生存分析、信号与光谱。
+3. **Analyze which data sets?**（分析哪些数据集？）勾选要包括的数据集（**Select All** 全选，**Deselect All** 全不选）。
+4. **作用说明。** 所选分析的简短说明。**Next…**（下一步…，或双击）打开其选项，并带上所选的数据集。
+
+选项较多的窗口分为选项卡：单因素和双因素方差分析有 **Model**（模型）、**Comparisons**（比较）和 **Graph**（图表）。
+
+![One-way ANOVA › Comparisons：每组与对照比较。](img/comparisons.png)
+
+1. **选项卡。** **Model**（方差分析类型、显著性水平）、**Comparisons**（比较）、**Graph**（括号和星号）。
+2. **How many**（比较数量）。**Every pair**（每一对）、**Each against a control**（每组与对照比较，可选择对照）或 **Only the pairs I choose**（仅比较所选配对）；双因素方差分析还可设置 **What to compare**（比较什么）。
+3. **示意图。** 每个均值一个圆，每个比较一条线；对照为实心圆。下方显示比较的次数。
 
 ### 结果表
 

@@ -138,10 +138,20 @@ The X column of an XY table can hold dates. Right-click its heading (or choose *
 
 The other groups of the Analyze tab start an analysis directly: **Statistics**, **Compare Groups**, **Regression**, **Materials** and more.
 
-![Analyze…: every analysis, by group.](img/analyze.png)
+![Analyze…: search, every analysis, the data sets.](img/analyze.png)
 
-1. **Groups.** Statistics, regression and fitting, materials, compare groups, relationships, survival, signals and spectra.
-2. **Analyses.** Click one to read what it does and which Python libraries it uses; **Next…** asks which data sets to include and the options.
+1. **Search.** Type part of a name or what you want to do ("ANOVA", "IC50", "peaks"); the arrow keys move through the list.
+2. **Analyses.** Those that suit the open table come first (**Suggested for this … table**), then every group: statistics, regression and fitting, materials, compare groups, relationships, survival, signals and spectra.
+3. **Analyze which data sets?** Tick the data sets to include (**Select All**, **Deselect All**).
+4. **What it does.** A short explanation of the analysis chosen. **Next…** (or a double-click) opens its options with those data sets.
+
+Long option windows are in tabs: one- and two-way ANOVA have **Model**, **Comparisons** and **Graph**.
+
+![One-way ANOVA › Comparisons: each group against a control.](img/comparisons.png)
+
+1. **Tabs.** **Model** (the kind of ANOVA, the significance level), **Comparisons**, **Graph** (the brackets and stars).
+2. **How many.** **Every pair**, **Each against a control** (choose the control) or **Only the pairs I choose**; two-way ANOVA also sets **What to compare**.
+3. **The picture.** A circle for each mean and a line for each comparison; the control is filled. Under it, how many comparisons are made.
 
 ### The results sheet
 

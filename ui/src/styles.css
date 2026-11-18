@@ -729,3 +729,24 @@ input.mono { font-family: var(--mono) !important; }
 .cmpdiag .cmpa { fill: var(--blue); }
 .form > .fsub { grid-column: 1 / -1; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--line2); margin-top: 6px; padding-bottom: 2px; }
 .form .cmpinline select { width: auto; max-width: 220px; }
+/* 0.4.21 (J10): tabs inside an analysis window */
+.form > .ftabs { grid-column: 1 / -1; display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-top: 4px; }
+.ftabs button { padding: 6px 14px; border-bottom: 2px solid transparent; font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.ftabs button.on { color: var(--blue); border-bottom-color: var(--blue); }
+/* 0.4.21 (J10): the Analyze Data window */
+.anw { display: grid; grid-template-columns: 1fr 260px; border: 1px solid var(--line); min-height: 360px; }
+.anlist { display: flex; flex-direction: column; border-right: 1px solid var(--line); min-width: 0; }
+.ansearch { margin: 8px; }
+.anitems { overflow-y: auto; max-height: 52vh; padding-bottom: 6px; }
+.angroup { font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 3px; }
+.anitem { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; padding: 4px 12px 4px 18px; border-left: 3px solid transparent; }
+.anitem:hover { background: var(--panel); }
+.anitem.on { background: var(--sel); border-left-color: var(--blue); }
+.anitem.soon { color: var(--muted); }
+.ansets { padding: 8px 12px; background: var(--panel); display: flex; flex-direction: column; gap: 6px; }
+.ansets h4 { margin: 0; }
+.ansetlist { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; max-height: 40vh; }
+.anabout { display: grid; grid-template-columns: 56px 1fr; gap: 12px; padding: 10px 4px 0; min-height: 84px; }
+.anabout h3 { margin: 0 0 4px; }
+.anabout p { margin: 0 0 4px; }
+.anpic { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border: 1px solid var(--line); background: var(--pale); color: var(--blue); }

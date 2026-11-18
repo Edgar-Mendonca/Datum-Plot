@@ -115,13 +115,20 @@ const srv = http.createServer((q, r) => {
   // 3. Analyze.
   await tab("Analyze"); await shot("analyze-tab", [["grp:Analyze", 1]], TOP);
   await p.click('.ribbon .rb:has-text("Analyze…")'); await wait(400);
-  await shot("analyze", [[".dlg nav", 1], [".dlg .galitem", 2, 0]], ".dlg");
+  await shot("analyze", [[".dlg .ansearch", 1], [".dlg .anitems", 2, 0, "in"], [".dlg .ansets", 3, 0, "in"], [".dlg .anabout", 4, 0, "in"]], ".dlg");
   await p.keyboard.press("Escape"); await wait(200);
   await nav(5); await wait(600);
   await shot("results", [[".rview .rtable", 1, 0], [".explain .ans", 2, 0, "below"], [".explain .checks", 3, 0, "below"]]);
   await nav(6); await wait(400); await shot("anova-results");
   // 4. Other graphs.
   await nav(10); await shot("anova", [[".gpaper", 1]]);
+  // 0.4.21 (J10): One-way ANOVA's Comparisons tab, each group against a control, with its diagram
+  await tab("Analyze"); await p.click('.ribbon .rb.big:has-text("One-way ANOVA")'); await wait(400);
+  if (((await p.textContent(".dlg").catch(() => "")) || "").includes("Make Another")) { await p.click('.dlg button:has-text("Make Another")'); await wait(400); }
+  await p.click('.dlg .ftabs button:has-text("Comparisons")'); await wait(200);
+  await p.selectOption('.dlg select:has(option[value="control"])', "control"); await wait(200);
+  await shot("comparisons", [[".dlg .ftabs", 1], [".dlg .cmpinline", 2, 0], [".dlg .cmpdiag", 3, 0, "right"]], ".dlg");
+  for (let i = 0; i < 3 && (await p.$$(".dlg")).length; i++) { await p.keyboard.press("Escape"); await wait(150); }
   await nav(11); await shot("contour", [[".gpaper", 1]]);
   await nav(12); await shot("survival");
   // 5. Layout.

@@ -332,11 +332,21 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.tabs button:text-is("Analyze")');
   await p.click('.ribbon .rb:has-text("Analyze…")');
   await p.waitForTimeout(150);
-  check("Analyze lists every family of analyses", (await p.$$(".gal nav button")).length >= 6 && (await p.$$(".galitem")).length >= 3);
-  await p.click('.gal nav button:has-text("Regression")');
-  check("the gallery shows regression analyses with their release", ((await p.textContent(".galitems")) || "").includes("Linear regression"));
-  await p.keyboard.press("Escape");
-  await p.waitForTimeout(100);
+  // 0.4.21 (J10, #61): Analyze Data: the analyses that suit this table first, then every group; search; the data sets
+  const groupsA = await p.$$eval(".anitems .angroup", gs => gs.map(g => g.textContent));
+  check("Analyze lists every family of analyses, those for this table first", groupsA.length >= 6 && /^Suggested for this XY table/.test(groupsA[0] || ""), JSON.stringify(groupsA.slice(0, 3)));
+  check("…with Linear regression among the suggested", ((await p.$$eval(".anitems .angroup ~ .anitem", bs => bs.map(b => b.textContent))) || []).slice(0, 8).some(t => t.includes("Linear regression")));
+  await p.fill(".dlg .ansearch", "anova"); await p.waitForTimeout(100);
+  const found = await p.$$eval(".anitems .anitem", bs => bs.map(b => b.textContent));
+  check("searching finds the matching analyses only", found.length >= 2 && found.every(t => /anova/i.test(t) || t.length > 0) && found.some(t => t.includes("One-way ANOVA")) && !found.some(t => t.includes("Peak analysis")), JSON.stringify(found));
+  await p.fill(".dlg .ansearch", "descriptive"); await p.waitForTimeout(100);
+  const nsets = (await p.$$(".dlg .ansetlist label")).length;
+  if (nsets > 1) await p.click(".dlg .ansetlist label >> nth=0");
+  await p.click(".dlg .btn.pri"); await p.waitForTimeout(300);
+  if ((await p.textContent(".dlg").catch(() => "")).includes("Make Another")) { await p.click('.dlg button:has-text("Make Another")'); await p.waitForTimeout(250); }
+  const firstOn = await p.$eval(".dlg .form .inline input[type=checkbox]", e => e.checked).catch(() => null);
+  check("Next opens the options with the data sets chosen", (await p.textContent(".dlg header").catch(() => "")).includes("Descriptive") && (nsets < 2 || firstOn === false), JSON.stringify([nsets, firstOn]));
+  for (let i = 0; i < 3 && (await p.$$(".dlg")).length; i++) { await p.keyboard.press("Escape"); await p.waitForTimeout(100); }
 
   // 5a. Analyses: the gallery leads to the options; OK adds a linked analysis drawn on the graph.
   await p.click('.tabs button:text-is("Analyze")');
@@ -759,14 +769,11 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   // 0.3.9: the new analyses are in the gallery and their options open.
   await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(100);
   await p.click('.ribbon .rb:has-text("Analyze…")'); await p.waitForTimeout(300);
-  await p.click('.dlg nav button:has-text("Compare groups")'); await p.waitForTimeout(150);
-  const gal = (await p.textContent(".dlg .galitems")) || "";
-  check("the Analyze gallery offers Three-way ANOVA and ANCOVA", gal.includes("Three-way ANOVA") && gal.includes("ANCOVA"), gal.slice(0, 200));
-  await p.click('.dlg nav button:has-text("Signals")'); await p.waitForTimeout(150);
-  check("the Analyze gallery offers wavelets and spectrograms (0.4.0)", ((await p.textContent(".dlg .galitems")) || "").includes("Wavelets and spectrograms"));
-  await p.click('.dlg nav button:has-text("Compare groups")'); await p.waitForTimeout(150);
-  await p.dblclick('.dlg .galitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
-  check("double-clicking ANCOVA opens its options and closes the gallery", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
+  const gal = (await p.textContent(".dlg .anitems")) || "";
+  check("the Analyze window offers Three-way ANOVA and ANCOVA", gal.includes("Three-way ANOVA") && gal.includes("ANCOVA"), gal.slice(0, 200));
+  check("the Analyze window offers wavelets and spectrograms (0.4.0)", gal.includes("Wavelets and spectrograms"));
+  await p.dblclick('.dlg .anitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
+  check("double-clicking ANCOVA opens its options and closes the Analyze window", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
   // 0.3.10: New Design asks the shell for the factorial table.
   await reset();
@@ -990,6 +997,9 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     const tw = await q.$('.ribbon .rb:has-text("Two-way ANOVA")');
     if (tw && !(await tw.isVisible())) await tw.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
     await q.click('.ribbon .rb:has-text("Two-way ANOVA")'); await q.waitForTimeout(250);
+    // 0.4.21 (J10): the options are in tabs; comparisons have their own
+    check("Two-way ANOVA's options are in tabs: Model, Comparisons, Graph", JSON.stringify(await q.$$eval(".dlg .ftabs button", bs => bs.map(b => b.textContent))) === '["Model","Comparisons","Graph"]');
+    await q.click('.dlg .ftabs button:has-text("Comparisons")'); await q.waitForTimeout(100);
     await q.click('.dlg label:has-text("The rows within each data set")'); await q.waitForTimeout(100);
     await q.evaluate(() => { window.__calls = []; });
     await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
@@ -1001,6 +1011,7 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     if (tw2 && !(await tw2.isVisible())) await tw2.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
     await q.click('.ribbon .rb:has-text("Two-way ANOVA")'); await q.waitForTimeout(250);
     if ((await q.textContent(".dlg").catch(() => "")).includes("Make Another")) { await q.click('.dlg button:has-text("Make Another")'); await q.waitForTimeout(250); }
+    await q.click('.dlg .ftabs button:has-text("Comparisons")'); await q.waitForTimeout(100);
     const lines0 = (await q.$$(".dlg .cmpdiag path.cmpl")).length;
     await q.click('.dlg label:has-text("Every cell with every other")'); await q.waitForTimeout(150);
     const lines1 = (await q.$$(".dlg .cmpdiag path.cmpl")).length;

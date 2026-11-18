@@ -48,17 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.21",
-      "title": "Analyze Data",
-      "when": "Next",
-      "items": [
-        "One window to search, choose and explain an analysis"
-      ]
-    },
-    {
       "v": "0.5",
       "title": "Modules",
-      "when": "Later",
+      "when": "Next",
       "items": [
         "Science, engineering and quality tools you can switch on"
       ]

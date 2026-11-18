@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.21 — 2026-11-18
+
+A new Analyze Data window.
+
+**Analyze Data** (Analyze › Analyze…)
+- One window: a **Search** box, every analysis in a list with those that suit the open table first (**Suggested for this … table**), then every group.
+- **Analyze which data sets?** on the right: tick the data sets to include before going on.
+- Below, a short explanation of the analysis you picked. **Next…** (or a double-click) opens its options with those data sets.
+
+**Options in tabs**
+- One- and two-way ANOVA now show their options in three tabs: **Model**, **Comparisons** and **Graph**.
+
 ## 0.4.20 — 2026-11-18
 
 The Comparisons page: choose what to compare and see it on a picture of your table.

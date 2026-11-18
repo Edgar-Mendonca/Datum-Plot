@@ -138,10 +138,20 @@ La colonne X d’un tableau XY peut contenir des dates. Cliquez avec le bouton d
 
 Les autres groupes de l’onglet **Analyze** (Analyser) lancent directement une analyse : **Statistics** (Statistiques), **Compare Groups** (Comparer des groupes), **Regression** (Régression), **Materials** (Matériaux) et d’autres.
 
-![Analyze… : toutes les analyses, par groupe.](img/analyze.png)
+![Analyze… : recherche, toutes les analyses, les séries.](img/analyze.png)
 
-1. **Groupes.** Statistiques, régression et ajustement, matériaux, comparaison de groupes, relations, survie, signaux et spectres.
-2. **Analyses.** Cliquez sur une analyse pour lire ce qu’elle fait et quelles bibliothèques Python elle utilise ; **Next…** (Suivant…) demande quelles séries de données inclure et quelles options appliquer.
+1. **Recherche.** Tapez une partie d’un nom ou ce que vous voulez faire (« ANOVA », « IC50 », « peaks ») ; les flèches parcourent la liste.
+2. **Analyses.** Celles qui conviennent au tableau ouvert viennent d’abord (**Suggested for this … table**, suggérées pour ce tableau), puis chaque groupe : statistiques, régression et ajustement, matériaux, comparaison de groupes, relations, survie, signaux et spectres.
+3. **Analyze which data sets?** (Quelles séries analyser ?) Cochez les séries à inclure (**Select All** tout cocher, **Deselect All** tout décocher).
+4. **Ce qu’elle fait.** Une courte explication de l’analyse choisie. **Next…** (Suivant…, ou un double-clic) ouvre ses options avec ces séries.
+
+Les longues fenêtres d’options sont en onglets : l’ANOVA à un et deux facteurs a **Model** (Modèle), **Comparisons** (Comparaisons) et **Graph** (Graphique).
+
+![One-way ANOVA › Comparisons : chaque groupe contre un témoin.](img/comparisons.png)
+
+1. **Onglets.** **Model** (le type d’ANOVA, le seuil de signification), **Comparisons**, **Graph** (les crochets et les étoiles).
+2. **How many** (Combien). **Every pair** (chaque paire), **Each against a control** (chacun contre un témoin, à choisir) ou **Only the pairs I choose** (seulement les paires choisies) ; l’ANOVA à deux facteurs règle aussi **What to compare** (Que comparer).
+3. **Le schéma.** Un cercle par moyenne et un trait par comparaison ; le témoin est plein. En dessous, le nombre de comparaisons.
 
 ### La feuille de résultats
 
