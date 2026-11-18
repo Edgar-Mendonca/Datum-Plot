@@ -254,6 +254,13 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D27 | Your style for new graphs (data-set look in saved styles; Options › Style for new graphs); several data sets at once; typed strengths (#46) | ✅ 0.4.9 (typed strengths 0.4.8) |
 | D30 | Grouped box plots and violins; rows shown, hidden and ordered (#60) | ✅ 0.4.16 |
 | D31 | Fill patterns (#59) | ✅ 0.4.17 |
+| E10 | Enter confirms a value and keeps Format Graph and the other live windows open (#64) | ✅ 0.4.18 |
+| D32 | Pattern strength and thickness (#63) | ✅ 0.4.18 |
+| A25 | Show Only This Family from graphs and results; a table's new name carried to its graphs and results (#62) | ✅ 0.4.18 |
+| C12 | Brackets across rows: two-way ANOVA comparisons within rows, within data sets or both, brackets between any two cells, above or below (#61) | 0.4.19 |
+| E11 | Hover a replicate: its value and place in the table (#65) | 0.4.19 |
+| B40 | The Comparisons page: what to compare on a live diagram (rows, data sets, every cell, main effects), every pair / against a control / chosen pairs; one- and two-way ANOVA (#61) | 0.4.20 |
+| J10 | The Analyze Data window: search, grouped list, data sets, explanation with a picture, tabbed options (#61) | 0.4.21 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
 | D29 | Titles: the graph's name, a subtitle, long titles wrap (#56) | ✅ 0.4.14 |
 | D25 | Symbols and error bars on their own: symbols' Filled, strengths of borders and symbol fills, error-bar colour, legend borders, legends with an axis break (#40–#43) | ✅ 0.4.2 |
@@ -443,5 +450,9 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.15** ✅ | Fixes: the colour scheme box (GitHub #57), colour pop-ups after moving Format Graph (#58) |
 | **0.4.16** ✅ | Grouped box plots and violins; rows on grouped graphs (D30; #60) |
 | **0.4.17** ✅ | Fill patterns (D31; #59) |
-| 0.4.18 | Mac and Linux versions (I7), on hold: the modules come first |
+| **0.4.18** ✅ | Testers' fixes: Enter keeps Format Graph open (E10; #64), pattern strength and thickness (D32; #63), families and names (A25; #62) |
+| 0.4.19 | Brackets across rows (C12; #61); hover a replicate (E11; #65) |
+| 0.4.20 | The Comparisons page with diagrams (B40; #61) |
+| 0.4.21 | The Analyze Data window (J10; #61) |
+| later | Modules (planned later); Mac and Linux versions (I7), on hold |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

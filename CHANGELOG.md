@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.18 — 2026-11-18
+
+Testers' fixes: Enter in Format Graph, stronger patterns, and families that are easier to follow.
+
+**Format Graph**
+- **Enter** now confirms the value you typed and keeps Format Graph (and Colour Schemes) open; it used to close the window.
+
+**Patterns**
+- A pattern now has its own **strength** (in its colour's pop-up) and **Pattern lines** (thin, normal, thick, extra thick), so it shows clearly even in the same colour as its fill.
+
+**Navigator**
+- **Show Only This Family** now works from a graph or a result too: it shows their data table and everything made from it.
+- Renaming a data table renames its graphs and results that carry its name ("t-test · Exp 1" becomes "t-test · Exp 2"); names you chose yourself stay, and Undo puts everything back.
+
 ## 0.4.17 — 2026-11-17
 
 Fill patterns.

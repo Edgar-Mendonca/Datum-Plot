@@ -356,7 +356,11 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 return Err("Type a name.".into());
             }
             if let Some(t) = p.tables.iter_mut().find(|t| t.id == id) {
-                t.name = name;
+                let old = std::mem::replace(&mut t.name, name.clone());
+                // 0.4.18 (#62): its graphs and results that carry the table's old name (as a whole word) take the new one.
+                for n in p.graphs.iter_mut().filter(|g| g.table == id).map(|g| &mut g.name).chain(p.analyses.iter_mut().filter(|a| a.table == id).map(|a| &mut a.name)) {
+                    *n = renamed(n, &old, &name);
+                }
             } else if let Some(g) = p.graphs.iter_mut().find(|g| g.id == id) {
                 g.name = name;
             } else if let Some(a) = p.analyses.iter_mut().find(|a| a.id == id) {
@@ -624,4 +628,22 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// `name` with `old` replaced by `new` where `old` stands as whole words ("Exp 1 (2)", "t-test · Exp 1"), not
+/// inside another word ("Exp 10", "Exp 1b").
+pub(crate) fn renamed(name: &str, old: &str, new: &str) -> String {
+    if old.is_empty() {
+        return name.to_string();
+    }
+    let (mut out, mut rest) = (String::new(), name);
+    while let Some(i) = rest.find(old) {
+        let (before, after) = (&rest[..i], &rest[i + old.len()..]);
+        let edge = |c: Option<char>| c.is_none_or(|c| !c.is_alphanumeric());
+        let whole = edge(out.chars().last().filter(|_| before.is_empty()).or(before.chars().last())) && edge(after.chars().next());
+        out.push_str(before);
+        out.push_str(if whole { new } else { old });
+        rest = after;
+    }
+    out + rest
 }

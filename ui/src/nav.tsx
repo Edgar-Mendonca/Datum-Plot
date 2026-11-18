@@ -80,6 +80,8 @@ export const Navigator = () => {
     if (ids.length > 1) return openMenu(e, [...organise(ids, s), "-", { label: `Delete ${ids.length} Items`, icon: "del", run: () => delMany(ids) }, { label: "Clear the Selection", run: () => setSel([]) }]);
     setSel([]); open(s, id); openMenu(e, [
       ...(s === "data" ? [{ label: "New Graph of This Table", icon: "graph", run: () => newGraph(id) }, { label: "Show Only This Family", icon: "list", run: () => setFamily(id) }, "-" as const] : []),
+      // 0.4.18 (#62): a graph's or a result's family is its table's
+      ...(s === "graphs" || s === "results" ? [{ label: "Show Only This Family", icon: "list", run: () => { const t = s === "graphs" ? P().graphs.find(x => x.id === id)?.table : P().analyses.find(x => x.id === id)?.table; if (t !== undefined) setFamily(t); } }] : []),
       ...(s === "graphs" ? [{ label: "Copy Picture", icon: "copy", run: () => copyGraph(id) }, { label: "Copy Embedded", icon: "copy", run: () => copyEmbedded(id) }, { label: "Export…", icon: "export", run: () => { const g = P().graphs.find(x => x.id === id); if (g) exportGraph(g); } },
         { label: "New Layout with This Graph", icon: "layout", run: () => newLayout([id]) }, { label: thumbs() ? "Hide Previews" : "Show Previews", icon: "image", run: () => setThumbs(!thumbs()) }, "-" as const] : []),
       ...(s === "layouts" ? [{ label: "Copy Picture", icon: "copy", run: () => copyPage(id) }, { label: "Export…", icon: "export", run: () => { const l = P().layouts?.find(x => x.id === id); if (l) exportLayout(l); } }, "-" as const] : []),

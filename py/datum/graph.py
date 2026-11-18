@@ -71,7 +71,14 @@ def style_of(graph, k, colors=OKABE_ITO):
             "mfilled": s.get("markerFilled") is not False, "ealpha": (s.get("edgeAlpha") if isinstance(s.get("edgeAlpha"), (int, float)) else None), "malpha": (s.get("markerAlpha") if isinstance(s.get("markerAlpha"), (int, float)) else None),
             "mealpha": (s.get("markerEdgeAlpha") if isinstance(s.get("markerEdgeAlpha"), (int, float)) else None), "err": s.get("errColor") or None, "base": colors[k % len(colors)],
             # 0.4.17 (#59): a fill pattern (a hatch) and its colour (the border's unless set)
-            "hatch": HATCH.get(s.get("pattern") or ""), "hcol": s.get("patternColor") or darker(s.get("edge") or colors[k % len(colors)])}
+            "hatch": HATCH.get(s.get("pattern") or ""), "hcol": rgba(s.get("patternColor") or darker(s.get("edge") or colors[k % len(colors)]), num(s.get("patternAlpha"))),
+            # 0.4.18 (#63): the pattern's line thickness (points)
+            "hwidth": num(s.get("patternWidth")) or 0.8}
+
+
+def num(v):
+    """A number from the settings, or None."""
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 
 def darker(c, f=0.6):
@@ -88,7 +95,7 @@ def hatched(artist, st):
     if st.get("hatch"):
         artist.set_hatch(st["hatch"])
         artist.set_hatchcolor(st["hcol"])
-        artist.set_hatch_linewidth(0.8)
+        artist.set_hatch_linewidth(st.get("hwidth", 0.8))
     return artist
 
 

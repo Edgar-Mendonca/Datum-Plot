@@ -54,7 +54,8 @@ export const Dialog = (p: { title: string; wide?: boolean; children: JSX.Element
     if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement) && !(e.target instanceof HTMLButtonElement)) {
       e.preventDefault();
       if (e.target instanceof HTMLInputElement) e.target.blur();
-      setTimeout(done);
+      // 0.4.18 (#64): side windows (Format Graph, Colour Schemes) apply as you go: Enter only confirms the value.
+      if (!p.side) setTimeout(done);
     }
   };
   let el!: HTMLDivElement;

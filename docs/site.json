@@ -48,9 +48,35 @@
   ],
   "roadmap": [
     {
+      "v": "0.4.19",
+      "title": "Comparisons",
+      "when": "Next",
+      "items": [
+        "Brackets across rows on grouped graphs",
+        "Hover a point to see its value and place in the table"
+      ]
+    },
+    {
+      "v": "0.4.20",
+      "title": "The Comparisons page",
+      "when": "Soon",
+      "items": [
+        "What is compared, shown on a diagram of the table",
+        "Every pair, against a control, or chosen pairs"
+      ]
+    },
+    {
+      "v": "0.4.21",
+      "title": "Analyze Data",
+      "when": "Soon",
+      "items": [
+        "One window to search, choose and explain an analysis"
+      ]
+    },
+    {
       "v": "0.5",
       "title": "Modules",
-      "when": "Next",
+      "when": "Later",
       "items": [
         "Science, engineering and quality tools you can switch on"
       ]

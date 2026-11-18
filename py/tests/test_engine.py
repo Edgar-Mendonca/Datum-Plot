@@ -431,6 +431,13 @@ class Patterns(unittest.TestCase):
             self.assertEqual({h.get_hatch() for h in leg.legend_handles}, {"///", "..."}, f"{kind}: in the legend")
         red = [a for a in arts if a.get_hatch() == "///"]
         self.assertEqual(matplotlib.colors.to_hex(red[0].get_hatchcolor()), "#ff0000")
+        # 0.4.18 (#63): a pattern's strength and thickness
+        g = {"column": "bars", "sets": [{"pattern": "diag", "patternColor": "#ff0000", "patternAlpha": 0.5, "patternWidth": 2.0}]}
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, leg, _ = graph.figure(T, g)
+        bar = [a for a in ax.patches if a.get_hatch() == "///"][0]
+        self.assertAlmostEqual(bar.get_hatchcolor()[3], 0.5)
+        self.assertAlmostEqual(bar.get_hatch_linewidth(), 2.0)
         st = graph.style_of({"sets": [{"pattern": "nope"}]}, 0)
         self.assertIsNone(st["hatch"], "unknown patterns draw nothing")
 

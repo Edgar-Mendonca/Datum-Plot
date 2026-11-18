@@ -97,6 +97,10 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.dlg .dtabs button:has-text("Y Axis")');
   await p.waitForTimeout(100);
   check("Format Graph › Y Axis offers an axis break", ((await p.textContent(".dlg .fmtpage")) || "").includes("Axis break"));
+  // 0.4.18 (#64): Enter in Format Graph confirms the value and keeps the window open.
+  await reset();
+  await p.fill(".dlg .fmtpage input[type=number] >> nth=0", "7"); await p.keyboard.press("Enter"); await p.waitForTimeout(250);
+  check("Enter in Format Graph applies the value and keeps the window open", (await p.$$(".dlg")).length === 1 && !!(await ops()).find(o => o.GraphSet), JSON.stringify(await ops()));
   await p.click('.dlg .dtabs button:has-text("Data Sets")');
   await p.waitForTimeout(100);
   // 0.3.21: each colour is a square (the colour as drawn) whose pop-up offers the graph's scheme.
@@ -208,6 +212,11 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=0', { button: "right" }); await p.waitForTimeout(150);
   await p.click('.menu button:has-text("Show Only This Family")'); await p.waitForTimeout(200);
   check("Show Only This Family filters the navigator", ((await p.textContent(".nav .nfamily")) || "").includes("Family of") && (await p.$$(".nav .nitem:has(span:text-is('Figure 1'))")).length === 1);
+  await p.click('.nav .nfamily button:has-text("Show All")'); await p.waitForTimeout(150);
+  // 0.4.18 (#62): a graph shows its table's family too.
+  await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=1', { button: "right" }); await p.waitForTimeout(150);
+  await p.click('.menu button:has-text("Show Only This Family")'); await p.waitForTimeout(200);
+  check("a graph's Show Only This Family shows its table's family", ((await p.textContent(".nav .nfamily")) || "").includes("Family of") && (await p.$$(".nav .nitem:has(span:text-is('Figure 1'))")).length === 1);
   await p.click('.nav .nfamily button:has-text("Show All")'); await p.waitForTimeout(150);
   await p.click('.nav .nitem:has(span:text-is("Growth")) >> nth=1'); await p.waitForTimeout(400);
   // 3. Hovering a point shows its values.
@@ -964,6 +973,11 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.selectOption(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=0", "dots"); await q.waitForTimeout(150);
     const pt = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets?.[0];
     check("…and choosing one sets it for the data set", pt?.pattern === "dots", JSON.stringify(pt?.pattern));
+    // 0.4.18 (#63): the pattern's line thickness
+    await q.evaluate(() => { window.__calls = []; });
+    await q.selectOption(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=1", "1.6"); await q.waitForTimeout(150);
+    const pw = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets?.[0];
+    check("…and its lines can be made thicker", pw?.patternWidth === 1.6, JSON.stringify(pw?.patternWidth));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

@@ -606,6 +606,10 @@ fn fill_patterns_are_kept_clean() {
     let p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"pattern":"diag","patternColor":"#000000"},{"pattern":"<x>"}]}}],"nextId":3}"##).unwrap();
     let s = &p.graphs[0].settings.sets;
     assert_eq!((s[0].pattern.as_str(), s[0].pattern_color.as_str(), s[1].pattern.as_str()), ("diag", "#000000", ""));
+    // 0.4.18 (#63): a pattern's strength and thickness, kept in range
+    let p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"sets":[{"patternAlpha":3,"patternWidth":99},{"patternAlpha":0.5,"patternWidth":1.5}]}}],"nextId":3}"##).unwrap();
+    let s = &p.graphs[0].settings.sets;
+    assert_eq!((s[0].pattern_alpha, s[0].pattern_width, s[1].pattern_alpha, s[1].pattern_width), (Some(1.0), Some(5.0), Some(0.5), Some(1.5)));
 }
 
 #[test]
@@ -643,4 +647,20 @@ fn digitized_points_become_a_table() {
     let mut d = Doc::new(Project::new("P"));
     d.apply(Op::Digitize { name: "Fig".into(), calib: c, sets, graph: Some(Box::default()) }).unwrap();
     assert_eq!((d.p.tables.len(), d.p.graphs.len()), (1, 1));
+}
+
+#[test]
+fn renaming_a_table_renames_its_family() {
+    // 0.4.18 (#62): graphs and results named after their table follow its new name; other names and tables stay.
+    use crate::doc::renamed;
+    assert_eq!(renamed("One-way ANOVA · Exp 1", "Exp 1", "Exp 2"), "One-way ANOVA · Exp 2");
+    assert_eq!(renamed("Exp 1 (2)", "Exp 1", "Day 3"), "Day 3 (2)");
+    assert_eq!(renamed("Exp 10", "Exp 1", "X"), "Exp 10");
+    assert_eq!(renamed("My figure", "Exp 1", "X"), "My figure");
+    let mut d = Doc::new(Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"Exp 1"},{"id":5,"name":"Exp 1"}],"graphs":[{"id":2,"table":1,"name":"Exp 1"},{"id":3,"table":1,"name":"Figure 2"},{"id":6,"table":5,"name":"Exp 1"}],"analyses":[{"id":4,"table":1,"name":"t-test · Exp 1","kind":"ttest"}],"nextId":7}"##).unwrap());
+    d.apply(Op::Rename { id: 1, name: "Control".into() }).unwrap();
+    let names: Vec<&str> = d.p.graphs.iter().map(|g| g.name.as_str()).chain(d.p.analyses.iter().map(|a| a.name.as_str())).collect();
+    assert_eq!(names, ["Control", "Figure 2", "Exp 1", "t-test · Control"]);
+    d.undo();
+    assert_eq!(d.p.graphs[0].name, "Exp 1");
 }

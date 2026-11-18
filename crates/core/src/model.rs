@@ -617,6 +617,11 @@ pub struct SetStyle {
     pub pattern: String,
     #[serde(rename = "patternColor")]
     pub pattern_color: String,
+    /// 0.4.18 (#63): the pattern's strength (0–1; none = full) and its line thickness in points (none = 0.8).
+    #[serde(rename = "patternAlpha")]
+    pub pattern_alpha: Option<f64>,
+    #[serde(rename = "patternWidth")]
+    pub pattern_width: Option<f64>,
 }
 
 /// 0.4.17 (#59): the fill patterns offered (the engine draws each as a hatch).
@@ -624,7 +629,7 @@ pub const PATTERNS: [&str; 9] = ["diag", "rdiag", "horiz", "vert", "cross", "xcr
 
 impl Default for SetStyle {
     fn default() -> Self {
-        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None, marker_filled: None, edge_alpha: None, marker_alpha: None, marker_edge_alpha: None, err_color: String::new(), pattern: String::new(), pattern_color: String::new() }
+        Self { show: true, color: String::new(), symbol: String::new(), size: 6.0, filled: true, line: None, width: 1.0, right: false, fill: String::new(), edge: String::new(), marker_edge: String::new(), alpha: None, marker_filled: None, edge_alpha: None, marker_alpha: None, marker_edge_alpha: None, err_color: String::new(), pattern: String::new(), pattern_color: String::new(), pattern_alpha: None, pattern_width: None }
     }
 }
 
@@ -788,7 +793,8 @@ impl Project {
                     st.pattern.clear();
                 }
                 st.pattern_color.truncate(32);
-                for a in [&mut st.alpha, &mut st.edge_alpha, &mut st.marker_alpha, &mut st.marker_edge_alpha] {
+                st.pattern_width = st.pattern_width.filter(|w| w.is_finite()).map(|w| w.clamp(0.1, 5.0));
+                for a in [&mut st.alpha, &mut st.edge_alpha, &mut st.marker_alpha, &mut st.marker_edge_alpha, &mut st.pattern_alpha] {
                     *a = a.filter(|a| a.is_finite()).map(|a| a.clamp(0.0, 1.0));
                 }
                 // 0.4.2 (#42, #43): symbols had no fill switch of their own (they followed the bars'), and an automatic
