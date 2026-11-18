@@ -211,14 +211,14 @@ def twoway_rm(table, ks, o):
         checks.append((sw.pvalue > alpha, f"The residuals {'look' if sw.pvalue > alpha else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)})."))
     brackets = []
     if post != "none":
-        brackets = comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs)
+        brackets = comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, o)
     return result("Two-way repeated measures ANOVA" if complete else "Mixed-effects model", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
                   methods=f"Data were analysed by {method} ({rowname} × {colname}; {DESIGNS[rm]}){'' if post == 'none' else ', with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons from the mixed model'} (α = {alpha:g}) in Datum Plot (statsmodels).",
                   legend="Points show each subject; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="import statsmodels.formula.api as smf\n# df: one row per value with columns y, A (row), B (data set), S (subject)\nm = smf.mixedlm('y ~ C(A, Sum) * C(B, Sum)', df, groups=df['S']).fit(reml=True)\nprint(m.summary())")
 
 
-def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs):
+def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, opts):
     """Differences of cell means from the mixed model, within each row (or each data set)."""
     import pandas as pd
     names = list(fit.fe_params.index)
@@ -229,32 +229,15 @@ def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs):
     row = lambda a, s: dmatrix(design, pd.DataFrame({"A": [a], "B": [s]}), return_type="dataframe").to_numpy()[0]
     dfw = {k: d2 for k, _, _, d2, _, w_ in tests if w_}
     dfb = {k: d2 for k, _, _, d2, _, w_ in tests if not w_}
-    from .groups import families, FAMILY
-    brackets = []
-    for fam in families(within):  # 0.4.19 (#61): rows, data sets or both, each family corrected on its own
-        brackets += family(fam, b, V, row, rm, ks, rlab, slab, rix, dfw, dfb, post, tabs)
-    return brackets
+    from .groups import plan, run_families
+    # 0.4.19 (#61), 0.4.20 (B40): every family asked for, from the model's own contrasts of (averaged) cell means;
+    # the error df is the factor's (within or between subjects), or the smallest when a comparison spans both.
+    contrast = lambda cs_: np.mean([row(rlab[rix.index(r)], slab[ks.index(k)]) for k, r in cs_], axis=0)
+    every = list(dfw.values()) + list(dfb.values())
 
-
-def family(fam, b, V, row, rm, ks, rlab, slab, rix, dfw, dfb, post, tabs):
-    """One family of comparisons of cell means from the mixed model, with its table; returns its brackets."""
-    from .groups import FAMILY
-    if fam == "rows":
-        comps = [(f"{r}: {slab[i]} vs {slab[j]}", r, slab[i], r, slab[j], [ks[i], ks[j], None, rix[rlab.index(r)]], "B")
-                 for r in rlab for i, j in combinations(range(len(slab)), 2)]
-    else:
-        comps = [(f"{s}: {rlab[i]} vs {rlab[j]}", rlab[i], s, rlab[j], s, [ks[si], ks[si], None, rix[i], rix[j]], "A")
-                 for si, s in enumerate(slab) for i, j in combinations(range(len(rlab)), 2)]
-    out, raw = [], []
-    for c in comps:
-        L = row(c[3], c[4]) - row(c[1], c[2])
-        d, se = float(L @ b), float(math.sqrt(max(L @ V @ L, 0)))
-        rep = c[6] in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
-        ddf = (dfw.get(c[6]) if rep else dfb.get(c[6])) or min(list(dfw.values()) + list(dfb.values()))
-        raw.append(2 * float(st.t.sf(abs(d / se), ddf)) if se > 0 else float("nan"))
-        out.append((c, d, se, ddf))
-    adj = adjust(raw, post)
-    q = 1 - 0.95 ** (1 / len(out)) if post in ("sidak", "holm") else 0.05 / len(out) if post == "bonferroni" else 0.05
-    tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {FAMILY[fam]}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
-                 "rows": [[c[0], g(d), ci_text(d - st.t.ppf(1 - q / 2, ddf) * se, d + st.t.ppf(1 - q / 2, ddf) * se), pv(p), stars(p)] for (c, d, se, ddf), p in zip(out, adj)]})
-    return [[*c[5][:2], float(p), *c[5][3:]] for (c, d, se, ddf), p in zip(out, adj)]
+    def est(a_, b_, fac):
+        L = contrast(b_) - contrast(a_)
+        rep = fac in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
+        ddf = ((dfw.get(fac) if rep else dfb.get(fac)) if fac else None) or min(every)
+        return float(L @ b), float(math.sqrt(max(L @ V @ L, 0))), ddf
+    return run_families(plan({**opts, "compare": within}, ks, list(zip(rix, rlab)), lambda k: slab[ks.index(k)]), est, post, tabs)

@@ -716,3 +716,16 @@ input.mono { font-family: var(--mono) !important; }
 .nav .nitem.dropb { box-shadow: inset 0 2px 0 var(--blue); }
 .nav .nitem.dropa { box-shadow: inset 0 -2px 0 var(--blue); }
 .nav .nfolder.dropin { outline: 2px solid var(--blue); outline-offset: -2px; }
+/* 0.4.20 (B40): the Comparisons page and its diagram */
+.cmpfams { display: flex; flex-direction: column; gap: 2px; }
+.cmppairs { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.cmppair { display: inline-flex; gap: 6px; align-items: center; padding: 1px 0 1px 8px; border: 1px solid var(--line); background: var(--panel); }
+.cmpdiag { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; border: 1px solid var(--line2); background: var(--bg2); width: max-content; max-width: 100%; overflow-x: auto; }
+.cmpdiag .cmph { font: 10px var(--sans); fill: var(--muted); }
+.cmpdiag .cmpc { fill: var(--pale); stroke: var(--blue); stroke-width: 1.5; }
+.cmpdiag .cmpc.main { stroke-dasharray: 3 2; }
+.cmpdiag .cmpc.ctl { fill: var(--blue); }
+.cmpdiag .cmpl { fill: none; stroke: var(--blue); stroke-width: 1.2; opacity: 0.85; }
+.cmpdiag .cmpa { fill: var(--blue); }
+.form > .fsub { grid-column: 1 / -1; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--line2); margin-top: 6px; padding-bottom: 2px; }
+.form .cmpinline select { width: auto; max-width: 220px; }

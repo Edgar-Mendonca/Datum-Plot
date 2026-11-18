@@ -994,7 +994,23 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.evaluate(() => { window.__calls = []; });
     await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
     const twa = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.AddAnalysis)?.AddAnalysis.analysis;
-    check("Two-way ANOVA can compare within each row and across rows at once", twa?.kind === "twoway" && twa?.options.compare === "both", JSON.stringify(twa?.options));
+    check("Two-way ANOVA can compare within each row and across rows at once", twa?.kind === "twoway" && twa?.options.compare === "rows+sets", JSON.stringify(twa?.options));
+    // 0.4.20 (B40): the Comparisons page: against a control, with a diagram that follows the choices
+    for (let i = 0; i < 3 && (await q.$$(".dlg")).length; i++) { await q.keyboard.press("Escape"); await q.waitForTimeout(100); }
+    const tw2 = await q.$('.ribbon .rb:has-text("Two-way ANOVA")');
+    if (tw2 && !(await tw2.isVisible())) await tw2.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
+    await q.click('.ribbon .rb:has-text("Two-way ANOVA")'); await q.waitForTimeout(250);
+    if ((await q.textContent(".dlg").catch(() => "")).includes("Make Another")) { await q.click('.dlg button:has-text("Make Another")'); await q.waitForTimeout(250); }
+    const lines0 = (await q.$$(".dlg .cmpdiag path.cmpl")).length;
+    await q.click('.dlg label:has-text("Every cell with every other")'); await q.waitForTimeout(150);
+    const lines1 = (await q.$$(".dlg .cmpdiag path.cmpl")).length;
+    check("the Comparisons diagram draws more lines when every cell is compared", lines1 > lines0 && lines0 > 0, `${lines0} -> ${lines1}`);
+    await q.selectOption('.dlg select:has(option[value="control"])', "control"); await q.waitForTimeout(150);
+    check("…and fills the control against which each is compared", (await q.$$(".dlg .cmpdiag circle.ctl")).length >= 1 && ((await q.textContent(".dlg .cmpdiag")) || "").includes("control"));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
+    const twc = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.AddAnalysis)?.AddAnalysis.analysis.options;
+    check("…and sends the families, the control and its correction", twc?.compare === "rows+cells" && twc?.vs === "control" && twc?.posthoc === "sidak", JSON.stringify(twc));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

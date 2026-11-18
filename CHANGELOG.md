@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.20 — 2026-11-18
+
+The Comparisons page: choose what to compare and see it on a picture of your table.
+
+**Two-way ANOVA › Comparisons**
+- **What to compare** (tick any): the data sets within each row, the rows within each data set (across rows), every cell with every other, the data sets' means (main effect) and the rows' means (main effect).
+- **How many**: every pair, each against a control (choose the control data set and row), or only the pairs you choose.
+- A small **picture of the table** under the choices draws a line for each comparison and fills the control, and says how many comparisons there are. Each kind of comparison is corrected for its own number.
+- This works with and without repeated measures.
+
+**One-way ANOVA › Comparisons**
+- Every pair (Tukey), each against a control group of your choice (Dunnett), or only the pairs you choose, with the same picture.
+
 ## 0.4.19 — 2026-11-18
 
 Brackets across rows, and the value behind each point.

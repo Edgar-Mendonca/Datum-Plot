@@ -92,6 +92,23 @@ class Anova(unittest.TestCase):
         # η² = SSB / SST = 3.7663 / 14.258
         self.assertAlmostEqual(num(cell(r, "R squared (η²)", None)), 0.2641, places=4)
 
+    def test_against_a_control_or_chosen_pairs(self):
+        """0.4.20 (B40). R: pairwise.t.test(weight, group, p.adjust = "none") on PlantGrowth: ctrl–trt2 0.0877, trt1–trt2 0.0045."""
+        t = col(CTRL, TRT1, TRT2)
+        r = A.run("anova", t, [], {"vs": "pairs", "pairs": [[0, 2], [1, 2], [2, 2]], "posthoc": "lsd"})
+        self.assertEqual([(b[0], b[1], A.pv(b[2])) for b in r["brackets"]], [(0, 2, "0.0877"), (1, 2, "0.0045")])
+        d = A.run("anova", t, [], {"vs": "control", "control": 1, "posthoc": "dunnett"})
+        self.assertEqual(sorted((b[0], b[1]) for b in d["brackets"]), [(1, 0), (1, 2)], "each against the second group")
+        from scipy import stats as st
+        ref = st.dunnett(np.array(CTRL, float), np.array(TRT2, float), control=np.array(TRT1, float))
+        self.assertAlmostEqual(d["brackets"][1][2], float(ref.pvalue[1]), places=3)  # Dunnett integrates by random sampling
+        # Tukey is for every pair: against a control it becomes Holm-Šidák, and the methods say so
+        h = A.run("anova", t, [], {"vs": "control", "control": 2, "posthoc": "tukey"})
+        self.assertIn("Holm-Šidák", h["methods"])
+        self.assertEqual(sorted((b[0], b[1]) for b in h["brackets"]), [(2, 0), (2, 1)])
+        with self.assertRaises(ValueError):
+            A.run("anova", t, [], {"vs": "pairs", "pairs": []})
+
     def test_every_variant_runs(self):
         for o in [{"anova": "welch", "posthoc": "dunnett"}, {"anova": "bf", "posthoc": "holm"}, {"anova": "rm", "posthoc": "bonferroni"}, {"posthoc": "sidak", "trend": True}, {"posthoc": "lsd"}, {"posthoc": "none"}]:
             r = A.run("anova", col(CTRL, TRT1, TRT2), [], o)
@@ -230,6 +247,74 @@ class TwoWay(unittest.TestCase):
         spans = sorted(round(max(x) - min(x), 3) for x in (l.get_xdata() for l in ax.lines) if len(x) == 4 and min(x) != max(x))
         self.assertEqual(len(spans), 6, spans)
         self.assertGreater(spans[0], 0.9, "each joins boxes in different rows")
+
+
+WB_A = [[26, 30, 54, 25, 70, 52, 51, 26, 67], [18, 21, 29, 17, 12, 18, 35, 30, 36], [36, 21, 24, 18, 10, 43, 28, 15, 26]]
+WB_B = [[27, 14, 29, 19, 29, 31, 41, 20, 44], [42, 26, 19, 16, 39, 28, 21, 39, 29], [20, 21, 24, 17, 13, 15, 15, 16, 28]]
+WB = {"kind": "grouped", "rows": 3, "rowTitles": ["L", "M", "H"], "sets": [{"title": "A", "entry": "rep", "reps": 9}, {"title": "B", "entry": "rep", "reps": 9}],
+      "cols": [[None] * 3] + [[WB_A[r][j] for r in range(3)] for j in range(9)] + [[WB_B[r][j] for r in range(3)] for j in range(9)], "excluded": []}
+
+
+class Comparisons(unittest.TestCase):
+    """0.4.20 (B40): what to compare after two-way ANOVA (cells, main effects) and how many (every pair, against a
+    control, chosen pairs). Warpbreaks again; the residual mean square 5745.1111 / 48 df."""
+    A_, B_, T = WB_A, WB_B, WB
+    MSE = 5745.1111 / 48
+
+    def p_of(self, d, se, df=48):
+        from scipy import stats as st
+        return 2 * st.t.sf(abs(d) / se, df)
+
+    def rows_of(self, r, i=-1):
+        return r["tabs"][0]["tables"][i]["rows"]
+
+    def test_main_effect_of_the_data_sets_is_the_anova_f_test(self):
+        # balanced: the data sets' means compared is the wool F test (R: P = 0.058213)
+        r = A.run("twoway", self.T, [], {"compare": "mainsets"})
+        row = self.rows_of(r)
+        self.assertEqual(len(row), 1)
+        self.assertEqual(row[0][3], "0.0582")
+        self.assertEqual(r["brackets"], [], "main effects draw no brackets")
+
+    def test_every_cell_against_a_control_and_chosen_pairs(self):
+        cells = A.run("twoway", self.T, [], {"compare": "cells", "posthoc": "bonferroni"})
+        self.assertEqual(len(self.rows_of(cells)), 15)
+        self.assertEqual(len(cells["brackets"]), 15)
+        ctrl = A.run("twoway", self.T, [], {"compare": "cells", "vs": "control", "controlSet": 1, "controlRow": 2, "posthoc": "bonferroni"})
+        rows = self.rows_of(ctrl)
+        self.assertEqual(len(rows), 5)
+        self.assertTrue(all(x[0].startswith("B · H vs") for x in rows), rows)
+        # A · L against B · H by hand: Bonferroni over 5
+        d = np.mean(self.A_[0]) - np.mean(self.B_[2])
+        p = min(1, 5 * self.p_of(d, np.sqrt(self.MSE * 2 / 9)))
+        b = [x for x in ctrl["brackets"] if (x[0], x[3], x[1], x[4]) == (1, 2, 0, 0)][0]
+        self.assertAlmostEqual(b[2], p, places=6)
+        pr = A.run("twoway", self.T, [], {"vs": "pairs", "pairs": [[0, 0, 1, 2], [0, 0, 0, 0], [5, 0, 1, 1]], "posthoc": "sidak"})
+        self.assertEqual(len(pr["brackets"]), 1, "the same cell twice and unknown data sets are left out")
+        self.assertAlmostEqual(pr["brackets"][0][2], self.p_of(np.mean(self.B_[2]) - np.mean(self.A_[0]), np.sqrt(self.MSE * 2 / 9)), places=6)
+        with self.assertRaises(ValueError):
+            A.run("twoway", self.T, [], {"vs": "pairs", "pairs": []})
+
+    def test_rows_against_a_control_row_and_the_rows_main_effect(self):
+        r = A.run("twoway", self.T, [], {"compare": "sets+mainrows", "vs": "control", "controlRow": 2})
+        titles = [x["title"] for x in r["tabs"][0]["tables"]]
+        self.assertTrue(any("within each data set, each against H" in x for x in titles) and any("rows' means (main effect), each against H" in x for x in titles), titles)
+        main = self.rows_of(r)
+        self.assertEqual([x[0] for x in main], ["H vs L", "H vs M"])
+        # the rows' means (averaged over A and B) by hand: L against H, Šidák over 2
+        d = (np.mean(self.A_[0]) + np.mean(self.B_[0])) / 2 - (np.mean(self.A_[2]) + np.mean(self.B_[2])) / 2
+        p = 1 - (1 - self.p_of(d, np.sqrt(self.MSE * 2 * 2 / 9 / 4))) ** 2
+        self.assertEqual(main[0][3], A.pv(p))
+        self.assertEqual(len(r["brackets"]), 2 * 2)
+
+    def test_repeated_measures_take_every_choice(self):
+        rng = np.random.default_rng(3)
+        from test_repeated import grouped
+        v = [[[rng.normal(10, 2) for _ in range(3)] for _ in range(3)] for _ in range(2)]
+        for o in ({"compare": "cells"}, {"compare": "mainsets+mainrows"}, {"compare": "rows", "vs": "control", "controlSet": 1}, {"vs": "pairs", "pairs": [[0, 0, 1, 2]]}):
+            for rm in ("rows", "sets", "both"):
+                r = A.run("twoway", grouped(v, 3, 2, 3), [], {"rm": rm, **o})
+                self.assertTrue(r["answer"], (rm, o))
 
 
 class Contingency(unittest.TestCase):

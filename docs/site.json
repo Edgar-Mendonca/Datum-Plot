@@ -48,18 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.20",
-      "title": "The Comparisons page",
-      "when": "Next",
-      "items": [
-        "What is compared, shown on a diagram of the table",
-        "Every pair, against a control, or chosen pairs"
-      ]
-    },
-    {
       "v": "0.4.21",
       "title": "Analyze Data",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "One window to search, choose and explain an analysis"
       ]
