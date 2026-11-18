@@ -516,6 +516,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - **0.4.15** (released after CI green; installer, three guides, SHA256SUMS) (the user passed on #57–#60; "go ahead with this order"): #57 and #58 fixed as above. Plan: 0.4.16 grouped box/violin and rows (#60), 0.4.17 fill patterns (#59), Mac and Linux after.
 - **0.4.16** (released after CI green; installer, three guides, SHA256SUMS): #60 as above. Tests: Python (box and violin, legend, row order and hiding), UI (its own window with a grouped table: the two types offered, Rows listed, hide and move).
 - **0.4.17** (released after CI green; installer, three guides, SHA256SUMS): #59 as above. Tests: core (unknown patterns dropped), Python (patterns on bars, boxes and violins and in legends; their colour), UI (offered and set). The 0.4.15 release waited on a new npm advisory (GHSA-fc5q-39xc-vjpf, picomatch in the build tool, no fix yet): the user chose a dated exception (`audit-allow.json`, until 2026-12-17).
+- **README** (2026-11-18, the user's request): "What it does" rewritten from site.json's highlights in five parts (Data, Analysis, Graphs, Export and share, Also inside) plus Coming next; it had stopped at 0.2.x features. Keep it in step with site.json when releases add features.
 ---
 
 ## 5. Known limits and next steps

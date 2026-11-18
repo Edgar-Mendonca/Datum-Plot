@@ -29,23 +29,51 @@
 
 Datum Plot is part of Datum; see its page: https://edgar-mendonca.github.io/Datum/apps/plot
 
-Datum Plot keeps a project as a chain: **data tables → analyses → results → graphs → layouts**. Everything stays linked, so changing a value redraws its graphs.
+Datum Plot keeps a project as a chain: **data tables → analyses → results → graphs → layouts**. Everything stays linked, so changing a value updates every result and graph that uses it.
 
-- **Data tables** that work like a spreadsheet: XY tables (an X column and data sets with replicates, or a mean with SD or SEM and N) and column tables (one group per column). Paste from a spreadsheet, fill series, exclude a value without deleting it. **Worksheets** with free columns (X, Y, Y error), units and comments, and **column formulas** such as `log10(A)` or `(B - mean(B)) / sd(B)` that update as the data change.
-- **Publication-quality graphs** drawn with matplotlib: means with SD, SEM, 95% CI or range, linear or log axes, colour-blind-safe colours, sizes in millimetres for journal columns.
-- **Export** as PNG or TIFF at any dpi, or as SVG, PDF and EPS with editable text; every graph as slides (.pptx) or a report with graphs, results and methods (.docx); posters and slides as page layouts. Copy into documents and slides. Print with headers, footers and captions.
-- **Import** CSV, TXT and .xlsx files, the tables of .pzfx projects, 96- and 384-well plates, and many runs at once. Large data sets (hundreds of thousands of points) stay quick, and a region tool gives the statistics of any part of a curve.
-- **Statistics and regression** on the built-in Python engine (numpy, SciPy, statsmodels, lmfit): descriptive statistics, normality, outliers, t-tests, one-way ANOVA with multiple comparisons, nonparametric tests, effect sizes, correlation, power; linear regression (fit ranges, Deming, comparing lines), curve fitting with a model library or your own equation, global fits and model comparison, area under the curve and smoothing; multiple, logistic and Poisson regression, principal components and clustering on tables of many variables; survival analysis (Kaplan-Meier curves, median survival, log-rank test, hazard ratios); nested t-tests and ANOVA for subgroups within groups. Results stay linked to the data, explain themselves and give methods text.
-- **Matrices and 3D**: Z values on an X–Y grid as contour maps, heat maps or 3D surfaces; surface fits (plane, quadratic with its maximum or minimum, cubic, 2D Gaussian peak); polar graphs of XY data.
-- **Peaks and signals**: find peaks above a straight or polynomial baseline (positions, heights, widths, areas), fit them as Gaussian, Lorentzian or Voigt peaks; Fourier spectra, low-, high- and band-pass filters, resampling.
-- **Materials testing**: tensile tests (modulus, yield, UTS, elongation, toughness), Weibull strength, Arrhenius activation energies, S–N fatigue curves (Basquin, with run-outs), DSC peaks (onset, peak temperature, enthalpy) and TGA steps (onset, mass lost, residue).
-- **Column graphs** (dots, bars, box plots, violins) with significance stars, journal styles and colour-blind-safe schemes. Export every graph at once, or the whole project to a spreadsheet (.xlsx). More arrives in releases: see the [roadmap](docs/MEMORY.md#3-roadmap).
+### Data
+- **Tables for every kind of experiment**: XY, column (one group per column), grouped (two factors), contingency (counts), survival, nested and multiple-variable tables. Replicates or a mean with SD or SEM and N; dates and times in the X column, drawn on date axes. Paste from a spreadsheet, fill series, exclude a value without deleting it.
+- **Worksheets** with free columns, units and comments, and **column formulas** such as `log10(A)` or `(B - mean(B)) / sd(B)` that update as the data change.
+- **Import** CSV, TXT, .xlsx and .pzfx files, 96- and 384-well plates and many runs at once. Large data sets (hundreds of thousands of points) stay quick.
+- **Graph digitizer**: read the points of a published graph from its picture into a table.
+
+### Analysis
+- **Statistics**: descriptive statistics, normality, outliers, t-tests, nonparametric tests, one-, two- and three-way ANOVA with multiple comparisons, repeated measures and mixed-effects models, ANCOVA, **Bayes factors** beside the P values, multiple t-tests with false discovery rates and volcano plots, nested t-tests and ANOVA, contingency tables, correlation, power, Bland-Altman, ROC, agreement (Cohen's kappa, McNemar), bootstrap confidence intervals and survival analysis (Kaplan-Meier, log-rank, hazard ratios).
+- **Regression and curve fitting**: linear regression (fit ranges, Deming, comparing lines), a model library or your own equation, global fits and model comparison, smoothing splines, area under the curve; multiple, logistic and Poisson regression, principal components and clustering.
+- **IC50 and EC50**: dose-response curves with normalising, pIC50, confidence intervals and a test of whether compounds differ.
+- **Matrices and 3D**: contour maps, heat maps, 3D surfaces, 3D scatter and vector fields; surface fits (plane, quadratic, cubic, 2D Gaussian).
+- **Peaks and signals**: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters, wavelet scalograms and spectrograms.
+- **Quality**: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.
+- **Materials testing**: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).
+- Every result stays linked to its data, explains itself in plain words and gives ready **methods text**.
+
+### Graphs
+- **Publication-quality graphs** drawn with matplotlib: XY, column graphs (dots, bars, box plots, violins), grouped bars, box plots and violins, pie and donut charts, forest plots, polar, ternary, bubble, radar and waterfall graphs.
+- **Significance brackets and stars** that stay readable however many there are, chosen per graph.
+- **Styling**: error bars (mean or median; SD, SEM, 95% CI or range), colour-blind-safe colour schemes, symbols, fills and **fill patterns** (stripes, cross-hatching, dots and more), axis breaks, a second Y axis, label angles, text sizes, titles and subtitles, annotations and insets. Save **your own style** for every new graph.
+- **Interactive**: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.
+- **Page layouts** at journal sizes, multi-panel figures, posters and slides.
+
+### Export and share
+- PNG or TIFF at any dpi (with CMYK), or SVG, PDF and EPS with editable text.
+- Every graph as slides (.pptx or .odp), or a document with graphs, results and methods (.docx or .odt); tables and results as a workbook (.xlsx or .ods). Print with headers, footers and captions.
+- Graphs pasted into documents, slides and workbooks open again in Datum Plot with a double-click (Windows).
+
+### Also inside
+- A **Python console** (below), your own saved analyses, analysis templates, batch processing and notebook export.
+- A step-by-step **guide** with pictures in English, Chinese and French (Help › Guide), and over twenty sample projects grouped by subject.
+- **Safe and sturdy**: projects never run code, saves never leave half-written files, damaged files open or explain why, and updates are checked against their checksums.
 
 Everything stays on your computer. The only network call is the update check to GitHub.
 
+### Coming next
+- **0.5 Modules**: science, engineering and quality tools you can switch on.
+- **1.0 Stable**: a signed installer and a validation report against reference values.
+- Mac and Linux versions are on hold for now. The full plan is in the [roadmap](docs/MEMORY.md#3-roadmap).
+
 ## Install
 
-Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Mendonca/Datum-Plot/releases/latest) and run it. It installs for your user account, with its own Python, and updates itself from the Home page.
+Download `DatumPlot-x.y.z-setup.exe` from [Releases](https://github.com/Edgar-Mendonca/Datum-Plot/releases/latest) and run it. It installs for your user account in seconds, with its own Python (nothing else to install), and updates itself from the Home page. Windows 10 and 11.
 
 ## The Python console
 
