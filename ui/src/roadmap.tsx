@@ -131,6 +131,10 @@ const SUITS: Record<string, string[]> = {
   grouped: ["B15", "B34a", "B33", "B1"], contingency: ["B17", "B34c", "A6"], parts: ["A6"], survival: ["B19"], multi: ["B21", "B22", "B16", "B35d"],
   matrix: ["B26"], worksheet: ["B9", "B10", "B24", "B25", "B36", "B14", "B16"], nested: ["B1"],
 };
+/** 0.4.22 (#61): the analyses chosen last (at most five), kept in this window's storage on this computer. */
+const RECENT = "datum-recent-analyses";
+const recent = (): string[] => { try { const v = JSON.parse(localStorage.getItem(RECENT) || "[]"); return Array.isArray(v) ? v.filter(x => typeof x === "string").slice(0, 5) : []; } catch { return []; } };
+const remember = (id: string) => { try { localStorage.setItem(RECENT, JSON.stringify([id, ...recent().filter(x => x !== id)].slice(0, 5))); } catch { /* storage off: nothing to remember */ } };
 const KIND_NAME: Record<string, string> = { xy: "XY", column: "column", grouped: "grouped", contingency: "contingency", parts: "parts-of-whole", survival: "survival", multi: "many-variables", matrix: "matrix", worksheet: "worksheet", nested: "nested" };
 
 /** 0.4.21 (J10, #61): Analyze Data in one window: search, the analyses grouped (those that suit the open table first),
@@ -144,7 +148,8 @@ const AnalyzeData = (p: { first?: string }) => {
   const sections = createMemo(() => {
     const sug = ANALYSES.filter(c => suits.includes(keyOf(c)) && match(c)).sort((a, b) => suits.indexOf(keyOf(a)) - suits.indexOf(keyOf(b)));
     const groups = [...new Set(ANALYSES.map(c => c.group))].map(g => [g, ANALYSES.filter(c => c.group === g && match(c))] as [string, Choice[]]).filter(([, cs]) => cs.length);
-    return [...(sug.length ? [[`Suggested for ${t ? `this ${KIND_NAME[t.kind] ?? t.kind} table` : "this table"}`, sug] as [string, Choice[]]] : []), ...groups];
+    const rec = recent().map(id => ANALYSES.find(c => keyOf(c) === id)).filter((c): c is Choice => !!c && match(c));
+    return [...(rec.length ? [["Recently used", rec] as [string, Choice[]]] : []), ...(sug.length ? [[`Suggested for ${t ? `this ${KIND_NAME[t.kind] ?? t.kind} table` : "this table"}`, sug] as [string, Choice[]]] : []), ...groups];
   });
   // a search that hides the chosen analysis chooses the first match, so Enter opens the top hit
   createEffect(() => { const flat = sections().flatMap(([, cs]) => cs); if (flat.length && !flat.includes(sel())) setSel(flat[0]); });
@@ -153,6 +158,7 @@ const AnalyzeData = (p: { first?: string }) => {
     if (f && !ready(f[0])) { soon(f[0]); return false; }
     if (t && !sets().length) { toast("Tick at least one data set."); return false; }
     const all = !t || sets().length === t.sets.length;
+    remember(keyOf(c));
     setTimeout(() => runAnalysis(keyOf(c), all ? [] : sets()));
   };
   const key = (e: KeyboardEvent) => {  // arrows move through the list as it is shown

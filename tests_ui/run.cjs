@@ -769,6 +769,9 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   // 0.3.9: the new analyses are in the gallery and their options open.
   await p.click('.tabs button:text-is("Analyze")'); await p.waitForTimeout(100);
   await p.click('.ribbon .rb:has-text("Analyze…")'); await p.waitForTimeout(300);
+  // 0.4.22 (#61): the analysis chosen earlier comes first, under Recently used
+  const recentA = await p.$$eval(".anitems .angroup", gs => gs.map(g => g.textContent));
+  check("Analyze Data lists the analyses used recently first", recentA[0] === "Recently used" && ((await p.textContent(".anitems")) || "").includes("Descriptive statistics"), JSON.stringify(recentA.slice(0, 2)));
   const gal = (await p.textContent(".dlg .anitems")) || "";
   check("the Analyze window offers Three-way ANOVA and ANCOVA", gal.includes("Three-way ANOVA") && gal.includes("ANCOVA"), gal.slice(0, 200));
   check("the Analyze window offers wavelets and spectrograms (0.4.0)", gal.includes("Wavelets and spectrograms"));
@@ -1022,6 +1025,26 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
     const twc = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.AddAnalysis)?.AddAnalysis.analysis.options;
     check("…and sends the families, the control and its correction", twc?.compare === "rows+cells" && twc?.vs === "control" && twc?.posthoc === "sidak", JSON.stringify(twc));
+    // 0.4.22 (#61): what will be done, the repeated-measures layout, the false discovery rate and residual plots
+    for (let i = 0; i < 3 && (await q.$$(".dlg")).length; i++) { await q.keyboard.press("Escape"); await q.waitForTimeout(100); }
+    const tw3 = await q.$('.ribbon .rb:has-text("Two-way ANOVA")');
+    if (tw3 && !(await tw3.isVisible())) await tw3.evaluate(e => e.closest(".grp")?.querySelector(".gfold")?.click());
+    await q.click('.ribbon .rb:has-text("Two-way ANOVA")'); await q.waitForTimeout(250);
+    if ((await q.textContent(".dlg").catch(() => "")).includes("Make Another")) { await q.click('.dlg button:has-text("Make Another")'); await q.waitForTimeout(250); }
+    const plan0 = (await q.textContent(".dlg .plan").catch(() => "")) || "";
+    check("the window says what will be done, in plain words", plan0.includes("Ordinary two-way ANOVA") && plan0.includes("corrected by Šidák"), plan0);
+    check("…and draws no layout without repeated measures", (await q.$$(".dlg .rmlayout")).length === 0);
+    await q.selectOption('.dlg select:has(option[value="both"])', "rows"); await q.waitForTimeout(150);
+    check("repeated measures outline one subject's values down the rows", (await q.$$(".dlg .rmlayout rect.on")).length === 3 && ((await q.textContent(".dlg .plan")) || "").includes("repeated-measures"));
+    await q.click('.dlg .ftabs button:has-text("Comparisons")'); await q.waitForTimeout(100);
+    await q.selectOption('.dlg select:has(option[value="fdr"])', "fdr"); await q.waitForTimeout(100);
+    check("…the false discovery rate is offered and the summary follows", ((await q.textContent(".dlg .plan")) || "").includes("false discovery rate"));
+    await q.click('.dlg .ftabs button:has-text("Graph")'); await q.waitForTimeout(100);
+    await q.click('.dlg label:has-text("Residual plots")'); await q.waitForTimeout(100);
+    await q.evaluate(() => { window.__calls = []; });
+    await q.click(".dlg .btn.pri"); await q.waitForTimeout(250);
+    const tw4 = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.AddAnalysis)?.AddAnalysis.analysis.options;
+    check("…and the analysis asks for them", tw4?.rm === "rows" && tw4?.posthoc === "fdr" && tw4?.resplots === true, JSON.stringify(tw4));
     await q.close();
   }
   // 0.4.1 (E8): the digitizer sends pixels (in the picture's own size) and the typed values; the core makes the table.

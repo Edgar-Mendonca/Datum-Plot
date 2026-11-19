@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.22 — 2026-11-19
+
+Analysis windows that explain themselves.
+
+**One- and two-way ANOVA**
+- **What will be done**: a box at the bottom of the window says in plain words what will be run (the design, the comparisons and how many, the correction, what goes on the graph), and follows every change.
+- **Repeated measures** now show a small picture of the table with one subject's values outlined, so it is clear which values are matched.
+- **Residual plots** (Graph tab): the residuals, their spread and a normal QQ plot on the results sheet, to check the model.
+- **False discovery rate** (Benjamini-Hochberg) is now offered as a correction for the comparisons.
+
+**Analyze Data**
+- **Recently used** lists the analyses you chose last at the top.
+
 ## 0.4.21 — 2026-11-18
 
 A new Analyze Data window.

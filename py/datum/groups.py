@@ -385,6 +385,8 @@ def anova(table, ks, o):
         if s_ < 2:
             raise ValueError("Repeated measures ANOVA needs two or more complete rows (subjects).")
         gm = M.mean()
+        fitted = M.mean(1, keepdims=True) + M.mean(0, keepdims=True) - gm  # subject + treatment (0.4.22: residual plots)
+        rmres = (fitted.ravel(), (M - fitted).ravel())
         ss_t = float(((M.mean(0) - gm) ** 2).sum() * nr)
         ss_s = float(((M.mean(1) - gm) ** 2).sum() * kk)
         ss_e = float(((M - gm) ** 2).sum()) - ss_t - ss_s
@@ -466,13 +468,43 @@ def anova(table, ks, o):
     if bf is not None:
         from . import bayes
         ans += f" Bayes factor BF₁₀ = {bayes.text(bf)}: {bayes.words(bf)}."
+    if o.get("resplots") and kind == "rm":
+        plots += residual_plots(*rmres)
+    elif o.get("resplots") and all(s[0] is not None for s in sm_):
+        plots += residual_plots(np.concatenate([np.full(len(s[0]), s[2]) for s in sm_]), np.concatenate([s[0] - s[2] for s in sm_]))
     return result("One-way ANOVA", ans, [{"name": "Summary", "tables": tabs}], checks, plots=plots, brackets=brackets,
                   methods=f"Groups were compared by {meth}{'' if post == 'none' else ' with ' + POSTNAME[post] + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (SciPy, statsmodels)." + (BAYES_METHODS + f" Prior width: {width}." if bf is not None else ""),
                   legend="Stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="from scipy import stats\nprint(stats.f_oneway(a, b, c))\nprint(stats.tukey_hsd(a, b, c))")
 
 
-POSTNAME = {"tukey": "Tukey's", "dunnett": "Dunnett's", "bonferroni": "Bonferroni", "sidak": "Šidák", "holm": "Holm-Šidák", "lsd": "Fisher's LSD (unadjusted)"}
+POSTNAME = {"tukey": "Tukey's", "dunnett": "Dunnett's", "bonferroni": "Bonferroni", "sidak": "Šidák", "holm": "Holm-Šidák", "lsd": "Fisher's LSD (unadjusted)",
+            "fdr": "Benjamini-Hochberg false discovery rate (q values)"}
+
+
+def residual_plots(fitted, resid):
+    """0.4.22: the residuals against the fitted values, their size against the fitted values (equal spread?) and a
+    normal QQ plot, as small pictures for the results sheet."""
+    fitted, resid = np.asarray(fitted, float), np.asarray(resid, float)
+    if len(resid) < 3:
+        return []
+    grey = "#3B4859"
+
+    def rv(ax):
+        ax.axhline(0, color="#8D9AAB", lw=0.8, ls="--")
+        ax.plot(fitted, resid, "o", ms=3, color=COLORS[0], mfc="none")
+        ax.set_xlabel("Fitted value"), ax.set_ylabel("Residual")
+
+    def spread(ax):
+        ax.plot(fitted, np.abs(resid), "o", ms=3, color=COLORS[0], mfc="none")
+        ax.set_xlabel("Fitted value"), ax.set_ylabel("|Residual|"), ax.set_ylim(bottom=0)
+
+    def qq(ax):
+        (q, v), (slope, icpt, _) = st.probplot(resid)
+        ax.plot(q, v, "o", ms=3, color=COLORS[0], mfc="none")
+        ax.plot(q, slope * np.asarray(q) + icpt, color=grey, lw=0.8)
+        ax.set_xlabel("Normal quantile"), ax.set_ylabel("Residual")
+    return [small_plot("Residuals: is the model right?", rv), small_plot("Spread: equal variance?", spread), small_plot("Normal QQ: normal residuals?", qq)]
 
 
 FAMILY = {"rows": "within each row", "sets": "within each data set", "cells": "between the cells", "mainsets": "of the data sets' means (main effect)",
@@ -751,6 +783,7 @@ def twoway(table, ks, o):
         est = lambda a_, b_, _f: (mean(b_) - mean(a_), math.sqrt(var(a_) + var(b_)), dfe)
         brackets = run_families(plan(o, ks, rows, lambda k: name_of(table, k)), est, post, tabs)
     return result("Two-way ANOVA", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
+                  plots=residual_plots(m.fittedvalues, m.resid) if o.get("resplots") else [],
                   methods=f"Data were analysed by two-way ANOVA ({rowname} × {colname}{'' if inter else ', main effects only'}; Type III sums of squares){'' if post == 'none' else ' with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons'} (α = {alpha:g}) in Datum Plot (statsmodels).",
                   legend="Bars show mean and SD; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="import statsmodels.formula.api as smf\nfrom statsmodels.stats.anova import anova_lm\nm = smf.ols('y ~ C(A, Sum) * C(B, Sum)', data=df).fit()\nprint(anova_lm(m, typ=3))")

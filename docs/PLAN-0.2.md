@@ -261,6 +261,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | E11 | Hover a replicate: its value and place in the table (#65) | ✅ 0.4.19 |
 | B40 | The Comparisons page: what to compare on a live diagram (rows, data sets, every cell, main effects), every pair / against a control / chosen pairs; one- and two-way ANOVA (#61) | ✅ 0.4.20 |
 | J10 | The Analyze Data window: search, grouped list, data sets, explanation with a picture, tabbed options (#61) | ✅ 0.4.21 |
+| C13 | What will be done, in plain words, in the ANOVA windows; the repeated-measures layout picture (#61 video) | ✅ 0.4.22 |
+| B41 | Residual plots (residuals, spread, normal QQ) for one- and two-way ANOVA; the false discovery rate as a correction (#61 video) | ✅ 0.4.22 |
+| J11 | Recently used analyses in Analyze Data (#61 video) | ✅ 0.4.22 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
 | D29 | Titles: the graph's name, a subtitle, long titles wrap (#56) | ✅ 0.4.14 |
 | D25 | Symbols and error bars on their own: symbols' Filled, strengths of borders and symbol fills, error-bar colour, legend borders, legends with an axis break (#40–#43) | ✅ 0.4.2 |
@@ -454,5 +457,6 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.19** ✅ | Brackets across rows (C12; #61); hover a replicate (E11; #65) |
 | **0.4.20** ✅ | The Comparisons page with diagrams (B40; #61) |
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
+| **0.4.22** ✅ | What will be done, the repeated-measures layout (C13), residual plots and the false discovery rate (B41), recently used (J11); from #61's video |
 | later | Modules (planned later); Mac and Linux versions (I7), on hold |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

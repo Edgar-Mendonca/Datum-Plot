@@ -3,7 +3,7 @@
 import { For, Show, createSignal, createEffect, on, createResource } from "solid-js";
 import { Analysis, Result, Table, invoke, letter, isEmpty } from "./api";
 import { act, call, out, P, open, openDialog, closeDialog, toast, item } from "./store";
-import { Comparisons } from "./compare";
+import { Comparisons, Plan, Layout } from "./compare";
 import { Dialog, Pick, Check, Tabs, Icon } from "./ui";
 import { Empty } from "./nav";
 import { Help } from "./help";
@@ -125,12 +125,14 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <Show when={tab() === "model"}>
             <label>Factor names</label><span class="inline"><input placeholder="Rows, e.g. Alloy" value={o().rowname} onChange={e => put("rowname", e.currentTarget.value)} /><input placeholder="Data sets, e.g. Treatment" value={o().colname} onChange={e => put("colname", e.currentTarget.value)} /></span>
             <label>Repeated measures</label><Pick value={o().rm ?? "none"} set={v => put("rm", v)} options={[["none", "No: every value is a different subject"], ["rows", "Each sub-column is one subject, measured in every row"], ["sets", "Each row's sub-column is one subject, measured in every data set"], ["both", "Each sub-column is one subject, measured in every row and data set"]]} />
+            {/* 0.4.22 (#61): which values are one subject */}
+            <Show when={(o().rm ?? "none") !== "none"}><label /><Layout t={t} mode={o().rm} sets={sets} /></Show>
             <Show when={(o().rm ?? "none") === "none"}><label>Model</label><Check label="Include the interaction (needs two or more values per cell)" value={o().interaction !== false} set={v => put("interaction", v)} /></Show>
             <Show when={(o().rm ?? "none") !== "none"}><label>Sphericity</label><Check label="Geisser-Greenhouse correction (missing values: a mixed-effects model is used instead)" value={o().gg !== false} set={v => put("gg", v)} /></Show>
             </Show>
             {/* 0.4.20 (B40, #61): the Comparisons page; 0.4.21 (J10): in its own tab */}
             <Show when={tab() === "compare"}><Comparisons t={t} two o={o} put={put} sets={sets} /></Show>
-            <Show when={tab() === "graph"}><Brackets /></Show>
+            <Show when={tab() === "graph"}><Brackets /><label>Residuals</label><Check label="Residual plots on the results sheet (residuals, spread, normal QQ)" value={!!o().resplots} set={v => put("resplots", v)} /></Show>
           </Show>
           <Show when={kind === "control"}>
             <label>Chart</label><Pick value={o().chart} set={v => put("chart", v)} options={[["imr", "Individuals and moving range (one value per row)"], ["xbar", "X̄ and R (each row a subgroup in the sub-columns)"], ["xbar_s", "X̄ and S (larger subgroups)"], ["p", "p chart (defective, then inspected, per row)"]]} />
@@ -220,13 +222,14 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
           <Show when={kind === "anova"}>
             <Show when={tab() === "model"}>
             <label>ANOVA</label><Pick value={o().anova} set={v => put("anova", v)} options={[["ordinary", "Ordinary (equal SDs)"], ["welch", "Welch (unequal SDs)"], ["bf", "Brown-Forsythe (unequal SDs)"], ["rm", "Repeated measures (rows are subjects)"]]} />
+            <Show when={o().anova === "rm"}><label /><Layout t={t} mode="oneway" sets={sets} /></Show>
             </Show>
             <Show when={tab() === "compare"}><Comparisons t={t} two={false} o={o} put={put} sets={sets} /></Show>
             <Show when={tab() === "model"}>
             <label /><Check label="Test for a linear trend across the groups (in their order)" value={!!o().trend} set={v => put("trend", v)} />
             <Bayes width />
             </Show>
-            <Show when={tab() === "graph"}><Brackets /></Show>
+            <Show when={tab() === "graph"}><Brackets /><label>Residuals</label><Check label="Residual plots on the results sheet (residuals, spread, normal QQ)" value={!!o().resplots} set={v => put("resplots", v)} /></Show>
           </Show>
           <Show when={kind === "correlation"}><Bayes /></Show>
           <Show when={kind === "correlation" && t.kind !== "column"}><label>Correlate</label><Pick value={o().between ? "1" : ""} set={v => put("between", !!v)} options={[["", "X with each data set's Y"], ["1", "The data sets with each other (row by row)"]]} /></Show>
@@ -307,6 +310,8 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>On the graph</label><Check label="Show Ea on the graph" value={o().label !== false} set={v => put("label", v)} />
           </Show>
         </div>
+        {/* 0.4.22 (#61): what will be done, in plain words */}
+        <Show when={tabbed}><Plan t={t} two={kind === "twoway"} o={o} sets={sets} /></Show>
         <p class="muted">The result stays linked to “{t.name}”: change a value and it updates.{draws(kind, t) ? (KINDS[kind][2] === "brackets" ? " Significance brackets are drawn on the table's graphs." : " The fitted curve is drawn on the table's graphs.") : ""}{kind === "transform" || kind === "frequency" || kind === "smooth" ? " Make it a new data table from the results." : ""}</p>
       </Dialog>
     );

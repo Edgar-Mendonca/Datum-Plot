@@ -10,6 +10,13 @@ const FAMS: [string, string][] = [["rows", "The data sets within each row"], ["s
   ["mainsets", "The data sets' means (main effect)"], ["mainrows", "The rows' means (main effect)"]];
 export const famsOf = (c: string | undefined) => c === "both" ? ["rows", "sets"] : (c || "rows").split("+").filter(f => FAMS.some(x => x[0] === f)).length ? (c || "rows").split("+").filter(f => FAMS.some(x => x[0] === f)) : ["rows"];
 const pairsN = (n: number) => n * (n - 1) / 2;
+/** How many comparisons the choices make (S data sets, R rows). */
+const nComparisons = (two: boolean, vs: string, fams: string[], S: number, R: number, nPairs: number) => {
+  const ctl = vs === "control";
+  if (vs === "pairs") return nPairs;
+  if (!two) return ctl ? S - 1 : pairsN(S);
+  return fams.reduce((n, f) => n + ({ rows: R * (ctl ? S - 1 : pairsN(S)), sets: S * (ctl ? R - 1 : pairsN(R)), cells: ctl ? R * S - 1 : pairsN(R * S), mainsets: ctl ? S - 1 : pairsN(S), mainrows: ctl ? R - 1 : pairsN(R) } as Record<string, number>)[f], 0);
+};
 const letter = (k: number) => String.fromCharCode(65 + k);
 
 /** The rows of a grouped table that hold values in any of the data sets. */
@@ -30,20 +37,15 @@ export const Comparisons = (p: { t: Table; two: boolean; o: () => Record<string,
     if (!next.length) return toast("Keep at least one kind of comparison (or choose Correction › No comparisons).");
     p.put("compare", next.join("+"));
   };
-  // each correction for the design it was made for: Tukey for every pair, Dunnett against a control (one-way)
+  // each correction for the design it was made for (0.4.22: and the false discovery rate): Tukey for every pair, Dunnett against a control (one-way)
   const posts = (): [string, string][] => [...(!p.two && vs() === "all" ? [["tukey", "Tukey (recommended for every pair)"] as [string, string]] : []), ...(!p.two && vs() === "control" ? [["dunnett", "Dunnett (recommended against a control)"] as [string, string]] : []),
-    ["holm", "Holm-Šidák"], ["sidak", "Šidák"], ["bonferroni", "Bonferroni"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]];
+    ["holm", "Holm-Šidák"], ["sidak", "Šidák"], ["bonferroni", "Bonferroni"], ["fdr", "False discovery rate (Benjamini-Hochberg)"], ["lsd", "None (Fisher's LSD)"], ["none", "No comparisons"]];
   const setVs = (v: string) => {
     const keep = v === "all" ? p.o().posthoc !== "dunnett" : v === "control" ? p.o().posthoc !== "tukey" : !["tukey", "dunnett"].includes(p.o().posthoc);
     p.put("vs", v);
     if (!keep) p.put("posthoc", p.two ? "sidak" : v === "all" ? "tukey" : v === "control" ? "dunnett" : "sidak");
   };
-  const count = () => {
-    const S = ks().length, R = rows().length, ctl = vs() === "control";
-    if (vs() === "pairs") return pairs().length;
-    if (!p.two) return ctl ? S - 1 : pairsN(S);
-    return fams().reduce((n, f) => n + ({ rows: R * (ctl ? S - 1 : pairsN(S)), sets: S * (ctl ? R - 1 : pairsN(R)), cells: ctl ? R * S - 1 : pairsN(R * S), mainsets: ctl ? S - 1 : pairsN(S), mainrows: ctl ? R - 1 : pairsN(R) } as Record<string, number>)[f], 0);
-  };
+  const count = () => nComparisons(p.two, vs(), fams(), ks().length, rows().length, pairs().length);
   // the pair being added (two-way: cells as "set:row")
   const cellOpts = (): [string, string][] => p.two ? rows().flatMap(r => ks().map(k => [`${k}:${r}`, `${sname(k)} · ${rname(r)}`] as [string, string])) : ks().map(k => [String(k), sname(k)] as [string, string]);
   const [a, setA] = createSignal(""), [b, setB] = createSignal("");
@@ -121,5 +123,64 @@ const Diagram = (p: { t: Table; two: boolean; ks: number[]; rows: number[]; fams
       <Show when={mainR}><For each={R}>{(r, i) => <circle cx={X(S.length - 1) + 74} cy={Y(i())} r={rad} classList={{ cmpc: true, main: true, ctl: ctl && r === p.cr }} />}</For><text x={X(S.length - 1) + 74} y={14} text-anchor="middle" class="cmph">Mean</text></Show>
     </svg>
     <span class="muted">{p.n} comparison{p.n === 1 ? "" : "s"}{p.two && (p.ks.length > 3 || p.rows.length > 3) ? " (the picture shows part of the table)" : ""}{ctl ? `; the filled circle${p.two && p.fams.length > 1 ? "s are the controls" : " is the control"}` : ""}.</span>
+  </div>;
+}}</>;
+
+const POST: Record<string, string> = { tukey: "Tukey", dunnett: "Dunnett", holm: "Holm-Šidák", sidak: "Šidák", bonferroni: "Bonferroni", fdr: "the false discovery rate (Benjamini-Hochberg)", lsd: "no correction (Fisher's LSD)" };
+const DESIGN: Record<string, string> = {
+  none: "Ordinary two-way ANOVA: every value is a different subject", rows: "Two-way repeated-measures ANOVA: each sub-column is one subject, measured in every row",
+  sets: "Two-way repeated-measures ANOVA: each row's sub-column is one subject, measured in every data set", both: "Two-way repeated-measures ANOVA: each sub-column is one subject, measured in every row and data set" };
+const ONEWAY: Record<string, string> = { ordinary: "Ordinary one-way ANOVA (equal SDs)", welch: "Welch's ANOVA (the SDs may differ)", bf: "Brown-Forsythe ANOVA (the SDs may differ)", rm: "Repeated-measures one-way ANOVA (each row is one subject)" };
+const FAMTXT: Record<string, string> = { rows: "the data sets within each row", sets: "the rows within each data set", cells: "every cell with every other", mainsets: "the data sets' means", mainrows: "the rows' means" };
+
+/** 0.4.22 (#61): "What will be done", in plain words from every choice in the window, kept up to date as they change. */
+export const Plan = (p: { t: Table; two: boolean; o: () => Record<string, any>; sets: () => number[] }) => {
+  const lines = () => {
+    const o = p.o(), ks = p.sets().length ? p.sets() : p.t.sets.map((_, k) => k), rows = p.two ? filledRows(p.t, ks) : [];
+    const sname = (k: number) => p.t.sets[k]?.title || `Data set ${letter(k)}`, rname = (r: number) => p.t.rowTitles?.[r] || `Row ${r + 1}`;
+    const vs = o.vs ?? (o.posthoc === "dunnett" ? "control" : "all"), fams = famsOf(o.compare), nP = (o.pairs ?? []).length;
+    let post = o.posthoc ?? (p.two ? "sidak" : "tukey");
+    if ((post === "tukey" && vs !== "all") || (post === "dunnett" && vs !== "control") || (o.anova === "rm" && ["tukey", "dunnett"].includes(post))) post = "holm";
+    const out: string[] = [];
+    if (p.two) {
+      const rm = o.rm ?? "none";
+      out.push(`${DESIGN[rm] ?? DESIGN.none}${rm === "none" ? (o.interaction !== false ? ", with the interaction of the two factors." : ", main effects only (no interaction).") : `${o.gg !== false ? "; Geisser-Greenhouse correction for sphericity" : ""}; a mixed-effects model if values are missing.`}`);
+    } else out.push(`${ONEWAY[o.anova ?? "ordinary"] ?? ONEWAY.ordinary}, ${ks.length} groups.`);
+    if (post === "none") out.push("No multiple comparisons.");
+    else {
+      const n = nComparisons(p.two, vs, fams, ks.length, rows.length, nP);
+      const what = vs === "pairs" ? `only the ${nP} pair${nP === 1 ? "" : "s"} you chose` : p.two ? fams.map(f => FAMTXT[f]).join(", ") : vs === "control" ? "each group" : "every pair of groups";
+      const ctl = vs !== "control" ? "" : p.two ? `, each against ${fams.every(f => ["sets", "mainrows"].includes(f)) ? rname(rows.includes(o.controlRow) ? o.controlRow : rows[0]) : fams.includes("cells") ? `${sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])} · ${rname(rows.includes(o.controlRow) ? o.controlRow : rows[0])}` : sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])}` : ` against ${sname(ks.includes(o.control) ? o.control : ks[0])}`;
+      out.push(`Compare ${what}${p.two && vs === "all" ? ", every pair" : ""}${ctl}: ${n} comparison${n === 1 ? "" : "s"}, corrected by ${POST[post] ?? post}${p.two && fams.length > 1 && vs !== "pairs" ? " (each kind on its own)" : ""}.`);
+    }
+    if (!p.two && o.trend) out.push("A test for a linear trend across the groups in their order.");
+    if (!p.two && o.bayes) out.push("A Bayes factor beside the P value.");
+    out.push(o.brackets === "none" || post === "none" ? "No brackets on the graph." : `Brackets with ${o.ptext === "p" ? "P values" : "stars"} on the graph for ${o.brackets === "all" ? "every pair compared" : "the significant pairs"}.`);
+    if (o.resplots) out.push("Residual plots (residuals, spread, normal QQ) on the results sheet.");
+    return out;
+  };
+  return <div class="plan"><b>What will be done</b><ul><For each={lines()}>{l => <li>{l}</li>}</For></ul></div>;
+};
+
+/** 0.4.22 (#61): which values belong to one subject under repeated measures, outlined on a small picture of the table. */
+export const Layout = (p: { t: Table; mode: string; sets: () => number[] }) => <>{() => {
+  const two = p.mode !== "oneway", ks = (p.sets().length ? p.sets() : p.t.sets.map((_, k) => k)).slice(0, two ? 2 : 3);
+  const R = two ? 3 : 4, W = two ? 3 : 1, cw = 22, ch = 15, gx = 12, x0 = 54, y0 = 30;
+  const X = (j: number, s: number) => x0 + j * (W * cw + gx) + s * cw, Y = (r: number) => y0 + r * ch;
+  const on = (j: number, r: number, s: number) => s === 0 && (p.mode === "rows" ? j === 0 : p.mode === "sets" ? r === 0 : p.mode === "both" ? true : r === 0);
+  const cells = ks.flatMap((_, j) => Array.from({ length: R }, (_, r) => Array.from({ length: W }, (_, s) => [j, r, s]))).flat() as [number, number, number][];
+  const hit = cells.filter(c => on(...c));
+  const order = [...hit].sort((a, b) => p.mode === "sets" || p.mode === "oneway" ? a[0] - b[0] || a[1] - b[1] : a[0] - b[0] || a[1] - b[1]);
+  const w = X(ks.length - 1, W - 1) + cw + 10, h = Y(R - 1) + ch + 8;
+  const cut = (s: string) => s.length > 9 ? s.slice(0, 8) + "…" : s;
+  return <div class="cmpdiag rmlayout">
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Which values belong to one subject">
+      <For each={ks}>{(k, j) => <text x={X(j(), 0) + W * cw / 2} y={12} text-anchor="middle" class="cmph">{cut(p.t.sets[k]?.title || `Data set ${letter(k)}`)}</text>}</For>
+      <Show when={two}><For each={ks}>{(_, j) => <For each={Array.from({ length: W }, (_, s) => s)}>{s => <text x={X(j(), s) + cw / 2} y={24} text-anchor="middle" class="cmph">{s + 1}</text>}</For>}</For></Show>
+      <For each={Array.from({ length: R }, (_, r) => r)}>{r => <text x={6} y={Y(r) + 11} class="cmph">{two ? (p.t.rowTitles?.[r] ? cut(p.t.rowTitles[r]) : `Row ${r + 1}`) : `Row ${r + 1}`}</text>}</For>
+      <For each={cells}>{([j, r, s]) => <rect x={X(j, s) + 1} y={Y(r) + 1} width={cw - 2} height={ch - 2} classList={{ rmc: true, on: on(j, r, s) }} />}</For>
+      <polyline points={order.map(([j, r, s]) => `${X(j, s) + cw / 2},${Y(r) + ch / 2}`).join(" ")} class="rml" />
+    </svg>
+    <span class="muted">Outlined: the values of one subject, matched {p.mode === "rows" ? "down the rows" : p.mode === "sets" ? "across the data sets" : p.mode === "both" ? "across rows and data sets" : "across the groups"}.</span>
   </div>;
 }}</>;

@@ -212,7 +212,9 @@ def twoway_rm(table, ks, o):
     brackets = []
     if post != "none":
         brackets = comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, o)
+    from .groups import residual_plots
     return result("Two-way repeated measures ANOVA" if complete else "Mixed-effects model", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
+                  plots=residual_plots(fit.fittedvalues, fit.resid) if o.get("resplots") else [],
                   methods=f"Data were analysed by {method} ({rowname} × {colname}; {DESIGNS[rm]}){'' if post == 'none' else ', with ' + POSTNAME.get(post, 'Šidák') + ' multiple comparisons from the mixed model'} (α = {alpha:g}) in Datum Plot (statsmodels).",
                   legend="Points show each subject; stars: * P < 0.05, ** P < 0.01, *** P < 0.001 (multiplicity-adjusted).",
                   code="import statsmodels.formula.api as smf\n# df: one row per value with columns y, A (row), B (data set), S (subject)\nm = smf.mixedlm('y ~ C(A, Sum) * C(B, Sum)', df, groups=df['S']).fit(reml=True)\nprint(m.summary())")

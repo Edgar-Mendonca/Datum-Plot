@@ -145,7 +145,7 @@ Les autres groupes de l’onglet **Analyze** (Analyser) lancent directement une 
 3. **Analyze which data sets?** (Quelles séries analyser ?) Cochez les séries à inclure (**Select All** tout cocher, **Deselect All** tout décocher).
 4. **Ce qu’elle fait.** Une courte explication de l’analyse choisie. **Next…** (Suivant…, ou un double-clic) ouvre ses options avec ces séries.
 
-Les longues fenêtres d’options sont en onglets : l’ANOVA à un et deux facteurs a **Model** (Modèle), **Comparisons** (Comparaisons) et **Graph** (Graphique).
+Les longues fenêtres d’options sont en onglets : l’ANOVA à un et deux facteurs a **Model** (Modèle), **Comparisons** (Comparaisons) et **Graph** (Graphique). Un encadré jaune en bas, **What will be done** (Ce qui sera fait), dit en mots simples ce qui sera calculé et suit chaque changement ; avec des mesures répétées, un petit schéma entoure les valeurs d’un même sujet. **Graph › Residual plots** (Graphiques des résidus) ajoute aux résultats les résidus, leur dispersion et un diagramme QQ normal, et les comparaisons peuvent être corrigées par le **false discovery rate** (taux de fausses découvertes). Les analyses choisies récemment sont listées en premier sous **Recently used** (Utilisées récemment).
 
 ![One-way ANOVA › Comparisons : chaque groupe contre un témoin.](img/comparisons.png)
 

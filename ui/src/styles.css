@@ -750,3 +750,10 @@ input.mono { font-family: var(--mono) !important; }
 .anabout h3 { margin: 0 0 4px; }
 .anabout p { margin: 0 0 4px; }
 .anpic { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border: 1px solid var(--line); background: var(--pale); color: var(--blue); }
+/* 0.4.22: what will be done, and the repeated-measures layout */
+.plan { margin: 10px 0 2px; padding: 8px 12px; border: 1px solid var(--warn-line); background: var(--warn-bg); color: var(--text); }
+.plan ul { margin: 4px 0 0; padding-left: 18px; }
+.plan li { margin: 1px 0; }
+.rmlayout .rmc { fill: var(--bg2); stroke: var(--line3); stroke-width: 1; }
+.rmlayout .rmc.on { fill: var(--pale); stroke: var(--blue); stroke-width: 1.6; }
+.rmlayout .rml { fill: none; stroke: var(--blue); stroke-width: 1; opacity: .6; }

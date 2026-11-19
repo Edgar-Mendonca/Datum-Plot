@@ -307,6 +307,25 @@ class Comparisons(unittest.TestCase):
         self.assertEqual(main[0][3], A.pv(p))
         self.assertEqual(len(r["brackets"]), 2 * 2)
 
+    def test_false_discovery_rate_and_residual_plots(self):
+        """0.4.22: the false discovery rate as a correction (Benjamini-Hochberg on the family's raw P values) and the
+        three residual plots, for ordinary and repeated-measures two-way and one-way ANOVA."""
+        from statsmodels.stats.multitest import multipletests
+        raw = A.run("twoway", self.T, [], {"compare": "sets", "posthoc": "lsd"})["brackets"]
+        fdr = A.run("twoway", self.T, [], {"compare": "sets", "posthoc": "fdr", "resplots": True})
+        self.assertEqual([round(b[2], 9) for b in fdr["brackets"]], [round(q, 9) for q in multipletests([b[2] for b in raw], method="fdr_bh")[1]])
+        self.assertIn("false discovery rate", fdr["tabs"][0]["tables"][-1]["title"])
+        self.assertEqual([x["title"] for x in fdr["plots"]], ["Residuals: is the model right?", "Spread: equal variance?", "Normal QQ: normal residuals?"])
+        self.assertEqual(A.run("twoway", self.T, [], {})["plots"], [], "only when asked")
+        from test_repeated import grouped
+        rng = np.random.default_rng(4)
+        v = [[[rng.normal(10, 2) for _ in range(3)] for _ in range(3)] for _ in range(2)]
+        self.assertEqual(len(A.run("twoway", grouped(v, 3, 2, 3), [], {"rm": "rows", "resplots": True})["plots"]), 3)
+        one = A.run("anova", col(CTRL, TRT1, TRT2), [], {"resplots": True, "posthoc": "fdr", "vs": "all"})
+        self.assertTrue(sum("QQ" in x["title"] for x in one["plots"]) == 1 and "false discovery rate" in one["methods"], one["methods"])
+        rm = A.run("anova", col(CTRL, TRT1, TRT2), [], {"anova": "rm", "resplots": True})
+        self.assertEqual(sum("QQ" in x["title"] for x in rm["plots"]), 1, "repeated measures too (subject and group effects removed)")
+
     def test_repeated_measures_take_every_choice(self):
         rng = np.random.default_rng(3)
         from test_repeated import grouped
