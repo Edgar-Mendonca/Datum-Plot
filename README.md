@@ -31,6 +31,8 @@ Datum Plot is part of Datum; see its page: https://edgar-mendonca.github.io/Datu
 
 Datum Plot keeps a project as a chain: **data tables → analyses → results → graphs → layouts**. Everything stays linked, so changing a value updates every result and graph that uses it.
 
+<img src="docs/guide/img/comparisons.png" alt="One-way ANOVA: the Comparisons tab with a picture of what is compared" width="100%">
+
 ### Data
 - **Tables for every kind of experiment**: XY, column (one group per column), grouped (two factors), contingency (counts), survival, nested and multiple-variable tables. Replicates or a mean with SD or SEM and N; dates and times in the X column, drawn on date axes. Paste from a spreadsheet, fill series, exclude a value without deleting it.
 - **Worksheets** with free columns, units and comments, and **column formulas** such as `log10(A)` or `(B - mean(B)) / sd(B)` that update as the data change.
@@ -45,14 +47,18 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 - **Peaks and signals**: find peaks above a baseline, fit Gaussian, Lorentzian or Voigt peaks, Fourier spectra and filters, wavelet scalograms and spectrograms.
 - **Quality**: control charts (individuals, X̄–R, X̄–S, p) with capability, and two-level factorial designs with their effects.
 - **Materials testing**: tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, and DSC/TGA thermal analysis (onsets, enthalpies, mass loss).
+- **Choosing an analysis**: the **Analyze Data** window has a search box, lists the analyses that suit your table first (and those you used recently), lets you tick the data sets, and explains each analysis. Long option windows are in tabs.
+- **Multiple comparisons, made clear**: after one- or two-way ANOVA, compare the data sets within each row, the rows within each data set (across rows), every cell, or the main effects; every pair, each against a control, or only the pairs you choose. A small picture of your table shows exactly which means are compared. Corrections: Tukey, Dunnett, Šidák, Holm-Šidák, Bonferroni, the false discovery rate, or none.
+- **What will be done**: the ANOVA windows say in plain words what will be run before you press Analyze; with repeated measures a picture shows which values belong to one subject. Residual plots (residuals, spread, normal QQ) check the model.
 - Every result stays linked to its data, explains itself in plain words and gives ready **methods text**.
 
 ### Graphs
 - **Publication-quality graphs** drawn with matplotlib: XY, column graphs (dots, bars, box plots, violins), grouped bars, box plots and violins, pie and donut charts, forest plots, polar, ternary, bubble, radar and waterfall graphs.
-- **Significance brackets and stars** that stay readable however many there are, chosen per graph.
-- **Styling**: error bars (mean or median; SD, SEM, 95% CI or range), colour-blind-safe colour schemes, symbols, fills and **fill patterns** (stripes, cross-hatching, dots and more), axis breaks, a second Y axis, label angles, text sizes, titles and subtitles, annotations and insets. Save **your own style** for every new graph.
-- **Interactive**: zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.
+- **Significance brackets and stars** that stay readable however many there are, chosen per graph, including brackets across the rows of a grouped graph.
+- **Styling**: error bars (mean or median; SD, SEM, 95% CI or range), colour-blind-safe colour schemes, symbols, fills and **fill patterns** (stripes, cross-hatching, dots and more, with their own strength and thickness), axis breaks, a second Y axis, label angles, text sizes, titles and subtitles, annotations and insets. Save **your own style** for every new graph.
+- **Interactive**: hover a point to see its value and where it is in the table, zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.
 - **Page layouts** at journal sizes, multi-panel figures, posters and slides.
+- **A tidy project**: drag items into your own order and folders, colour them, show one table's family (its results and graphs) only; renaming a table renames its graphs and results.
 
 ### Export and share
 - PNG or TIFF at any dpi (with CMYK), or SVG, PDF and EPS with editable text.
@@ -67,7 +73,8 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 Everything stays on your computer. The only network call is the update check to GitHub.
 
 ### Coming next
-- **0.5 Modules**: science, engineering and quality tools you can switch on.
+- Testers' requests from GitHub issues come first, released in small steps.
+- **Modules**: science, engineering and quality tools you can switch on (being planned).
 - **1.0 Stable**: a signed installer and a validation report against reference values.
 - Mac and Linux versions are on hold for now. The full plan is in the [roadmap](docs/MEMORY.md#3-roadmap).
 
