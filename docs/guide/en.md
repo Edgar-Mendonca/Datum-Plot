@@ -145,7 +145,7 @@ The other groups of the Analyze tab start an analysis directly: **Statistics**, 
 3. **Analyze which data sets?** Tick the data sets to include (**Select All**, **Deselect All**).
 4. **What it does.** A short explanation of the analysis chosen. **Next…** (or a double-click) opens its options with those data sets.
 
-Long option windows are in tabs: one- and two-way ANOVA have **Model**, **Comparisons** and **Graph**. A yellow box at the bottom, **What will be done**, says in plain words what will be run and follows every change; with repeated measures a small picture outlines one subject's values. **Graph › Residual plots** adds the residuals, their spread and a normal QQ plot to the results, and the comparisons can be corrected by the **false discovery rate**. Analyses you chose lately are listed first under **Recently used**.
+Long option windows are in tabs: one- and two-way ANOVA have **Model**, **Comparisons** and **Graph**. A yellow box at the bottom, **What will be done**, says in plain words what will be run and follows every change; with repeated measures a small picture outlines one subject's values. **Graph › Residual plots** adds the residuals, their spread and a normal QQ plot to the results, and the comparisons can be corrected by the **false discovery rate**. Analyses you chose lately are listed first under **Recently used**. In the results, each comparison shows the predicted means of both sides, the SE of the difference, t and DF; a difference "A vs B" is A − B.
 
 ![One-way ANOVA › Comparisons: each group against a control.](img/comparisons.png)
 

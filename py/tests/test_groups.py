@@ -88,7 +88,7 @@ class Anova(unittest.TestCase):
         self.assertAlmostEqual(p_of(cell(r, "P value", None)), 0.0159, places=4)
         tk = r["tabs"][0]["tables"][3]
         self.assertEqual([row[3] for row in tk["rows"]], ["0.3909", "0.1980", "0.0120"])
-        self.assertEqual(tk["rows"][2][1], "0.865")
+        self.assertEqual(tk["rows"][2][1], "-0.865", "TRT1 vs TRT2 is TRT1 − TRT2 (0.4.23)")
         # η² = SSB / SST = 3.7663 / 14.258
         self.assertAlmostEqual(num(cell(r, "R squared (η²)", None)), 0.2641, places=4)
 
@@ -283,7 +283,7 @@ class Comparisons(unittest.TestCase):
         ctrl = A.run("twoway", self.T, [], {"compare": "cells", "vs": "control", "controlSet": 1, "controlRow": 2, "posthoc": "bonferroni"})
         rows = self.rows_of(ctrl)
         self.assertEqual(len(rows), 5)
-        self.assertTrue(all(x[0].startswith("B · H vs") for x in rows), rows)
+        self.assertTrue(all(x[0].startswith("H · B vs") for x in rows), rows)
         # A · L against B · H by hand: Bonferroni over 5
         d = np.mean(self.A_[0]) - np.mean(self.B_[2])
         p = min(1, 5 * self.p_of(d, np.sqrt(self.MSE * 2 / 9)))
@@ -325,6 +325,41 @@ class Comparisons(unittest.TestCase):
         self.assertTrue(sum("QQ" in x["title"] for x in one["plots"]) == 1 and "false discovery rate" in one["methods"], one["methods"])
         rm = A.run("anova", col(CTRL, TRT1, TRT2), [], {"anova": "rm", "resplots": True})
         self.assertEqual(sum("QQ" in x["title"] for x in rm["plots"]), 1, "repeated measures too (subject and group effects removed)")
+
+    def test_main_effects_model_compares_its_predicted_means(self):
+        """0.4.23 (#67): without the interaction, comparisons use the model's predicted (least-squares) means, as other
+        programs and R's emmeans do, also with unequal n. Made-up data (4 rows × 2 data sets, one cell with 4 values);
+        checked against an independent least-squares fit of the additive model (numpy, dummy coding)."""
+        vals = {(0, 0): [9.8, 11.2, 10.4, 8.9, 10.7], (0, 1): [16.1, 17.4, 15.2, 18.3, 16.8], (1, 0): [12.1, 13.0, 11.4, 12.8],
+                (1, 1): [19.9, 21.3, 18.2, 20.6, 22.0], (2, 0): [8.4, 9.9, 9.1, 8.0, 9.5], (2, 1): [18.7, 17.2, 19.5, 20.1, 18.0],
+                (3, 0): [14.6, 12.9, 13.8, 15.1, 14.0], (3, 1): [30.2, 27.9, 31.5, 29.1, 28.4]}
+        R, S, n = 4, 2, 5
+        cols = [[None] * R] + [[vals[(r, k)][j] if j < len(vals[(r, k)]) else None for r in range(R)] for k in range(S) for j in range(n)]
+        t = {"kind": "grouped", "rows": R, "rowTitles": ["P", "Q", "U", "V"], "sets": [{"title": "Low", "entry": "rep", "reps": n}, {"title": "High", "entry": "rep", "reps": n}], "cols": cols, "excluded": []}
+        r = A.run("twoway", t, [], {"interaction": False, "compare": "cells", "vs": "control", "posthoc": "bonferroni"})
+        rows = r["tabs"][0]["tables"][-1]["rows"]
+        # the additive model by hand: y = μ + row + data set; cell prediction x·β
+        X, y = [], []
+        for (rr, k), v in vals.items():
+            for x in v:
+                X.append([1] + [1 if rr == i else 0 for i in range(1, R)] + [1 if k == 1 else 0]); y.append(x)
+        X, y = np.array(X, float), np.array(y)
+        beta, *_ = np.linalg.lstsq(X, y, rcond=None)
+        res = y - X @ beta
+        dfe = len(y) - X.shape[1]
+        cov = res @ res / dfe * np.linalg.inv(X.T @ X)
+        xc = lambda rr, k: np.array([1] + [1 if rr == i else 0 for i in range(1, R)] + [1 if k == 1 else 0], float)
+        a_, b_ = xc(0, 0), xc(0, 1)
+        d, se = (a_ - b_) @ beta, np.sqrt((a_ - b_) @ cov @ (a_ - b_))
+        first = rows[0]  # P · Low vs P · High
+        self.assertTrue(first[0].startswith("P · Low vs P · High"), first[0])
+        self.assertAlmostEqual(float(first[1]), d, places=3)
+        self.assertAlmostEqual(float(first[5]), a_ @ beta, places=3)
+        self.assertAlmostEqual(float(first[7]), se, places=4)
+        self.assertEqual(first[9], str(dfe))
+        from scipy import stats as st
+        self.assertEqual(first[3], A.pv(min(1, 7 * 2 * st.t.sf(abs(d / se), dfe))))
+        self.assertLess(d, 0, "first minus second: Low − High is negative here")
 
     def test_repeated_measures_take_every_choice(self):
         rng = np.random.default_rng(3)

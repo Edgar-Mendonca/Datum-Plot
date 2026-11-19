@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.23 — 2026-11-19
+
+Two-way comparisons that follow the model.
+
+**Two-way ANOVA comparisons**
+- The comparisons now use the fitted model's **predicted means**. Without the interaction (main effects only) they follow that model, as they should; before, they compared the raw cell averages, which gave larger P values. With the interaction included nothing changes. Unequal group sizes are handled the same way.
+- Each comparison now also shows the two **predicted means**, the **SE of the difference**, **t** and **DF**, so it can be checked by hand.
+- Cells are named row first ("Astro Grade 2 · Low Density").
+
+**All ANOVA comparisons**
+- A difference "A vs B" is now **A − B** (first minus second), as other programs and R report it. Differences in existing results change sign; their P values do not.
+
 ## 0.4.22 — 2026-11-19
 
 Analysis windows that explain themselves.

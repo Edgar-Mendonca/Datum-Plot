@@ -452,7 +452,7 @@ def anova(table, ks, o):
     if post != "none":
         comps, label = posthoc(table, ks, sm_, post, mse, dfe, kind, o, names)
         tabs.append({"title": label, "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"], "rows": [[f"{names[i]} vs {names[j]}", g(d), ci, pv(q), stars(q)] for i, j, d, ci, q in comps]})
-        plots.append(forest("Differences with 95% CI", [(f"{names[j]} − {names[i]}", d, *map(float, ci.split(" to "))) for i, j, d, ci, q in comps]))
+        plots.append(forest("Differences with 95% CI", [(f"{names[i]} − {names[j]}", d, *map(float, ci.split(" to "))) for i, j, d, ci, q in comps]))
         brackets = [[ks[i], ks[j], q] for i, j, _, _, q in comps]
     if o.get("trend") and kk > 2:
         w = np.arange(kk) - (kk - 1) / 2
@@ -528,7 +528,7 @@ def plan(o, ks, rows, sname):
     vs, rid, rl = o.get("vs", "all"), [r for r, _ in rows], dict(rows)
     cs = o.get("controlSet") if o.get("controlSet") in ks else ks[0]
     cr = o.get("controlRow") if o.get("controlRow") in rl else rid[0]
-    cell = lambda k, r: f"{sname(k)} · {rl[r]}"
+    cell = lambda k, r: f"{rl[r]} · {sname(k)}"  # 0.4.23 (#67): the row first, as a grouped table is read
     if vs == "pairs":
         ps = [(f"{cell(a, ra)} vs {cell(b, rb)}", [(a, ra)], [(b, rb)], [a, b, None, ra, rb], None)
               for a, ra, b, rb in (p for p in (o.get("pairs") or []) if isinstance(p, (list, tuple)) and len(p) == 4)
@@ -542,9 +542,9 @@ def plan(o, ks, rows, sname):
     out = []
     for fam in families(o.get("compare", "rows")):
         if fam == "rows":
-            comps = [(f"{rl[r]}: {sname(a)} vs {sname(b)}", [(a, r)], [(b, r)], [a, b, None, r], "B") for r in rid for a, b in pairs(first(ks, cs))]
+            comps = [(f"{rl[r]} · {sname(a)} vs {sname(b)}", [(a, r)], [(b, r)], [a, b, None, r], "B") for r in rid for a, b in pairs(first(ks, cs))]
         elif fam == "sets":
-            comps = [(f"{sname(k)}: {rl[a]} vs {rl[b]}", [(k, a)], [(k, b)], [k, k, None, a, b], "A") for k in ks for a, b in pairs(first(rid, cr))]
+            comps = [(f"{sname(k)} · {rl[a]} vs {rl[b]}", [(k, a)], [(k, b)], [k, k, None, a, b], "A") for k in ks for a, b in pairs(first(rid, cr))]
         elif fam == "cells":
             comps = [(f"{cell(*a)} vs {cell(*b)}", [a], [b], [a[0], b[0], None, a[1], b[1]], None) for a, b in pairs(first([(k, r) for r in rid for k in ks], (cs, cr)))]
         elif fam == "mainsets":
@@ -558,15 +558,19 @@ def plan(o, ks, rows, sname):
 
 def run_families(fams, est, post, tabs):
     """0.4.20 (B40): each family of comparisons corrected on its own, a table each; `est(cells A, cells B, factor)` gives
-    (difference B − A, its SE, its df). Returns the brackets [set, set, P, row, row]."""
+    (mean of A, mean of B, the SE of A − B, its df). The difference is A − B, first minus second (0.4.23, #67: as
+    other programs and R report "A vs B"); the means are the model's predicted (least-squares) means. Returns the
+    brackets [set, set, P, row, row]."""
     brackets = []
     for title, comps in fams:
         out = [(c, *est(c[1], c[2], c[4])) for c in comps]
-        raw = [2 * float(st.t.sf(abs(d / se), ddf)) if se > 0 else float("nan") for _, d, se, ddf in out]
+        raw = [2 * float(st.t.sf(abs((m1 - m2) / se), ddf)) if se > 0 else float("nan") for _, m1, m2, se, ddf in out]
         adj = adjust(raw, post)
         q = 1 - 0.95 ** (1 / len(out)) if post in ("sidak", "holm") else 0.05 / len(out) if post == "bonferroni" else 0.05
-        tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {title}", "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary"],
-                     "rows": [[c[0], g(d), ci_text(d - st.t.ppf(1 - q / 2, ddf) * se, d + st.t.ppf(1 - q / 2, ddf) * se), pv(p), stars(p)] for (c, d, se, ddf), p in zip(out, adj)]})
+        tabs.append({"title": f"{POSTNAME.get(post, 'Šidák')} multiple comparisons {title}",
+                     "columns": ["Comparison", "Mean difference", "95% CI", "Adjusted P", "Summary", "Predicted mean 1", "Predicted mean 2", "SE of difference", "t", "DF"],
+                     "rows": [[c[0], g(m1 - m2), ci_text(m1 - m2 - st.t.ppf(1 - q / 2, ddf) * se, m1 - m2 + st.t.ppf(1 - q / 2, ddf) * se), pv(p), stars(p), g(m1), g(m2), g(se), g((m1 - m2) / se, 4) if se > 0 else "", g(ddf, 4)]
+                              for (c, m1, m2, se, ddf), p in zip(out, adj)]})
         brackets += [[*c[3][:2], float(p), *c[3][3:]] for (c, *_), p in zip(out, adj) if c[3]]
     return brackets
 
@@ -592,22 +596,23 @@ def posthoc(table, ks, sm_, post, mse, dfe, kind, o=None, names=None):
     if post == "tukey" and raw:
         r = st.tukey_hsd(*[s[0] for s in sm_])
         ci = r.confidence_interval(0.95)
-        return [(i, j, m[j] - m[i], ci_text(-ci.high[i, j], -ci.low[i, j]), float(r.pvalue[i, j])) for i, j in pairs], "Tukey's multiple comparisons"
+        # 0.4.23 (#67): "A vs B" is A − B, first minus second
+        return [(i, j, m[i] - m[j], ci_text(ci.low[i, j], ci.high[i, j]), float(r.pvalue[i, j])) for i, j in pairs], "Tukey's multiple comparisons"
     if post == "dunnett" and raw:
         others = [j for j in range(kk) if j != c]
         r = st.dunnett(*[sm_[j][0] for j in others], control=sm_[c][0])
         ci = r.confidence_interval(0.95)
         who = names[c] if names else "the control group"
-        return [(c, j, m[j] - m[c], ci_text(ci.low[i], ci.high[i]), float(r.pvalue[i])) for i, j in enumerate(others)], f"Dunnett's multiple comparisons (against {who})"
+        return [(c, j, m[c] - m[j], ci_text(-ci.high[i], -ci.low[i]), float(r.pvalue[i])) for i, j in enumerate(others)], f"Dunnett's multiple comparisons (against {who})"
     out = []
     for i, j in pairs:
         if kind == "rm":
             x, y = pairs_of(table, ks[i], ks[j])
-            d = y - x
+            d = x - y
             se, df = d.std(ddof=1) / math.sqrt(len(d)), len(d) - 1
             diff = float(d.mean())
         else:
-            se, df, diff = math.sqrt(mse * (1 / n[i] + 1 / n[j])), dfe, m[j] - m[i]
+            se, df, diff = math.sqrt(mse * (1 / n[i] + 1 / n[j])), dfe, m[i] - m[j]
         out.append([i, j, diff, se, df, 2 * float(st.t.sf(abs(diff / se), df)) if se > 0 else float("nan")])
     adj = adjust([x[5] for x in out], {"tukey": "holm", "dunnett": "holm"}.get(post, post))
     against = f", each against {names[c]}" if vs == "control" and names else " of the chosen pairs" if vs == "pairs" else ""
@@ -778,9 +783,19 @@ def twoway(table, ks, o):
     if post != "none":
         # 0.4.19 (#61), 0.4.20 (B40): the families asked for, each corrected on its own. A side is the unweighted mean
         # of its cells; its variance is the residual mean square over each cell's n.
-        mean = lambda cs_: float(np.mean([np.mean(cv[c]) for c in cs_]))
-        var = lambda cs_: res_ms * sum(1 / len(cv[c]) for c in cs_) / len(cs_) ** 2
-        est = lambda a_, b_, _f: (mean(b_) - mean(a_), math.sqrt(var(a_) + var(b_)), dfe)
+        # 0.4.23 (#67): every mean is the fitted model's prediction for its cells (least-squares means), so without the
+        # interaction the comparisons follow the main-effects model, as they must; with it they are the cells' means.
+        from patsy import dmatrix
+        design = dmatrix("C(A, Sum) * C(B, Sum)" if inter else "C(A, Sum) + C(B, Sum)", df, return_type="dataframe").design_info
+        assert list(design.column_names) == list(m.params.index)  # the model's own coding
+        b, V = m.params.to_numpy(), m.cov_params().to_numpy()
+        rowlab = dict(rows)
+        xrow = lambda c: dmatrix(design, pd.DataFrame({"A": [rowlab[c[1]]], "B": [name_of(table, c[0])]}), return_type="dataframe").to_numpy()[0]
+        contrast = lambda cs_: np.mean([xrow(c) for c in cs_], axis=0)
+
+        def est(a_, b_, _f):
+            La, Lb = contrast(a_), contrast(b_)
+            return float(La @ b), float(Lb @ b), float(math.sqrt(max((La - Lb) @ V @ (La - Lb), 0))), dfe
         brackets = run_families(plan(o, ks, rows, lambda k: name_of(table, k)), est, post, tabs)
     return result("Two-way ANOVA", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
                   plots=residual_plots(m.fittedvalues, m.resid) if o.get("resplots") else [],

@@ -47,7 +47,7 @@ export const Comparisons = (p: { t: Table; two: boolean; o: () => Record<string,
   };
   const count = () => nComparisons(p.two, vs(), fams(), ks().length, rows().length, pairs().length);
   // the pair being added (two-way: cells as "set:row")
-  const cellOpts = (): [string, string][] => p.two ? rows().flatMap(r => ks().map(k => [`${k}:${r}`, `${sname(k)} · ${rname(r)}`] as [string, string])) : ks().map(k => [String(k), sname(k)] as [string, string]);
+  const cellOpts = (): [string, string][] => p.two ? rows().flatMap(r => ks().map(k => [`${k}:${r}`, `${rname(r)} · ${sname(k)}`] as [string, string])) : ks().map(k => [String(k), sname(k)] as [string, string]);
   const [a, setA] = createSignal(""), [b, setB] = createSignal("");
   const add = () => {
     const A = a() || cellOpts()[0]?.[0], B = b() || cellOpts()[1]?.[0];
@@ -55,7 +55,7 @@ export const Comparisons = (p: { t: Table; two: boolean; o: () => Record<string,
     const pr = p.two ? [...A.split(":").map(Number), ...B.split(":").map(Number)] : [+A, +B];
     p.put("pairs", [...pairs().filter(x => JSON.stringify(x) !== JSON.stringify(pr)), pr]);
   };
-  const pairText = (x: number[]) => p.two ? `${sname(x[0])} · ${rname(x[1])} vs ${sname(x[2])} · ${rname(x[3])}` : `${sname(x[0])} vs ${sname(x[1])}`;
+  const pairText = (x: number[]) => p.two ? `${rname(x[1])} · ${sname(x[0])} vs ${rname(x[3])} · ${sname(x[2])}` : `${sname(x[0])} vs ${sname(x[1])}`;
   return <>
     <Show when={p.two}>
       <label>What to compare</label><span class="cmpfams">
@@ -150,7 +150,7 @@ export const Plan = (p: { t: Table; two: boolean; o: () => Record<string, any>; 
     else {
       const n = nComparisons(p.two, vs, fams, ks.length, rows.length, nP);
       const what = vs === "pairs" ? `only the ${nP} pair${nP === 1 ? "" : "s"} you chose` : p.two ? fams.map(f => FAMTXT[f]).join(", ") : vs === "control" ? "each group" : "every pair of groups";
-      const ctl = vs !== "control" ? "" : p.two ? `, each against ${fams.every(f => ["sets", "mainrows"].includes(f)) ? rname(rows.includes(o.controlRow) ? o.controlRow : rows[0]) : fams.includes("cells") ? `${sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])} · ${rname(rows.includes(o.controlRow) ? o.controlRow : rows[0])}` : sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])}` : ` against ${sname(ks.includes(o.control) ? o.control : ks[0])}`;
+      const ctl = vs !== "control" ? "" : p.two ? `, each against ${fams.every(f => ["sets", "mainrows"].includes(f)) ? rname(rows.includes(o.controlRow) ? o.controlRow : rows[0]) : fams.includes("cells") ? `${rname(rows.includes(o.controlRow) ? o.controlRow : rows[0])} · ${sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])}` : sname(ks.includes(o.controlSet) ? o.controlSet : ks[0])}` : ` against ${sname(ks.includes(o.control) ? o.control : ks[0])}`;
       out.push(`Compare ${what}${p.two && vs === "all" ? ", every pair" : ""}${ctl}: ${n} comparison${n === 1 ? "" : "s"}, corrected by ${POST[post] ?? post}${p.two && fams.length > 1 && vs !== "pairs" ? " (each kind on its own)" : ""}.`);
     }
     if (!p.two && o.trend) out.push("A test for a linear trend across the groups in their order.");

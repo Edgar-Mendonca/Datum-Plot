@@ -237,9 +237,9 @@ def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, opt
     contrast = lambda cs_: np.mean([row(rlab[rix.index(r)], slab[ks.index(k)]) for k, r in cs_], axis=0)
     every = list(dfw.values()) + list(dfb.values())
 
-    def est(a_, b_, fac):
-        L = contrast(b_) - contrast(a_)
+    def est(a_, b_, fac):  # the predicted means of both sides and the SE of A − B (0.4.23)
+        La, Lb = contrast(a_), contrast(b_)
         rep = fac in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
         ddf = ((dfw.get(fac) if rep else dfb.get(fac)) if fac else None) or min(every)
-        return float(L @ b), float(math.sqrt(max(L @ V @ L, 0))), ddf
+        return float(La @ b), float(Lb @ b), float(math.sqrt(max((La - Lb) @ V @ (La - Lb), 0))), ddf
     return run_families(plan({**opts, "compare": within}, ks, list(zip(rix, rlab)), lambda k: slab[ks.index(k)]), est, post, tabs)

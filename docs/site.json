@@ -48,9 +48,17 @@
   ],
   "roadmap": [
     {
+      "v": "0.4.24",
+      "title": "Box plots",
+      "when": "Next",
+      "items": [
+        "Whiskers from min to max, Tukey or percentiles"
+      ]
+    },
+    {
       "v": "0.5",
       "title": "Modules",
-      "when": "Next",
+      "when": "Soon",
       "items": [
         "Science, engineering and quality tools you can switch on"
       ]
