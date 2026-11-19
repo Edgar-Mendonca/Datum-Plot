@@ -650,6 +650,13 @@ fn digitized_points_become_a_table() {
 }
 
 #[test]
+fn whiskers_are_kept_clean() {
+    // 0.4.24 (#66): known whisker choices stay, others become min to max ("")
+    let p = Project::from_json(r##"{"name":"a","tables":[{"id":1,"name":"T"}],"graphs":[{"id":2,"table":1,"name":"G","settings":{"whiskers":"p5"}},{"id":3,"table":1,"name":"H","settings":{"whiskers":"<x>"}}],"nextId":4}"##).unwrap();
+    assert_eq!((p.graphs[0].settings.whiskers.as_str(), p.graphs[1].settings.whiskers.as_str()), ("p5", ""));
+}
+
+#[test]
 fn renaming_a_table_renames_its_family() {
     // 0.4.18 (#62): graphs and results named after their table follow its new name; other names and tables stay.
     use crate::doc::renamed;

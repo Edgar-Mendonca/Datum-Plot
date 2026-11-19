@@ -99,6 +99,15 @@ def hatched(artist, st):
     return artist
 
 
+WHISKERS = {"": (0, 100), "tukey": 1.5, "p10": (10, 90), "p5": (5, 95), "p1": (1, 99)}
+
+
+def whis(graph):
+    """0.4.24 (#66): where box plots' whiskers end: the minimum and maximum (the default, as most programs draw them),
+    1.5 × IQR (Tukey), or the 10th–90th, 5th–95th or 1st–99th percentiles; values beyond are drawn as points."""
+    return WHISKERS.get(graph.get("whiskers") or "", (0, 100))
+
+
 def mark_dots(ax, k, xs, ys, cells):
     """0.4.19 (#65): remember where each value of data set k was drawn, and its cell in the table ([row, column], the
     column None when unknown), so hovering one point in the window can say which value it is."""
@@ -859,7 +868,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
                 hatched(bar, st)
             ax.bar(i, m, width=0.62, color="none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2, zorder=1.1)
         elif kind == "box" and v is not None and len(v) > 1:
-            b = ax.boxplot(v, positions=[i], widths=0.5, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+            b = ax.boxplot(v, positions=[i], widths=0.5, whis=whis(graph), patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
                            boxprops={"facecolor": rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"]), "edgecolor": rgba(st["edge"], st["ealpha"])},
                            medianprops={"color": rgba(st["edge"], st["ealpha"]), "linewidth": 1.6}, whiskerprops={"color": rgba(st["edge"], st["ealpha"])}, capprops={"color": rgba(st["edge"], st["ealpha"])}, flierprops={"markeredgecolor": col})
             for box in b["boxes"]:
@@ -1280,7 +1289,7 @@ def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv
             points.append([k, float(x), float(np.median(v) if kind == "box" else v.mean()), len(v), sd, sd / math.sqrt(len(v)) if len(v) > 1 else 0.0])
             allv += list(v)
             if kind == "box" or len(v) < 3 or np.ptp(v) == 0:
-                bx = ax.boxplot(v, positions=[x], widths=w * 0.7, patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+                bx = ax.boxplot(v, positions=[x], widths=w * 0.7, whis=whis(graph), patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
                            boxprops={"facecolor": face, "edgecolor": edge}, medianprops={"color": edge, "linewidth": 1.6},
                            whiskerprops={"color": edge}, capprops={"color": edge}, flierprops={"markeredgecolor": st["color"], "markersize": 3})
                 for box in bx["boxes"]:

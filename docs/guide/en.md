@@ -213,6 +213,7 @@ Your own colours go in the last row (#hex, separated by commas). In **Format Gra
 ### Working on the graph
 
 - Hover a point to see its values: on a mean, the mean, n, SD and SEM; on a single value (when the graph shows each value), that value with its row and replicate in the table.
+- Box plots: **Format Graph › Whiskers** sets where the whiskers end: min to max (the default), Tukey (1.5 × IQR, values beyond as points) or percentiles.
 - Drag a note to move it; double-click it to edit.
 - Right-click a point to exclude it.
 - **Zoom to a Box**, **Pan** and **Statistics of a Region** are in the graph's right-click menu; [[Ctrl]] and the mouse wheel zoom the view.

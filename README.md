@@ -54,6 +54,7 @@ Datum Plot keeps a project as a chain: **data tables → analyses → results �
 
 ### Graphs
 - **Publication-quality graphs** drawn with matplotlib: XY, column graphs (dots, bars, box plots, violins), grouped bars, box plots and violins, pie and donut charts, forest plots, polar, ternary, bubble, radar and waterfall graphs.
+- **Box plots** with whiskers from the minimum to the maximum, Tukey (1.5 × IQR) or percentiles.
 - **Significance brackets and stars** that stay readable however many there are, chosen per graph, including brackets across the rows of a grouped graph.
 - **Styling**: error bars (mean or median; SD, SEM, 95% CI or range), colour-blind-safe colour schemes, symbols, fills and **fill patterns** (stripes, cross-hatching, dots and more, with their own strength and thickness), axis breaks, a second Y axis, label angles, text sizes, titles and subtitles, annotations and insets. Save **your own style** for every new graph.
 - **Interactive**: hover a point to see its value and where it is in the table, zoom, pan, drag notes, exclude points with a right-click, and the statistics of any region.
@@ -105,13 +106,13 @@ The ⓘ How to use button in the console and the ? beside it in the ribbon show 
 
 If Datum Plot helped your work, please cite it with the version you used (File › Updates shows it):
 
-> Mendonca, E. (2026). *Datum Plot* (Version 0.4.23) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
+> Mendonca, E. (2026). *Datum Plot* (Version 0.4.24) [Computer software]. https://github.com/Edgar-Mendonca/Datum-Plot
 
 ```bibtex
 @software{datum_plot,
   author  = {Mendonca, Edgar},
   title   = {Datum Plot},
-  version = {0.4.23},
+  version = {0.4.24},
   year    = {2026},
   url     = {https://github.com/Edgar-Mendonca/Datum-Plot},
   license = {MIT}

@@ -466,6 +466,31 @@ class Dots(unittest.TestCase):
         self.assertEqual(sorted((x[1], x[2], x[3]) for x in d), [(0, 1, 0), (0, 3, 0), (1, 2, 1), (1, 4, 1)])
 
 
+class Whiskers(unittest.TestCase):
+    """0.4.24 (#66): box plots' whiskers end at the minimum and maximum by default; Tukey (1.5 × IQR) and percentiles on
+    request, with values beyond drawn as points. Made-up values with one far value (30)."""
+    C = {"name": "C", "kind": "column", "rows": 8, "sets": [{"title": "A", "entry": "rep", "reps": 1}],
+         "cols": [[None] * 8, [10, 11, 12, 12, 13, 14, 15, 30]], "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+    def ends(self, g, kind="box"):
+        g = {"column": kind, "points": "mean", **g}
+        with matplotlib.rc_context(graph.rc_for(g)):
+            fig, ax, _, _ = graph.figure(self.C, g)
+        ys = sorted({round(float(y), 6) for ln in ax.lines for y in ln.get_ydata()})
+        fl = [ln for ln in ax.lines if ln.get_marker() not in ("None", None, "") and len(ln.get_ydata())]
+        return ys, sum(len(ln.get_ydata()) for ln in fl)
+
+    def test_choices(self):
+        ys, out = self.ends({})
+        self.assertEqual((ys[0], ys[-1], out), (10, 30, 0), "min to max by default: no points beyond")
+        ys, out = self.ends({"whiskers": "tukey"})
+        self.assertLess(max(y for y in ys if y < 30), 30)
+        self.assertEqual(out, 1, "Tukey: the far value is a point")
+        _, out = self.ends({"whiskers": "p10"})
+        self.assertGreaterEqual(out, 1)
+        self.assertEqual(graph.whis({"whiskers": "nope"}), (0, 100))
+
+
 class Worker(unittest.TestCase):
     def test_protocol(self):
         p = subprocess.Popen([sys.executable, os.path.join(os.path.dirname(HERE), "worker.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)

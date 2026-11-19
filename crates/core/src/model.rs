@@ -400,6 +400,8 @@ pub struct GraphSettings {
     pub error: String,
     /// both, up or down.
     pub error_dir: String,
+    /// 0.4.24 (#66): box plots' whiskers: "" min to max, "tukey" 1.5 × IQR, "p10", "p5" or "p1" (percentiles).
+    pub whiskers: String,
     /// mean (with error bars) or each (every replicate).
     pub points: String,
     /// Connect the points of each data set.
@@ -476,7 +478,7 @@ pub struct GraphSettings {
 impl Default for GraphSettings {
     fn default() -> Self {
         Self {
-            error: "sd".into(), error_dir: "both".into(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
+            error: "sd".into(), error_dir: "both".into(), whiskers: String::new(), points: "mean".into(), line: true, cap: 3.0, width: 80.0, height: 60.0, font: "Arial".into(), font_size: 10.0,
             bold_titles: true, style: "prism".into(), title: String::new(), show_title: true, legend: Legend::default(), x: Axis::default(), y: Axis::default(), sets: vec![], overlays: vec![], bracket_opts: BTreeMap::new(), set_look: SetLook::default(), x_angle: String::new(), title_size: 0.0, axis_title_size: 0.0, tick_size: 0.0, legend_size: 0.0, title_from_name: false, subtitle: String::new(), row_order: vec![], row_hide: vec![], order: vec![], colors2: true, colors3: true, colors4: true,
             column: "scatter".into(), palette: String::new(), y2: Axis::default(), notes: vec![], polar: false, levels: 0, elev: 28.0, azim: -60.0, offset: 0.0,
         }
@@ -774,6 +776,9 @@ impl Project {
             s.subtitle = s.subtitle.chars().take(300).collect();
             s.row_order.truncate(100_000);
             s.row_hide.truncate(100_000);
+            if !matches!(s.whiskers.as_str(), "" | "tukey" | "p10" | "p5" | "p1") {
+                s.whiskers.clear();
+            }
             if !matches!(s.x_angle.as_str(), "" | "0" | "30" | "45" | "90") {
                 s.x_angle.clear();
             }

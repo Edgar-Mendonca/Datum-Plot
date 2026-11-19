@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.24 — 2026-11-19
+
+Box plots' whiskers.
+
+**Box and whisker graphs** (Format Graph › Graph)
+- A new **Whiskers** choice: **min to max** (all the data; now the default, as most programs draw box plots), **Tukey** (1.5 × the box height, with values beyond drawn as points; the earlier look), or the **10th–90th**, **5th–95th** or **1st–99th percentiles**.
+- Box plots and violins no longer offer error bar settings or an error bar colour, which never applied to them.
+
 ## 0.4.23 — 2026-11-19
 
 Two-way comparisons that follow the model.

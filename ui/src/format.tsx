@@ -11,6 +11,8 @@ import { draws, KINDS } from "./results";
 
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
+/** 0.4.24 (#66): where box plots' whiskers end. */
+const WHISKERS: [string, string][] = [["", "Min to max (all the data)"], ["tukey", "Tukey (1.5 × IQR; values beyond as points)"], ["p10", "10th to 90th percentile"], ["p5", "5th to 95th percentile"], ["p1", "1st to 99th percentile"]];
 /** 0.4.17 (#59): the fill patterns (the engine draws each as a hatch). */
 export const PATTERNS: [string, string][] = [["", "None"], ["diag", "/// Diagonal"], ["rdiag", "\\\\\\ Diagonal"], ["horiz", "≡ Horizontal"], ["vert", "||| Vertical"], ["cross", "+ Cross-hatch"], ["xcross", "× Diagonal cross"], ["dots", "· Dots"], ["circles", "○ Circles"], ["stars", "★ Stars"]];
 export const FONTS = ["Arial", "Helvetica", "Calibri", "Segoe UI", "Verdana", "Times New Roman", "Georgia", "Cambria"];
@@ -125,6 +127,8 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
   const ordered = () => ["column", "grouped", "parts", "nested"].includes(t()?.kind ?? "");
   /** 0.3.21 (#38): graphs with bars, boxes or violins, their scheme colour per data set, and the fill's usual strength. */
   const bars = () => ["column", "grouped", "nested"].includes(t()?.kind ?? "");
+  /** 0.4.24 (#66): box plots and violins draw no error bars (the box, whiskers or shape show the spread). */
+  const boxy = () => ["column", "grouped", "contingency"].includes(t()?.kind ?? "") && ["box", "violin"].includes(s().column || "");
   const base = (k: number) => { const c = scheme(); return c.length ? c[k % c.length] : OKABE_ITO[k % 8]; };
   /** 0.4.2 (#43): the error bars' automatic colour: dark grey on scatter dot plots and grouped bars; 0.4.3: the scheme's
    *  on the other bar, box and violin graphs (no longer the symbols' fill), the data set's colour on XY graphs. */
@@ -176,7 +180,9 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             <Show when={!["xy", "multi", "survival", "nested", "sheet", "matrix"].includes(t()?.kind ?? "")}><label>Graph</label><span class="inline"><Pick value={s().column || (t()?.kind === "column" ? "scatter" : t()?.kind === "parts" ? "pie" : "bars")} set={v => set(x => { x.column = v; })} options={t()?.kind === "parts" ? [["pie", "Pie"], ["donut", "Donut"], ["percent", "Bars stacked to 100%"]] : t()?.kind !== "column"
                 ? [["bars", "Grouped bars"], ["box", "Grouped box and whiskers"], ["violin", "Grouped violins"], ["stacked", "Stacked bars"], ["percent", "Stacked to 100%"], ["scatter", "Grouped dots"], ["lines", "Lines (interaction plot)"], ["heatmap", "Heat map"], ["radar", "Radar"]] : [["scatter", "Scatter dot plot"], ["bars", "Bars"], ["box", "Box and whiskers"], ["violin", "Violin"], ["mean", "Mean ± error only"], ["paired", "Before–after"]]} />
               <Check label="Show each value" value={s().points === "each"} set={v => set(x => { x.points = v ? "each" : "mean"; })} /></span>
-              <label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
+              {/* 0.4.24 (#66): box plots have whiskers, not error bars; violins neither */}
+              <Show when={!boxy()}><label>Error bars</label><Pick value={s().error} set={v => set(x => { x.error = v; })} options={ERRORS} /></Show>
+              <Show when={(s().column || "") === "box"}><label>Whiskers</label><Pick value={s().whiskers ?? ""} set={v => set(x => { x.whiskers = v; })} options={WHISKERS} /></Show></Show>
             <Show when={t()?.kind === "xy"}><label>Show</label><Pick value={s().points} set={v => set(x => { x.points = v; })} options={[["mean", "Mean with error bars"], ["each", "Each replicate"]]} /></Show>
             <label>Colours</label><span class="inline"><Pick value={s().palette.includes("#") ? "own" : s().palette || "okabe"} set={v => v !== "own" && set(x => { x.palette = v; x.sets = x.sets.map(q => ({ ...q, color: "" })); })} options={[...PALETTES.map(p => [p[0], paletteName(p)] as [string, string]), ...(s().palette.includes("#") ? [["own", "Your colours"] as [string, string]] : [])]} />
               <button class="btn sm" onClick={() => import("./tools").then(m => m.paletteDialog())}>Colour schemes…</button></span>
@@ -193,11 +199,11 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
             <span class="muted">A colour marked A is automatic: it follows the colour scheme.</span></p>
           <Show when={picked().length > 1}><p class="pickhint"><b>{picked().length} data sets picked</b>: a change to one of them applies to all of them. <button class="btn sm" onClick={() => setPicked([])}>Unpick</button></p></Show>
           <div class="setwrap"><table class="tbl setfmt"><thead>
-            <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={6} class="gs">Bars, boxes and violins</th><th colSpan={5} class="gs">Symbols</th><th class="gs">Error bars</th></tr></Show>
+            <Show when={bars()}><tr class="grouphead"><th colSpan={ordered() ? 4 : 3} /><th colSpan={6} class="gs">Bars, boxes and violins</th><th colSpan={5} class="gs">Symbols</th><Show when={!boxy()}><th class="gs">Error bars</th></Show></tr></Show>
             <tr><th class="pickrow" title="Pick every data set (click again to pick none)" onClick={() => setPicked(picked().length === rows().length ? [] : [...rows()])}>All</th><th>Data set</th><Show when={ordered()}><th title="The order along the graph; the table keeps its own">Order</th></Show><th>Show</th>
             <Show when={bars()} fallback={<><th>Symbol</th><th>Size</th><th title="The symbols and the line">Colour</th><th title="The symbols' outline">Symbol border</th><th title="Filled symbols (or hollow)">Filled</th>
               <Show when={lined()}><th title="Connect the points of this data set with a line">Connect</th><th title="Thickness of that line, in points">Line width</th></Show><th title="The error bars' colour">Error bars</th></>}>
-              <th class="gs" title="Filled bars, or outlines only">Filled</th><th>Fill</th><th>Border</th><th title="A fill pattern: stripes, cross-hatching, dots…">Pattern</th><th title="The pattern's colour (automatic: a darker shade of the border) and its strength">Pattern colour</th><th title="The thickness of the pattern's lines">Pattern lines</th><th class="gs" title="Filled symbols, or hollow">Filled</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th><th class="gs" title="The error bars' colour">Colour</th></Show>
+              <th class="gs" title="Filled bars, or outlines only">Filled</th><th>Fill</th><th>Border</th><th title="A fill pattern: stripes, cross-hatching, dots…">Pattern</th><th title="The pattern's colour (automatic: a darker shade of the border) and its strength">Pattern colour</th><th title="The thickness of the pattern's lines">Pattern lines</th><th class="gs" title="Filled symbols, or hollow">Filled</th><th>Shape</th><th>Size</th><th>Fill</th><th>Border</th><Show when={!boxy()}><th class="gs" title="The error bars' colour">Colour</th></Show></Show>
             <Show when={t()?.kind === "xy"}><th title="Draw against a second Y axis on the right">Right Y</th></Show></tr></thead><tbody>
             <For each={rows()}>{k0 => { const k = () => k0, d = () => t()!.sets[k0], at = () => rows().indexOf(k0); return <tr classList={{ dimset: !!t() && isEmpty(t()!, k()), picked: picked().includes(k()) }}>
               <td class="pickrow" title="Click to pick this data set; Ctrl+click or Shift+click to pick several, then any change applies to all of them" onClick={e => pick(e, k())}><b>{letter(k())}</b></td><td>{d()?.title || `Data set ${letter(k())}`}{t() && isEmpty(t()!, k()) ? " (empty)" : ""}</td>
@@ -226,7 +232,7 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
                 <td><input type="number" min="1" max="20" style={{ width: "54px" }} value={st(k()).size} onChange={e => setStyle(k(), { size: +e.currentTarget.value })} /></td>
                 <td><Swatch title="Symbol fill" value={st(k()).color} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { color: c })} alpha={st(k()).markerAlpha ?? 1} setAlpha={a => setStyle(k(), { markerAlpha: a })} /></td>
                 <td><Swatch title="Symbol border" value={st(k()).markerEdge ?? ""} auto={base(k())} scheme={scheme()} set={c => setStyle(k(), { markerEdge: c })} alpha={st(k()).markerEdgeAlpha ?? 1} setAlpha={a => setStyle(k(), { markerEdgeAlpha: a })} /></td>
-                <td class="gs"><Swatch title="Error bars" value={st(k()).errColor ?? ""} auto={errAuto(k())} scheme={scheme()} set={c => setStyle(k(), { errColor: c })} /></td>
+                <Show when={!boxy()}><td class="gs"><Swatch title="Error bars" value={st(k()).errColor ?? ""} auto={errAuto(k())} scheme={scheme()} set={c => setStyle(k(), { errColor: c })} /></td></Show>
               </Show>
               <Show when={t()?.kind === "xy"}><td><input type="checkbox" checked={!!st(k()).right} onChange={e => setStyle(k(), { right: e.currentTarget.checked })} /></td></Show>
             </tr>; }}</For>

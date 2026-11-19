@@ -994,6 +994,13 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     await q.selectOption(".dlg .setfmt tbody tr >> nth=0 >> select >> nth=1", "1.6"); await q.waitForTimeout(150);
     const pw = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings.sets?.[0];
     check("…and its lines can be made thicker", pw?.patternWidth === 1.6, JSON.stringify(pw?.patternWidth));
+    // 0.4.24 (#66): a box plot has whiskers, not error bars (nor an error-bar colour)
+    const fmtTxt = (await q.textContent(".dlg .fmtpage").catch(() => "")) || "";
+    check("box plots offer Whiskers instead of Error bars", fmtTxt.includes("Whiskers") && !/Error bars/.test(fmtTxt.split("Data set")[0] || fmtTxt) && !((await q.textContent(".dlg .setfmt thead")) || "").includes("Error bars"), fmtTxt.slice(0, 160));
+    await q.evaluate(() => { window.__calls = []; });
+    await q.selectOption('.dlg select:has(option[value="tukey"])', "tukey"); await q.waitForTimeout(150);
+    const wk = (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).find(o => o.GraphSet)?.GraphSet.settings;
+    check("…and choosing Tukey sets the graph's whiskers", wk?.whiskers === "tukey", JSON.stringify(wk?.whiskers));
     // 0.4.19 (#61): two-way ANOVA compares within rows, across rows, or both
     await q.keyboard.press("Escape"); await q.waitForTimeout(150);
     await q.click('.tabs button:text-is("Analyze")'); await q.waitForTimeout(150);

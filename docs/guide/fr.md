@@ -213,6 +213,7 @@ Vos propres couleurs se saisissent dans la dernière ligne (#hex, séparées par
 ### Travailler sur le graphique
 
 - Survolez un point pour voir ses valeurs : sur une moyenne, la moyenne, n, l’écart-type et l’erreur-type ; sur une valeur seule (quand le graphique montre chaque valeur), cette valeur avec sa ligne et son réplicat dans le tableau.
+- Boîtes à moustaches : **Format Graph › Whiskers** (Moustaches) fixe où finissent les moustaches : du minimum au maximum (par défaut), Tukey (1,5 × IQR, valeurs au-delà en points) ou percentiles.
 - Faites glisser une note pour la déplacer ; double-cliquez dessus pour la modifier.
 - Faites un clic droit sur un point pour l’exclure.
 - **Zoom to a Box** (Zoomer sur un cadre), **Pan** (Déplacer la vue) et **Statistics of a Region** (Statistiques d’une zone) se trouvent dans le menu contextuel du graphique ; [[Ctrl]] et la molette de la souris zooment la vue.
