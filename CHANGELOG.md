@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.28 — 2026-11-20
+
+Regression and curve fitting, checked against R.
+
+Every model of the curve-fit library, linear regression (straight line, through the origin, polynomial, weighted, Deming, comparing lines), global fits, interpolation and the area under the curve were checked against R. All the fitted values, standard errors and confidence intervals matched; two details are fixed.
+
+**Comparing models**
+- **AICc** now counts the residual variance as a parameter, as R and other programs do. AICc values are a little larger and the probability that each model is correct can change slightly.
+- When the second model fits no better at all, the F test shows F = 0 (it could show a tiny negative number).
+
 ## 0.4.27 — 2026-11-20
 
 Comparing groups, checked against R.

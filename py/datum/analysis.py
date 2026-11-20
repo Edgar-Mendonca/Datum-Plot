@@ -485,6 +485,9 @@ def fit_one(model, guess, x, y, o):
 
 
 def aicc_of(ss, n, k):
+    """AICc of a least-squares fit with k fitted parameters. 0.4.28 (validation against R): the residual variance counts
+    as a parameter too (K = k + 1), as R's AIC and other programs count it; before, K was k."""
+    k = k + 1
     return n * math.log(ss / n) + 2 * k + (2 * k * (k + 1) / (n - k - 1) if n - k - 1 > 0 else float("inf")) if ss > 0 else float("nan")
 
 
@@ -620,7 +623,7 @@ def compare_models(table, model, done, o):
         if k1 != k2:
             (sa, ka), (sb, kb) = sorted([(ss1, k1), (ss2, k2)], key=lambda t: t[1])
             if n - kb > 0 and sb > 0:
-                F = ((sa - sb) / (kb - ka)) / (sb / (n - kb))
+                F = max(0.0, ((sa - sb) / (kb - ka)) / (sb / (n - kb)))  # 0.4.28: no tiny negative F when the fits are equal
                 pf = float(st.f.sf(F, kb - ka, n - kb))
                 Ftxt = f"F = {g(F, 4)}, P = {pv(pf)}"
         best = name1 if p1 >= 0.5 else name2

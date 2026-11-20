@@ -171,3 +171,22 @@ class Nested(unittest.TestCase):
         out = graph.render(nest(G1, G2, G3), {})
         self.assertIn("<svg", out["svg"])
         self.assertEqual(len([p for p in out["points"] if p]), 9)  # one hover point per subgroup
+
+
+class AiccCountsTheVariance(unittest.TestCase):
+    """0.4.28 (validation against R): AICc counts the residual variance as a parameter (K = fitted parameters + 1), as
+    R's AIC and other programs do; and a second model that fits no better gives F = 0, not a tiny negative F."""
+    X = [0.0, 0.714286, 1.428571, 2.142857, 2.857143, 3.571429, 4.285714, 5.0, 5.714286, 6.428571, 7.142857, 7.857143, 8.571429, 9.285714, 10.0]
+    Y1 = [96.5235, 77.4449, 62.4552, 53.2466, 40.8874, 38.7943, 32.4929, 32.614, 30.0498, 28.8986, 26.1295, 23.3467, 24.3142, 24.9608, 20.1581]
+    Y2 = [81.2207, 63.7607, 54.5867, 40.9104, 35.1258, 31.302, 27.2222, 20.5179, 22.3309, 19.7307, 18.2536, 17.4948, 17.5461, 12.9514, 19.2954]
+
+    def test_aicc_and_model_comparison(self):
+        import math
+        t = {"name": "X", "kind": "xy", "rows": 15, "sets": [{"title": "A", "entry": "rep", "reps": 1}, {"title": "B", "entry": "rep", "reps": 1}],
+             "cols": [self.X, self.Y1, self.Y2], "excluded": [], "xTitle": "", "yTitle": ""}
+        r = A.run("fit", t, [], {"model": "exp_decay", "model2": "exp_decay2"})
+        rows = [row for tb in r["tabs"] for tt in tb["tables"] if "against" in tt["title"] for row in tt["rows"]]
+        ss1 = float(rows[0][1].split(" / ")[0])
+        # R: n·log(SS/n) + 2(k+1) + 2(k+1)(k+2)/(n−k−2) with k = 3 fitted parameters, n = 15
+        self.assertAlmostEqual(float(rows[0][2].split(" / ")[0]), 15 * math.log(ss1 / 15) + 8 + 2 * 4 * 5 / 10, places=1)
+        self.assertTrue(rows[1][4].startswith("F = 0,"), rows[1][4])
