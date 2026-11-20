@@ -167,6 +167,15 @@ class CheckedAgainstR(unittest.TestCase):
         self.assertEqual([(x[7], x[9], x[3]) for x in between], [("1.919", "17.85", "0.1917"), ("1.919", "17.85", "0.3916"), ("1.919", "17.85", "0.1883")])
         self.assertEqual([(x[9], x[3]) for x in within], [("16", "0.1120"), ("16", "0.0039"), ("16", "0.1103")])
 
+    def test_normality_rows_line_up(self):
+        """0.4.29: every test on its own rows. R (PlantGrowth ctrl): Shapiro-Wilk W 0.9567, P 0.7475; D'Agostino K2
+        0.2335, P 0.8898; Anderson-Darling A2 0.2829, P 0.5546; Lilliefors D 0.1735 (the rows had shifted)."""
+        r = A.run("normality", col(CTRL), [], {})
+        rows = [(x[0].strip(), x[1]) for x in r["tabs"][0]["tables"][0]["rows"]]
+        self.assertEqual(rows, [("Shapiro-Wilk W", "0.9567"), ("P value", "0.7475"), ("Passed (normal)?", "Yes"), ("D'Agostino-Pearson K2", "0.2335"), ("P value", "0.8898"),
+                                ("Passed (normal)?", "Yes"), ("Anderson-Darling A2", "0.2829"), ("P value", "0.5546"), ("Passed (normal)?", "Yes"),
+                                ("Kolmogorov-Smirnov D (Lilliefors)", "0.1735"), ("P value", "0.5315"), ("Passed (normal)?", "Yes"), ("Number of values", "10")])
+
     NESTED2 = [[[10.41, 10.83, 8.36], [10.44, 9.72, 10.53, 9.41, 10.72], [11.36, 11.1]], [[9.95, 10.6, 9.91, 9.64], [11.92, 10.59], [13.57, 13.12, 10.4, 12.67, 11.3, 12.43], [13.14, 11.11, 12.87]]]
     NESTED3 = [[[9.52, 7.62, 9.93], [10.58, 11.46, 11.28, 10.63, 10.17], [9.58, 8.12]], [[13.9, 13.35, 12.41, 14.46], [11.91, 9.95], [9.44, 13.31, 10.87, 10.58, 11.78, 10.08], [10.32, 12.04, 10.45]],
                [[9.35, 8.48, 10.5, 9.97, 10.46], [11.33, 11.71, 12.73], [10.67, 10.47, 11.21, 10.69]]]

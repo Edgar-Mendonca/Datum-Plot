@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.29 — 2026-11-20
+
+Relationships, survival and statistics, checked against R.
+
+Correlation, contingency tables, ROC curves, survival (Kaplan-Meier, log-rank, Cox), multiple, logistic and Poisson regression, PCA, Bland-Altman, kappa, power and descriptive statistics were checked against R and matched. One display fix:
+
+**Normality tests**
+- The results table showed some values on the wrong rows: after D'Agostino-Pearson's K2, the Anderson-Darling and Kolmogorov-Smirnov rows and the number of values were shifted, and three P values were missing. Each test now shows its statistic, P value and answer on its own rows. (The Shapiro-Wilk result, used for the answer, was always right.)
+
 ## 0.4.28 — 2026-11-20
 
 Regression and curve fitting, checked against R.

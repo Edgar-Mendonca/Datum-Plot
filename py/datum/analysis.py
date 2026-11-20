@@ -178,8 +178,9 @@ def describe(table, ks, o):
 # ---------- normality (B2) ----------
 def normality(table, ks, o):
     alpha = float(o.get("alpha", ALPHA))
-    rows = {n: [n] for n in ["Shapiro-Wilk W", "  P value", "  Passed (normal)?", "D'Agostino-Pearson K2", "  P value", "  Passed (normal)?", "Anderson-Darling A2", "  P value", "  Passed (normal)?", "Kolmogorov-Smirnov D (Lilliefors)", "  P value", "  Passed (normal)?", "Number of values"]}
-    keys = list(rows)
+    # 0.4.29 (validation against R): a list, not a dict keyed by label: the repeated "  P value" rows had collapsed, so
+    # every value after D'Agostino's K2 showed on the wrong row
+    rows = [[n] for n in ["Shapiro-Wilk W", "  P value", "  Passed (normal)?", "D'Agostino-Pearson K2", "  P value", "  Passed (normal)?", "Anderson-Darling A2", "  P value", "  Passed (normal)?", "Kolmogorov-Smirnov D (Lilliefors)", "  P value", "  Passed (normal)?", "Number of values"]]
     plots, checks, fails = [], [], []
     for i, k in enumerate(ks):
         v = np.array([a for a, _ in values(table, k)])
@@ -201,8 +202,8 @@ def normality(table, ks, o):
         else:
             res += ["—", "—", "Too few"] * 2
         res.append(g(len(v)))
-        for key, r in zip(keys, res):
-            rows[key].append(r)
+        for row, r in zip(rows, res):
+            row.append(r)
         if len(v) >= 3:
             (osm, osr), (slope, icpt, _) = st.probplot(v)
             plots.append(small_plot(f"QQ plot · {name_of(table, k)}", lambda ax, osm=osm, osr=osr, slope=slope, icpt=icpt, c=COLORS[k % 8]: (
@@ -211,7 +212,7 @@ def normality(table, ks, o):
             checks.append((None, f"{name_of(table, k)}: with {len(v)} values, normality tests have little power; a QQ plot is a better guide."))
     ans = (f"Shapiro-Wilk: {', '.join(fails)} {'does' if len(fails) == 1 else 'do'} not look normally distributed (P ≤ {alpha:g})." if fails
            else f"Shapiro-Wilk finds no evidence against normality in {'any data set' if len(ks) > 1 else name_of(table, ks[0])} (P > {alpha:g}).")
-    return result("Normality tests", ans, [{"name": "Summary", "tables": [by_set(table, ks, list(rows.values()))]}], checks, plots=plots,
+    return result("Normality tests", ans, [{"name": "Summary", "tables": [by_set(table, ks, rows)]}], checks, plots=plots,
                   methods=f"Normality was tested with the Shapiro-Wilk, D'Agostino-Pearson, Anderson-Darling and Kolmogorov-Smirnov (Lilliefors) tests (α = {alpha:g}).",
                   code="from scipy import stats\nprint(stats.shapiro(v), stats.normaltest(v))")
 
