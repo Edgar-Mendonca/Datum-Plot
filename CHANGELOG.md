@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.25 — 2026-11-20
+
+Testers' fixes: whiskers, decimal commas, four stars and a paste shortcut.
+
+**Box plots**
+- **Percentile whiskers** (10th–90th, 5th–95th, 1st–99th) now end exactly at the percentile, so they show even with a few values per box; before, they could disappear into the box.
+- **Tukey** whiskers are labelled "best with 10 or more values per box": with fewer values a whisker can be short or missing, which is how Tukey whiskers are defined.
+
+**Data tables**
+- Numbers written with a **decimal comma** (1,5) are read as 1.5 when typed or pasted. A pasted block that uses decimal commas also reads 1,234 as 1.234.
+- **Ctrl+T** pastes **transposed** (rows become columns); it is also in the table's right-click menu and the Paste menu.
+
+**Significance stars**
+- A new choice, **Stars up to \*\*\*\*** (P ≤ 0.0001), beside stars up to \*\*\* and P values, for the graph's brackets and the results.
+- Stars now use ≤ as journals write them (\* for P ≤ 0.05), which only changes a P value of exactly 0.05, 0.01 or 0.001.
+
 ## 0.4.24 — 2026-11-19
 
 Box plots' whiskers.

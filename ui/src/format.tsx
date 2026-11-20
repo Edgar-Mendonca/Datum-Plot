@@ -12,7 +12,7 @@ import { draws, KINDS } from "./results";
 export const OKABE_ITO = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"];
 export const SYMBOLS: [string, string][] = [["circle", "● Circle"], ["square", "■ Square"], ["triangle", "▲ Triangle"], ["down", "▼ Down triangle"], ["diamond", "◆ Diamond"], ["pentagon", "⬟ Pentagon"], ["hexagon", "⬢ Hexagon"], ["star", "★ Star"], ["none", "No symbol"]];
 /** 0.4.24 (#66): where box plots' whiskers end. */
-const WHISKERS: [string, string][] = [["", "Min to max (all the data)"], ["tukey", "Tukey (1.5 × IQR; values beyond as points)"], ["p10", "10th to 90th percentile"], ["p5", "5th to 95th percentile"], ["p1", "1st to 99th percentile"]];
+const WHISKERS: [string, string][] = [["", "Min to max (all the data)"], ["tukey", "Tukey (1.5 × IQR; values beyond as points; best with 10 or more values per box)"], ["p10", "10th to 90th percentile"], ["p5", "5th to 95th percentile"], ["p1", "1st to 99th percentile"]];
 /** 0.4.17 (#59): the fill patterns (the engine draws each as a hatch). */
 export const PATTERNS: [string, string][] = [["", "None"], ["diag", "/// Diagonal"], ["rdiag", "\\\\\\ Diagonal"], ["horiz", "≡ Horizontal"], ["vert", "||| Vertical"], ["cross", "+ Cross-hatch"], ["xcross", "× Diagonal cross"], ["dots", "· Dots"], ["circles", "○ Circles"], ["stars", "★ Stars"]];
 export const FONTS = ["Arial", "Helvetica", "Calibri", "Segoe UI", "Verdana", "Times New Roman", "Georgia", "Cambria"];
@@ -291,7 +291,7 @@ const fmtWindow = (g0: Graph, gid: () => number, setGid: (id: number) => void, t
               {/* 0.4.7 (#51): this graph's own brackets for the analysis; "As the analysis" follows its options */}
               <Show when={KINDS[a.kind]?.[2] === "brackets" && s().overlays.includes(a.id)}>
                 <Pick value={s().bracketOpts?.[a.id]?.brackets ?? ""} set={v => bracket(a.id, "brackets", v)} options={[["", `As the analysis (${({ all: "every pair", none: "no brackets" } as Record<string, string>)[a.options?.brackets] ?? "significant pairs"})`], ["sig", "Significant pairs"], ["all", "Every pair"], ["none", "No brackets"]]} />
-                <Pick value={s().bracketOpts?.[a.id]?.ptext ?? ""} set={v => bracket(a.id, "ptext", v)} options={[["", `As the analysis (${a.options?.ptext === "p" ? "P values" : "stars"})`], ["stars", "Stars"], ["p", "P values"]]} />
+                <Pick value={s().bracketOpts?.[a.id]?.ptext ?? ""} set={v => bracket(a.id, "ptext", v)} options={[["", `As the analysis (${a.options?.ptext === "p" ? "P values" : a.options?.ptext === "stars4" ? "stars to ****" : "stars"})`], ["stars", "Stars (to ***)"], ["stars4", "Stars (to ****)"], ["p", "P values"]]} />
               </Show></span>}</For>
               <span class="muted">Ticked analyses are drawn on this graph only; the others keep their own choice. Brackets can differ from graph to graph.</span></span></Show>
           </div>

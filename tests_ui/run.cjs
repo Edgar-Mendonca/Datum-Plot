@@ -289,6 +289,12 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   const pa = (await ops()).find(o => o.Paste);
   check("paste from a spreadsheet sends the rows with their headings", pa && pa.Paste.row === 0 && pa.Paste.col === 0 && pa.Paste.rows.length === 2 && pa.Paste.rows[0][0] === "Time", JSON.stringify(pa));
   check("excluded values are shown struck through in blue", (await p.$$(".gbody .c.ex")).length === P.tables[0].excluded.length);
+  // 0.4.25 (#70): Ctrl+T pastes transposed (here from the system clipboard: one row becomes one column)
+  await reset();
+  await p.evaluate(() => { const inv = window.__TAURI__.core.invoke; window.__TAURI__.core.invoke = async (c, a) => c === "read_clipboard" ? (window.__calls.push([c, a]), "1\t2\t3") : inv(c, a); });
+  await p.mouse.click(cx, cy); await p.keyboard.press("Control+t"); await p.waitForTimeout(200);
+  const ptr = (await ops()).find(o => o.Paste);
+  check("Ctrl+T pastes transposed", ptr && JSON.stringify(ptr.Paste.rows) === '[["1"],["2"],["3"]]', JSON.stringify(ptr));
 
   // 5. Ribbon: every tab fits without a sideways scrollbar; Analyze explains what comes next.
   for (const w of [1280, 1600]) {

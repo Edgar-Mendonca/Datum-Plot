@@ -155,7 +155,7 @@ export const Plan = (p: { t: Table; two: boolean; o: () => Record<string, any>; 
     }
     if (!p.two && o.trend) out.push("A test for a linear trend across the groups in their order.");
     if (!p.two && o.bayes) out.push("A Bayes factor beside the P value.");
-    out.push(o.brackets === "none" || post === "none" ? "No brackets on the graph." : `Brackets with ${o.ptext === "p" ? "P values" : "stars"} on the graph for ${o.brackets === "all" ? "every pair compared" : "the significant pairs"}.`);
+    out.push(o.brackets === "none" || post === "none" ? "No brackets on the graph." : `Brackets with ${o.ptext === "p" ? "P values" : o.ptext === "stars4" ? "stars (up to ****)" : "stars"} on the graph for ${o.brackets === "all" ? "every pair compared" : "the significant pairs"}.`);
     if (o.resplots) out.push("Residual plots (residuals, spread, normal QQ) on the results sheet.");
     return out;
   };

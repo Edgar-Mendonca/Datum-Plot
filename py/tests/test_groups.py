@@ -115,6 +115,22 @@ class Anova(unittest.TestCase):
             self.assertTrue(r["answer"].startswith("The means"), o)
 
 
+class Stars(unittest.TestCase):
+    """0.4.25 (#69): stars with ≤ thresholds, and a fourth star (P ≤ 0.0001) when the analysis asks for it."""
+
+    def test_thresholds_and_four_stars(self):
+        self.assertEqual([A.stars(p) for p in (0.06, 0.05, 0.011, 0.01, 0.001, 0.00001)], ["ns", "*", "*", "**", "***", "***"])
+        self.assertEqual([A.stars(p, True) for p in (0.0001, 0.00001, 0.0002)], ["****", "****", "***"])
+        far = col([1.0, 1.1, 0.9, 1.05, 0.95, 1.02], [9.0, 9.2, 8.9, 9.1, 9.05, 8.95])
+        r = A.run("ttest", far, [], {"ptext": "stars4"})
+        self.assertIn("(****)", str(r["tabs"]))
+        self.assertIn("**** P ≤ 0.0001", r["legend"])
+        self.assertNotIn("****", str(A.run("ttest", far, [], {})["tabs"]), "three stars unless asked")
+        self.assertFalse(A.FOUR.get(), "the choice ends with its analysis")
+        svg = graph.render(far, {"column": "scatter"}, [{"kind": "ttest", "options": {"ptext": "stars4", "brackets": "all"}}])["svg"]
+        self.assertIn("****", svg, "the graph's bracket shows four stars")
+
+
 class CorrelationPower(unittest.TestCase):
     def test_pearson_matches_r(self):
         # R: cor.test(anscombe$x1, anscombe$y1): r = 0.8164205, p = 0.00217, 95% CI 0.4243912 to 0.9506933 (Fisher z)

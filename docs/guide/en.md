@@ -98,7 +98,7 @@ Choose the kind of table that matches your experiment: **Data › New Table**.
 
 1. **Data › Insert.** **New Table**, **Import**, **Several Files**, **Digitize Graph**, **Add Data Set**, **Remove Data Set** and rows.
 2. **Headings.** The X title and units, and each data set's title. Double-click a heading to change it, the replicates or the way values are entered. Long titles wrap onto up to three lines. Drag the right edge of a heading to widen its column; double-click the edge to fit the title and values.
-3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with spreadsheets ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down.
+3. **Cells.** Type a value and press [[Enter]]. Copy and paste work with spreadsheets ([[Ctrl+C]], [[Ctrl+V]]); [[Ctrl+D]] fills down. Decimal commas (1,5) are understood; [[Ctrl+T]] pastes transposed (rows become columns).
 
 A data set can be entered as replicates (each value in its own column) or as **mean, SD and N** or **mean, SEM and N** from a paper or another program: choose it in the data set's heading.
 
@@ -145,7 +145,7 @@ The other groups of the Analyze tab start an analysis directly: **Statistics**, 
 3. **Analyze which data sets?** Tick the data sets to include (**Select All**, **Deselect All**).
 4. **What it does.** A short explanation of the analysis chosen. **Next…** (or a double-click) opens its options with those data sets.
 
-Long option windows are in tabs: one- and two-way ANOVA have **Model**, **Comparisons** and **Graph**. A yellow box at the bottom, **What will be done**, says in plain words what will be run and follows every change; with repeated measures a small picture outlines one subject's values. **Graph › Residual plots** adds the residuals, their spread and a normal QQ plot to the results, and the comparisons can be corrected by the **false discovery rate**. Analyses you chose lately are listed first under **Recently used**. In the results, each comparison shows the predicted means of both sides, the SE of the difference, t and DF; a difference "A vs B" is A − B.
+Long option windows are in tabs: one- and two-way ANOVA have **Model**, **Comparisons** and **Graph**. A yellow box at the bottom, **What will be done**, says in plain words what will be run and follows every change; with repeated measures a small picture outlines one subject's values. **Graph › Residual plots** adds the residuals, their spread and a normal QQ plot to the results, and the comparisons can be corrected by the **false discovery rate**. Analyses you chose lately are listed first under **Recently used**. In the results, each comparison shows the predicted means of both sides, the SE of the difference, t and DF; a difference "A vs B" is A − B. On the **Graph** tab, stars can go up to \*\*\*\* (P ≤ 0.0001) for journals that ask for it.
 
 ![One-way ANOVA › Comparisons: each group against a control.](img/comparisons.png)
 

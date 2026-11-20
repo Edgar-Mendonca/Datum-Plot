@@ -266,6 +266,9 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | J11 | Recently used analyses in Analyze Data (#61 video) | ✅ 0.4.22 |
 | B42 | Two-way comparisons from the model's predicted means (also main effects only, unequal n), with predicted means, SE, t and df; differences first minus second (#67) | ✅ 0.4.23 |
 | D33 | Whiskers of box plots: min–max (default), Tukey, percentiles; error-bar settings hidden for box plots and violins (#66) | ✅ 0.4.24 |
+| A26 | Decimal commas when typing or pasting (#68) | ✅ 0.4.25 |
+| C14 | Four stars (P ≤ 0.0001) as a choice; ≤ thresholds (#69) | ✅ 0.4.25 |
+| A27 | Ctrl+T: Paste Transposed (#70) | ✅ 0.4.25 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
 | D29 | Titles: the graph's name, a subtitle, long titles wrap (#56) | ✅ 0.4.14 |
 | D25 | Symbols and error bars on their own: symbols' Filled, strengths of borders and symbol fills, error-bar colour, legend borders, legends with an axis break (#40–#43) | ✅ 0.4.2 |
@@ -461,6 +464,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.25** ✅ | Percentile whiskers fixed (#66), decimal commas (A26; #68), four stars (C14; #69), Ctrl+T (A27; #70) |
 | **0.4.22** ✅ | What will be done, the repeated-measures layout (C13), residual plots and the false discovery rate (B41), recently used (J11); from #61's video |
 | later | Modules (planned later); Mac and Linux versions (I7), on hold |
 | 1.0 | Signed installer (I6, needs a code-signing certificate from the user), validation report (J4) |

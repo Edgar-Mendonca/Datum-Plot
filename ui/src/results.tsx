@@ -105,7 +105,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
       <Show when={q.width && o().bayes}><span class="muted">prior</span><Pick value={o().prior ?? "medium"} set={v => put("prior", v)} options={[["medium", "Medium (default)"], ["wide", "Wide"], ["ultrawide", "Ultrawide"]]} /></Show></span></>;
     const Alpha = () => <><label>Significance level α</label><Pick value={String(o().alpha)} set={v => put("alpha", +v)} options={[["0.01", "0.01"], ["0.05", "0.05"], ["0.1", "0.10"]]} /></>;
     const Brackets = () => <Show when={t.kind === "column" || t.kind === "grouped"}><label>On the graph</label><span class="inline"><Pick value={o().brackets} set={v => put("brackets", v)} options={[["sig", "Brackets for significant pairs"], ["all", "Brackets for every pair"], ["none", "No brackets"]]} />
-      <Pick value={o().ptext} set={v => put("ptext", v)} options={[["stars", "Stars (*, **, ***)"], ["p", "P values"]]} /></span></Show>;
+      <Pick value={o().ptext} set={v => put("ptext", v)} options={[["stars", "Stars (*, **, ***)"], ["stars4", "Stars (*, **, ***, ****: P ≤ 0.0001)"], ["p", "P values"]]} /></span></Show>;
     return (
       <Dialog title={existing ? `Change · ${existing.name}` : KINDS[kind][0]} wide help="options" okText={existing ? "OK" : "Analyze"} ok={ok}>
         <div class="form">

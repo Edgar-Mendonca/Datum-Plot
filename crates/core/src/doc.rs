@@ -172,9 +172,21 @@ pub fn number(s: &str) -> Option<f64> {
     let t = s.trim().replace('\u{2212}', "-");
     let (t, pct) = match t.strip_suffix('%') { Some(x) => (x.trim().to_string(), true), None => (t, false) };
     let grouped = t.contains(',') && !t.contains(' ') && t.trim_start_matches('-').split('.').next().unwrap_or("").split(',').enumerate().all(|(i, g)| (i == 0 && (1..=3).contains(&g.len())) || g.len() == 3);
-    let t = if grouped { t.replace(',', "") } else { t };
+    // 0.4.25 (#68): a decimal comma ("1,5", "0,123") where it cannot be a thousands separator
+    let t = if decimal_comma(&t) { t.replacen(',', ".", 1) } else if grouped { t.replace(',', "") } else { t };
     let v: f64 = t.parse().ok().filter(|v: &f64| v.is_finite())?;
     Some(if pct { v / 100.0 } else { v })
+}
+
+/// 0.4.25 (#68): digits, one comma, digits ("1,5", "-0,25"): a number written with a decimal comma.
+fn comma_number(s: &str) -> bool {
+    let s = s.trim().trim_start_matches('-');
+    matches!(s.split_once(','), Some((a, b)) if !a.is_empty() && !b.is_empty() && a.bytes().all(|c| c.is_ascii_digit()) && b.bytes().all(|c| c.is_ascii_digit()))
+}
+
+/// A decimal comma for certain: not three digits after it ("1,5", "2,25") or a zero before it ("0,123").
+fn decimal_comma(s: &str) -> bool {
+    comma_number(s) && { let (a, b) = s.trim().trim_start_matches('-').split_once(',').unwrap_or_default(); b.len() != 3 || a == "0" }
 }
 
 /// Dates are written day first (05/11/2026 = 5 November) unless the options say month first; the shell sets it.
@@ -409,6 +421,12 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
         }
         Op::Paste { table, row, col, mut rows } => {
             let t = p.table_mut(table)?;
+            // 0.4.25 (#68): a block written with decimal commas ("1,5" somewhere) reads every "1,234" in it as 1.234 too
+            if rows.iter().flatten().any(|s| decimal_comma(s)) {
+                for s in rows.iter_mut().flatten().filter(|s| comma_number(s)) {
+                    *s = s.replacen(',', ".", 1);
+                }
+            }
             let words = |l: &Vec<String>| l.iter().any(|s| !s.trim().is_empty()) && l.iter().all(|s| s.trim().is_empty() || number(s).is_none());
             if row == 0 && rows.len() > 1 && words(&rows[0]) {
                 let head = rows.remove(0);

@@ -490,6 +490,21 @@ class Whiskers(unittest.TestCase):
         self.assertGreaterEqual(out, 1)
         self.assertEqual(graph.whis({"whiskers": "nope"}), (0, 100))
 
+    def test_percentile_whiskers_show_with_few_values(self):
+        """0.4.25 (#66): with 5 values per box the percentile whiskers used to vanish into the box; they end at the
+        percentile itself now (numpy's, linear), with the values beyond as points."""
+        C = {"name": "C", "kind": "column", "rows": 5, "sets": [{"title": "A", "entry": "rep", "reps": 1}],
+             "cols": [[None] * 5, [1.0, 2.0, 3.0, 4.0, 5.0]], "excluded": [], "xTitle": "", "yTitle": "Y"}
+        for w, (lo, hi) in graph.PERCENTILES.items():
+            g = {"column": "box", "points": "mean", "whiskers": w}
+            with matplotlib.rc_context(graph.rc_for(g)):
+                fig, ax, _, _ = graph.figure(C, g)
+            seg = [ln.get_ydata() for ln in ax.lines if len(ln.get_ydata()) == 2 and ln.get_xdata()[0] == ln.get_xdata()[1] and ln.get_linestyle() not in ("None", "")]
+            ends = sorted(round(float(y), 6) for s_ in seg for y in s_)
+            self.assertAlmostEqual(ends[0], float(np.percentile([1, 2, 3, 4, 5], lo)), places=6, msg=w)
+            self.assertAlmostEqual(ends[-1], float(np.percentile([1, 2, 3, 4, 5], hi)), places=6, msg=w)
+            self.assertTrue(all(np.ptp(s_) > 0 for s_ in seg), f"{w}: both whiskers have a length")
+
 
 class Worker(unittest.TestCase):
     def test_protocol(self):

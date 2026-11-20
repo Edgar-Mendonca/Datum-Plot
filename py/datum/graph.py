@@ -108,6 +108,23 @@ def whis(graph):
     return WHISKERS.get(graph.get("whiskers") or "", (0, 100))
 
 
+PERCENTILES = {"p10": (10, 90), "p5": (5, 95), "p1": (1, 99)}
+
+
+def draw_box(ax, v, pos, width, graph, showfliers, **props):
+    """One box and its whiskers (0.4.25, #66): percentile whiskers end exactly at the percentile, as other programs
+    draw them (matplotlib's own end at the nearest value inside it, which with a few values is the box itself, so the
+    whiskers vanished); values beyond the whiskers are the outliers."""
+    from matplotlib import cbook
+    v = np.asarray(v, float)
+    st = cbook.boxplot_stats(v, whis=whis(graph))[0]
+    pc = PERCENTILES.get(graph.get("whiskers") or "")
+    if pc:
+        st["whislo"], st["whishi"] = (float(x) for x in np.percentile(v, pc))
+        st["fliers"] = v[(v < st["whislo"]) | (v > st["whishi"])]
+    return ax.bxp([st], positions=[pos], widths=width, patch_artist=True, showfliers=showfliers, manage_ticks=False, **props)
+
+
 def mark_dots(ax, k, xs, ys, cells):
     """0.4.19 (#65): remember where each value of data set k was drawn, and its cell in the table ([row, column], the
     column None when unknown), so hovering one point in the window can say which value it is."""
@@ -250,7 +267,7 @@ def draw_brackets(ax, brackets, pos, tops, size, o):
     per_pt = span / room
     for x1, x2, y, p in placed:
         ax.plot([x1, x1, x2, x2], [y - tick_pt * per_pt, y, y, y - tick_pt * per_pt], color="#222222", linewidth=0.9, zorder=4)
-        text = stars(p) if o.get("ptext") != "p" else (f"P {pv(p)}" if pv(p).startswith("<") else f"P = {pv(p)}")
+        text = stars(p, o.get("ptext") == "stars4") if o.get("ptext") != "p" else (f"P {pv(p)}" if pv(p).startswith("<") else f"P = {pv(p)}")
         # "ns" is letters, the stars are small glyphs: ns a little smaller so neither crowds the other (#52)
         ax.text((x1 + x2) / 2, y + 0.4 * per_pt, text, ha="center", va="bottom", fontsize=fs * (0.85 if text == "ns" else 1.0), zorder=4)
     ax.set_ylim(lo, lo + span)
@@ -868,7 +885,7 @@ def column_figure(fig, ax, table, graph, overlays, colors, size):
                 hatched(bar, st)
             ax.bar(i, m, width=0.62, color="none", edgecolor=rgba(st["edge"], st["ealpha"]), linewidth=1.2, zorder=1.1)
         elif kind == "box" and v is not None and len(v) > 1:
-            b = ax.boxplot(v, positions=[i], widths=0.5, whis=whis(graph), patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+            b = draw_box(ax, v, i, 0.5, graph, not each, zorder=1,
                            boxprops={"facecolor": rgba(st["fill"], 0.3 if st["alpha"] is None else st["alpha"]), "edgecolor": rgba(st["edge"], st["ealpha"])},
                            medianprops={"color": rgba(st["edge"], st["ealpha"]), "linewidth": 1.6}, whiskerprops={"color": rgba(st["edge"], st["ealpha"])}, capprops={"color": rgba(st["edge"], st["ealpha"])}, flierprops={"markeredgecolor": col})
             for box in b["boxes"]:
@@ -1289,7 +1306,7 @@ def grouped_shapes(fig, ax, table, graph, overlays, colors, size, kind, rows, cv
             points.append([k, float(x), float(np.median(v) if kind == "box" else v.mean()), len(v), sd, sd / math.sqrt(len(v)) if len(v) > 1 else 0.0])
             allv += list(v)
             if kind == "box" or len(v) < 3 or np.ptp(v) == 0:
-                bx = ax.boxplot(v, positions=[x], widths=w * 0.7, whis=whis(graph), patch_artist=True, showfliers=not each, manage_ticks=False, zorder=1,
+                bx = draw_box(ax, v, x, w * 0.7, graph, not each, zorder=1,
                            boxprops={"facecolor": face, "edgecolor": edge}, medianprops={"color": edge, "linewidth": 1.6},
                            whiskerprops={"color": edge}, capprops={"color": edge}, flierprops={"markeredgecolor": st["color"], "markersize": 3})
                 for box in bx["boxes"]:

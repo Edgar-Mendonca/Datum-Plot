@@ -12,10 +12,11 @@ fn cells(t: u32, v: &[(usize, i64, &str)]) -> Op {
 
 #[test]
 fn numbers_as_people_type_them() {
-    for (s, v) in [("1.5", 1.5), ("-2", -2.0), ("1e-3", 0.001), ("1,234.5", 1234.5), ("−4", -4.0), (" 7 ", 7.0), ("12%", 0.12), ("12,345,678", 12345678.0)] {
+    for (s, v) in [("1.5", 1.5), ("-2", -2.0), ("1e-3", 0.001), ("1,234.5", 1234.5), ("−4", -4.0), (" 7 ", 7.0), ("12%", 0.12), ("12,345,678", 12345678.0), ("1,2", 1.2), ("12,34", 12.34)] {
         assert_eq!(number(s), Some(v), "{s}");
     }
-    for s in ["", "abc", "1,2", "1.2.3", "NaN", "inf", "12,34"] {
+    // 0.4.25 (#68): "1,2" and "12,34" are decimal commas now (they were refused before)
+    for s in ["", "abc", "1.2.3", "NaN", "inf", "1,2,3"] {
         assert_eq!(number(s), None, "{s}");
     }
 }
@@ -670,4 +671,17 @@ fn renaming_a_table_renames_its_family() {
     assert_eq!(names, ["Control", "Figure 2", "Exp 1", "t-test · Control"]);
     d.undo();
     assert_eq!(d.p.graphs[0].name, "Exp 1");
+}
+
+#[test]
+fn decimal_commas_paste_and_type() {
+    // 0.4.25 (#68): "1,5" is 1.5; "1,234" alone stays one thousand two hundred and thirty-four, but in a block that
+    // uses decimal commas it is 1.234; thousands with several groups and dots still read as before.
+    assert_eq!((number("1,5"), number("-0,25"), number("0,123"), number("1,234"), number("12,345,678"), number("1,234.5")), (Some(1.5), Some(-0.25), Some(0.123), Some(1234.0), Some(12345678.0), Some(1234.5)));
+    let mut d = Doc::new(templates::build(None).unwrap());
+    let id = d.p.tables[0].id;
+    let rows = vec![vec!["1".to_string(), "1,5".to_string()], vec!["2".to_string(), "1,234".to_string()]];
+    d.apply(Op::Paste { table: id, row: 0, col: 0, rows }).unwrap();
+    let t = &d.p.tables[0];
+    assert_eq!((t.cols[1][0], t.cols[1][1]), (Some(1.5), Some(1.234)), "not taken for a row of titles, and read with decimal commas");
 }

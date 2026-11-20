@@ -737,7 +737,7 @@ impl Project {
                 if !matches!(v.brackets.as_str(), "all" | "sig" | "none") {
                     v.brackets.clear();
                 }
-                if !matches!(v.ptext.as_str(), "stars" | "p") {
+                if !matches!(v.ptext.as_str(), "stars" | "stars4" | "p") {
                     v.ptext.clear();
                 }
             }

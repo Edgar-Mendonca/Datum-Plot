@@ -164,6 +164,7 @@ export const DataTable = (p: { t: Table }) => {
     }
     if (ctrl && e.altKey && k === "v") { e.preventDefault(); return pasteDialog(); }
     if (ctrl && k === "e") { e.preventDefault(); return exclude(); }
+    if (ctrl && !e.altKey && k === "t") { e.preventDefault(); return pasteSpecial("all", true); }  // 0.4.25 (#70): paste transposed
     if (ctrl && k === "d") { e.preventDefault(); const [a, b, c2, d] = range(); if (c2 > a) { S.setCur({ row: a, col: b }); S.setRanges([{ r0: a, c0: b, r1: a, c1: d }]); fillRange(c2, d, true); } return; }
     if (ctrl && k === "r") { e.preventDefault(); const [a, b, c2, d] = range(); if (d > b) { S.setCur({ row: a, col: b }); S.setRanges([{ r0: a, c0: b, r1: c2, c1: b }]); fillRange(c2, d, true); } return; }
     if (ctrl && ["b", "i", "u"].includes(k)) { e.preventDefault(); return F.toggle(k as "b"); }
@@ -188,7 +189,7 @@ export const DataTable = (p: { t: Table }) => {
     const [a, b] = rowsSel(), k = t().sets.length ? setAt(cur()[1]) : -1;
     const items: Item[] = [
       { label: "Cut", icon: "cut", keys: "Ctrl+X", run: () => document.execCommand("cut") }, { label: "Copy", icon: "copy", keys: "Ctrl+C", run: () => document.execCommand("copy") },
-      { label: "Paste Special…", icon: "paste", keys: "Ctrl+Alt+V", run: () => pasteDialog() }, "-",
+      { label: "Paste Transposed", icon: "paste", keys: "Ctrl+T", run: () => pasteSpecial("all", true) }, { label: "Paste Special…", icon: "paste", keys: "Ctrl+Alt+V", run: () => pasteDialog() }, "-",
       { label: "Exclude / Include Values", icon: "exclude", keys: "Ctrl+E", run: exclude }, { label: "Clear Contents", icon: "clear", keys: "Del", run: clear }, "-",
       { label: `Insert ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"} Above`, icon: "addrow", run: () => act({ Rows: { table: t().id, at: a, count: b - a + 1 } }) },
       { label: `Delete ${b - a + 1 > 1 ? `${b - a + 1} Rows` : "Row"}`, icon: "delrow", run: () => act({ Rows: { table: t().id, at: a, count: -(b - a + 1) } }) }, "-",

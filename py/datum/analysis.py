@@ -7,6 +7,7 @@
 are values an analysis suggests excluding (outliers). Numbers in tables are already formatted text.
 """
 import io
+import contextvars
 import math
 
 import numpy as np
@@ -41,8 +42,23 @@ def pv(p):
     return "—" if p is None or not math.isfinite(p) else "< 0.0001" if p < 1e-4 else f"{p:.4f}"
 
 
-def stars(p):
-    return "ns" if p is None or not math.isfinite(p) or p >= 0.05 else "*" if p >= 0.01 else "**" if p >= 0.001 else "***"
+# 0.4.25 (#69): the analysis being run asked for a fourth star (**** for P ≤ 0.0001), some journals' style
+FOUR = contextvars.ContextVar("four_stars", default=False)
+
+
+def stars(p, four=None):
+    """ns for P > 0.05, * for P ≤ 0.05, ** ≤ 0.01, *** ≤ 0.001, and **** ≤ 0.0001 when asked (0.4.25, #69: ≤, as journals
+    write the thresholds)."""
+    four = FOUR.get() if four is None else four
+    if p is None or not math.isfinite(p) or p > 0.05:
+        return "ns"
+    return "*" if p > 0.01 else "**" if p > 0.001 else "***" if not four or p > 0.0001 else "****"
+
+
+def star_legend(text, four):
+    """A figure legend's star key, with ≤ and the fourth star when asked."""
+    key = "* P ≤ 0.05, ** P ≤ 0.01, *** P ≤ 0.001" + (", **** P ≤ 0.0001" if four else "")
+    return text.replace("* P < 0.05, ** P < 0.01, *** P < 0.001", key)
 
 
 def name_of(table, k):
@@ -681,12 +697,18 @@ def run(kind, table, sets, options):
     ks = [k for k in ks if k not in empty]
     if not ks:
         raise ValueError("Choose at least one data set." if not empty else "The chosen data sets have no values yet.")
+    four = (options or {}).get("ptext") == "stars4"
+    token = FOUR.set(four)
     try:
         r = (KINDS if kind in KINDS else more_kinds())[kind](table, ks, options or {})
     except ZeroDivisionError:
         raise ValueError("The values do not vary (they are all the same, or a group has only one value), so this cannot be worked out.")
     except OverflowError:
         raise ValueError("Some numbers are too large or too small to work with; try other units (for example kPa instead of Pa).")
+    finally:
+        FOUR.reset(token)
+    if isinstance(r.get("legend"), str):
+        r["legend"] = star_legend(r["legend"], four)
     if empty:
         r["checks"].append([None, f"Left out because {'it is' if len(empty) == 1 else 'they are'} empty: {', '.join(name_of(table, k) for k in empty)}."])
     return r
