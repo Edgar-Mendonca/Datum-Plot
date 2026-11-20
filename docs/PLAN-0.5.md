@@ -1,6 +1,6 @@
 # Datum Plot 0.5: validation and hardening (plan, questions first)
 
-The user's request (2026-11-20): "We need to do a strict hardening test … there were issues in analysis (#67) … a strict and strong hardening test, evaluation and optimisation." Nothing is built until the questions in §6 are answered.
+The user's request (2026-11-20): "We need to do a strict hardening test … there were issues in analysis (#67) … a strict and strong hardening test, evaluation and optimisation." **The user's answers (2026-11-20):** the reference values are only for checking, kept in the scratch area and not stored in the project or published (no fixtures, no report); R runs in the cloud workspace only, never in the app; real errors are fixed and released as consecutive 0.4.x versions (no jump to 0.5; the modules stay unplanned); where two methods are both valid, the user chooses: offer both as a choice with a ? explaining them, the reference's as the default. Parts A–F are done in that spirit; G (the report) is dropped.
 
 ## 1. Where we stand
 

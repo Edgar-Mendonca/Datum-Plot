@@ -130,7 +130,7 @@ const POST: Record<string, string> = { tukey: "Tukey", dunnett: "Dunnett", holm:
 const DESIGN: Record<string, string> = {
   none: "Ordinary two-way ANOVA: every value is a different subject", rows: "Two-way repeated-measures ANOVA: each sub-column is one subject, measured in every row",
   sets: "Two-way repeated-measures ANOVA: each row's sub-column is one subject, measured in every data set", both: "Two-way repeated-measures ANOVA: each sub-column is one subject, measured in every row and data set" };
-const ONEWAY: Record<string, string> = { ordinary: "Ordinary one-way ANOVA (equal SDs)", welch: "Welch's ANOVA (the SDs may differ)", bf: "Brown-Forsythe ANOVA (the SDs may differ)", rm: "Repeated-measures one-way ANOVA (each row is one subject)" };
+const ONEWAY: Record<string, string> = { ordinary: "Ordinary one-way ANOVA (equal SDs)", welch: "Welch's ANOVA (the SDs may differ)", bf: "Brown-Forsythe ANOVA (the SDs may differ)", bfm: "Brown-Forsythe ANOVA with Mehrotra's correction (the SDs may differ)", rm: "Repeated-measures one-way ANOVA (each row is one subject)" };
 const FAMTXT: Record<string, string> = { rows: "the data sets within each row", sets: "the rows within each data set", cells: "every cell with every other", mainsets: "the data sets' means", mainrows: "the rows' means" };
 
 /** 0.4.22 (#61): "What will be done", in plain words from every choice in the window, kept up to date as they change. */

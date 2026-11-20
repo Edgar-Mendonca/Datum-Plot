@@ -408,6 +408,13 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(250);
   check("…and opens its options", ((await p.textContent(".dlg header")) || "").includes("One-way ANOVA"));
+  // 0.4.27: both Brown-Forsythe versions offered, and a ? that explains each one-way ANOVA
+  const anovaKinds = await p.$$eval('.dlg select:has(option[value="bfm"]) option', os => os.map(o => o.value)).catch(() => []);
+  check("One-way ANOVA offers Brown-Forsythe and its Mehrotra version", anovaKinds.includes("bf") && anovaKinds.includes("bfm"), JSON.stringify(anovaKinds));
+  await p.click('.dlg .form label:has-text("ANOVA") .help'); await p.waitForTimeout(200);
+  const hc = (await p.textContent(".dlg >> nth=-1").catch(() => "")) || "";
+  check("…and its ? explains every choice", hc.includes("Which one-way ANOVA?") && hc.includes("Mehrotra") && hc.includes("Welch"), hc.slice(0, 120));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(150);
   await p.click(".dlg .btn.pri");
   await p.waitForTimeout(200);
   const an = (await ops()).find(o => o.AddAnalysis);

@@ -145,7 +145,7 @@ Analyze 选项卡的其他组可以直接启动一项分析：**Statistics**（�
 3. **Analyze which data sets?**（分析哪些数据集？）勾选要包括的数据集（**Select All** 全选，**Deselect All** 全不选）。
 4. **作用说明。** 所选分析的简短说明。**Next…**（下一步…，或双击）打开其选项，并带上所选的数据集。
 
-选项较多的窗口分为选项卡：单因素和双因素方差分析有 **Model**（模型）、**Comparisons**（比较）和 **Graph**（图表）。底部的黄色框 **What will be done**（将执行的内容）用简单的语言说明将运行的分析，并随每次更改而更新；选择重复测量时，小图会框出同一受试对象的数值。**Graph › Residual plots**（残差图）会在结果中加入残差图、离散度图和正态 QQ 图，比较还可以用 **false discovery rate**（错误发现率）校正。最近使用的分析列在最前面的 **Recently used**（最近使用）下。结果中的每个比较都列出两边的预测均值、差值的标准误、t 和自由度；“A vs B” 的差值为 A − B。在 **Graph**（图表）选项卡中，星号可以最多显示到 \*\*\*\*（P ≤ 0.0001），以满足部分期刊的要求。
+选项较多的窗口分为选项卡：单因素和双因素方差分析有 **Model**（模型）、**Comparisons**（比较）和 **Graph**（图表）。底部的黄色框 **What will be done**（将执行的内容）用简单的语言说明将运行的分析，并随每次更改而更新；选择重复测量时，小图会框出同一受试对象的数值。**Graph › Residual plots**（残差图）会在结果中加入残差图、离散度图和正态 QQ 图，比较还可以用 **false discovery rate**（错误发现率）校正。最近使用的分析列在最前面的 **Recently used**（最近使用）下。结果中的每个比较都列出两边的预测均值、差值的标准误、t 和自由度；“A vs B” 的差值为 A − B。在 **Graph**（图表）选项卡中，星号可以最多显示到 \*\*\*\*（P ≤ 0.0001），以满足部分期刊的要求。在单因素方差分析中，**ANOVA** 旁的 **?** 会解释每一种方法（普通、Welch、Brown-Forsythe、带 Mehrotra 校正的 Brown-Forsythe、重复测量）以及适用场合。
 
 ![One-way ANOVA › Comparisons：每组与对照比较。](img/comparisons.png)
 

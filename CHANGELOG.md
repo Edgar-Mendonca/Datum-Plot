@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.27 — 2026-11-20
+
+Comparing groups, checked against R.
+
+Every t-test, nonparametric test and ANOVA (with all their comparisons) was checked number by number against R, the statistics reference. Almost everything matched; these are the fixes.
+
+**Repeated measures two-way ANOVA**
+- Comparing the data sets at one time point (when each subject belongs to one data set) now uses the right degrees of freedom (Satterthwaite's, combining the between- and within-subject errors). Before, the P values of these comparisons were too large. Comparisons within subjects were already right.
+
+**Nested t-test and ANOVA**
+- When subgroups hold different numbers of values, the groups are now tested from the mixed model with Satterthwaite's degrees of freedom. Before, the classic F test was used, which gave P values that were too small in that case. With equal subgroup sizes the result is unchanged.
+
+**One-way ANOVA**
+- **Brown-Forsythe** is now the test as most programs report it (Brown & Forsythe, 1974). The earlier, more cautious version is still there as **Brown-Forsythe with Mehrotra's correction**.
+- A new **?** beside the ANOVA choice explains each kind of one-way ANOVA and when to use it.
+
+**Kruskal-Wallis**
+- Dunn's comparisons now show "A vs B" as A − B, like every other comparison (the P values were already right).
+
 ## 0.4.26 — 2026-11-20
 
 A fix for deleting data sets.

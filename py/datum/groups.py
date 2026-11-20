@@ -268,6 +268,19 @@ def ttest(table, ks, o):
 
 
 # ---------- nonparametric tests (B5) ----------
+def brown_forsythe(groups):
+    """0.4.27: the Brown-Forsythe (1974) ANOVA for unequal SDs, as R's and most programs report it: F* with k − 1 and
+    Satterthwaite's denominator df. (Mehrotra's 1997 variant, which also corrects the numerator df, is "bfm".)"""
+    n = np.array([len(x) for x in groups], float)
+    m = np.array([np.mean(x) for x in groups])
+    v = np.array([np.var(x, ddof=1) for x in groups])
+    N, gm = n.sum(), float(np.concatenate(groups).mean())
+    w = (1 - n / N) * v
+    F = float((n * (m - gm) ** 2).sum() / w.sum())
+    c = w / w.sum()
+    return F, float(len(groups) - 1), float(1 / (c ** 2 / (n - 1)).sum())
+
+
 def dunn(groups, method="bonferroni"):
     """Dunn's test after Kruskal-Wallis: [(i, j, mean rank difference, z, adjusted P)]."""
     allv = np.concatenate(groups)
@@ -280,8 +293,8 @@ def dunn(groups, method="bonferroni"):
     out = []
     for i, j in combinations(range(len(groups)), 2):
         se = math.sqrt((N * (N + 1) / 12 - tie) * (1 / len(groups[i]) + 1 / len(groups[j])))
-        z = (mr[j] - mr[i]) / se
-        out.append([i, j, mr[j] - mr[i], z, 2 * st.norm.sf(abs(z))])
+        z = (mr[i] - mr[j]) / se  # 0.4.27: "A vs B" is A − B, as in the other comparisons
+        out.append([i, j, mr[i] - mr[j], z, 2 * st.norm.sf(abs(z))])
     adj = adjust([x[4] for x in out], method)
     return [x[:4] + [min(1.0, a)] for x, a in zip(out, adj)]
 
@@ -408,13 +421,18 @@ def anova(table, ks, o):
         meth = "repeated measures one-way ANOVA with the Geisser-Greenhouse correction"
     else:
         df1, df2 = kk - 1, N - kk
-        if kind in ("welch", "bf") and raw:
-            from statsmodels.stats.oneway import anova_oneway
-            r = anova_oneway([s[0] for s in sm_], use_var="unequal" if kind == "welch" else "bf", welch_correction=True)
-            F, p = float(r.statistic), float(r.pvalue)
-            d1, d2 = (float(x) for x in r.df)
-            rows = [["Test", "Welch's ANOVA" if kind == "welch" else "Brown-Forsythe ANOVA"], ["F", g(F, 4)], ["DFn, DFd", f"{g(d1, 4)}, {g(d2, 4)}"], ["P value", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"]]
-            meth = "Welch's ANOVA" if kind == "welch" else "Brown-Forsythe ANOVA"
+        if kind in ("welch", "bf", "bfm") and raw:
+            if kind == "bf":
+                F, d1, d2 = brown_forsythe([s[0] for s in sm_])
+                p = float(st.f.sf(F, d1, d2))
+            else:
+                # Welch's ANOVA, or (0.4.27) Brown-Forsythe with Mehrotra's (1997) corrected numerator df
+                from statsmodels.stats.oneway import anova_oneway
+                r = anova_oneway([s[0] for s in sm_], use_var="unequal" if kind == "welch" else "bf", welch_correction=True)
+                F, p = float(r.statistic), float(r.pvalue)
+                d1, d2 = (float(x) for x in r.df)
+            meth = {"welch": "Welch's ANOVA", "bf": "Brown-Forsythe ANOVA", "bfm": "Brown-Forsythe ANOVA with Mehrotra's correction"}[kind]
+            rows = [["Test", meth], ["F" if kind == "welch" else "F*", g(F, 4)], ["DFn, DFd", f"{g(d1, 4)}, {g(d2, 4)}"], ["P value", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"]]
         else:
             F = (ssb / df1) / (ssw / df2)
             p = float(st.f.sf(F, df1, df2))

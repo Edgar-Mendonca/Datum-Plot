@@ -131,6 +131,62 @@ class Stars(unittest.TestCase):
         self.assertIn("****", svg, "the graph's bracket shows four stars")
 
 
+class CheckedAgainstR(unittest.TestCase):
+    """0.4.27: the fixes from the validation against R (the user's hardening request after #67). Made-up or textbook
+    data; the expected values were computed in R (stats, car, emmeans, lmerTest) and are written here."""
+
+    def test_dunn_is_first_minus_second(self):
+        # R by hand on PlantGrowth: mean ranks ctrl − trt1 = 4.4, ctrl − trt2 = −6.65, trt1 − trt2 = −11.05; Bonferroni P
+        r = A.run("nonparam", col(CTRL, TRT1, TRT2), [], {"test": "kw"})
+        rows = [x for t in r["tabs"][0]["tables"] if "Dunn" in t["title"] for x in t["rows"]]
+        self.assertEqual([(x[1], x[3]) for x in rows], [("4.4", "0.7911"), ("-6.65", "0.2735"), ("-11.05", "0.0150")])
+
+    def test_brown_forsythe_and_mehrotra(self):
+        # Brown & Forsythe (1974) on PlantGrowth: F* = 4.846, DF 2 and 22.21, P = 0.01793; Mehrotra's DFn 1.805, P = 0.0205
+        t = col(CTRL, TRT1, TRT2)
+        bf = A.run("anova", t, [], {"anova": "bf", "posthoc": "none", "bayes": False})
+        self.assertEqual(cell(bf, "DFn, DFd", None), "2, 22.21")
+        self.assertEqual(cell(bf, "P value", None), "0.0179")
+        self.assertIn("Brown-Forsythe ANOVA", bf["methods"])
+        m = A.run("anova", t, [], {"anova": "bfm", "posthoc": "none", "bayes": False})
+        self.assertEqual((cell(m, "DFn, DFd", None), cell(m, "P value", None)), ("1.805, 22.21", "0.0205"))
+        self.assertIn("Mehrotra", m["methods"])
+
+    RM = {(0, 0): [20.686, 19.747, 24.197, 24.29, 26.985], (0, 1): [20.956, 25.672, 26.21, 26.144, 29.264], (0, 2): [26.52, 29.082, 23.853, 30.266, 30.93],
+          (1, 0): [22.812, 22.487, 28.514, 24.977, 30.134], (1, 1): [27.604, 23.301, 27.395, 26.882, 31.488], (1, 2): [30.029, 32.547, 26.444, 30.35, 34.407]}
+
+    def test_repeated_measures_between_subject_comparisons(self):
+        """Subjects nested in the data sets, measured in every row. Comparing the data sets at one row crosses subjects:
+        R (lmer, emmeans, Satterthwaite) gives SE 1.919 on 17.85 df, P 0.1917, 0.3916, 0.1883; within a data set the
+        rows are compared on 16 df (P 0.1120, 0.0039, 0.1103 for the first)."""
+        from test_repeated import grouped
+        vals = [[self.RM[(k, r)] for r in range(3)] for k in range(2)]
+        r = A.run("twoway", grouped(vals, 3, 2, 5), [], {"rm": "rows", "gg": False, "posthoc": "lsd", "compare": "rows+sets"})
+        rows = [x for t in r["tabs"][0]["tables"] if "multiple comparisons" in t["title"] for x in t["rows"]]
+        between, within = rows[:3], rows[3:6]
+        self.assertEqual([(x[7], x[9], x[3]) for x in between], [("1.919", "17.85", "0.1917"), ("1.919", "17.85", "0.3916"), ("1.919", "17.85", "0.1883")])
+        self.assertEqual([(x[9], x[3]) for x in within], [("16", "0.1120"), ("16", "0.0039"), ("16", "0.1103")])
+
+    NESTED2 = [[[10.41, 10.83, 8.36], [10.44, 9.72, 10.53, 9.41, 10.72], [11.36, 11.1]], [[9.95, 10.6, 9.91, 9.64], [11.92, 10.59], [13.57, 13.12, 10.4, 12.67, 11.3, 12.43], [13.14, 11.11, 12.87]]]
+    NESTED3 = [[[9.52, 7.62, 9.93], [10.58, 11.46, 11.28, 10.63, 10.17], [9.58, 8.12]], [[13.9, 13.35, 12.41, 14.46], [11.91, 9.95], [9.44, 13.31, 10.87, 10.58, 11.78, 10.08], [10.32, 12.04, 10.45]],
+               [[9.35, 8.48, 10.5, 9.97, 10.46], [11.33, 11.71, 12.73], [10.67, 10.47, 11.21, 10.69]]]
+
+    @staticmethod
+    def nested(groups):
+        n = max(len(v) for s_ in groups for v in s_)
+        cols = [[None] * n] + [list(v) + [None] * (n - len(v)) for s_ in groups for v in s_]
+        return {"name": "N", "kind": "nested", "rows": n, "sets": [{"title": f"G{i}", "entry": "rep", "reps": len(s_)} for i, s_ in enumerate(groups)], "cols": cols, "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+    def test_nested_with_unequal_subgroups(self):
+        """Subgroups of different sizes: the groups are tested from the mixed model. R lmerTest (Satterthwaite):
+        two groups F = 2.1886 on 1 and 5.2154 df, P 0.1967 (the classic F said 2.832 and P 0.153); three groups
+        F = 2.3464 on 2 and 7.192 df, P 0.1643."""
+        two = A.run("nested", self.nested(self.NESTED2), [], {})["tabs"][0]["tables"][0]["rows"][1]
+        self.assertEqual((two[4], two[5]), ("F = 2.189 (DFn 1, DFd 5.215; mixed model)", "0.1967"))
+        three = A.run("nested", self.nested(self.NESTED3), [], {})["tabs"][0]["tables"][0]["rows"][0]
+        self.assertEqual((three[4], three[5]), ("F = 2.346 (DFn 2, DFd 7.19; mixed model)", "0.1643"))  # R 7.192: REML optimisers agree to 4 digits
+
+
 class CorrelationPower(unittest.TestCase):
     def test_pearson_matches_r(self):
         # R: cor.test(anscombe$x1, anscombe$y1): r = 0.8164205, p = 0.00217, 95% CI 0.4243912 to 0.9506933 (Fisher z)

@@ -22,6 +22,46 @@ def subgroups(table, k):
     return out
 
 
+def reml_group_test(data, var_s, var_r):
+    """0.4.27: the groups' F test from the nested mixed model (REML variances), with Satterthwaite's denominator df
+    (as R's lmerTest): exact where the classic F is not, i.e. when subgroups hold different numbers of values.
+    data: [(k, [subgroup values…])]. Returns (F, DFn, DFd)."""
+    y, gi, sid = [], [], []
+    for i, (_, s) in enumerate(data):
+        for j, v in enumerate(s):
+            y += list(v); gi += [i] * len(v); sid += [(i, j)] * len(v)
+    y, a = np.asarray(y, float), len(data)
+    X = np.array([[1.0] + [1.0 if g_ == q else 0.0 for q in range(1, a)] for g_ in gi])
+    subs = sorted(set(sid))
+    Z = np.array([[1.0 if s_ == u else 0.0 for u in subs] for s_ in sid])
+    ZZ, I = Z @ Z.T, np.eye(len(y))
+    var_s, var_r = max(var_s, 0.0), max(var_r, 1e-300)
+    V = var_s * ZZ + var_r * I
+    Vi = np.linalg.inv(V)
+    C = np.linalg.inv(X.T @ Vi @ X)
+    beta = C @ X.T @ Vi @ y
+    P = Vi - Vi @ X @ C @ X.T @ Vi
+    dV = [ZZ, I] if var_s > 0 else [I]  # a variance on the boundary (0) is held fixed, as lmerTest does
+    # the observed information of the REML likelihood (as lmerTest): −0.5 tr(P Vi P Vj) + y'P Vi P Vj P y
+    Py = P @ y
+    info = np.array([[-0.5 * np.trace(P @ Di @ P @ Dj) + float(Py @ Di @ P @ Dj @ Py) for Dj in dV] for Di in dV])
+    Acov = np.linalg.pinv(info)
+    L = np.hstack([np.zeros((a - 1, 1)), np.eye(a - 1)])
+    LCL = L @ C @ L.T
+    F = float(beta @ L.T @ np.linalg.solve(LCL, L @ beta)) / (a - 1)
+    w, U = np.linalg.eigh(LCL)
+    nus = []
+    for m in range(a - 1):  # one Satterthwaite df per eigen-direction, combined (Fai & Cornelius; lmerTest)
+        l = U[:, m] @ L
+        g_ = np.array([-(l @ C @ X.T @ Vi @ Di @ Vi @ X @ C @ l) for Di in dV])
+        nus.append(2 * float(l @ C @ l) ** 2 / float(g_ @ Acov @ g_))
+    if a - 1 == 1:
+        return F, 1, nus[0]
+    E = sum(n_ / (n_ - 2) for n_ in nus if n_ > 2)
+    q = a - 1
+    return F, q, (2 * E / (E - q)) if E > q else 1.0
+
+
 def nested(table, ks, o):
     alpha = float(o.get("alpha", ALPHA))
     data = [(k, subgroups(table, k)) for k in ks]
@@ -68,16 +108,28 @@ def nested(table, ks, o):
               {"title": "Variance components (mixed model, REML)", "columns": ["", "Value"], "rows": [["Between subgroups", g(var_s, 4)], ["Within subgroups (residual)", g(var_r, 4)],
                                                                                                     ["Intraclass correlation", g(icc, 3)]]}]
     names = [name_of(table, k) for k, _ in data]
+    # 0.4.27: subgroups with different numbers of values make the classic F (groups over subgroups) only approximate;
+    # the groups are then tested from the mixed model with Satterthwaite's df, as R (lmerTest) and other programs do.
+    unequal = len({len(v) for _, s in data for v in s}) > 1
+    dfd = df_s
+    if unequal and N <= 4000:
+        try:
+            f_g, _, dfd = reml_group_test(data, var_s, var_r)
+            p_g = float(st.f.sf(f_g, df_g, dfd))
+            tables[0]["rows"][0][4], tables[0]["rows"][0][5] = f"F = {g(f_g, 4)} (DFn {df_g}, DFd {g(dfd, 4)}; mixed model)", pv(p_g)
+        except (np.linalg.LinAlgError, ValueError, ZeroDivisionError):
+            unequal = False
     if a == 2:
         t = math.copysign(math.sqrt(f_g), np.concatenate(data[1][1]).mean() - np.concatenate(data[0][1]).mean())
-        tables[0]["rows"].insert(0, ["t (from F)", "", g(df_s), "", f"t = {g(t, 4)}", pv(p_g)])
-    ans = (f"The {'two ' if a == 2 else ''}groups {'differ' if p_g < alpha else 'do not differ significantly'} (F = {g(f_g, 4)}, DFn {df_g}, DFd {df_s}, P {pv(p_g) if p_g < 1e-4 else '= ' + pv(p_g)}), "
+        tables[0]["rows"].insert(0, ["t (from F)", "", g(dfd, 4), "", f"t = {g(t, 4)}", pv(p_g)])
+    ans = (f"The {'two ' if a == 2 else ''}groups {'differ' if p_g < alpha else 'do not differ significantly'} (F = {g(f_g, 4)}, DFn {df_g}, DFd {g(dfd, 4)}, P {pv(p_g) if p_g < 1e-4 else '= ' + pv(p_g)}), "
            f"tested against the variation between {nsub} subgroups. {100 * icc:.0f}% of the variation lies between subgroups (intraclass correlation {g(icc, 2)}).")
     checks = [(None, "The groups are tested against the subgroups (DFd = subgroups − groups), not against every replicate: replicates within a subgroup are not independent."),
               (p_s >= alpha, f"Subgroups within groups {'do not differ significantly' if p_s >= alpha else 'differ'} (P {pv(p_s) if p_s < 1e-4 else '= ' + pv(p_s)}){'' if p_s >= alpha else ': the nested test is the right one'}.")]
     sizes = {len(v) for _, s in data for v in s} | {len(s) for _, s in data}
     if len({len(v) for _, s in data for v in s}) > 1 or len({len(s) for _, s in data}) > 1:
-        checks.append((None, "The design is unbalanced (different numbers of subgroups or values), so the F test is approximate; the mixed model's variance components allow for it."))
+        checks.append((None, "Subgroups hold different numbers of values, so the groups are tested from the mixed model (REML) with Satterthwaite's degrees of freedom; the classic F would only be approximate." if unequal else
+                       "The groups have different numbers of subgroups; with the same number of values in every subgroup the F test is still exact."))
     del sizes
 
     def draw(ax):
@@ -89,5 +141,5 @@ def nested(table, ks, o):
         ax.set_xticks(range(a), [n[:12] for n in names]); ax.set_xlim(-0.6, a - 0.4)
     return result("Nested ANOVA" if a > 2 else "Nested t-test", ans, [{"name": "Summary", "tables": tables}], checks, plots=[small_plot("Subgroups in each group", draw)],
                   legend=f"Nested {'one-way ANOVA' if a > 2 else 't-test'}: {', '.join(names)}, subgroups as a random factor.",
-                  methods=f"Groups were compared by a nested {'one-way ANOVA' if a > 2 else 't-test'} with subgroups as a random factor nested in groups (F tested against the subgroup mean square; {nsub} subgroups, {N} values) in Datum Plot (SciPy); variance components came from a linear mixed model fitted by REML (statsmodels), α = {alpha:g}.",
+                  methods=f"Groups were compared by a nested {'one-way ANOVA' if a > 2 else 't-test'} with subgroups as a random factor nested in groups ({'tested from the mixed model with Satterthwaite degrees of freedom, as subgroups hold different numbers of values' if unequal else 'F tested against the subgroup mean square'}; {nsub} subgroups, {N} values) in Datum Plot (SciPy); variance components came from a linear mixed model fitted by REML (statsmodels), α = {alpha:g}.",
                   code="import statsmodels.formula.api as smf\nprint(smf.mixedlm('y ~ C(group)', df, groups=df['subgroup']).fit(reml=True).summary())")

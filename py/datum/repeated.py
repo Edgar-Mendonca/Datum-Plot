@@ -211,7 +211,7 @@ def twoway_rm(table, ks, o):
         checks.append((sw.pvalue > alpha, f"The residuals {'look' if sw.pvalue > alpha else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)})."))
     brackets = []
     if post != "none":
-        brackets = comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, o)
+        brackets = comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, o, errs if complete else None)
     from .groups import residual_plots
     return result("Two-way repeated measures ANOVA" if complete else "Mixed-effects model", "; ".join(ans) + ".", [{"name": "Summary", "tables": tabs}], checks, brackets=brackets,
                   plots=residual_plots(fit.fittedvalues, fit.resid) if o.get("resplots") else [],
@@ -220,7 +220,33 @@ def twoway_rm(table, ks, o):
                   code="import statsmodels.formula.api as smf\n# df: one row per value with columns y, A (row), B (data set), S (subject)\nm = smf.mixedlm('y ~ C(A, Sum) * C(B, Sum)', df, groups=df['S']).fit(reml=True)\nprint(m.summary())")
 
 
-def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, opts):
+def strata_var(df, rm, errs, coef):
+    """0.4.27: the variance of a contrast of the observations (complete data) and its Welch-Satterthwaite df. The
+    contrast is split into the error strata of the repeated measures ANOVA (subjects; subjects × within factors;
+    residual); each part's variance is estimated by that stratum's mean square. So a comparison that crosses subjects
+    (e.g. two data sets at one time point when subjects are nested in data sets) combines the between- and
+    within-subject errors, as other programs and R (Satterthwaite) do."""
+    a = coef
+    d = df.assign(a=a)
+    ss = lambda s_: float((s_ ** 2).sum())
+    subj = d.groupby("S").a.transform("mean")
+    parts = []
+    if rm == "both":
+        sa = d.groupby(["S", "A"]).a.transform("mean") - subj
+        sb = d.groupby(["S", "B"]).a.transform("mean") - subj
+        rest = d.a - subj - sa - sb
+        parts = [(ss(sa), errs["A×S"]), (ss(sb), errs["B×S"]), (ss(rest), errs["A×B×S"])]
+        if ss(subj) > 1e-15 * ss(d.a):
+            return None  # a contrast across the subjects' means: no error term without the subject stratum
+    else:
+        W = "A" if rm == "rows" else "B"
+        parts = [(ss(subj), errs["S"]), (ss(d.a - subj), errs[f"{W}×S"])]
+    terms = [(k * sse / dfe, dfe) for k, (sse, dfe) in parts if k > 1e-15 and dfe > 0]
+    v = sum(t for t, _ in terms)
+    return v, (v * v / sum(t * t / f for t, f in terms)) if v > 0 else float("nan")
+
+
+def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, opts, errs=None):
     """Differences of cell means from the mixed model, within each row (or each data set)."""
     import pandas as pd
     names = list(fit.fe_params.index)
@@ -239,6 +265,15 @@ def comparisons(fit, df, rm, ks, rlab, slab, rix, tests, within, post, tabs, opt
 
     def est(a_, b_, fac):  # the predicted means of both sides and the SE of A − B (0.4.23)
         La, Lb = contrast(a_), contrast(b_)
+        if errs is not None:
+            # 0.4.27: complete data: the classic strata variance with Satterthwaite's df (the error terms of the table)
+            lab = {(rlab[rix.index(r)], slab[ks.index(k)]) for k, r in a_}, {(rlab[rix.index(r)], slab[ks.index(k)]) for k, r in b_}
+            cell = list(zip(df.A, df.B))
+            na = df.assign(c=cell).groupby("c").size()
+            coef = np.array([(1 / (len(lab[0]) * na[c]) if c in lab[0] else 0.0) - (1 / (len(lab[1]) * na[c]) if c in lab[1] else 0.0) for c in cell])
+            sv = strata_var(df, rm, errs, coef)
+            if sv is not None:
+                return float(La @ b), float(Lb @ b), math.sqrt(sv[0]), sv[1]
         rep = fac in {"rows": {"A"}, "sets": {"B"}, "both": {"A", "B"}}[rm]
         ddf = ((dfw.get(fac) if rep else dfb.get(fac)) if fac else None) or min(every)
         return float(La @ b), float(Lb @ b), float(math.sqrt(max((La - Lb) @ V @ (La - Lb), 0))), ddf

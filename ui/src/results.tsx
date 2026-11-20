@@ -221,7 +221,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
           </Show>
           <Show when={kind === "anova"}>
             <Show when={tab() === "model"}>
-            <label>ANOVA</label><Pick value={o().anova} set={v => put("anova", v)} options={[["ordinary", "Ordinary (equal SDs)"], ["welch", "Welch (unequal SDs)"], ["bf", "Brown-Forsythe (unequal SDs)"], ["rm", "Repeated measures (rows are subjects)"]]} />
+            <label>ANOVA <Help k="anovatype" /></label><Pick value={o().anova} set={v => put("anova", v)} options={[["ordinary", "Ordinary (equal SDs)"], ["welch", "Welch (unequal SDs)"], ["bf", "Brown-Forsythe (unequal SDs)"], ["bfm", "Brown-Forsythe with Mehrotra's correction (more cautious)"], ["rm", "Repeated measures (rows are subjects)"]]} />
             <Show when={o().anova === "rm"}><label /><Layout t={t} mode="oneway" sets={sets} /></Show>
             </Show>
             <Show when={tab() === "compare"}><Comparisons t={t} two={false} o={o} put={put} sets={sets} /></Show>
