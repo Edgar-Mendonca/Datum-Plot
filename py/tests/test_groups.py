@@ -176,6 +176,25 @@ class CheckedAgainstR(unittest.TestCase):
                                 ("Passed (normal)?", "Yes"), ("Anderson-Darling A2", "0.2829"), ("P value", "0.5546"), ("Passed (normal)?", "Yes"),
                                 ("Kolmogorov-Smirnov D (Lilliefors)", "0.1735"), ("P value", "0.5315"), ("Passed (normal)?", "Yes"), ("Number of values", "10")])
 
+    def test_awkward_data_gives_a_message(self):
+        """0.4.30 (hardening: every analysis on empty, single, equal, tied, missing, tiny, huge and large data): an empty
+        agreement table says what to enter (it raised an internal IndexError); no outliers says so in words."""
+        empty = {"kind": "contingency", "rows": 2, "rowTitles": ["a", "b"], "sets": [{"title": "a", "entry": "rep", "reps": 1}, {"title": "b", "entry": "rep", "reps": 1}],
+                 "cols": [[None, None], [None, None], [None, None]], "excluded": [], "name": "K"}
+        with self.assertRaisesRegex(ValueError, "Enter the counts"):
+            A.run("agreement", empty, [], {})
+        r = A.run("outliers", col([10, 11, 12, 10.5, 11.5]), [], {})
+        self.assertEqual(r["tabs"][0]["tables"][0]["rows"][0][0], "No outliers found")
+
+    def test_many_dots_draw_quickly(self):
+        """0.4.30: a box plot showing 20 000 values per group took three minutes (every dot was checked against every
+        other); now well under the limit."""
+        import time
+        rng = np.random.default_rng(0)
+        t0 = time.time()
+        graph.render(col(*[list(rng.normal(10, 2, 20000)) for _ in range(3)]), {"column": "box", "points": "each"})
+        self.assertLess(time.time() - t0, 20)
+
     NESTED2 = [[[10.41, 10.83, 8.36], [10.44, 9.72, 10.53, 9.41, 10.72], [11.36, 11.1]], [[9.95, 10.6, 9.91, 9.64], [11.92, 10.59], [13.57, 13.12, 10.4, 12.67, 11.3, 12.43], [13.14, 11.11, 12.87]]]
     NESTED3 = [[[9.52, 7.62, 9.93], [10.58, 11.46, 11.28, 10.63, 10.17], [9.58, 8.12]], [[13.9, 13.35, 12.41, 14.46], [11.91, 9.95], [9.44, 13.31, 10.87, 10.58, 11.78, 10.08], [10.32, 12.04, 10.45]],
                [[9.35, 8.48, 10.5, 9.97, 10.46], [11.33, 11.71, 12.73], [10.67, 10.47, 11.21, 10.69]]]

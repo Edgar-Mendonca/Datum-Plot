@@ -136,6 +136,8 @@ def agreement(table, ks, o):
     from statsmodels.stats.contingency_tables import SquareTable, mcnemar
     from statsmodels.stats.inter_rater import cohens_kappa
     rows, cv = cells(table)
+    if not rows:  # 0.4.30 (hardening): an empty table said "tuple index out of range"
+        raise ValueError("Enter the counts: how many items each pair of ratings has (rows: the first rating, data sets: the second).")
     M = np.array([[sum(cv.get((k, r), [0])) for k in ks] for r, _ in rows], float)
     if M.shape[0] != M.shape[1] or M.shape[0] < 2:
         raise ValueError(f"Agreement needs a square table: the same categories in the rows and the data sets, in the same order (this one is {M.shape[0]} × {M.shape[1]}).")

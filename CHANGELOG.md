@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.30 — 2026-11-20
+
+Hardening: materials, quality and signals checked; awkward data; speed.
+
+Weibull, Arrhenius, control charts, factorial designs, peaks and Fourier spectra were checked against R and against signals with known answers, and matched. Every analysis was then run on awkward data (empty groups, single values, all-equal values, ties, missing cells, very small and very large numbers, thousands of rows), and the error bars drawn on graphs were checked against the results.
+
+**Fixes**
+- Box plots, violins and dot plots that show each value now draw quickly with many values: 20 000 values per group take about a second instead of three minutes.
+- Agreement (kappa) on an empty table explains what to enter, instead of an internal error.
+- Outliers says "No outliers found" when there are none.
+
 ## 0.4.29 — 2026-11-20
 
 Relationships, survival and statistics, checked against R.

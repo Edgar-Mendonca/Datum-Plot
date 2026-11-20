@@ -465,6 +465,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.30** ✅ | Hardening: materials, quality and signals checked; every analysis on awkward data; graphs equal results; 20 000 dots per group drawn in about a second |
 | **0.4.29** ✅ | Relationships, survival and descriptive statistics checked against R: the normality table's rows |
 | **0.4.28** ✅ | Regression and curve fitting checked against R: AICc counts the residual variance; F of equal fits is 0 |
 | **0.4.27** ✅ | Comparing groups checked against R: repeated-measures comparisons' df, nested ANOVA with unequal subgroups, Dunn's sign, Brown-Forsythe (B43) |

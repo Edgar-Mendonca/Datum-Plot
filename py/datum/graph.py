@@ -831,9 +831,16 @@ def date_axis(axis, a):
 def swarm(v, h, step, lim):
     """Sideways offsets that keep dots closer than `h` (one dot, in Y units) apart: a simple bee swarm. A crowded
     group wider than ±`lim` is squeezed evenly to fit (0.3.14: it used to pile the extra dots in a column at the edge)."""
-    off, placed = np.zeros(len(v)), []
+    v = np.asarray(v, float)
+    if len(v) > 800:
+        # 0.4.30 (hardening): thousands of dots cannot be laid out side by side anyway (20 000 took three minutes);
+        # spread them evenly and repeatably across the width instead, as other programs do with many points.
+        return (np.random.default_rng(len(v)).random(len(v)) * 2 - 1) * lim
+    off, placed, lo = np.zeros(len(v)), [], 0
     for i in np.argsort(v, kind="stable"):
-        near = {round(o / step) for (y, o) in placed if abs(y - v[i]) < h}
+        while lo < len(placed) and placed[lo][0] <= v[i] - h:  # 0.4.30: only the dots within one dot's height (sorted)
+            lo += 1
+        near = {round(o / step) for (y, o) in placed[lo:]}
         x = next(j for k in range(len(v) + 1) for j in ((k, -k) if k else (0,)) if j not in near)  # nearest free place, right first
         off[i] = x * step
         placed.append((v[i], off[i]))

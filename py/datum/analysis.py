@@ -246,7 +246,7 @@ def outliers(table, ks, o):
             cells.append(cell)
             found += 1
     ans = f"Grubbs' test found {found} outlier{'s' if found != 1 else ''} (α = {alpha:g})." if found else f"Grubbs' test found no outliers (α = {alpha:g})."
-    tab = {"title": "Outliers", "columns": ["Data set", "Value", "Row", "Column"], "rows": [[r[0], r[1], r[2], str(r[3])] for r in rows] or [["None", "", "", ""]]}
+    tab = {"title": "Outliers", "columns": ["Data set", "Value", "Row", "Column"], "rows": [[r[0], r[1], r[2], str(r[3])] for r in rows] or [["No outliers found", "", "", ""]]}
     return result("Outliers", ans, [{"name": "Summary", "tables": [tab]}],
                   [(None, "Exclude outliers only with a reason; Grubbs' test assumes the other values are normally distributed.")] if found else [],
                   methods=f"Outliers were identified with the iterative two-sided Grubbs' test (α = {alpha:g}).", cells=cells,
