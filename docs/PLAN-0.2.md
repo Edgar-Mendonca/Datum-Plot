@@ -464,6 +464,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.26** ✅ | Fix: deleting the selected data set froze the table (#71) |
 | **0.4.25** ✅ | Percentile whiskers fixed (#66), decimal commas (A26; #68), four stars (C14; #69), Ctrl+T (A27; #70) |
 | **0.4.22** ✅ | What will be done, the repeated-measures layout (C13), residual plots and the false discovery rate (B41), recently used (J11); from #61's video |
 | later | Modules (planned later); Mac and Linux versions (I7), on hold |

@@ -15,7 +15,12 @@ export type Sel = ReturnType<typeof createSel>;
 export const createSel = (size: () => [number, number], reveal: (row: number, col: number) => void,
   sig?: { ranges: Accessor<Range[]>; setRanges: (v: Range[]) => void; cur: Accessor<Cell>; setCur: (v: Cell) => void }) => {
   const own = sig ? null : { r: createSignal<Range[]>([{ r0: 0, c0: 0, r1: 0, c1: 0 }]), c: createSignal<Cell>({ row: 0, col: 0 }) };
-  const ranges = sig?.ranges ?? own!.r[0], setRanges = sig?.setRanges ?? own!.r[1], cur = sig?.cur ?? own!.c[0], setCur = sig?.setCur ?? own!.c[1];
+  const rawRanges = sig?.ranges ?? own!.r[0], setRanges = sig?.setRanges ?? own!.r[1], rawCur = sig?.cur ?? own!.c[0], setCur = sig?.setCur ?? own!.c[1];
+  // 0.4.25 (#71): the active cell and the ranges always lie inside the grid as it is now, so deleting a data set (or
+  // rows) under the selection cannot leave it pointing at columns that no longer exist.
+  const fit = (v: number, n: number) => Math.max(0, Math.min(Math.max(0, n), v));
+  const cur: Accessor<Cell> = () => { const c = rawCur(), [nr, nc] = size(); return c.row <= nr && c.col <= nc - 1 ? c : { row: fit(c.row, nr), col: fit(c.col, nc - 1) }; };
+  const ranges: Accessor<Range[]> = () => { const [nr, nc] = size(); return rawRanges().map(g => ({ r0: fit(g.r0, nr), r1: fit(g.r1, nr), c0: fit(g.c0, nc - 1), c1: fit(g.c1, nc - 1) })); };
   const last = () => norm(ranges()[ranges().length - 1] ?? { r0: cur().row, c0: cur().col, r1: cur().row, c1: cur().col });
   const inRange = (r: number, c: number) => ranges().some(g => r >= Math.min(g.r0, g.r1) && r <= Math.max(g.r0, g.r1) && c >= Math.min(g.c0, g.c1) && c <= Math.max(g.c0, g.c1));
   /** Moves the active cell; `extend` grows the last range to it, `add` starts another range. */

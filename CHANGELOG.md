@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.26 — 2026-11-20
+
+A fix for deleting data sets.
+
+**Data tables**
+- Deleting a data set while its column was selected (for example after right-clicking its header) showed an error, left the column on screen and stopped the table taking input until another table was opened. The selection now always stays inside the table, so the data set goes and the table keeps working.
+
 ## 0.4.25 — 2026-11-20
 
 Testers' fixes: whiskers, decimal commas, four stars and a paste shortcut.

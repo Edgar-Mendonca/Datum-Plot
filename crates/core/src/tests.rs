@@ -685,3 +685,20 @@ fn decimal_commas_paste_and_type() {
     let t = &d.p.tables[0];
     assert_eq!((t.cols[1][0], t.cols[1][1]), (Some(1.5), Some(1.234)), "not taken for a row of titles, and read with decimal commas");
 }
+
+#[test]
+fn deleting_any_data_set_works_in_every_sample() {
+    // 0.4.25 (#71): the core side of deleting a data set: every data set of every sample can go (when it is not the
+    // last), its columns go with it, and the project stays valid.
+    for tp in templates::list() {
+        let base = Doc::new(templates::build(Some(tp.id)).unwrap());
+        for t in base.p.tables.iter().filter(|t| t.sets.len() > 1) {
+            for k in 0..t.sets.len() {
+                let mut d = Doc::new(base.p.clone());
+                d.apply(Op::SetDef { table: t.id, k: Some(k), set: None }).unwrap_or_else(|e| panic!("{} {} {k}: {e}", tp.id, t.name));
+                let after = d.p.table(t.id).unwrap();
+                assert_eq!((after.sets.len(), after.cols.len()), (t.sets.len() - 1, t.cols.len() - t.spans()[k].1), "{} {} {k}", tp.id, t.name);
+            }
+        }
+    }
+}

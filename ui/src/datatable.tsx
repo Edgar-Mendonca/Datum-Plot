@@ -204,7 +204,7 @@ export const DataTable = (p: { t: Table }) => {
   /** The data set under selection column k, or -1 for the row title and X columns. */
   const setAt = (k: number) => spans(t()).findIndex(([c0, w]) => k - 1 >= c0 && k - 1 < c0 + w);
   const vis = createMemo(() => { const f = Math.max(0, Math.floor(top() / RH) - 2); return Array.from({ length: Math.ceil(h() / RH) + 6 }, (_, j) => f + j).filter(r => r < nrows()); });
-  const name = () => { const [r, k] = cur(); if (k === 0) return `Row ${r + 1} title`; if (k === 1) return `X · row ${r + 1}`; const s = setAt(k), [c0] = spans(t())[s] ?? [0]; const e = t().sets[s]?.entry; return `${letter(s)}:${e === "rep" ? `Y${k - 1 - c0 + 1}` : SUB[e!][k - 1 - c0]} · row ${r + 1}`; };
+  const name = () => { const [r, k] = cur(); if (k === 0) return `Row ${r + 1} title`; if (k === 1) return `X · row ${r + 1}`; const s = setAt(k), [c0] = spans(t())[s] ?? [0]; const e = t().sets[s]?.entry; if (!e) return ""; return `${letter(s)}:${e === "rep" ? `Y${k - 1 - c0 + 1}` : SUB[e]?.[k - 1 - c0] ?? ""} · row ${r + 1}`; };
   return (
     <section class="dview">
       <TableHead t={t()} />

@@ -956,6 +956,42 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
     check("with every data set picked, unticking one symbol's Filled unticks them all", n >= 2 && many && many.length >= n && many.slice(0, n).every(v => v.markerFilled === false), JSON.stringify([n, many?.map(v => v.markerFilled)]));
     await q.close();
   }
+  // 0.4.25 (#71): deleting the data set under the selection leaves a working table (it froze with a TypeError)
+  {
+    const q = await b.newPage({ viewport: { width: 1400, height: 900 } });
+    await q.addInitScript(([f]) => {
+      let st = JSON.parse(JSON.stringify({ ...f.state, embedded: "a test" }));
+      const t0 = st.project.tables[0], n = t0.rows;
+      t0.kind = "column";
+      t0.sets = ["A", "B", "C", "D"].map(x => ({ ...t0.sets[0], title: x, entry: "rep", reps: 3 }));
+      t0.cols = [t0.cols[0], ...Array.from({ length: 12 }, (_, j) => Array.from({ length: n }, (_, r) => j >= 9 ? null : (r + 1) * (j + 1) * 0.1))];
+      st.project.graphs.forEach(g => { if (g.table === t0.id) g.settings.sets = t0.sets.map(() => ({ show: true, color: "", symbol: "", size: 6, filled: true, line: null, width: 1 })); });
+      const m = { options: { theme: "light", autosave: 0, decimals: -1, reps: 3, entry: "rep", error: "sd", width: 80, height: 60, font: "Arial", fontSize: 10, dpi: 300, paper: "A4", dateOrder: "dmy" }, templates: f.templates, recent: [], version: "t" };
+      try { localStorage.setItem("guide-hint", "1"); } catch {}
+      window.__calls = [];
+      window.__TAURI__ = { core: { invoke: async (c, a) => {
+        if (c === "state") return st;
+        window.__calls.push([c, a]);
+        if (c === "apply" && a.op.SetDef && a.op.SetDef.set === null) {  // what the core does: drop the set and its columns
+          const t = st.project.tables.find(x => x.id === a.op.SetDef.table), k = a.op.SetDef.k, c0 = 1 + t.sets.slice(0, k).reduce((s_, x) => s_ + x.reps, 0);
+          t.sets.splice(k, 1); t.cols.splice(c0, 3); st = JSON.parse(JSON.stringify(st));
+        }
+        return c === "apply" ? st : c in m ? m[c] : null;
+      } }, event: { listen: async () => () => {} } };
+      window.confirm = () => true;
+    }, [fix]);
+    await q.goto(url); await q.waitForTimeout(900);
+    await q.click(".nav .nitem >> nth=1"); await q.waitForTimeout(500);
+    await q.click(".hc.st >> nth=3", { button: "right" }); await q.waitForTimeout(200);
+    await q.click('.menu button:has-text("Delete Data Set")'); await q.waitForTimeout(500);
+    const heads = await q.$$eval(".hc.st", hs => hs.map(h => h.textContent));
+    const toasts = await q.$$eval(".toast", ts => ts.map(x => x.textContent));
+    check("deleting the selected data set leaves the table working (no error, the column gone)", heads.length === 3 && !toasts.some(x => /Error/.test(x)), JSON.stringify([heads, toasts]));
+    await q.click(".hc.st >> nth=0"); await q.waitForTimeout(100);
+    await q.keyboard.type("7"); await q.keyboard.press("Enter"); await q.waitForTimeout(250);
+    check("…and typing into it still works", (await q.evaluate(() => window.__calls.filter(x => x[0] === "apply").map(x => x[1].op))).some(o => o.Cells), "no Cells op");
+    await q.close();
+  }
   // 0.4.16 (#60): a grouped table: box and violin in the graph types, and its rows shown, hidden and ordered per graph
   {
     const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
