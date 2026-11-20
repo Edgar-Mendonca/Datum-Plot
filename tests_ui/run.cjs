@@ -791,6 +791,17 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   await p.dblclick('.dlg .anitem:has-text("ANCOVA")'); await p.waitForTimeout(400);
   check("double-clicking ANCOVA opens its options and closes the Analyze window", JSON.stringify(await p.$$eval(".dlg header", hs => hs.map(h => h.textContent.replace(/[?×]/g, "")))) === '["ANCOVA"]');
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  // 0.4.31: the ROC curve's AUC confidence interval, two methods with a ?
+  await p.click('.tabs button:text-is("Analyze")'); await p.click('.ribbon .rb:has-text("Analyze…")'); await p.waitForTimeout(250);
+  await p.fill(".dlg .ansearch", "ROC curve"); await p.keyboard.press("Enter"); await p.waitForTimeout(300);
+  if ((await p.textContent(".dlg").catch(() => "")).includes("Make Another")) { await p.click('.dlg button:has-text("Make Another")'); await p.waitForTimeout(250); }
+  const aucOpts = await p.$$eval('.dlg select:has(option[value="hanley"]) option', os => os.map(o => o.value)).catch(() => []);
+  check("ROC offers DeLong (first) and Hanley & McNeil for the AUC's CI", aucOpts[0] === "delong" && aucOpts.includes("hanley"), JSON.stringify(aucOpts));
+  await p.click('.dlg .form label:has-text("CI of the AUC") .help'); await p.waitForTimeout(200);
+  const ah = (await p.textContent(".dlg >> nth=-1").catch(() => "")) || "";
+  check("…and its ? explains both", ah.includes("DeLong") && ah.includes("Hanley"), ah.slice(0, 100));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(100);
+  for (let i = 0; i < 4 && (await p.$$(".dlg")).length; i++) { await p.evaluate(() => document.querySelector(".dlg header button.x")?.click()); await p.waitForTimeout(150); }
   // 0.3.10: New Design asks the shell for the factorial table.
   await reset();
   await p.click('.ribbon .rb:has-text("New Design")'); await p.waitForTimeout(200);

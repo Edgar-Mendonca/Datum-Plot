@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.31 — 2026-11-20
+
+The ROC curve's AUC confidence interval, two ways.
+
+**New**
+- ROC curve: choose how the AUC's 95% confidence interval is worked out: DeLong's method (the default; it uses the data themselves and is what most statistics software reports today) or Hanley & McNeil's simpler formula. A ? explains both, and the results and the methods text name the one used.
+
 ## 0.4.30 — 2026-11-20
 
 Hardening: materials, quality and signals checked; awkward data; speed.

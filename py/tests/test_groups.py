@@ -195,6 +195,16 @@ class CheckedAgainstR(unittest.TestCase):
         graph.render(col(*[list(rng.normal(10, 2, 20000)) for _ in range(3)]), {"column": "box", "points": "each"})
         self.assertLess(time.time() - t0, 20)
 
+    def test_roc_auc_confidence_interval_two_ways(self):
+        """0.4.31: DeLong (default, R's pROC: AUC 0.835, 95% CI 0.645593 to 1) or Hanley & McNeil (SE 0.0937)."""
+        g = [0.13, 0.14, 0.10, 0.04, 0.13, 0.10, 0.47, 0.16, 0.18, 0.10]
+        p = [0.44, 0.71, 0.16, 0.21, 0.33, 0.15, 0.11, 0.25, 0.38, 1.02]
+        d = A.run("roc", col(g, p), [], {})["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual((d[0][1], d[0][2], d[1][0]), ("0.835", "0.64559 to 1", "Std. error (DeLong)"))
+        h = A.run("roc", col(g, p), [], {"aucci": "hanley"})
+        self.assertEqual(h["tabs"][0]["tables"][0]["rows"][1][:2], ["Std. error (Hanley & McNeil)", "0.0937"])
+        self.assertIn("Hanley and McNeil", h["methods"])
+
     NESTED2 = [[[10.41, 10.83, 8.36], [10.44, 9.72, 10.53, 9.41, 10.72], [11.36, 11.1]], [[9.95, 10.6, 9.91, 9.64], [11.92, 10.59], [13.57, 13.12, 10.4, 12.67, 11.3, 12.43], [13.14, 11.11, 12.87]]]
     NESTED3 = [[[9.52, 7.62, 9.93], [10.58, 11.46, 11.28, 10.63, 10.17], [9.58, 8.12]], [[13.9, 13.35, 12.41, 14.46], [11.91, 9.95], [9.44, 13.31, 10.87, 10.58, 11.78, 10.08], [10.32, 12.04, 10.45]],
                [[9.35, 8.48, 10.5, 9.97, 10.46], [11.33, 11.71, 12.73], [10.67, 10.47, 11.21, 10.69]]]

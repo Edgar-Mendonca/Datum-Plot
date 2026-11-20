@@ -268,6 +268,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | D33 | Whiskers of box plots: min–max (default), Tukey, percentiles; error-bar settings hidden for box plots and violins (#66) | ✅ 0.4.24 |
 | A26 | Decimal commas when typing or pasting (#68) | ✅ 0.4.25 |
 | C14 | Four stars (P ≤ 0.0001) as a choice; ≤ thresholds (#69) | ✅ 0.4.25 |
+| C15 | ROC: the AUC's CI by DeLong (default) or Hanley & McNeil, with a ? | ✅ 0.4.31 |
 | A27 | Ctrl+T: Paste Transposed (#70) | ✅ 0.4.25 |
 | B43 | Brown-Forsythe ANOVA as most programs report it, and Mehrotra's version; ? explaining each one-way ANOVA | ✅ 0.4.27 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
@@ -465,6 +466,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.31** ✅ | The ROC curve's AUC confidence interval by DeLong (default) or Hanley & McNeil, with a ? (C15) |
 | **0.4.30** ✅ | Hardening: materials, quality and signals checked; every analysis on awkward data; graphs equal results; 20 000 dots per group drawn in about a second |
 | **0.4.29** ✅ | Relationships, survival and descriptive statistics checked against R: the normality table's rows |
 | **0.4.28** ✅ | Regression and curve fitting checked against R: AICc counts the residual variance; F of equal fits is 0 |

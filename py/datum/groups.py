@@ -970,12 +970,20 @@ def roc(table, ks, o):
     fpr = np.array([0.0] + [float(np.mean(s_neg >= c)) for c in cuts])
     U = st.mannwhitneyu(s_pos, s_neg, alternative="two-sided")
     auc = float(U.statistic) / (len(pos) * len(neg))
-    q1, q2 = auc / (2 - auc), 2 * auc * auc / (1 + auc)
-    se = math.sqrt((auc * (1 - auc) + (len(pos) - 1) * (q1 - auc * auc) + (len(neg) - 1) * (q2 - auc * auc)) / (len(pos) * len(neg)))
+    # 0.4.31: the AUC's SE by DeLong et al. (1988, R's pROC; the default) or Hanley & McNeil (1982), the user's choice
+    how = "hanley" if o.get("aucci") == "hanley" else "delong"
+    if how == "delong":
+        psi = (s_pos[:, None] > s_neg[None, :]) + 0.5 * (s_pos[:, None] == s_neg[None, :])
+        v10, v01 = psi.mean(axis=1), psi.mean(axis=0)
+        se = math.sqrt(np.var(v10, ddof=1) / len(pos) + np.var(v01, ddof=1) / len(neg))
+    else:
+        q1, q2 = auc / (2 - auc), 2 * auc * auc / (1 + auc)
+        se = math.sqrt((auc * (1 - auc) + (len(pos) - 1) * (q1 - auc * auc) + (len(neg) - 1) * (q2 - auc * auc)) / (len(pos) * len(neg)))
+    who = "DeLong" if how == "delong" else "Hanley & McNeil"
     p = float(U.pvalue)
     j = int(np.argmax(sens[1:] - fpr[1:])) + 1
     best = cuts[j - 1] if higher else -cuts[j - 1]
-    rows = [["Area under the ROC curve (AUC)", g(auc, 4), ci_text(max(0.0, auc - Z95 * se), min(1.0, auc + Z95 * se))], ["Std. error (Hanley & McNeil)", g(se, 3), ""],
+    rows = [["Area under the ROC curve (AUC)", g(auc, 4), ci_text(max(0.0, auc - Z95 * se), min(1.0, auc + Z95 * se))], [f"Std. error ({who})", g(se, 3), ""],
             ["P value (AUC = 0.5, Mann-Whitney)", pv(p), ""], ["Best cut-off (Youden)", f"{'≥' if higher else '≤'} {g(best)}", ""],
             ["  Sensitivity at the cut-off", f"{g(100 * sens[j], 4)}%", ""], ["  Specificity at the cut-off", f"{g(100 * (1 - fpr[j]), 4)}%", ""], ["Controls, cases", f"{len(neg)}, {len(pos)}", ""]]
     cut_rows = [[f"{'≥' if higher else '≤'} {g(c if higher else -c)}", f"{g(100 * s_, 4)}%", f"{g(100 * (1 - f_), 4)}%", g(s_ / f_, 3) if f_ > 0 else "∞"] for c, s_, f_ in zip(cuts, sens[1:], fpr[1:])][:60]
@@ -988,5 +996,5 @@ def roc(table, ks, o):
                   [{"name": "Summary", "tables": [{"title": f"{name_of(table, ks[1])} (cases) against {name_of(table, ks[0])} (controls)", "columns": ["", "Value", "95% CI"], "rows": rows}]},
                    {"name": "Cut-offs", "tables": [{"title": "Sensitivity and specificity at each cut-off", "columns": ["Positive if", "Sensitivity", "Specificity", "Likelihood ratio"], "rows": cut_rows}]}],
                   [(None, f"Values {'above' if higher else 'below'} the cut-off count as positive; change the direction if the test works the other way.")], plots=[plot], table=tb,
-                  methods="The ROC curve was computed from the values of the controls and cases; the AUC equals the Mann-Whitney U statistic over n1·n2, with its standard error after Hanley and McNeil (1982), in Datum Plot (SciPy).",
+                  methods=f"The ROC curve was computed from the values of the controls and cases; the AUC equals the Mann-Whitney U statistic over n1·n2, with its standard error after {'DeLong et al. (1988)' if how == 'delong' else 'Hanley and McNeil (1982)'}, in Datum Plot (SciPy).",
                   code="from scipy import stats\nU = stats.mannwhitneyu(cases, controls)\nauc = U.statistic / (len(cases) * len(controls))")

@@ -90,6 +90,11 @@ export const HELP: Record<string, Topic> = {
     how: ["Hover a point for its values; right-click it to exclude it or format its data set.", "Double-click an axis, the legend or the data to format it; double-click a note to edit its text.", "Click a note to select it, drag to move it, Delete to remove it.", "Zoom and Pan (Format tab or right-click): zoom to a box, pan by dragging, zoom out, reset the axes. Ctrl+wheel zooms the view only."] },
   results: { t: "Results sheet", what: "The result of one analysis, linked to its table: tables you can copy, small plots, and on the right the answer in one sentence, checks of the assumptions, methods text and a figure legend.",
     how: ["The tabs (Summary, Details…) hold the tables; Copy puts one on the clipboard for a spreadsheet or a document.", "“Show on” draws the fit on a graph.", "Change… reopens the options; Python code shows the same calculation in Python."] },
+  // 0.4.31: the ROC curve's AUC confidence interval
+  aucci: { t: "Confidence interval of the AUC", what: "How sure the area under the ROC curve is. Both methods give the same AUC; they estimate its standard error differently, so the 95% CI differs slightly (usually in the third decimal).",
+    how: ["DeLong (recommended): works out the standard error from the data themselves, without assuming a shape for the two groups' values (DeLong, DeLong & Clarke-Pearson, 1988). The usual choice today, and what R's pROC reports.",
+      "Hanley & McNeil: a formula that needs only the AUC and the two group sizes (Hanley & McNeil, 1982). Older and simpler; it assumes the values follow a particular shape, so it can be a little off when they do not.",
+      "The results and the methods text name the method used."] },
   // 0.4.27: which one-way ANOVA, in plain words, so the choice is never made blindly
   anovatype: { t: "Which one-way ANOVA?", what: "All of them ask whether the group means differ; they differ in what they assume about the spread (SD) of each group, and about who was measured.",
     how: ["Ordinary (equal SDs): the classic ANOVA. Use it when the groups' SDs are similar (the results' check, Brown-Forsythe test of equal SDs, tells you). Most powerful when its assumption holds.",
