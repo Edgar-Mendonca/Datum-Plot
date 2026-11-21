@@ -365,5 +365,47 @@ class RandomCheckFindings(unittest.TestCase):
         self.assertAlmostEqual(list(runs)[0][1], 0.000925, delta=2e-5)  # R multcomp, abseps 1e-6: 0.0009250
 
 
+
+class GraphsShowTheResults(unittest.TestCase):
+    """0.4.36 (full check, step 4): the stars and P values drawn on a graph are the analysis's, over the right pair
+    (the scratch check ran 300 column and 150 grouped graphs; these keep one of each)."""
+
+    @classmethod
+    def setUpClass(cls):
+        A.more_kinds()
+
+    def labels(self, svg):
+        import re
+        out = []
+        for m in re.finditer(r'<text([^>]*)>([^<]*)</text>', svg):
+            x = re.search(r'\bx="([-\d.e]+)"', m.group(1))
+            s = m.group(2).replace("&lt;", "<").strip()
+            if s in ("ns", "*", "**", "***", "****") or s.startswith("P "):
+                out.append((s, float(x.group(1)) if x else None))
+        return out
+
+    def test_anova_stars_over_their_pairs(self):
+        from datum import graph
+        from datum.analysis import stars
+        t = cols([4.1, 5.2, 3.3, 4.4, 5.5], [6.1, 7.2, 5.9, 6.8, 7.7], [4.0, 5.5, 4.9, 6.0, 5.2], [9.0, 9.6, 8.7, 10.2, 9.9])
+        o = {"posthoc": "tukey", "brackets": "all"}
+        br = A.run("anova", t, [0, 1, 2, 3], o)["brackets"]
+        r = graph.render(t, {"overlays": [1]}, [{"id": 1, "kind": "anova", "sets": [0, 1, 2, 3], "options": o}])
+        got = self.labels(r["svg"])
+        self.assertEqual(sorted(s for s, _ in got), sorted(stars(b[2]) for b in br))
+        X = lambda j: r["plot"][0] + (j - r["xlim"][0]) / (r["xlim"][1] - r["xlim"][0]) * (r["plot"][2] - r["plot"][0])
+        for b in br:  # each label centred over its pair
+            self.assertTrue(any(s == stars(b[2]) and abs(x - (X(b[0]) + X(b[1])) / 2) < 1 for s, x in got), b)
+        r = graph.render(t, {"overlays": [1]}, [{"id": 1, "kind": "anova", "sets": [0, 1, 2, 3], "options": {**o, "ptext": "p", "brackets": "sig"}}])
+        self.assertEqual(len(self.labels(r["svg"])), sum(b[2] < 0.05 for b in br))
+        self.assertTrue(all(s.startswith("P ") for s, _ in self.labels(r["svg"])))
+
+    def test_two_way_falls_back_from_tukey(self):
+        t = cols([1.0, 2.0], [1.5, 2.5], [3.0, 4.0], [3.2, 4.4], kind="grouped")
+        t["sets"] = [{"title": "S0", "entry": "rep", "reps": 2}, {"title": "S1", "entry": "rep", "reps": 2}]
+        r = A.run("twoway", t, [], {"posthoc": "tukey", "compare": "rows"})  # was a bare KeyError: 'tukey'
+        self.assertIn("Šidák", r["methods"])
+
+
 if __name__ == "__main__":
     unittest.main()

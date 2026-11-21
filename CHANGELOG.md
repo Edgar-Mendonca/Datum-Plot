@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.36 — 2026-11-21
+
+Full check, step 4: what the window shows is what the engine works out. The full check is complete.
+
+The stars and P values on 300 random column graphs and 150 grouped graphs were exactly the analyses' P values, each over the right pair, whatever the correction, the choice of significant or all comparisons, and stars or P values. The results sheet shows every value exactly as calculated, and any change to the data recalculates the results and the graph.
+
+**Fixes**
+- After two quick changes, or switching quickly between analyses, a slower earlier calculation could replace the newer result on the results sheet; only the newest is shown now.
+- Two-way ANOVA given a correction it does not offer (for example from a file made elsewhere) uses Šidák instead of stopping with an error.
+
 ## 0.4.35 — 2026-11-21
 
 Full check, step 3: about 7 500 random data sets through 16 analyses, every number compared with R.

@@ -843,6 +843,8 @@ def twoway(table, ks, o):
     import statsmodels.formula.api as smf
     from statsmodels.stats.anova import anova_lm
     alpha, post, within = float(o.get("alpha", ALPHA)), o.get("posthoc", "sidak"), o.get("compare", "rows")
+    if post not in ("bonferroni", "sidak", "holm", "holm-b", "fdr", "none", "lsd"):  # 0.4.36 (step 4): Tukey or Dunnett from elsewhere gave a bare KeyError
+        post = "sidak"
     if o.get("rm") in ("rows", "sets", "both"):  # repeated measures (B32)
         from .repeated import twoway_rm
         return twoway_rm(table, ks, o)

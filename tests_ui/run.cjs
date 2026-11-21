@@ -686,6 +686,23 @@ const BRANDS = /Prism|GraphPad|OriginPro|OriginLab|\bOrigin\b|Excel|PowerPoint|\
   check("the results sheet shows the summary tables", (await p.$$(".rview .rtable")).length >= 2);
   check("the Explain panel gives the answer and the checks", ((await p.textContent(".explain .ans")) || "").includes("slope") && (await p.$$(".explain .checks li")).length >= 1);
   check("residual plots are shown", (await p.$$(".rplots img")).length >= 1);
+  // 0.4.36 (full check, step 4): the sheet shows the engine's text exactly, and after quick edits only the newest reply
+  const shownRows = await p.$$eval(".rview .rtable tbody tr", trs => trs.map(tr => [...tr.querySelectorAll("td")].map(td => td.textContent)));
+  const engineRows = lin.result.tabs[0].tables.flatMap(t => t.rows.map(r => r.map(String)));
+  check("the results sheet shows every value exactly as the engine gives it", shownRows.length > 0 && JSON.stringify(shownRows) === JSON.stringify(engineRows), JSON.stringify([shownRows.length, engineRows.length, shownRows[0], engineRows[0]]));
+  await p.evaluate(() => {
+    const inv = window.__TAURI__.core.invoke; window.__inv0 = inv; let rev = 100, first = true;
+    window.__TAURI__.core.invoke = async (c, a) => {
+      if (c === "history") { const s = await inv(c, a); return { ...s, rev: ++rev }; }
+      if (c === "result") { const x = await inv(c, a); if (first) { first = false; await new Promise(r => setTimeout(r, 400)); return { ...x, answer: "STALE ANSWER" }; } return x; }
+      return inv(c, a);
+    };
+  });
+  const asked0 = (await calls("result")).length;
+  await p.keyboard.press("Control+z"); await p.waitForTimeout(40); await p.keyboard.press("Control+z"); await p.waitForTimeout(800);
+  check("an edit asks the engine for the result again", (await calls("result")).length >= asked0 + 2, String((await calls("result")).length - asked0));
+  check("…and a slower earlier reply does not replace the newer result", !((await p.textContent(".explain .ans")) || "").includes("STALE"), (await p.textContent(".explain .ans")) || "");
+  await p.evaluate(() => { window.__TAURI__.core.invoke = window.__inv0; });
   await reset();
   await p.click('.explain .btn:has-text("Copy methods text")');
   await p.waitForTimeout(100);

@@ -332,7 +332,10 @@ const ICON: Record<string, string> = { true: "✓", false: "⚠", null: "ℹ" };
 /** The results sheet of the open analysis. */
 export const ResultsView = (p: { a: Analysis }) => {
   const [r, setR] = createSignal<Result | null>(null), [err, setErr] = createSignal(""), [tab, setTab] = createSignal("Summary");
-  createEffect(on(() => [p.a.id, out()?.rev], () => { invoke<Result>("result", { id: p.a.id }).then(x => { setR(x); setErr(""); if (!x.tabs.some(t => t.name === tab())) setTab(x.tabs[0]?.name ?? "Summary"); }).catch(e => setErr(String(e))); }));
+  // 0.4.36 (full check, step 4): only the latest request is shown, as for graphs: after two quick edits a slower
+  // earlier reply no longer replaces the newer result
+  let n = 0;
+  createEffect(on(() => [p.a.id, out()?.rev], () => { const k = ++n; invoke<Result>("result", { id: p.a.id }).then(x => { if (k !== n) return; setR(x); setErr(""); if (!x.tabs.some(t => t.name === tab())) setTab(x.tabs[0]?.name ?? "Summary"); }).catch(e => { if (k === n) setErr(String(e)); }); }));
   const t = () => P().tables.find(x => x.id === p.a.table);
   const graphs = () => P().graphs.filter(g => g.table === p.a.table);
   const copy = (text: string, what: string) => call("copy_text", { text }).then(() => toast(`${what} copied.`, true));
