@@ -49,7 +49,7 @@ class Fatigue(unittest.TestCase):
         S[-2:] = [200, 205]  # run-outs
         r = A.run("sn", xy(N, S), [], {"runout": 1e7, "at": "1e6, 1e7"})
         row = r["tabs"][0]["tables"][0]["rows"][0]
-        self.assertEqual((row[1], row[2].split(" ±")[0], row[3], row[4], row[5]), ("900", "-0.09", "1", "6", "2"))
+        self.assertEqual((row[1], row[2].split(" (")[0], row[3], row[4], row[5]), ("900", "-0.09", "1", "6", "2"))
         life = r["tabs"][0]["tables"][1]["rows"]
         self.assertEqual(life[1][2], A.g(900 * 1e7 ** -0.09, 4))
         rr = A.run("sn", xy(N[:6], S[:6]), [], {"reversals": True})

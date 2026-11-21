@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.34 — 2026-11-21
+
+Full check, step 2 done: regression, quality, materials and signals compared with R, published constants and curves with known answers.
+
+Lines through the origin, polynomials, reading unknowns, fixed parameters, dose-response curves (3 parameters, normalised, comparing IC50s), clustering and surface fits matched R. Control charts matched the published constants, and tensile tests, DSC, TGA, filters, spectra, wavelets, derivatives and histograms gave the right answers on curves whose answers are known.
+
+**New**
+- S–N curves: fitted as the ASTM E739 standard prescribes (life on stress; the default), or stress on life, with a ? that explains both.
+
+**Fixes**
+- Area under the curve: when the curve crosses the baseline between two points, the positive and negative areas (and each peak's area) were too large; the crossing is now found and the areas split there. The total area was right.
+- Frequency distributions say which bin a value on a boundary goes into; filters say that running forwards and backwards halves the amplitude at the cut-off.
+
 ## 0.4.33 — 2026-11-21
 
 Full check, step 2 (first part): the statistics that only our own tests covered, now compared with R.

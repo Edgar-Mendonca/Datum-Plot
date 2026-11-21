@@ -266,7 +266,7 @@ def signal(table, ks, o):
                    x_title=f"Frequency (per {xt})" if op == "fft" else None, y_title="Amplitude" if op == "fft" else None)
     checks = [(None, "The data were not evenly spaced, so they were first interpolated onto even steps.")] if uneven else []
     if op in ("lowpass", "highpass", "bandpass"):
-        checks.append((None, "A Butterworth filter run forwards and backwards: no shift in X, but the edges of the curve are less reliable."))
+        checks.append((None, "A Butterworth filter run forwards and backwards: no shift in X, but the edges of the curve are less reliable. Run twice, it halves the amplitude at the cut-off (−6 dB, not −3 dB)."))
     how = {"fft": "the amplitude spectrum by the fast Fourier transform (mean removed)", "lowpass": f"a low-pass Butterworth filter (cut-off {hi:g}, order {o.get('order', 4)})" if hi else "",
            "highpass": f"a high-pass Butterworth filter (cut-off {lo:g}, order {o.get('order', 4)})" if lo else "", "bandpass": f"a band-pass Butterworth filter ({lo:g} to {hi:g}, order {o.get('order', 4)})" if lo and hi else "",
            "resample": "linear interpolation onto evenly spaced points"}[op]

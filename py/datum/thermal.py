@@ -105,7 +105,7 @@ def life_text(v):
 
 def sn(table, ks, o):
     """S–N curves: Basquin S = A · N^b, fitted as a straight line of log S on log N; run-outs (N ≥ the run-out limit) are shown but left out."""
-    rev = bool(o.get("reversals"))
+    rev, how = bool(o.get("reversals")), o.get("fit", "e739")
     run = float(o["runout"]) if o.get("runout") not in (None, "") else None
     at = [float(v) for v in str(o.get("at") or "1e6, 1e7").replace(";", ",").split(",") if v.strip()]
     rows, curves, ans, life = [], [], [], []
@@ -117,11 +117,18 @@ def sn(table, ks, o):
         if use.sum() < 3:
             continue
         n_ = 2 * N[use] if rev else N[use]
-        lr = st.linregress(np.log10(n_), np.log10(S[use]))
-        b, A = lr.slope, 10 ** lr.intercept
         tq = st.t.ppf(0.975, use.sum() - 2)
+        if how == "e739":  # 0.4.34: ASTM E739: log N (the random variable) on log S, then turned round to S = A·N^b
+            lr = st.linregress(np.log10(S[use]), np.log10(n_))
+            b, A = 1 / lr.slope, 10 ** (-lr.intercept / lr.slope)
+            lo_c, hi_c = lr.slope - tq * lr.stderr, lr.slope + tq * lr.stderr
+            bci = f"{g(b, 4)} ({g(min(1 / lo_c, 1 / hi_c), 4)} to {g(max(1 / lo_c, 1 / hi_c), 4)})" if lo_c * hi_c > 0 else f"{g(b, 4)} (undefined: the slope's CI includes 0)"
+        else:  # log S on log N
+            lr = st.linregress(np.log10(n_), np.log10(S[use]))
+            b, A = lr.slope, 10 ** lr.intercept
+            bci = f"{g(b, 4)} ({g(b - tq * lr.stderr, 4)} to {g(b + tq * lr.stderr, 4)})"
         name = name_of(table, k)
-        rows.append([name, g(A, 5), f"{g(b, 4)} ± {g(tq * lr.stderr, 2)}", g(lr.rvalue ** 2, 4), g(int(use.sum())), g(int(out.sum())), pv(lr.pvalue)])
+        rows.append([name, g(A, 5), bci, g(lr.rvalue ** 2, 4), g(int(use.sum())), g(int(out.sum())), pv(lr.pvalue)])
         life += [[name, f"{life_text(v)} {'reversals' if rev else 'cycles'}", g(A * v ** b, 4)] for v in at]
         xs = np.geomspace(N[use].min(), max(N[use].max(), run or 0), 100)
         curves.append({"set": k, "x": xs.tolist(), "y": (A * (2 * xs if rev else xs) ** b).tolist(), "label": f"S = {g(A, 4)}·{'(2N)' if rev else 'N'}^{g(b, 3)}",
@@ -133,7 +140,7 @@ def sn(table, ks, o):
     if run:
         checks.append((None, f"Points at {life_text(run)} cycles or more are run-outs (no failure): they are drawn but left out of the fit."))
     return result("S–N curve (Basquin)", "; ".join(ans) + ".", [{"name": "Summary", "tables": [
-        {"title": "Basquin fit", "columns": ["Data set", "Coefficient A", "Exponent b ± 95% CI", "R²", "Failures", "Run-outs", "P (slope)"], "rows": rows},
+        {"title": "Basquin fit" + (" (ASTM E739: log N on log S)" if how == "e739" else " (log S on log N)"), "columns": ["Data set", "Coefficient A", "Exponent b (95% CI)", "R²", "Failures", "Run-outs", "P (slope)"], "rows": rows},
         {"title": "Fatigue strength", "columns": ["Data set", "Life", "Stress"], "rows": life}]}], checks, curves=curves,
-        methods=f"Fatigue data were fitted with Basquin's relation S = A·{'(2N)' if rev else 'N'}^b by least squares on log S against log N{', leaving out run-outs' if run else ''} in Datum Plot (SciPy).",
+        methods=f"Fatigue data were fitted with Basquin's relation S = A·{'(2N)' if rev else 'N'}^b by least squares {'of log N on log S, life being the random variable (ASTM E739)' if how == 'e739' else 'of log S on log N'}{', leaving out run-outs' if run else ''} in Datum Plot (SciPy).",
         code="from scipy import stats\nfit = stats.linregress(np.log10(N), np.log10(S)); A, b = 10**fit.intercept, fit.slope")

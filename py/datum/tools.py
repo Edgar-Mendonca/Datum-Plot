@@ -183,11 +183,23 @@ def frequency(table, ks, o):
     tb["xUnits"] = table.get("yUnits", "")
     return result("Frequency distribution", f"{len(centers)} bins of width {g(edges[1] - edges[0])} from {g(edges[0])} to {g(edges[-1])}; {sum(len(v) for _, v in data)} values.",
                   [{"name": "Summary", "tables": [tab]}], plots=plots, table=tb,
-                  methods=f"Values were binned into a {'cumulative ' if cum else ''}frequency distribution (bin width {g(edges[1] - edges[0])}) in Datum Plot (numpy).",
+                  methods=f"Values were binned into a {'cumulative ' if cum else ''}frequency distribution (bin width {g(edges[1] - edges[0])}; each bin holds the values from its lower edge up to, but not including, its upper edge, the last bin both edges) in Datum Plot (numpy).",
                   code="import numpy as np\ncounts, edges = np.histogram(v, bins='auto')")
 
 
 # ---------- area under the curve (B14) ----------
+def crossings(x, d):
+    """0.4.34: x and d with a point added wherever d crosses zero between two points, so the parts above and below
+    the baseline are split exactly (clipping the points alone overstated both parts when the curve crossed)."""
+    xs, ds = [x[0]], [d[0]]
+    for i in range(1, len(x)):
+        if d[i - 1] * d[i] < 0:
+            t = d[i - 1] / (d[i - 1] - d[i])
+            xs.append(x[i - 1] + t * (x[i] - x[i - 1])); ds.append(0.0)
+        xs.append(x[i]); ds.append(d[i])
+    return np.array(xs, float), np.array(ds, float)
+
+
 def auc(table, ks, o):
     base = o.get("baseline", "zero")
     rows, curves, ans, peaks_rows = [], [], [], []
@@ -197,14 +209,17 @@ def auc(table, ks, o):
             continue
         i = np.argsort(x)
         x, y = x[i], y[i]
+        xo = x
         b = {"zero": np.zeros_like(y), "value": np.full_like(y, float(o.get("base", 0) or 0)), "first": np.full_like(y, y[0]), "min": np.full_like(y, y.min()),
              "line": y[0] + (y[-1] - y[0]) * (x - x[0]) / (x[-1] - x[0] if x[-1] != x[0] else 1)}[base]
-        d = y - b
+        d0 = y - b
+        j = int(np.argmax(np.abs(d0)))
+        rows_x, rows_y, npts = x[j], y[j], len(x)
+        x, d = crossings(x, d0)
         tot = float(np.trapezoid(d, x))
         pos = float(np.trapezoid(np.clip(d, 0, None), x))
         neg = float(np.trapezoid(np.clip(d, None, 0), x))
-        j = int(np.argmax(np.abs(d)))
-        rows.append([name_of(table, k), g(tot), g(pos), g(neg), g(x[j]), g(y[j]), g(len(x))])
+        rows.append([name_of(table, k), g(tot), g(pos), g(neg), g(rows_x), g(rows_y), g(npts)])
         ans.append(f"{name_of(table, k)}: area {g(tot, 4)}.")
         # Regions above the baseline (peaks).
         above = d > 0
@@ -219,7 +234,7 @@ def auc(table, ks, o):
                 if q - start >= 1 and abs(area) > 0.01 * max(abs(pos), 1e-300):
                     peaks_rows.append([name_of(table, k), g(x[a]), g(x[e]), g(x[top]), g(d[top]), g(area)])
                 start = None
-        curves.append({"set": k, "x": x.tolist(), "y": y.tolist(), "fill": b.tolist(), "label": f"Area = {g(tot, 4)}", "thin": True})
+        curves.append({"set": k, "x": xo.tolist(), "y": y.tolist(), "fill": b.tolist(), "label": f"Area = {g(tot, 4)}", "thin": True})
     tabs = [{"name": "Summary", "tables": [{"title": "Area under the curve", "columns": ["Data set", "Total area", "Positive area", "Negative area", "Peak X", "Peak Y", "Points"], "rows": rows},
                                            {"title": "Peaks (regions above the baseline)", "columns": ["Data set", "From X", "To X", "Peak X", "Height", "Area"], "rows": peaks_rows or [["None", "", "", "", "", ""]]}]}]
     return result("Area under the curve", " ".join(ans) or "Not enough points.", tabs, [(None, "Areas use the trapezoid rule on the means at each X; units are X units × Y units.")], curves=curves,

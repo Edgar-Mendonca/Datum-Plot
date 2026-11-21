@@ -174,7 +174,7 @@ Below them are the **Methods** text, ready to paste into a paper (**Copy methods
 - **Survival:** Kaplan-Meier curves, the log-rank test and hazard ratios.
 - **Signals and spectra:** peak finding, Gaussian, Lorentzian and Voigt peak fits, Fourier spectra and filters, and how the frequencies change over time: a **wavelet scalogram** or a **spectrogram** (Signals › Operation), a heat map of time against frequency with the strongest frequency at each time as a table to graph.
 - **Quality:** control charts (individuals, X̄–R, X̄–S, p) with rule checks and Cp/Cpk; **Analyze › New Design** makes a two-level factorial design (full or half fraction) to fill in, and Factorial Analysis gives the effects, a Pareto chart and the main effects.
-- **Materials:** tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves, DSC and TGA thermal analysis.
+- **Materials:** tensile tests, Weibull strength, Arrhenius activation energies, S–N fatigue curves (fitted as ASTM E739 prescribes, or log S on log N, under **Fit**), DSC and TGA thermal analysis.
 
 ![A one-way ANOVA results sheet with multiple comparisons.](img/anova-results.png)
 

@@ -36,7 +36,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   control: { chart: "imr", lsl: "", usl: "" }, doe: {},
   threeway: { rowname: "", bname: "", cname: "", alpha: 0.05 }, ancova: { alpha: 0.05 }, agreement: { weights: "none" }, bootstrap: { stat: "mean", n: 9999 },
   multit: { test: "welch", method: "fdr_bh", q: 0.05, x: "log2", label: 10 },
-  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher", aucci: "delong" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
+  parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher", aucci: "delong" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false, fit: "e739" }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
   anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, correlation: { between: false, bayes: true, spearmanp: "exact" }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
@@ -200,6 +200,8 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label /><span class="muted">{t.kind === "matrix" ? "Fits every Z of the matrix; the fit is drawn as dashed contours or a wireframe." : "Uses the first three ticked data sets as X, Y and Z, one point per row."}</span>
           </Show>
           <Show when={kind === "sn"}>
+            {/* 0.4.34: which way the S–N line is fitted, explained under ? */}
+            <label>Fit <Help k="snfit" /></label><Pick value={o().fit ?? "e739"} set={v => put("fit", v)} options={[["e739", "log N on log S, ASTM E739 (recommended)"], ["basquin", "log S on log N"]]} />
             <label>Run-outs</label><span class="inline"><span class="muted">cycles at or above</span><N k="runout" w={110} ph="none" /><span class="muted">did not fail: shown, not fitted</span></span>
             <label>Fatigue strength at</label><input value={o().at ?? ""} placeholder="e.g. 1e6, 1e7" onChange={e => put("at", e.currentTarget.value)} />
             <label /><Check label="Fit against reversals 2N (S = σ'f · (2N)^b) instead of cycles N" value={!!o().reversals} set={v => put("reversals", v)} />

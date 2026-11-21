@@ -262,5 +262,59 @@ class OwnTestsCheckedAgainstR(unittest.TestCase):
             self.assertIn(want, A.run("power", t, [0, 1, 2, 3], o)["answer"])
 
 
+    # 0.4.34 (step 2b): regression items, against lm(), nls() and hclust() in R
+    def test_line_through_origin_and_polynomial(self):
+        r = A.run("linear", xy(AX, AY), [0], {"model": "origin"})
+        self.assertEqual((cell(r, "Slope", None), cell(r, "Slope", None, 2), cell(r, "R squared", None)), ("0.7968", "0.049616", "0.9627"))
+        r = A.run("linear", xy(AX, AY), [0], {"model": "poly", "order": 2})
+        self.assertEqual([cell(r, b, None) for b in ("B0", "B1", "B2", "R squared")], ["0.75507", "1.0693", "-0.03162", "0.6873"])
+
+    def test_dose_response_three_parameters_and_comparison(self):
+        c = [10 ** v for v in np.arange(-9, -5.4, 0.5)]
+        y1, y2 = [98.1, 95.4, 88.0, 70.2, 41.5, 20.3, 9.8, 6.1], [99.0, 97.2, 94.5, 86.1, 68.0, 42.2, 21.9, 11.0]
+        r = A.run("ic50", xy(c, y1), [0], {"model": "3"})
+        self.assertEqual(cell(r, "IC50", None), "6.733e-08")
+        r = A.run("ic50", xy(c, y1, y2), [0, 1], {"model": "4", "compare": True})
+        self.assertIn("F(1, 8) = 2055", r["tabs"][1]["tables"][0]["rows"][0][1])
+
+    def test_clusters_as_hclust(self):
+        a = [1.0, 1.2, 0.8, 1.1, 5.0, 5.3, 4.8, 5.1, 2.9, 3.2, 9.0, 3.0]
+        b = [2.0, 2.3, 1.9, 2.1, 2.2, 1.8, 2.1, 2.4, 6.0, 6.3, 5.8, 6.2]
+        for m, sizes in (("ward", "4, 4, 4"), ("average", "8, 3, 1"), ("complete", "8, 3, 1")):
+            self.assertIn(f"in 3 clusters of {sizes}", A.run("cluster", cols(a, b), [0, 1], {"method": m, "k": 3})["answer"])
+
+
+    # 0.4.34 (step 2c): quality, materials and signals against published constants, R and curves with known answers
+    def test_area_split_where_the_curve_crosses_the_baseline(self):
+        r = A.run("auc", xy([0, 1, 2], [1, -1, 1]), [0], {})
+        self.assertEqual(r["tabs"][0]["tables"][0]["rows"][0][1:4], ["0", "0.5", "-0.5"])  # was 1 and -1
+        self.assertEqual([x[5] for x in r["tabs"][0]["tables"][1]["rows"]], ["0.25", "0.25"])  # was 0.5 each
+
+    def test_sn_line_two_ways(self):
+        N, S = [2.1e4, 3.5e4, 6.0e4, 1.1e5, 2.4e5, 4.0e5, 9.5e5, 1.8e6], [420, 400, 370, 350, 320, 300, 280, 260]
+        e739 = A.run("sn", xy(N, S), [0], {})["tabs"][0]["tables"][0]  # R: lm(log10(N) ~ log10(S)), turned round
+        self.assertEqual(e739["rows"][0][1:3], ["1229.7", "-0.1083 (-0.1143 to -0.1028)"])
+        self.assertIn("E739", e739["title"])
+        self.assertEqual(A.run("sn", xy(N, S), [0], {"fit": "basquin"})["tabs"][0]["tables"][0]["rows"][0][1], "1225.3")  # lm(log10(S) ~ log10(N))
+
+    def test_tensile_and_dsc_known_curves(self):
+        e = np.r_[np.linspace(0, 0.0015, 31)[:-1], np.linspace(0.0015, 0.1, 400), np.linspace(0.1, 0.12, 21)[1:]]
+        s = np.where(e <= 0.0015, 200000 * e, np.where(e <= 0.1, 300 + 2000 * (e - 0.0015), 497 - (e - 0.1) / 0.02 * 27))
+        t = xy(e.tolist(), s.tolist()); t["yUnits"] = "MPa"
+        row = A.run("tensile", t, [0], {"offset": 0.2})["tabs"][0]["tables"][1]["rows"][0]
+        self.assertEqual(row[1:6], ["200", "304", "497", "10", "12"])  # E (GPa), Rp0.2 = 304.04, UTS, strain at UTS, elongation
+        T = np.linspace(100, 200, 1001)
+        dsc = A.run("thermal", xy(T.tolist(), (-0.1 - 2 * np.exp(-0.5 * ((T - 150) / 3) ** 2)).tolist()), [0], {"mode": "dsc", "rate": 10})["tabs"][0]["tables"][0]["rows"][0]
+        self.assertEqual(dsc[1:4] + [dsc[6]], ["144", "150", "156", "90.24 J/g"])  # onset x0 − 2σ, endset x0 + 2σ, A·σ·√(2π) ÷ (10/60)
+
+    def test_xbar_r_chart_limits(self):
+        G = [[50.1, 49.2, 51.0, 48.7, 50.5], [49.8, 50.9, 50.2, 51.3, 49.1], [48.9, 50.0, 49.5, 50.7, 51.2], [50.6, 49.4, 50.8, 49.9, 50.3], [51.1, 50.2, 49.0, 50.4, 49.6], [49.5, 50.8, 50.1, 49.3, 50.9]]
+        t = {"rows": 6, "sets": [{"title": "S", "entry": "rep", "reps": 5}], "cols": [[None] * 6] + [[g[j] for g in G] for j in range(5)], "excluded": [], "xTitle": "", "yTitle": ""}
+        xb = np.mean(G); rb = np.mean([max(g) - min(g) for g in G])
+        lim = A.run("control", t, [0], {"chart": "xbar"})["tabs"][0]["tables"][0]["rows"]
+        self.assertAlmostEqual(float(lim[0][3]), xb + 0.577 * rb, places=2)  # A2 = 0.577 for n = 5
+        self.assertAlmostEqual(float(lim[1][3]), 2.114 * rb, places=2)  # D4 = 2.114
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -90,6 +90,11 @@ export const HELP: Record<string, Topic> = {
     how: ["Hover a point for its values; right-click it to exclude it or format its data set.", "Double-click an axis, the legend or the data to format it; double-click a note to edit its text.", "Click a note to select it, drag to move it, Delete to remove it.", "Zoom and Pan (Format tab or right-click): zoom to a box, pan by dragging, zoom out, reset the axes. Ctrl+wheel zooms the view only."] },
   results: { t: "Results sheet", what: "The result of one analysis, linked to its table: tables you can copy, small plots, and on the right the answer in one sentence, checks of the assumptions, methods text and a figure legend.",
     how: ["The tabs (Summary, Details…) hold the tables; Copy puts one on the clipboard for a spreadsheet or a document.", "“Show on” draws the fit on a graph.", "Change… reopens the options; Python code shows the same calculation in Python."] },
+  // 0.4.34: the S–N line, two ways
+  snfit: { t: "Fitting the S–N line", what: "Both ways give a Basquin line S = A·N^b. They differ in which quantity is treated as uncertain, so with scattered data the lines differ (the more scatter, the more).",
+    how: ["log N on log S, ASTM E739 (recommended): the stress is set by the test and the life is what varies, so the life is the dependent variable, as the ASTM standard for fatigue data prescribes. The line is then turned round to S = A·N^b.",
+      "log S on log N: the stress treated as the dependent variable. Common in older texts and spreadsheets; it gives a flatter line when the lives scatter.",
+      "R² and P are the same either way; A and b differ. The results and the methods text name the way used."] },
   // 0.4.33: Spearman's P value
   spearmanp: { t: "Spearman's P value", what: "Two ways to get the P value of Spearman's rank correlation. Both give the same rs; the P values differ slightly with few pairs, and agree closely with many.",
     how: ["Exact (recommended): counts how often a correlation this strong would arise by chance among all orderings of the ranks (exact up to 9 pairs, a very close series approximation above; Best & Roberts, 1975). R reports this one.",
