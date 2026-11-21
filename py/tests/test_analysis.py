@@ -234,7 +234,7 @@ class OwnTestsCheckedAgainstR(unittest.TestCase):
         self.assertEqual(groups.spearman_p([1, 2, 2, 3, 4], [1, 3, 2, 4, 5], 0.97)[1], "t")  # ties: the exact method does not apply
         r = A.run("correlation", cols(x, y), [0, 1], {})
         self.assertIn("P = 0.0004", r["tabs"][0]["tables"][0]["rows"][0][4])
-        self.assertIn("AS 89", r["methods"])
+        self.assertIn("P exact", r["methods"])
 
     def test_holm_sidak(self):
         gs = [[9.8, 10.4, 11.1, 9.2, 10.0], [11.5, 12.2, 10.9, 12.8, 11.7, 12.0], [10.6, 11.0, 9.9, 10.8], [12.9, 13.4, 12.1, 13.8, 12.6]]

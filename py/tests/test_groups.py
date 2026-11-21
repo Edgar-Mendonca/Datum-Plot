@@ -71,8 +71,8 @@ class Nonparametric(unittest.TestCase):
         # R: wilcox.test(extra ~ group, sleep): W = 25.5, p = 0.06933; paired: p = 0.009091
         # kruskal.test(weight ~ group, PlantGrowth): chi-squared = 7.9882, p = 0.01842
         t = col(SLEEP1, SLEEP2)
-        self.assertAlmostEqual(p_of(cell(A.run("nonparam", t, [], {"test": "mw"}), "P value (two-tailed)", None)), 0.0693, places=4)
-        self.assertAlmostEqual(p_of(cell(A.run("nonparam", t, [], {"test": "wilcoxon"}), "P value (two-tailed)", None)), 0.0091, places=4)
+        self.assertAlmostEqual(p_of(cell(A.run("nonparam", t, [], {"test": "mw"}), "P value (two-tailed, normal approximation)", None)), 0.0693, places=4)
+        self.assertAlmostEqual(p_of(cell(A.run("nonparam", t, [], {"test": "wilcoxon"}), "P value (two-tailed, normal approximation)", None)), 0.0091, places=4)
         r = A.run("nonparam", col(CTRL, TRT1, TRT2), [], {"test": "kw"})
         self.assertAlmostEqual(num(cell(r, "Kruskal-Wallis H", None)), 7.988, places=3)
         self.assertAlmostEqual(p_of(cell(r, "P value", None)), 0.0184, places=4)
