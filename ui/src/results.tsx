@@ -221,6 +221,8 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
           </Show>
           <Show when={kind === "nonparam"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["mw", "Mann-Whitney (two independent groups)"], ["wilcoxon", "Wilcoxon matched pairs (paired)"], ["ks", "Kolmogorov-Smirnov (two distributions)"], ["kw", "Kruskal-Wallis with Dunn's test (three or more groups)"], ["friedman", "Friedman (repeated measures)"]]} />
+            {/* 0.4.35: exact P values where they can be had, or the approximation; explained under ? */}
+            <Show when={["mw", "wilcoxon", "ks"].includes(o().test ?? "mw")}><label>P value <Help k="exactp" /></label><Pick value={o().exactp ?? "exact"} set={v => put("exactp", v)} options={[["exact", "Exact (recommended)"], ["approx", "Approximation"]]} /></Show>
             <Brackets />
           </Show>
           <Show when={kind === "anova"}>
@@ -237,7 +239,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
           </Show>
           <Show when={kind === "correlation"}><Bayes />
             {/* 0.4.33: Spearman's P, two published ways, explained under ? */}
-            <label>Spearman's P <Help k="spearmanp" /></label><Pick value={o().spearmanp ?? "exact"} set={v => put("spearmanp", v)} options={[["exact", "Exact (recommended)"], ["t", "t approximation"]]} /></Show>
+            <label>Rank correlations' P <Help k="spearmanp" /></label><Pick value={o().spearmanp ?? "exact"} set={v => put("spearmanp", v)} options={[["exact", "Exact (recommended)"], ["t", "t approximation"]]} /></Show>
           <Show when={kind === "correlation" && t.kind !== "column"}><label>Correlate</label><Pick value={o().between ? "1" : ""} set={v => put("between", !!v)} options={[["", "X with each data set's Y"], ["1", "The data sets with each other (row by row)"]]} /></Show>
           <Show when={kind === "power"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["t2", "Unpaired t-test"], ["paired", "Paired t-test"], ["anova", "One-way ANOVA"], ["prop", "Two proportions (Cohen's h)"]]} />

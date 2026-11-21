@@ -56,7 +56,8 @@ def multit(table, ks, o):
             if test == "paired":
                 t, p = st.ttest_rel(b, a)
             elif test == "mw":
-                t, p = st.mannwhitneyu(b, a, alternative="two-sided")
+                from .groups import mw_p
+                t, p, _ = mw_p(a, b, o.get("exactp", "exact"))
             else:
                 t, p = st.ttest_ind(b, a, equal_var=test == "student")
             ma, mb = float(a.mean()), float(b.mean())

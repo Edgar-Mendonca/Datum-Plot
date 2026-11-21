@@ -316,5 +316,37 @@ class OwnTestsCheckedAgainstR(unittest.TestCase):
         self.assertAlmostEqual(float(lim[1][3]), 2.114 * rb, places=2)  # D4 = 2.114
 
 
+
+class RandomCheckFindings(unittest.TestCase):
+    """0.4.35 (full check, step 3: thousands of random data sets against R): what it found, as R gives it."""
+
+    @classmethod
+    def setUpClass(cls):
+        A.more_kinds()
+
+    def test_kolmogorov_smirnov_exact_with_ties(self):
+        a, b = [5, 7, 7, 8, 9, 9, 9, 10, 11, 12, 12], [8, 9, 10, 10, 11, 12, 12, 13, 14, 14, 15, 16]
+        r = A.run("nonparam", cols(a, b), [0, 1], {"test": "ks"})["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual(r[2], ["P value (exact)", "0.0798"])  # R's ks.test; SciPy's exact P assumes no ties
+
+    def test_mann_whitney_exact_up_to_49(self):
+        x = [4.12, 5.31, 3.87, 6.02, 5.55, 4.98, 5.73, 4.44, 6.31, 5.09, 4.76, 5.92, 3.95, 6.48, 5.27]
+        y = [5.94, 6.71, 5.02, 7.33, 6.18, 6.89, 5.46, 7.05, 6.52, 5.81, 7.48, 6.36]
+        rows = A.run("nonparam", cols(x, y), [0, 1], {"test": "mw"})["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual(rows[2], ["P value (two-tailed, exact)", "0.0009"])  # R 0.000934; the normal approximation gives 0.0013
+        self.assertIn("normal approximation", A.run("nonparam", cols(x, y), [0, 1], {"test": "mw", "exactp": "approx"})["tabs"][0]["tables"][0]["rows"][2][0])
+
+    def test_kendall_exact_up_to_49(self):
+        u = [16.8, 80.8, 38.5, 32.8, 60.2, 60.4, 12.5, 29.5, 57.8, 63.1, 51.2, 50.5, 53.4, 55.7, 86.8, 83, 11.1, 70.4, 89.7, 28, 22.8, 1.5, 12.9, 9.3, 23.7, 79.1, 60, 91, 56, 75.6, 37.9, 37.3, 17, 45.3, 25.8, 33.6, 89, 20.2, 57.9, 20.8]
+        v = [32.3, 98.8, 26.9, 65.3, 57, 41.9, 7.9, 17.7, 45.9, 95.8, 35.7, 33.9, 101.1, 113.2, 106.1, 111.8, 49.9, 40, 35.2, 35, 87.3, 6.1, 83.5, 12.8, 82.6, 50.3, 91.9, 76.8, 50.2, 28.2, 85.5, 85.4, 94.6, 108, 58, 63.3, 38.6, 21.5, 93.1, 80.3]
+        from datum import groups
+        self.assertAlmostEqual(groups.kendall_p(u, v)[1], 0.04848249004, places=9)
+
+    def test_wilcoxon_reports_the_positive_rank_sum(self):
+        a, b = [4.1, 5.2, 3.3, 6.4, 5.5, 4.6, 5.0], [6.1, 7.2, 5.9, 6.8, 7.7, 6.0, 8.1]
+        rows = A.run("nonparam", cols(a, b), [0, 1], {"test": "wilcoxon"})["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual(rows[1], ["W (sum of positive ranks of G1 − G0)", "28"])  # R's V; was the smaller sum, 0
+
+
 if __name__ == "__main__":
     unittest.main()

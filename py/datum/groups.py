@@ -268,6 +268,49 @@ def ttest(table, ks, o):
                   legend="Bars show mean and SD; stars: * P < 0.05, ** P < 0.01, *** P < 0.001.")
 
 
+# ---------- exact or approximate P values of rank tests (0.4.35, the full check against R) ----------
+def ties_in(*vs):
+    v = np.concatenate([np.asarray(x, float) for x in vs])
+    return len(np.unique(v)) < len(v)
+
+
+def mw_p(a, b, how="exact"):
+    """Mann-Whitney U (of b) and two-tailed P: exact when both groups have fewer than 50 values and there are no
+    ties (as R's wilcox.test), otherwise the normal approximation with continuity correction."""
+    exact = how == "exact" and len(a) < 50 and len(b) < 50 and not ties_in(a, b)
+    r = st.mannwhitneyu(b, a, alternative="two-sided", method="exact" if exact else "asymptotic")
+    return float(r.statistic), float(r.pvalue), exact
+
+
+def ks_p(a, b, how="exact"):
+    """Two-sample Kolmogorov-Smirnov D and P: exact, also with ties (counting the orderings that keep the
+    distributions within D at every change of value, as R ≥ 4.2), when m·n < 10 000; otherwise asymptotic."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    m, n = len(a), len(b)
+    D = float(st.ks_2samp(a, b).statistic)
+    if how != "exact" or m * n >= 10000:
+        return D, float(st.ks_2samp(a, b, method="asymp").pvalue), False
+    z = np.sort(np.concatenate([a, b]))
+    dmn = round(D * m * n)
+    edge = [k == m + n or z[k - 1] != z[k] for k in range(m + n + 1)]  # a boundary after k values
+    row = [1] + [0] * n
+    for j in range(1, n + 1):
+        row[j] = row[j - 1] if (not edge[j] or j * m < dmn) else 0
+    for i in range(1, m + 1):
+        row[0] = row[0] if (not edge[i] or i * n < dmn) else 0
+        for j in range(1, n + 1):
+            row[j] = row[j] + row[j - 1] if (not edge[i + j] or abs(i * n - j * m) < dmn) else 0
+    return D, max(0.0, min(1.0, 1 - row[n] / math.comb(m + n, m))), True
+
+
+def kendall_p(x, y, how="exact"):
+    """Kendall's τ and P: exact for fewer than 50 pairs without ties (as R's cor.test), otherwise the normal
+    approximation with the variance corrected for ties."""
+    exact = how == "exact" and len(x) < 50 and not ties_in(x) and not ties_in(y)
+    r = st.kendalltau(x, y, method="exact" if exact else "asymptotic")
+    return float(r.statistic), float(r.pvalue), exact
+
+
 # ---------- nonparametric tests (B5) ----------
 def brown_forsythe(groups):
     """0.4.27: the Brown-Forsythe (1974) ANOVA for unequal SDs, as R's and most programs report it: F* with k − 1 and
@@ -301,7 +344,8 @@ def dunn(groups, method="bonferroni"):
 
 
 def nonparam(table, ks, o):
-    test, alpha = o.get("test", "mw"), float(o.get("alpha", ALPHA))
+    test, alpha, how = o.get("test", "mw"), float(o.get("alpha", ALPHA)), o.get("exactp", "exact")
+    used = None
     names = [name_of(table, k) for k in ks]
     vals = []
     for k in ks:
@@ -316,29 +360,32 @@ def nonparam(table, ks, o):
             raise ValueError("Choose two data sets to compare.")
         a, b = vals[0], vals[1]
         if test == "mw":
-            r = st.mannwhitneyu(b, a, alternative="two-sided")
+            U, p, used = mw_p(a, b, how)
             hl = float(np.median(np.subtract.outer(b, a)))
-            rows = [["Test", "Mann-Whitney U"], ["U", g(float(r.statistic))], ["P value (two-tailed)", pv(r.pvalue)], ["Significant?", f"{'Yes' if r.pvalue < alpha else 'No'} ({stars(r.pvalue)})"],
+            rows = [["Test", "Mann-Whitney U"], ["U", g(U)], [f"P value (two-tailed, {'exact' if used else 'normal approximation'})", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"],
                     [f"Hodges-Lehmann difference ({names[1]} − {names[0]})", g(hl)]]
-            p, what = float(r.pvalue), f"the distributions of {names[0]} and {names[1]}"
+            what = f"the distributions of {names[0]} and {names[1]}"
         elif test == "ks":
-            r = st.ks_2samp(a, b)
-            rows = [["Test", "Kolmogorov-Smirnov (two samples)"], ["D", g(float(r.statistic), 4)], ["P value", pv(r.pvalue)], ["Significant?", f"{'Yes' if r.pvalue < alpha else 'No'} ({stars(r.pvalue)})"]]
-            p, what = float(r.pvalue), f"the cumulative distributions of {names[0]} and {names[1]}"
+            D, p, used = ks_p(a, b, how)  # 0.4.35: exact also with ties (SciPy's exact P assumes none)
+            rows = [["Test", "Kolmogorov-Smirnov (two samples)"], ["D", g(D, 4)], [f"P value ({'exact' if used else 'asymptotic'})", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"]]
+            what = f"the cumulative distributions of {names[0]} and {names[1]}"
         else:
             x, y = pairs_of(table, ks[0], ks[1])
             if len(x) < 2:
                 raise ValueError("The Wilcoxon test needs at least two rows with values in both data sets.")
             d = y - x
-            exact = len(np.unique(np.abs(d))) == len(d) and np.all(d != 0) and len(d) <= 50
-            r = st.wilcoxon(y, x, correction=True, method="exact" if exact else "approx")  # as R: normal approximation with ties
-            rows = [["Test", "Wilcoxon matched-pairs signed rank"], ["W (sum of positive ranks)", g(float(r.statistic))], ["P value (two-tailed)", pv(r.pvalue)],
+            exact = how == "exact" and len(np.unique(np.abs(d))) == len(d) and np.all(d != 0) and len(d) < 50  # as R: exact below 50 pairs without ties or zeros
+            r = st.wilcoxon(y, x, correction=True, method="exact" if exact else "approx")
+            used = exact
+            nz = d[d != 0]
+            wplus = float(st.rankdata(np.abs(nz))[nz > 0].sum())  # 0.4.35: SciPy's statistic is the smaller sum, not the positive one
+            rows = [["Test", "Wilcoxon matched-pairs signed rank"], [f"W (sum of positive ranks of {names[1]} − {names[0]})", g(wplus)], [f"P value (two-tailed, {'exact' if exact else 'normal approximation'})", pv(r.pvalue)],
                     ["Significant?", f"{'Yes' if r.pvalue < alpha else 'No'} ({stars(r.pvalue)})"], ["Median of differences", g(np.median(y - x))], ["Number of pairs", g(len(x))]]
             p, what = float(r.pvalue), f"the paired values of {names[0]} and {names[1]}"
         brackets.append([ks[0], ks[1], p])
         tabs.insert(0, {"title": f"{names[0]} vs {names[1]}", "columns": ["", "Value"], "rows": rows})
         ans = f"{'There is' if p < alpha else 'No'} evidence that {what} differ ({p_text(p)})."
-        meth = {"mw": "a two-tailed Mann-Whitney test", "ks": "a two-sample Kolmogorov-Smirnov test", "wilcoxon": "a two-tailed Wilcoxon matched-pairs signed rank test"}[test]
+        meth = {"mw": "a two-tailed Mann-Whitney test", "ks": "a two-sample Kolmogorov-Smirnov test", "wilcoxon": "a two-tailed Wilcoxon matched-pairs signed rank test"}[test] + (" (exact P)" if used else " (P from the " + ("asymptotic distribution)" if test == "ks" else "normal approximation)"))
     else:
         if len(ks) < 2:
             raise ValueError("Choose at least two data sets.")
@@ -712,7 +759,8 @@ def correlation(table, ks, o):
         rs = float(st.spearmanr(x, y).statistic)
         ps, sp_how = spearman_p(x, y, rs, o.get("spearmanp", "exact"))
         used.add(sp_how)
-        tau, pk = st.kendalltau(x, y)
+        tau, pk, k_ex = kendall_p(x, y, o.get("spearmanp", "exact"))
+        used.add("exact" if k_ex else "t")
         bf = bayes.corr_bf(float(r), n) if want_bf else None
         rows.append([f"{na} vs {nb}", g(r, 4), ci_text(lo, hi), p_text(p), f"{g(rs, 4)} ({p_text(ps)})", f"{g(tau, 4)} ({p_text(pk)})", g(n)] + ([bayes.text(bf), bayes.words(bf).replace("difference", "correlation")] if want_bf else []))
         ans.append(f"{na} vs {nb}: r = {g(r, 4)} (95% CI {g(lo, 3)} to {g(hi, 3)}), {p_text(p)}" + (f"; BF₁₀ = {bayes.text(bf)}." if want_bf else "."))
@@ -725,7 +773,7 @@ def correlation(table, ks, o):
         tabs.append({"title": "Correlation matrix (Pearson r)", "columns": ["", *[name_of(table, k) for k in ks]], "rows": mat})
         del cols
     return result("Correlation", " ".join(ans) or "Not enough pairs.", [{"name": "Summary", "tables": tabs}], [(None, "Correlation measures how two variables move together; it does not show that one causes the other.")], plots=plots,
-                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank (P {'exact (algorithm AS 89)' if used == {'exact'} else 'from the t distribution' if used == {'t'} else 'exact (AS 89) where there are no ties, otherwise from the t distribution'}) and Kendall's τ correlations were calculated in Datum Plot (SciPy), α = {alpha:g}." + (" Bayes factors for Pearson's r used a uniform prior on ρ (Ly, Verhagen & Wagenmakers 2016)." if want_bf else ""),
+                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank and Kendall's τ correlations (P {'exact' if used == {'exact'} else 'from the t or normal approximation' if used == {'t'} else 'exact where there are no ties, otherwise from the t or normal approximation'}) were calculated in Datum Plot (SciPy), α = {alpha:g}." + (" Bayes factors for Pearson's r used a uniform prior on ρ (Ly, Verhagen & Wagenmakers 2016)." if want_bf else ""),
                   code="from scipy import stats\nprint(stats.pearsonr(x, y), stats.spearmanr(x, y), stats.kendalltau(x, y))")
 
 
@@ -1033,7 +1081,7 @@ def roc(table, ks, o):
         q1, q2 = auc / (2 - auc), 2 * auc * auc / (1 + auc)
         se = math.sqrt((auc * (1 - auc) + (len(pos) - 1) * (q1 - auc * auc) + (len(neg) - 1) * (q2 - auc * auc)) / (len(pos) * len(neg)))
     who = "DeLong" if how == "delong" else "Hanley & McNeil"
-    p = float(U.pvalue)
+    p = mw_p(s_neg, s_pos)[1]  # 0.4.35: exact as R's wilcox.test when it can be
     j = int(np.argmax(sens[1:] - fpr[1:])) + 1
     best = cuts[j - 1] if higher else -cuts[j - 1]
     rows = [["Area under the ROC curve (AUC)", g(auc, 4), ci_text(max(0.0, auc - Z95 * se), min(1.0, auc + Z95 * se))], [f"Std. error ({who})", g(se, 3), ""],

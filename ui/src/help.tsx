@@ -96,10 +96,16 @@ export const HELP: Record<string, Topic> = {
       "log S on log N: the stress treated as the dependent variable. Common in older texts and spreadsheets; it gives a flatter line when the lives scatter.",
       "R² and P are the same either way; A and b differ. The results and the methods text name the way used."] },
   // 0.4.33: Spearman's P value
-  spearmanp: { t: "Spearman's P value", what: "Two ways to get the P value of Spearman's rank correlation. Both give the same rs; the P values differ slightly with few pairs, and agree closely with many.",
+  spearmanp: { t: "Rank correlations' P value", what: "Two ways to get the P values of Spearman's and Kendall's rank correlations. Both give the same rs and τ; the P values differ slightly with few pairs, and agree closely with many.",
     how: ["Exact (recommended): counts how often a correlation this strong would arise by chance among all orderings of the ranks (exact up to 9 pairs, a very close series approximation above; Best & Roberts, 1975). R reports this one.",
       "t approximation: treats rs like Pearson's r and uses the t distribution. Simpler; a little off with few pairs.",
-      "With tied values the exact method does not apply, so the t approximation is used, and the methods text says so."] },
+      "Kendall's τ: exact below 50 pairs, otherwise the normal approximation.",
+      "With tied values the exact methods do not apply, so the approximation is used, and the methods text says so."] },
+  // 0.4.35: exact or approximate P for the Mann-Whitney, Wilcoxon and Kolmogorov-Smirnov tests
+  exactp: { t: "Exact or approximate P value", what: "Rank tests can give their P value exactly, by counting every way the values could have fallen, or from an approximation that is close with many values.",
+    how: ["Exact (recommended): used whenever it can be (as R does): Mann-Whitney and Wilcoxon with fewer than 50 values per group and no ties; Kolmogorov-Smirnov also with ties, up to 10 000 for the product of the group sizes.",
+      "Approximation: the normal distribution (with continuity correction) for Mann-Whitney and Wilcoxon, the asymptotic distribution for Kolmogorov-Smirnov. Used automatically when the exact way does not apply.",
+      "The results say which one was used."] },
   // 0.4.32: what a Bland-Altman plot shows, and the two ways of ratios
   badiff: { t: "Differences or ratios", what: "What is compared for each pair of measurements. Use differences when the disagreement stays about the same at every size, % or ratios when it grows with the size of the values.",
     how: ["Differences (B − A): bias and limits in the units of the data.", "Differences as % of the mean: each difference divided by the mean of the pair.",
