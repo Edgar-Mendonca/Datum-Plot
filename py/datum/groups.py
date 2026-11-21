@@ -1,6 +1,7 @@
 """Comparing groups (column tables, or the data sets of any table): t-tests, nonparametric tests,
 one-way ANOVA with multiple comparisons and effect sizes, correlation, and power. Every function
 has the analysis signature (table, ks, options) and returns analysis.result(...)."""
+import functools
 import math
 from itertools import combinations
 
@@ -644,6 +645,45 @@ def posthoc(table, ks, sm_, post, mse, dfe, kind, o=None, names=None):
 
 
 # ---------- correlation (B16) ----------
+@functools.lru_cache(maxsize=None)
+def _rho_counts(n):
+    """The sum of squared rank differences over all n! orderings (n ≤ 9), sorted."""
+    from itertools import permutations
+    p = np.array(list(permutations(range(n))), dtype=np.int16)
+    return np.sort(((p - np.arange(n)) ** 2).sum(1))
+
+
+def _prho(n, s, lower):
+    """AS 89 (Best & Roberts 1975), as R's cor.test uses: P(S ≥ s), or P(S < s) when `lower`; exact for
+    n ≤ 9, an Edgeworth series above."""
+    pv = 0.0 if lower else 1.0
+    if s <= 0:
+        return pv
+    if s > n * (n * n - 1) / 3:
+        return 1 - pv
+    if n <= 9:
+        c = _rho_counts(n)
+        up = float(np.sum(c >= s))
+        return (len(c) - up if lower else up) / len(c)
+    b = 1 / n
+    x = (6 * (s - 1) * b / (n * n - 1) - 1) * math.sqrt(1 / b - 1)
+    y = x * x
+    u = x * b * (0.2274 + b * (0.2531 + 0.1745 * b) + y * (-0.0758 + b * (0.1033 + 0.3932 * b) - y * b * (0.0879 + 0.0151 * b - y * (0.0072 - 0.0831 * b + y * b * (0.0131 - 4.6e-4 * y)))))
+    pv = min(max(u / math.exp(y / 2) + st.norm.sf(x), 0.0), 1.0)
+    return 1 - pv if lower else pv
+
+
+def spearman_p(x, y, rs, how="exact"):
+    """0.4.33: Spearman's two-tailed P: exact (AS 89, R's default, when there are no ties and n ≤ 1290) or
+    from the t distribution (SciPy's; always with ties). Returns (P, the method used)."""
+    n = len(x)
+    if how == "exact" and n <= 1290 and len(set(x)) == n and len(set(y)) == n:
+        q = (n ** 3 - n) * (1 - rs) / 6
+        p = _prho(n, round(q), False) if q > (n ** 3 - n) / 6 else _prho(n, round(q) + 2, True)
+        return min(2 * p, 1.0), "exact"
+    return float(st.spearmanr(x, y).pvalue), "t"
+
+
 def correlation(table, ks, o):
     alpha = float(o.get("alpha", ALPHA))
     want_bf = bool(o.get("bayes"))
@@ -661,7 +701,7 @@ def correlation(table, ks, o):
         for a, b in combinations(ks, 2):
             x, y = pairs_of(table, a, b)
             pairs.append((name_of(table, a), name_of(table, b), x, y))
-    rows, plots, ans = [], [], []
+    rows, plots, ans, used = [], [], [], set()
     for i, (na, nb, x, y) in enumerate(pairs):
         n = len(x)
         if n < 3:
@@ -669,7 +709,9 @@ def correlation(table, ks, o):
         r, p = st.pearsonr(x, y)
         z, se = math.atanh(min(max(r, -0.999999), 0.999999)), 1 / math.sqrt(n - 3) if n > 3 else float("inf")
         lo, hi = math.tanh(z - Z95 * se), math.tanh(z + Z95 * se)
-        rs, ps = st.spearmanr(x, y)
+        rs = float(st.spearmanr(x, y).statistic)
+        ps, sp_how = spearman_p(x, y, rs, o.get("spearmanp", "exact"))
+        used.add(sp_how)
         tau, pk = st.kendalltau(x, y)
         bf = bayes.corr_bf(float(r), n) if want_bf else None
         rows.append([f"{na} vs {nb}", g(r, 4), ci_text(lo, hi), p_text(p), f"{g(rs, 4)} ({p_text(ps)})", f"{g(tau, 4)} ({p_text(pk)})", g(n)] + ([bayes.text(bf), bayes.words(bf).replace("difference", "correlation")] if want_bf else []))
@@ -683,7 +725,7 @@ def correlation(table, ks, o):
         tabs.append({"title": "Correlation matrix (Pearson r)", "columns": ["", *[name_of(table, k) for k in ks]], "rows": mat})
         del cols
     return result("Correlation", " ".join(ans) or "Not enough pairs.", [{"name": "Summary", "tables": tabs}], [(None, "Correlation measures how two variables move together; it does not show that one causes the other.")], plots=plots,
-                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank and Kendall's τ correlations were calculated in Datum Plot (SciPy), α = {alpha:g}." + (" Bayes factors for Pearson's r used a uniform prior on ρ (Ly, Verhagen & Wagenmakers 2016)." if want_bf else ""),
+                  methods=f"Pearson's r (with a 95% CI from Fisher's z), Spearman's rank (P {'exact (algorithm AS 89)' if used == {'exact'} else 'from the t distribution' if used == {'t'} else 'exact (AS 89) where there are no ties, otherwise from the t distribution'}) and Kendall's τ correlations were calculated in Datum Plot (SciPy), α = {alpha:g}." + (" Bayes factors for Pearson's r used a uniform prior on ρ (Ly, Verhagen & Wagenmakers 2016)." if want_bf else ""),
                   code="from scipy import stats\nprint(stats.pearsonr(x, y), stats.spearmanr(x, y), stats.kendalltau(x, y))")
 
 

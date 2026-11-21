@@ -16,7 +16,7 @@ from .groups import p_text
 
 TESTS = {"welch": "Welch's unpaired t-test", "student": "unpaired t-test (equal SDs)", "paired": "paired t-test", "mw": "Mann-Whitney test"}
 METHODS = {"fdr_bh": ("Benjamini-Hochberg false discovery rate", "q"), "fdr_tsbky": ("two-stage step-up (Benjamini, Krieger and Yekutieli) false discovery rate", "q"),
-           "holm-sidak": ("Holm-Šidák", "adjusted P"), "bonferroni": ("Bonferroni", "adjusted P"), "none": ("no correction", "P")}
+           "holm-sidak": ("Holm-Šidák", "adjusted P"), "bonferroni": ("Bonferroni", "adjusted P"), "none": ("no correction", "P (not adjusted)")}
 SHOWN = 2000  # rows listed on the results sheet (all go into the new table)
 
 
@@ -102,7 +102,7 @@ def multit(table, ks, o):
            "rowTitles": [x[0] for x in rows], "sets": [{"title": "Discoveries", "entry": "rep", "reps": 1}, {"title": "Not discoveries", "entry": "rep", "reps": 1}],
            "cols": [[float(v) for v in xs], [y if h else None for y, h in zip(ys, hits)], [None if h else y for y, h in zip(ys, hits)]]}
     summary = [["Rows tested", str(n)], ["Rows not tested (fewer than two values, or no variation)", str(skipped)], ["Test", TESTS.get(test, TESTS["welch"])],
-               ["Correction", mname], [f"Threshold ({qname})", g(q)], ["Discoveries", f"{sum(hits)} ({up} higher in {nb}, {down} lower)"]]
+               ["Correction", mname], [f"Threshold ({qname.split(' (')[0]})", g(q)], ["Discoveries", f"{sum(hits)} ({up} higher in {nb}, {down} lower)"]]
     checks = [(None, f"{n} rows were tested{f'; {skipped} had too few values or no variation and were left out' if skipped else ''}.")]
     if useFC is False and o.get("x", "log2") == "log2":
         checks.append((None, "Fold changes need positive means in every row, so the volcano plot shows differences instead."))

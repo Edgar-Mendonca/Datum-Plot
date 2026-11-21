@@ -90,6 +90,11 @@ export const HELP: Record<string, Topic> = {
     how: ["Hover a point for its values; right-click it to exclude it or format its data set.", "Double-click an axis, the legend or the data to format it; double-click a note to edit its text.", "Click a note to select it, drag to move it, Delete to remove it.", "Zoom and Pan (Format tab or right-click): zoom to a box, pan by dragging, zoom out, reset the axes. Ctrl+wheel zooms the view only."] },
   results: { t: "Results sheet", what: "The result of one analysis, linked to its table: tables you can copy, small plots, and on the right the answer in one sentence, checks of the assumptions, methods text and a figure legend.",
     how: ["The tabs (Summary, Details…) hold the tables; Copy puts one on the clipboard for a spreadsheet or a document.", "“Show on” draws the fit on a graph.", "Change… reopens the options; Python code shows the same calculation in Python."] },
+  // 0.4.33: Spearman's P value
+  spearmanp: { t: "Spearman's P value", what: "Two ways to get the P value of Spearman's rank correlation. Both give the same rs; the P values differ slightly with few pairs, and agree closely with many.",
+    how: ["Exact (recommended): counts how often a correlation this strong would arise by chance among all orderings of the ranks (exact up to 9 pairs, a very close series approximation above; Best & Roberts, 1975). R reports this one.",
+      "t approximation: treats rs like Pearson's r and uses the t distribution. Simpler; a little off with few pairs.",
+      "With tied values the exact method does not apply, so the t approximation is used, and the methods text says so."] },
   // 0.4.32: what a Bland-Altman plot shows, and the two ways of ratios
   badiff: { t: "Differences or ratios", what: "What is compared for each pair of measurements. Use differences when the disagreement stays about the same at every size, % or ratios when it grows with the size of the values.",
     how: ["Differences (B − A): bias and limits in the units of the data.", "Differences as % of the mean: each difference divided by the mean of the pair.",

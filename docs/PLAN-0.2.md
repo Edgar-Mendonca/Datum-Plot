@@ -270,6 +270,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | C14 | Four stars (P ≤ 0.0001) as a choice; ≤ thresholds (#69) | ✅ 0.4.25 |
 | C15 | ROC: the AUC's CI by DeLong (default) or Hanley & McNeil, with a ? | ✅ 0.4.31 |
 | C16 | Bland-Altman ratios from logs (recommended) or the plain mean, with a ? | ✅ 0.4.32 |
+| C17 | Spearman's P exact (AS 89, default) or from the t distribution, with a ? | ✅ 0.4.33 |
 | A27 | Ctrl+T: Paste Transposed (#70) | ✅ 0.4.25 |
 | B43 | Brown-Forsythe ANOVA as most programs report it, and Mehrotra's version; ? explaining each one-way ANOVA | ✅ 0.4.27 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
@@ -467,6 +468,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.33** ✅ | Full check, step 2a: column statistics, Grubbs, Holm-Šidák, unbalanced two-way ANOVA, the Geisser-Greenhouse correction (all three designs), multiple t-tests, correlation matrix, Kendall, weighted kappa and its SE, McNemar, Bowker, power, parts of whole matched R; Spearman's P exact or t (C17) |
 | **0.4.32** ✅ | Full check, step 1: 1/Y² weighting fixed (prediction band, comparing lines, weighted sums in curve fits, global fits), your own equations that overflow while searching now fit, Bland-Altman ratios two ways (C16); Friedman, the diagnostic table, Savitzky-Golay and LOWESS confirmed against R |
 | **0.4.31** ✅ | The ROC curve's AUC confidence interval by DeLong (default) or Hanley & McNeil, with a ? (C15) |
 | **0.4.30** ✅ | Hardening: materials, quality and signals checked; every analysis on awkward data; graphs equal results; 20 000 dots per group drawn in about a second |

@@ -37,7 +37,7 @@ const DEFAULTS: Record<string, Record<string, any>> = {
   threeway: { rowname: "", bname: "", cname: "", alpha: 0.05 }, ancova: { alpha: 0.05 }, agreement: { weights: "none" }, bootstrap: { stat: "mean", n: 9999 },
   multit: { test: "welch", method: "fdr_bh", q: 0.05, x: "log2", label: 10 },
   parts: {}, blandaltman: { diff: "diff" }, roc: { direction: "higher", aucci: "delong" }, multireg: { model: "linear", y: 0, alpha: 0.05 }, pca: { scale: true }, survival: { alpha: 0.05 }, nested: { alpha: 0.05 }, peaks: { baseline: "line", order: 2, direction: "up", prominence: 10, fit: "none" }, signal: { op: "fft", low: "", high: "", order: 4, n: "" }, thermal: { mode: "dsc", rate: 10, direction: "down", baseline: "line", prominence: 10 }, sn: { runout: "", at: "1e6, 1e7", reversals: false }, surface: { model: "quad", alpha: 0.05 }, cluster: { method: "ward", k: 3, scale: true }, contingency: { yates: false, diagnostic: false, alpha: 0.05 },
-  anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, correlation: { between: false, bayes: true }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
+  anova: { anova: "ordinary", posthoc: "tukey", trend: false, alpha: 0.05, brackets: "sig", ptext: "stars", bayes: true, prior: "medium" }, correlation: { between: false, bayes: true, spearmanp: "exact" }, power: { test: "t2", effect: "", power: 0.8, n: "", alpha: 0.05 },
   transform: { x: "none", kx: 1, y: "none", ky: 1, baseline: "none", base: 0, normalize: "none", means: false }, check: {}, frequency: { bins: "auto", width: "", y: "count", cumulative: false },
   auc: { baseline: "zero", base: 0, label: true }, smooth: { method: "sg", window: 7, order: 2, frac: 0.3, mode: "smooth", label: false }, tensile: { strain: "abs", offset: 0.2, label: true }, weibull: { method: "mle" },
 };
@@ -233,7 +233,9 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             </Show>
             <Show when={tab() === "graph"}><Brackets /><label>Residuals</label><Check label="Residual plots on the results sheet (residuals, spread, normal QQ)" value={!!o().resplots} set={v => put("resplots", v)} /></Show>
           </Show>
-          <Show when={kind === "correlation"}><Bayes /></Show>
+          <Show when={kind === "correlation"}><Bayes />
+            {/* 0.4.33: Spearman's P, two published ways, explained under ? */}
+            <label>Spearman's P <Help k="spearmanp" /></label><Pick value={o().spearmanp ?? "exact"} set={v => put("spearmanp", v)} options={[["exact", "Exact (recommended)"], ["t", "t approximation"]]} /></Show>
           <Show when={kind === "correlation" && t.kind !== "column"}><label>Correlate</label><Pick value={o().between ? "1" : ""} set={v => put("between", !!v)} options={[["", "X with each data set's Y"], ["1", "The data sets with each other (row by row)"]]} /></Show>
           <Show when={kind === "power"}>
             <label>Test</label><Pick value={o().test} set={v => put("test", v)} options={[["t2", "Unpaired t-test"], ["paired", "Paired t-test"], ["anova", "One-way ANOVA"], ["prop", "Two proportions (Cohen's h)"]]} />

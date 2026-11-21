@@ -213,5 +213,54 @@ class NotYetChecked(unittest.TestCase):
         np.testing.assert_allclose(out, [0.2454099, 0.8985512, 1.5364304, 2.0204124, 2.3347612, 2.4971105, 2.4822631, 2.3284112, 2.0097921, 1.5000159, 0.9358233, 0.3742738], atol=1e-6)
 
 
+
+class OwnTestsCheckedAgainstR(unittest.TestCase):
+    """0.4.33: analyses that had only our own tests, now against R 4.x (cor.test, pairwise.t.test with a
+    Holm-Šidák step-down by hand, e1071's skewness/kurtosis type 2, the Fleiss-Cohen-Everitt SE of kappa,
+    power.t.test / power.anova.test)."""
+
+    @classmethod
+    def setUpClass(cls):
+        A.more_kinds()
+
+    def test_spearman_exact_p_and_t(self):
+        x, y = [3.1, 4.7, 2.2, 6.0, 5.5, 7.9, 1.8, 6.6, 4.1, 8.8, 3.6, 7.0], [2.0, 3.9, 3.1, 5.2, 6.8, 6.1, 1.1, 4.4, 5.0, 7.7, 2.5, 8.3]
+        from datum import groups
+        import scipy.stats as st
+        rs = float(st.spearmanr(x, y).statistic)
+        self.assertAlmostEqual(groups.spearman_p(x, y, rs)[0], 0.0004433022, places=9)
+        self.assertAlmostEqual(groups.spearman_p(list(range(1, 10)), [2, 1, 4, 3, 6, 5, 8, 9, 7], 0.9)[0], 0.002028219, places=8)  # exact (n ≤ 9)
+        self.assertEqual(groups.spearman_p(x, y, rs, "t")[1], "t")
+        self.assertEqual(groups.spearman_p([1, 2, 2, 3, 4], [1, 3, 2, 4, 5], 0.97)[1], "t")  # ties: the exact method does not apply
+        r = A.run("correlation", cols(x, y), [0, 1], {})
+        self.assertIn("P = 0.0004", r["tabs"][0]["tables"][0]["rows"][0][4])
+        self.assertIn("AS 89", r["methods"])
+
+    def test_holm_sidak(self):
+        gs = [[9.8, 10.4, 11.1, 9.2, 10.0], [11.5, 12.2, 10.9, 12.8, 11.7, 12.0], [10.6, 11.0, 9.9, 10.8], [12.9, 13.4, 12.1, 13.8, 12.6]]
+        r = A.run("anova", cols(*gs), [0, 1, 2, 3], {"posthoc": "holm", "vs": "all"})
+        np.testing.assert_allclose([b[2] for b in r["brackets"]], [0.001407966, 0.2849486511, 1.60371415e-05, 0.02110034303, 0.02237234741, 0.0002176496067], rtol=1e-6)
+
+    def test_skewness_kurtosis_and_grubbs(self):
+        v = [4.2, 5.1, 3.9, 6.3, 4.8, 5.5, 12.7, 4.4, 5.0, 4.6]
+        r = A.run("describe", cols(v), [0], {})
+        self.assertEqual((cell(r, "Skewness", None), cell(r, "Kurtosis", None)), ("2.7677", "8.12"))
+        self.assertEqual(A.run("outliers", cols(v), [0], {})["tabs"][0]["tables"][0]["rows"][0][1], "12.7")
+
+    def test_weighted_kappa_and_its_error(self):
+        K = [[22, 5, 2], [4, 18, 6], [1, 3, 19]]
+        t = cols(*[[K[r][k] for r in range(3)] for k in range(3)], kind="grouped")
+        for w, kap, se in (("none", "0.6064", "0.0736"), ("linear", "0.6615", "0.0687"), ("quadratic", "0.717", "0.0714")):
+            rows = A.run("agreement", t, [0, 1, 2], {"weights": w})["tabs"][0]["tables"][0]["rows"]
+            self.assertEqual((rows[1][1], rows[2][1]), (kap, se))
+
+    def test_power(self):
+        t = cols([1, 2, 3], [2, 3, 4], [1, 2, 3], [3, 4, 5])
+        for o, want in (({"test": "t2", "effect": 0.6, "power": 0.8}, "n = 45 per group"), ({"test": "t2", "effect": 0.6, "n": 20}, "45.6%"),
+                        ({"test": "paired", "effect": 0.5, "power": 0.9}, "n = 44 pairs"), ({"test": "anova", "effect": 0.25, "power": 0.8}, "n = 45 per group"),
+                        ({"test": "prop", "effect": 0.3, "power": 0.8}, "n = 175 per group")):
+            self.assertIn(want, A.run("power", t, [0, 1, 2, 3], o)["answer"])
+
+
 if __name__ == "__main__":
     unittest.main()

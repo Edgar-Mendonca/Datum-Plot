@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.33 — 2026-11-21
+
+Full check, step 2 (first part): the statistics that only our own tests covered, now compared with R.
+
+Column statistics, Grubbs' outliers, the Holm-Šidák correction, two-way ANOVA with unequal groups, the Geisser-Greenhouse correction for repeated measures (rows, data sets or both), multiple t-tests with each correction, the correlation matrix, Kendall's τ, weighted kappa and its standard error, McNemar's and Bowker's tests, power and sample size, and the confidence intervals of parts of a whole all matched R.
+
+**New**
+- Spearman's correlation: the P value exact (the default, as R gives it) or from the t distribution, with a ? that explains both. The two differ a little with few pairs (for example 0.026 and 0.024 with 20).
+
+**Fixes**
+- Multiple t-tests without a correction no longer show two columns both called "P".
+
 ## 0.4.32 — 2026-11-21
 
 Full check, step 1: the analyses that had not been checked against an independent reference.

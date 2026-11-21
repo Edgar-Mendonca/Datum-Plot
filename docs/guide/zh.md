@@ -169,7 +169,7 @@ Analyze 选项卡的其他组可以直接启动一项分析：**Statistics**（�
 
 - **统计：** 描述性统计、正态性检验、离群值、频数分布、占总量的比例、均值/中位数/标准差的 Bootstrap 置信区间。
 - **组间比较：** t 检验（非配对、Welch、配对）、非参数检验、带多重比较的单因素和双因素方差分析、重复测量和混合效应模型、带错误发现率校正的多重 t 检验和火山图、嵌套 t 检验和嵌套方差分析、效应量、检验效能、三因素方差分析、协方差分析（ANCOVA，在控制协变量后比较各组）。t 检验、单因素方差分析和相关分析还给出 **Bayes factor**（贝叶斯因子，BF₁₀）：有差异时数据出现的可能性是无差异时的多少倍；与 P 值不同，它也能显示支持“无差异”的证据。在单因素和双因素方差分析中，窗口的 **Comparisons**（比较）部分决定比较什么：双因素方差分析可选 **the data sets within each row**（每行内的数据集）、**the rows within each data set**（每个数据集内的行，即跨行比较）、**every cell with every other**（所有单元格两两比较）或任一因素的均值（主效应）；**How many**（比较数量）可选每一对、每组与对照比较或仅比较您选择的配对。下方的表格小图为每个比较画一条线，并将对照填充显示；比较的括号会画在图表上。
-- **相关关系：** 相关分析、Bland-Altman 方法比较（差值、百分比或比值；比值最好用对数法）、ROC 曲线（AUC 的置信区间可在 **CI of the AUC**（AUC 置信区间）中选择 DeLong 法或 Hanley & McNeil 法）、列联表（卡方检验、Fisher 精确检验、相对危险度、比值比）、配对评定的一致性（Cohen kappa、McNemar 检验和 Bowker 检验）。
+- **相关关系：** 相关分析、Bland-Altman 方法比较（差值、百分比或比值；比值最好用对数法）、Spearman 的 P 值可选精确法或 t 近似（**Spearman's P**）、ROC 曲线（AUC 的置信区间可在 **CI of the AUC**（AUC 置信区间）中选择 DeLong 法或 Hanley & McNeil 法）、列联表（卡方检验、Fisher 精确检验、相对危险度、比值比）、配对评定的一致性（Cohen kappa、McNemar 检验和 Bowker 检验）。
 - **回归与拟合：** 线性回归、使用模型库或自定义方程的曲线拟合、**IC50 / EC50**（剂量反应曲线：每条曲线的 IC50 或 EC50 及其 95% CI、Hill 斜率和 pIC50；可归一化为 0–100 %；以及各化合物的 IC50 是否不同、相差多少）、全局拟合与模型比较、插值、曲线下面积、平滑、多元回归、logistic 回归和 Poisson 回归、主成分分析与聚类、曲面拟合、平滑样条。
 - **生存分析：** Kaplan-Meier 曲线、log-rank 检验和风险比。
 - **信号与光谱：** 寻峰，Gaussian、Lorentzian 和 Voigt 峰拟合，傅里叶频谱和滤波，以及频率随时间的变化：**小波尺度图**（wavelet scalogram）或**时频谱图**（spectrogram）（Signals › Operation），即时间对频率的热图，并把每个时刻最强的频率列成可绘图的表格。
