@@ -575,7 +575,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - **0.4.32** (released after CI green; installer, three guides, SHA256SUMS) (full check, step 1; C16): as above. Tests: `test_analysis.NotYetChecked` (seven, values from R; four fail on 0.4.31).
 - **0.4.33** (released after CI green; installer, three guides, SHA256SUMS) (full check, step 2a; C17): as above. Tests: `test_analysis.OwnTestsCheckedAgainstR` (five, values from R).
 - **0.4.34** (released after CI green; installer, three guides, SHA256SUMS) (full check, steps 2b–2c; C18): as above. Tests: `test_analysis.OwnTestsCheckedAgainstR` (seven more; the area test fails on 0.4.33).
-- **0.4.35** (full check, step 3; C19): as above. Tests: `test_analysis.RandomCheckFindings` (six; values from R; each fails on 0.4.34).
+- **0.4.35** (released after CI green; installer, three guides, SHA256SUMS) (full check, step 3; C19): as above. Tests: `test_analysis.RandomCheckFindings` (six; values from R; each fails on 0.4.34).
 ---
 
 ## 5. Known limits and next steps
