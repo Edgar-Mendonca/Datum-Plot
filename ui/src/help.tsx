@@ -90,6 +90,12 @@ export const HELP: Record<string, Topic> = {
     how: ["Hover a point for its values; right-click it to exclude it or format its data set.", "Double-click an axis, the legend or the data to format it; double-click a note to edit its text.", "Click a note to select it, drag to move it, Delete to remove it.", "Zoom and Pan (Format tab or right-click): zoom to a box, pan by dragging, zoom out, reset the axes. Ctrl+wheel zooms the view only."] },
   results: { t: "Results sheet", what: "The result of one analysis, linked to its table: tables you can copy, small plots, and on the right the answer in one sentence, checks of the assumptions, methods text and a figure legend.",
     how: ["The tabs (Summary, Details…) hold the tables; Copy puts one on the clipboard for a spreadsheet or a document.", "“Show on” draws the fit on a graph.", "Change… reopens the options; Python code shows the same calculation in Python."] },
+  // 0.4.32: what a Bland-Altman plot shows, and the two ways of ratios
+  badiff: { t: "Differences or ratios", what: "What is compared for each pair of measurements. Use differences when the disagreement stays about the same at every size, % or ratios when it grows with the size of the values.",
+    how: ["Differences (B − A): bias and limits in the units of the data.", "Differences as % of the mean: each difference divided by the mean of the pair.",
+      "Ratios, from logs (recommended): takes the logarithm of each ratio, works out the mean and limits, then turns them back into ratios (Bland & Altman, 1999). The mean is a geometric mean, and the limits are not symmetrical around it, as ratios should be.",
+      "Ratios, plain mean: the mean and SD of the ratios themselves. Simpler; gives nearly the same answer when the ratios are close to 1, and less sensible limits when they spread widely.",
+      "The results and the methods text say which was used."] },
   // 0.4.31: the ROC curve's AUC confidence interval
   aucci: { t: "Confidence interval of the AUC", what: "How sure the area under the ROC curve is. Both methods give the same AUC; they estimate its standard error differently, so the 95% CI differs slightly (usually in the third decimal).",
     how: ["DeLong (recommended): works out the standard error from the data themselves, without assuming a shape for the two groups' values (DeLong, DeLong & Clarke-Pearson, 1988). The usual choice today, and what R's pROC reports.",

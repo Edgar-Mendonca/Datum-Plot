@@ -160,7 +160,7 @@ export const analysisDialog = (kind: string, t: Table | undefined, existing?: An
             <label>Volcano X axis</label><Pick value={o().x} set={v => put("x", v)} options={[["log2", "log₂ fold change"], ["diff", "Difference of the means"]]} />
             <label>Label</label><span class="inline"><input type="number" min="0" max="100" style={{ width: "60px" }} value={o().label} onChange={e => put("label", +e.currentTarget.value)} /> discoveries with the smallest P values</span>
           </Show>
-          <Show when={kind === "blandaltman"}><label>Plot</label><Pick value={o().diff} set={v => put("diff", v)} options={[["diff", "Differences (B − A)"], ["pct", "Differences as % of the mean"], ["ratio", "Ratios (B / A)"]]} />
+          <Show when={kind === "blandaltman"}><label>Plot <Help k="badiff" /></label><Pick value={o().diff} set={v => put("diff", v)} options={[["diff", "Differences (B − A)"], ["pct", "Differences as % of the mean"], ["logratio", "Ratios (B / A), from logs (recommended)"], ["ratio", "Ratios (B / A), plain mean"]]} />
             <label /><p class="muted">The first two data sets are the two methods; each row is one item measured by both.</p></Show>
           <Show when={kind === "roc"}><label>Positive when</label><Pick value={o().direction} set={v => put("direction", v)} options={[["higher", "The value is high"], ["lower", "The value is low"]]} />
             {/* 0.4.31: the AUC's confidence interval, two published methods, explained under ? */}

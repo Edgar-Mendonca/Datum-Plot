@@ -922,24 +922,33 @@ def blandaltman(table, ks, o):
         raise ValueError("Bland-Altman needs at least three rows measured by both methods.")
     mode = o.get("diff", "diff")
     m = (x + y) / 2
-    d = (y - x) if mode == "diff" else 100 * (y - x) / m if mode == "pct" else y / x
+    if mode in ("ratio", "logratio") and (np.any(x <= 0) or np.any(y <= 0)):
+        raise ValueError("Ratios need values above zero in both data sets.")
+    # 0.4.32: ratios two ways: from logs (Bland & Altman 1999, the default) or the plain mean of the ratios
+    d = (y - x) if mode == "diff" else 100 * (y - x) / m if mode == "pct" else np.log(y / x) if mode == "logratio" else y / x
     n, bias, sd = len(d), float(d.mean()), float(d.std(ddof=1))
     t = st.t.ppf(0.975, n - 1)
     lo, hi = bias - Z95 * sd, bias + Z95 * sd
     se_b, se_l = sd / math.sqrt(n), sd * math.sqrt(3 / n)
-    unit = {"diff": "", "pct": " %", "ratio": ""}[mode]
-    what = {"diff": f"{nb} − {na}", "pct": f"({nb} − {na}) / mean × 100", "ratio": f"{nb} / {na}"}[mode]
+    unit = {"diff": "", "pct": " %", "ratio": "", "logratio": ""}[mode]
+    what = {"diff": f"{nb} − {na}", "pct": f"({nb} − {na}) / mean × 100", "ratio": f"{nb} / {na}", "logratio": f"{nb} / {na}"}[mode]
     reg = st.linregress(m, d)
-    rows = [["Bias (mean difference)", g(bias), ci_text(bias - t * se_b, bias + t * se_b)], ["SD of the differences", g(sd), ""],
-            ["Lower limit of agreement (bias − 1.96 SD)", g(lo), ci_text(lo - t * se_l, lo + t * se_l)], ["Upper limit of agreement (bias + 1.96 SD)", g(hi), ci_text(hi - t * se_l, hi + t * se_l)],
-            ["Slope of difference against mean", g(reg.slope, 4), p_text(reg.pvalue)], ["Number of pairs", g(n), ""]]
+    tr = np.exp if mode == "logratio" else (lambda v: v)
+    bias_t, lo_t, hi_t = float(tr(bias)), float(tr(lo)), float(tr(hi))
+    ci = lambda a, b: ci_text(float(tr(a)), float(tr(b)))
+    name = {"diff": ("Bias (mean difference)", "SD of the differences", "bias"), "pct": ("Bias (mean difference, %)", "SD of the differences (%)", "bias"),
+            "ratio": ("Mean ratio", "SD of the ratios", "mean"), "logratio": ("Geometric mean ratio", "SD of the log ratios", "from logs: mean")}[mode]
+    rows = [[name[0], g(bias_t), ci(bias - t * se_b, bias + t * se_b)], [name[1], g(sd), ""],
+            [f"Lower limit of agreement ({name[2]} − 1.96 SD)", g(lo_t), ci(lo - t * se_l, lo + t * se_l)], [f"Upper limit of agreement ({name[2]} + 1.96 SD)", g(hi_t), ci(hi - t * se_l, hi + t * se_l)],
+            ["Slope of difference against mean" if mode in ("diff", "pct") else "Slope of ratio against mean" if mode == "ratio" else "Slope of log ratio against mean", g(reg.slope, 4), p_text(reg.pvalue)], ["Number of pairs", g(n), ""]]
+    dshow = np.exp(d) if mode == "logratio" else d
     checks = [(reg.pvalue >= ALPHA, "No proportional bias: the difference does not change with the size of the values." if reg.pvalue >= ALPHA else f"Proportional bias: the difference changes with the size of the values ({p_text(reg.pvalue)}); try differences as % of the mean.")]
     if n >= 3:
         sw = st.shapiro(d)
         checks.append((sw.pvalue > ALPHA, f"The differences {'look' if sw.pvalue > ALPHA else 'do not look'} normally distributed (Shapiro-Wilk {p_text(sw.pvalue)}); the limits assume they are."))
     def draw(ax):
-        ax.plot(m, d, "o", ms=3.5, color=COLORS[0])
-        for v, ls, lab in ((bias, "-", f"Bias {g(bias, 3)}"), (lo, "--", f"−1.96 SD {g(lo, 3)}"), (hi, "--", f"+1.96 SD {g(hi, 3)}")):
+        ax.plot(m, dshow, "o", ms=3.5, color=COLORS[0])
+        for v, ls, lab in ((bias_t, "-", f"{'Bias' if mode in ('diff', 'pct') else 'Mean'} {g(bias_t, 3)}"), (lo_t, "--", f"−1.96 SD {g(lo_t, 3)}"), (hi_t, "--", f"+1.96 SD {g(hi_t, 3)}")):
             ax.axhline(v, color="#3A4655", lw=0.9, ls=ls)
             ax.text(max(m), v, f" {lab}", va="bottom", ha="right", fontsize=7, color="#3A4655")
         if mode == "diff":
@@ -947,10 +956,12 @@ def blandaltman(table, ks, o):
         ax.set_xlabel(f"Mean of {na} and {nb}"[:40]); ax.set_ylabel("Difference" if mode == "diff" else "Difference (%)" if mode == "pct" else "Ratio")
     plot = small_plot("Bland-Altman plot", draw, 95, 70)
     from .tools import new_table
-    tb = new_table(table, f"{table.get('name', 'Data')} Bland-Altman", [what], m.tolist(), [d.tolist()], x_title=f"Mean of {na} and {nb}", y_title="Difference" if mode == "diff" else "Difference (%)" if mode == "pct" else "Ratio")
-    return result("Bland-Altman", f"Bias {g(bias, 4)}{unit}; 95% limits of agreement {g(lo, 4)} to {g(hi, 4)}{unit} ({what}).", [{"name": "Summary", "tables": [{"title": f"Agreement of {na} and {nb}", "columns": ["", "Value", "95% CI"], "rows": rows}]}],
+    tb = new_table(table, f"{table.get('name', 'Data')} Bland-Altman", [what], m.tolist(), [dshow.tolist()], x_title=f"Mean of {na} and {nb}", y_title="Difference" if mode == "diff" else "Difference (%)" if mode == "pct" else "Ratio")
+    lead = {"diff": "Bias", "pct": "Bias", "ratio": "Mean ratio", "logratio": "Geometric mean ratio"}[mode]
+    how = {"diff": "", "pct": "", "ratio": ", the mean and SD of the ratios", "logratio": ", from the logarithms of the ratios, back-transformed"}[mode]
+    return result("Bland-Altman", f"{lead} {g(bias_t, 4)}{unit}; 95% limits of agreement {g(lo_t, 4)} to {g(hi_t, 4)}{unit} ({what}).", [{"name": "Summary", "tables": [{"title": f"Agreement of {na} and {nb}", "columns": ["", "Value", "95% CI"], "rows": rows}]}],
                   checks, plots=[plot], table=tb,
-                  methods=f"Agreement between {na} and {nb} was assessed by Bland-Altman analysis ({what}); limits of agreement are bias ± 1.96 SD, with 95% CIs after Bland and Altman (1999), in Datum Plot.",
+                  methods=f"Agreement between {na} and {nb} was assessed by Bland-Altman analysis ({what}{how}); limits of agreement are {'bias' if mode in ('diff', 'pct') else 'mean'} ± 1.96 SD, with 95% CIs after Bland and Altman (1999), in Datum Plot.",
                   legend="Bland-Altman plot: the solid line is the bias, dashed lines the 95% limits of agreement.",
                   code="import numpy as np\nd = b - a; m = (a + b) / 2\nbias, sd = d.mean(), d.std(ddof=1)\nprint(bias, bias - 1.96 * sd, bias + 1.96 * sd)")
 

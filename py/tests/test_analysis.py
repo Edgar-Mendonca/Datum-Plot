@@ -150,5 +150,68 @@ class Statistics(unittest.TestCase):
         self.assertEqual(A.run("outliers", xy(list(range(8)), v[:8]), [], {})["cells"], [])
 
 
+
+def cols(*groups, kind="column"):
+    n = max(len(g) for g in groups)
+    return {"kind": kind, "rows": n, "sets": [{"title": f"G{k}", "entry": "rep", "reps": 1} for k in range(len(groups))], "rowTitles": [f"R{r}" for r in range(n)],
+            "cols": [[None] * n] + [list(g) + [None] * (n - len(g)) for g in groups], "excluded": [], "xTitle": "", "yTitle": "Y"}
+
+
+class NotYetChecked(unittest.TestCase):
+    """0.4.32: the analyses that had no check against an independent reference, now against R 4.x
+    (friedman.test, lm/nls with weights = 1/y^2 and predict(weights=), anova of nested fits, lowess)."""
+
+    @classmethod
+    def setUpClass(cls):
+        A.more_kinds()
+
+    def test_friedman_with_ties(self):
+        fr = [[9, 11, 12, 9], [10, 10, 13, 8], [8, 12, 11, 9], [11, 11, 14, 10], [9, 13, 12, 9], [10, 12, 12, 11]]
+        r = A.run("nonparam", cols(*np.array(fr).T.tolist()), [0, 1, 2, 3], {"test": "friedman"})
+        self.assertAlmostEqual(num(cell(r, "Friedman statistic", None)), 13.47, places=2)
+        self.assertEqual(cell(r, "P value", None), "0.0037")
+
+    def test_diagnostic_table(self):
+        t = cols([41, 7], [9, 63], kind="grouped")
+        rows = {x[0]: x[1] for x in A.run("contingency", t, [0, 1], {"diagnostic": True})["tabs"][0]["tables"][1]["rows"]}
+        self.assertEqual([rows[k] for k in ("Sensitivity", "Specificity", "Positive predictive value", "Negative predictive value")], ["85.42%", "87.5%", "82%", "90%"])
+
+    def test_bland_altman_ratios_from_logs(self):
+        a, b = [10.2, 15.1, 22.3, 30.8, 41.0, 55.5, 63.2, 78.9], [11.0, 15.8, 23.9, 32.1, 43.9, 57.0, 68.1, 82.2]
+        r = A.run("blandaltman", cols(a, b), [0, 1], {"diff": "logratio"})
+        rows = r["tabs"][0]["tables"][0]["rows"]
+        self.assertEqual([x[1] for x in rows[:1]] + [x[1] for x in rows[2:4]], ["1.0568", "1.0186", "1.0964"])
+        self.assertIn("logarithms", r["methods"])
+        plain = A.run("blandaltman", cols(a, b), [0, 1], {"diff": "ratio"})["tabs"][0]["tables"][0]["rows"][0]
+        self.assertEqual(plain[0], "Mean ratio")
+
+    def test_weighted_line_prediction_band_and_comparison(self):
+        x, y, y2 = list(range(1, 9)), [41.8, 37.5, 31.2, 30.1, 24.6, 22.9, 17.8, 16.1], [44.0, 41.9, 37.0, 37.2, 33.1, 32.0, 28.4, 27.5]
+        r = A.run("linear", xy(x, y), [0], {"weight": "1/y2"})
+        c = r["curves"][0]
+        self.assertAlmostEqual(c["plo"][0], 34.2835, places=3); self.assertAlmostEqual(c["phi"][0], 45.5163, places=3)  # was the confidence band
+        cmp = A.run("linear", xy(x, y, y2), [0, 1], {"weight": "1/y2"})["tabs"][0]["tables"][2]["rows"][0]
+        self.assertEqual((cmp[1], cmp[3]), ("F = 16.85", "P = 0.0015"))  # was the unweighted F
+
+    def test_weighted_curve_reports_weighted_sums(self):
+        xe, ye = list(range(1, 11)), [68.0, 52.1, 41.9, 33.0, 28.2, 23.9, 20.5, 19.1, 17.2, 16.3]
+        r = A.run("fit", xy(xe, ye), [0], {"model": "exp_decay", "weight": "1/y2"})
+        self.assertAlmostEqual(num(cell(r, "K", None)), 0.33432, places=4)
+        self.assertAlmostEqual(num(cell(r, "Sum of squares (weighted)", None)), 0.0012462, places=6)
+        self.assertAlmostEqual(num(cell(r, "Sy.x (weighted)", None)), 0.013343, places=5)
+
+    def test_own_equation_that_overflows_while_searching(self):
+        xe, ye = list(range(1, 11)), [68.0, 52.1, 41.9, 33.0, 28.2, 23.9, 20.5, 19.1, 17.2, 16.3]
+        r = A.run("fit", xy(xe, ye), [0], {"model": "custom", "equation": "Y = A*exp(-B*X) + C"})
+        self.assertAlmostEqual(num(cell(r, "B", None)), 0.33461, places=4)  # was "the fit failed"
+        two = A.run("fit", xy(xe, ye), [0], {"model": "exp_decay", "model2": "custom", "equation2": "Y = Y0*exp(-K*X)"})
+        self.assertNotIn("did not fit", str(two["tabs"][1]["tables"][0]["rows"]))
+
+    def test_lowess(self):
+        ys = [0.2, 0.9, 1.7, 2.1, 2.6, 2.4, 2.9, 2.5, 2.1, 1.4, 1.1, 0.3]
+        out = A.run("smooth", xy(list(range(1, 13)), ys), [0], {"method": "lowess", "frac": 0.5})["curves"][0]["y"]
+        np.testing.assert_allclose(out, [0.2454099, 0.8985512, 1.5364304, 2.0204124, 2.3347612, 2.4971105, 2.4822631, 2.3284112, 2.0097921, 1.5000159, 0.9358233, 0.3742738], atol=1e-6)
+
+
 if __name__ == "__main__":
     unittest.main()

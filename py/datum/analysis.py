@@ -298,6 +298,12 @@ def weights(y, o):
     return 1 / np.maximum(y * y, 1e-300) if o.get("weight") == "1/y2" else None
 
 
+def wss(y, fit, o):
+    """0.4.32: the sum of squares a fit minimises (weighted by 1/Y² when chosen), as R's deviance() reports it."""
+    w = weights(np.asarray(y, float), o)
+    return float(np.sum((w if w is not None else 1.0) * (np.asarray(y, float) - fit) ** 2))
+
+
 def linear(table, ks, o):
     model, order = o.get("model", "line"), int(o.get("order", 2))
     cols, details, plots, curves, checks, answers, interp = [], [], [], [], [], [], []
@@ -361,7 +367,8 @@ def linear(table, ks, o):
                                  ["Residual", g(r.ssr), g(int(r.df_resid)), g(r.ssr / max(r.df_resid, 1)), "", ""], ["Total", g(r.ssr + r.ess), g(int(r.df_model + r.df_resid)), "", "", ""]]})
         details.append({"title": f"Runs test · {name}", "columns": ["Runs", "P (too few runs)"], "rows": [[g(runs), pv(prun)]]})
         xs = grid(x)
-        pr = r.get_prediction(X(xs)).summary_frame(alpha=0.05)
+        pw = None if w is None else 1 / np.maximum(r.predict(X(xs)) ** 2, 1e-300)  # 0.4.32: a weighted line's prediction band
+        pr = r.get_prediction(X(xs), weights=pw).summary_frame(alpha=0.05)
         if model == "line":
             eq = f"Y = {g(b, 4)}·X {'+' if a >= 0 else '−'} {g(abs(a), 4)}"
             answers.append(f"{name}: slope {g(b, 4)}{per} (95% CI {g(ci[1][0], 4)} to {g(ci[1][1], 4)}), R² = {g(r2, 4)}.")
@@ -378,7 +385,7 @@ def linear(table, ks, o):
     heads = ["Best-fit value", "Std. error", "95% CI"]
     tabs = [{"name": "Summary", "tables": [{"title": name_of(table, k), "columns": ["", *heads], "rows": [list(rw) for rw in rows]} for k, rows in zip(ks, cols) if rows]}]
     if model in ("line", "origin") and len(fits) > 1 and o.get("compare", True):
-        tabs[0]["tables"].append(compare_lines(table, fits, model))
+        tabs[0]["tables"].append(compare_lines(table, fits, model, o))
     if details:
         tabs.append({"name": "Details", "tables": details})
     if o.get("unknowns"):
@@ -391,16 +398,19 @@ def linear(table, ks, o):
                   code="import numpy as np, statsmodels.api as sm\nx, y = np.array([...]), np.array([...])\nr = sm.OLS(y, sm.add_constant(x)).fit()\nprint(r.summary())")
 
 
-def compare_lines(table, fits, model):
-    """F tests: are the slopes equal, then (if so) the intercepts? (Zar, Biostatistical Analysis.)"""
+def compare_lines(table, fits, model, o=None):
+    """F tests: are the slopes equal, then (if so) the intercepts? (Zar, Biostatistical Analysis.)
+    0.4.32: with 1/Y² weighting the three fits are weighted too, as R's anova() of weighted lm fits."""
     import statsmodels.api as sm
     xs = np.concatenate([f[1] for f in fits]); ys = np.concatenate([f[2] for f in fits])
     g_ = np.concatenate([np.full(len(f[1]), i) for i, f in enumerate(fits)])
     m = len(fits)
     D = np.eye(m)[g_]
-    sep = sm.OLS(ys, np.column_stack([D, D * xs[:, None]])).fit()      # own slope and intercept
-    common_slope = sm.OLS(ys, np.column_stack([D, xs])).fit()          # own intercepts, one slope
-    one = sm.OLS(ys, sm.add_constant(xs)).fit()                        # one line
+    w = weights(ys, o or {})
+    fit = lambda X: (sm.WLS(ys, X, weights=w) if w is not None else sm.OLS(ys, X)).fit()
+    sep = fit(np.column_stack([D, D * xs[:, None]]))      # own slope and intercept
+    common_slope = fit(np.column_stack([D, xs]))          # own intercepts, one slope
+    one = fit(sm.add_constant(xs))                        # one line
     def ftest(big, small):
         dfn = small.df_resid - big.df_resid
         F = ((small.ssr - big.ssr) / dfn) / (big.ssr / big.df_resid)
@@ -482,7 +492,12 @@ def start(model, guess, x, y, o):
 
 def fit_one(model, guess, x, y, o):
     w = None if o.get("weight") != "1/y2" else 1 / np.maximum(np.abs(y), 1e-300)
-    return model.fit(y, start(model, guess, x, y, o), x=x, weights=w, nan_policy="omit")
+    # 0.4.32: "propagate", not "omit": while searching, a curve such as A*exp(-B*X) can overflow at
+    # a trial value, and omitting those points made every such fit of your own equation fail.
+    r = model.fit(y, start(model, guess, x, y, o), x=x, weights=w, nan_policy="propagate")
+    if not np.all(np.isfinite(r.best_fit)):
+        raise ValueError("the curve cannot be computed at every X with the best-fit values; give starting values")
+    return r
 
 
 def aicc_of(ss, n, k):
@@ -495,7 +510,7 @@ def aicc_of(ss, n, k):
 def nonlinear(table, ks, o):
     eq, guess, mname = expression(o)
     model, py = make_model(eq)
-    tabs_rows, checks, plots, curves, answers, fits, details, done = [], [], [], [], [], [], [], []
+    tabs_rows, checks, plots, curves, answers, fits, details, done, start1 = [], [], [], [], [], [], [], [], {}
     for k in ks:
         x, y, _ = points(table, k, o)
         name, c = name_of(table, k), COLORS[k % 8]
@@ -516,11 +531,16 @@ def nonlinear(table, ks, o):
             ci = f"{g(par.value - t * se)} to {g(par.value + t * se)}" if se is not None and par.vary else ""
             rows.append([pn, g(par.value), g(se) if se is not None and par.vary else ("fixed" if not par.vary else "—"), ci])
         res = y - r.best_fit
-        ss = float(np.sum(res ** 2))
-        r2 = 1 - ss / float(np.sum((y - y.mean()) ** 2)) if np.ptp(y) else float("nan")
+        ss = wss(y, r.best_fit, o)  # 0.4.32: weighted when 1/Y² is chosen, as R's nls reports
+        ww = weights(y, o)
+        ww = np.ones_like(y) if ww is None else ww
+        ybar = float(np.sum(ww * y) / np.sum(ww))
+        r2 = 1 - ss / float(np.sum(ww * (y - ybar) ** 2)) if np.ptp(y) else float("nan")
         aicc = aicc_of(ss, n, nv)
         done.append((k, x, y, ss, nv))
-        rows += [["R squared", g(r2, 4), "", ""], ["Sy.x", g(math.sqrt(ss / df)), "", ""], ["Sum of squares", g(ss), "", ""], ["Degrees of freedom", g(df), "", ""], ["AICc", g(aicc), "", ""],
+        start1[k] = {pn: float(r.params[pn].value) for pn in model.param_names}
+        wtag = " (weighted)" if o.get("weight") == "1/y2" else ""
+        rows += [["R squared" + wtag, g(r2, 4), "", ""], ["Sy.x" + wtag, g(math.sqrt(ss / df)), "", ""], ["Sum of squares" + wtag, g(ss), "", ""], ["Degrees of freedom", g(df), "", ""], ["AICc", g(aicc), "", ""],
                  ["Number of points", g(n), "", ""], ["Converged", "Yes" if r.success else "No", "", ""]]
         if not r.success:
             checks.append((False, f"{name}: the fit did not converge; give better starting values or fix a parameter."))
@@ -551,7 +571,7 @@ def nonlinear(table, ks, o):
         tabs.insert(1, {"name": "Global fit", "tables": gt})
         curves, answers = gc, [ga]
     if o.get("model2") and done:
-        ct, ca = compare_models(table, model, done, o)
+        ct, ca = compare_models(table, model, done, o, start1)
         tabs.insert(1, {"name": "Model comparison", "tables": [ct]})
         answers.append(ca)
     if o.get("unknowns") and fits:
@@ -575,7 +595,8 @@ def global_fit(table, model, guess, done, o, shared):
             for i, s_ in enumerate(starts):
                 P.add(f"{n}_{i}", value=s_[n].value, vary=s_[n].vary)
     vals = lambda P, i: {n: P[n].value if n in shared else P[f"{n}_{i}"].value for n in model.param_names}
-    r = minimize(lambda P: np.concatenate([model.eval(x=x, **vals(P, i)) - y for i, (_, x, y, _, _) in enumerate(done)]), P)
+    wy = [1 / np.maximum(np.abs(y), 1e-300) if o.get("weight") == "1/y2" else 1.0 for _, x, y, _, _ in done]  # 0.4.32: weighted as the separate fits
+    r = minimize(lambda P: np.concatenate([(model.eval(x=x, **vals(P, i)) - y) * wy[i] for i, (_, x, y, _, _) in enumerate(done)]), P)
     ssg, N = float(np.sum(r.residual ** 2)), sum(len(d[1]) for d in done)
     dfg = N - r.nvarys
     sss, dfs = sum(d[3] for d in done), sum(len(d[1]) - d[4] for d in done)
@@ -599,7 +620,7 @@ def global_fit(table, model, guess, done, o, shared):
     return out, curves, ans
 
 
-def compare_models(table, model, done, o):
+def compare_models(table, model, done, o, start1=None):
     """Fits a second model to each data set and compares the two (extra sum-of-squares F test and AICc)."""
     if o["model2"] == "custom":
         eq2, guess2, name2 = str(o.get("equation2", "")).split("=", 1)[-1].strip(), None, "your second equation"
@@ -612,11 +633,13 @@ def compare_models(table, model, done, o):
     rows, prefer = [], []
     for k, x, y, ss1, k1 in done:
         try:
-            r2 = fit_one(m2, guess2, x, y, {**o, "init": {}, "fixed": {}})
+            # 0.4.32: the second model starts from the first's best-fit values where the names match
+            init2 = {pn: v for pn, v in (start1 or {}).get(k, {}).items() if pn in m2.param_names} if guess2 is None else {}
+            r2 = fit_one(m2, guess2, x, y, {**o, "init": init2, "fixed": {}})
         except Exception:
             rows.append([name_of(table, k), "the second model did not fit", "", "", "", ""]); continue
         n, k2 = len(x), r2.nvarys
-        ss2 = float(np.sum((y - r2.best_fit) ** 2))
+        ss2 = wss(y, r2.best_fit, o)
         a1, a2 = aicc_of(ss1, n, k1), aicc_of(ss2, n, k2)
         d = a2 - a1
         p1 = 1 / (1 + math.exp(-0.5 * d)) if math.isfinite(d) and abs(d) < 700 else (1.0 if d > 0 else 0.0)
@@ -626,7 +649,7 @@ def compare_models(table, model, done, o):
             if n - kb > 0 and sb > 0:
                 F = max(0.0, ((sa - sb) / (kb - ka)) / (sb / (n - kb)))  # 0.4.28: no tiny negative F when the fits are equal
                 pf = float(st.f.sf(F, kb - ka, n - kb))
-                Ftxt = f"F = {g(F, 4)}, P = {pv(pf)}"
+                Ftxt = f"F = {g(F, 4)}, P {pv(pf)}" if pv(pf).startswith("<") else f"F = {g(F, 4)}, P = {pv(pf)}"
         best = name1 if p1 >= 0.5 else name2
         prefer.append(f"{name_of(table, k)}: {best}")
         rows.append([name_of(table, k), f"{g(ss1)} / {g(ss2)}", f"{g(a1, 4)} / {g(a2, 4)}", f"{g(100 * p1, 3)}% / {g(100 * (1 - p1), 3)}%", Ftxt, best])

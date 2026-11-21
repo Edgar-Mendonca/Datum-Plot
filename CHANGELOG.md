@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.32 — 2026-11-21
+
+Full check, step 1: the analyses that had not been checked against an independent reference.
+
+Friedman's test, the diagnostic table (sensitivity, specificity, predictive values), Savitzky-Golay and LOWESS smoothing were compared with R and matched. Fitting with 1/Y² weighting, curve fits with your own equation and Bland-Altman ratios were not right in every case, and are fixed.
+
+**Fixes**
+- Straight lines weighted by 1/Y²: the prediction band was as narrow as the confidence band; it now widens with the size of the values, as it should.
+- Comparing two weighted lines now uses the weights (it used unweighted fits).
+- Curves weighted by 1/Y² report the weighted sum of squares, Sy.x and R², and the model comparison and global fits use them.
+- A curve with your own equation, such as Y = A*exp(-B*X) + C, no longer fails when the search briefly tries values that are too large to compute. A second equation to compare starts from the first one's values.
+- The model comparison no longer writes "P = < 0.0001".
+
+**New**
+- Bland-Altman: ratios from logarithms (recommended; Bland & Altman 1999), beside the plain mean of the ratios, with a ? that explains every way of plotting.
+
 ## 0.4.31 — 2026-11-20
 
 The ROC curve's AUC confidence interval, two ways.
