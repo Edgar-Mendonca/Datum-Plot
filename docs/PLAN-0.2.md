@@ -272,6 +272,7 @@ Releases: **0.1.1** fixes and fast updates · **0.2** compare groups · **0.3** 
 | C16 | Bland-Altman ratios from logs (recommended) or the plain mean, with a ? | ✅ 0.4.32 |
 | C17 | Spearman's P exact (AS 89, default) or from the t distribution, with a ? | ✅ 0.4.33 |
 | C18 | S–N line by ASTM E739 (log N on log S, default) or log S on log N, with a ? | ✅ 0.4.34 |
+| C19 | Exact P values of rank tests (MW, Wilcoxon, KS with ties, Kendall) as R, or the approximation, with a ? | ✅ 0.4.35 |
 | A27 | Ctrl+T: Paste Transposed (#70) | ✅ 0.4.25 |
 | B43 | Brown-Forsythe ANOVA as most programs report it, and Mehrotra's version; ? explaining each one-way ANOVA | ✅ 0.4.27 |
 | D28 | Label angles and text sizes (#55) | ✅ 0.4.13 |
@@ -469,6 +470,7 @@ The user: "this is a very big gap and we are short of tokens… break it into ve
 | **0.4.21** ✅ | The Analyze Data window (J10; #61) |
 | **0.4.23** ✅ | Comparisons from the model's predicted means, first minus second (B42; #67) |
 | **0.4.24** ✅ | Whiskers of box plots (D33; #66) |
+| **0.4.35** ✅ | Full check, step 3: about 7 500 random data sets through 16 analyses against R; exact rank tests (C19); KS with ties fixed; Wilcoxon's W; Dunnett repeatable; clear messages for Welch with a constant group, polynomials on too few X values and perfect separation |
 | **0.4.34** ✅ | Full check, steps 2b–2c: line through the origin, polynomials, unknowns, fixed parameters, dose-response (3 parameters, normalised, comparison), clustering, surfaces matched R; X̄–R, X̄–S, p charts matched the published constants; tensile, DSC, TGA, filters, spectra, wavelets, derivatives and histograms gave the known answers; area under the curve split exactly at baseline crossings (a fix); S–N two ways (C18) |
 | **0.4.33** ✅ | Full check, step 2a: column statistics, Grubbs, Holm-Šidák, unbalanced two-way ANOVA, the Geisser-Greenhouse correction (all three designs), multiple t-tests, correlation matrix, Kendall, weighted kappa and its SE, McNemar, Bowker, power, parts of whole matched R; Spearman's P exact or t (C17) |
 | **0.4.32** ✅ | Full check, step 1: 1/Y² weighting fixed (prediction band, comparing lines, weighted sums in curve fits, global fits), your own equations that overflow while searching now fit, Bland-Altman ratios two ways (C16); Friedman, the diagnostic table, Savitzky-Golay and LOWESS confirmed against R |

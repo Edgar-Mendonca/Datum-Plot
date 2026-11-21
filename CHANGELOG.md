@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.35 — 2026-11-21
+
+Full check, step 3: about 7 500 random data sets through 16 analyses, every number compared with R.
+
+Random data of every size and shape (ties, missing values, unequal groups, skewed values) went through t-tests, nonparametric tests, one-way ANOVA with every correction, correlation, contingency tables, kappa, Bland-Altman, ROC, linear and curve fits, column statistics, normality, two-way ANOVA, multiple regression, survival and Weibull analysis, and each result was compared with R. They matched, apart from what is fixed here.
+
+**Fixes**
+- Kolmogorov-Smirnov with tied values: the P value was wrong (it assumed no ties); it is now exact with ties, as R gives it.
+- Mann-Whitney and Kendall's τ used an approximation from 9 values (Mann-Whitney) or 34 pairs (Kendall) on; they are now exact up to 49 without ties, as R, so P values change slightly (by up to about 0.01).
+- Wilcoxon: the row "sum of positive ranks" showed the smaller rank sum; it now shows the positive one. The P value was right.
+- Dunnett's P value could differ in the fourth decimal from one run to the next; the same data now always give the same P.
+- Clear messages instead of a misleading answer: Welch's ANOVA when a group has the same value throughout, a polynomial with too few different X values, and logistic regression when a predictor separates the outcomes perfectly.
+
+**New**
+- Nonparametric tests: **P value** exact (recommended) or the approximation, with a ? that explains both; the results say which was used. Kendall's τ follows the correlation's **Rank correlations' P**.
+
 ## 0.4.34 — 2026-11-21
 
 Full check, step 2 done: regression, quality, materials and signals compared with R, published constants and curves with known answers.

@@ -58,10 +58,15 @@ def multireg(table, ks, o):
         f = sm.OLS(yv, D).fit()
     else:
         fam = sm.families.Binomial() if model == "logistic" else sm.families.Poisson()
+        import warnings
+        from statsmodels.tools.sm_exceptions import PerfectSeparationWarning
         try:
-            f = sm.GLM(yv, D, family=fam).fit()
-        except Exception as e:  # perfect separation and similar
-            raise ValueError(f"The model cannot be fitted: {e}. A predictor may separate the outcomes perfectly.")
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", PerfectSeparationWarning)
+                f = sm.GLM(yv, D, family=fam).fit()
+        except Exception:  # 0.4.35 (step 3): said "try other units" before (R warns: fitted probabilities 0 or 1)
+            raise ValueError("The model cannot be fitted: a predictor separates the outcomes perfectly (every 0 on one side, every 1 on the other), "
+                             "so its coefficient is infinite. Leave that predictor out, or add data where the outcomes overlap.")
     lin, q = model == "linear", st.t.ppf(1 - alpha / 2, f.df_resid) if model == "linear" else st.norm.ppf(1 - alpha / 2)
     lo, hi = f.params - q * f.bse, f.params + q * f.bse
     terms = ["Intercept", *names]

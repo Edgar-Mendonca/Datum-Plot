@@ -348,5 +348,22 @@ class RandomCheckFindings(unittest.TestCase):
         self.assertEqual(rows[1], ["W (sum of positive ranks of G1 − G0)", "28"])  # R's V; was the smaller sum, 0
 
 
+    def test_clear_messages_where_r_gives_nan_or_warns(self):
+        with self.assertRaisesRegex(ValueError, "spread in every group"):  # Welch's ANOVA with a constant group: R's oneway.test gives NaN
+            A.run("anova", cols([13.0, 5, 16, 8, 10], [9.0, 9, 9], [10.9, 12.3, 13.6, 7.8]), [0, 1, 2], {"anova": "welch"})
+        r = A.run("linear", xy([8, 8, 11, 11, 11], [16.7, 19.1, 25.9, 26.5, 24.4]), [0], {"model": "poly", "order": 2})
+        self.assertIn("at least 3 different X values", str(r["checks"]))  # was a quadratic fitted anyway; R drops a term
+        t = {"kind": "multi", "rows": 8, "sets": [{"title": k, "entry": "rep", "reps": 1} for k in ("y", "x1", "x2")], "excluded": [], "xTitle": "", "yTitle": "", "rowTitles": [],
+             "cols": [[None] * 8, [0, 0, 0, 0, 1, 1, 1, 1], [-2, -1.5, -1, -.5, .5, 1, 1.5, 2], [1, 2, 1, 3, 2, 1, 3, 2]]}
+        with self.assertRaisesRegex(ValueError, "separates the outcomes perfectly"):  # was "try other units"
+            A.run("multireg", t, [], {"y": 0, "model": "logistic"})
+
+    def test_dunnett_gives_the_same_p_every_time(self):
+        g = [[11.1, 6.7, 2.1, 5.0, 6.5, 8.5, 1.9], [8.2, 7.5, 3.9, 5.6, 5.4, 5.4, 6.5, 3.8, 4.9], [9.9, 10.4, 12.0, 11.1, 8.7, 13.0], [4.0, 5.1, 6.3, 4.4, 5.9]]
+        runs = {tuple(round(b[2], 9) for b in A.run("anova", cols(*g), [0, 1, 2, 3], {"posthoc": "dunnett", "vs": "control"})["brackets"]) for _ in range(3)}
+        self.assertEqual(len(runs), 1)
+        self.assertAlmostEqual(list(runs)[0][1], 0.000925, delta=2e-5)  # R multcomp, abseps 1e-6: 0.0009250
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -479,6 +479,9 @@ def anova(table, ks, o):
                 r = anova_oneway([s[0] for s in sm_], use_var="unequal" if kind == "welch" else "bf", welch_correction=True)
                 F, p = float(r.statistic), float(r.pvalue)
                 d1, d2 = (float(x) for x in r.df)
+            if not (math.isfinite(F) and math.isfinite(p)):  # 0.4.35 (step 3): a group without spread; R gives NaN too
+                raise ValueError(f"{'Welch' if kind == 'welch' else 'Brown-Forsythe'} ANOVA needs some spread in every group: "
+                                 + ", ".join(n for n, s_ in zip(names, sm_) if np.std(s_[0]) == 0) + " has the same value throughout. Use ordinary ANOVA, or check the data.")
             meth = {"welch": "Welch's ANOVA", "bf": "Brown-Forsythe ANOVA", "bfm": "Brown-Forsythe ANOVA with Mehrotra's correction"}[kind]
             rows = [["Test", meth], ["F" if kind == "welch" else "F*", g(F, 4)], ["DFn, DFd", f"{g(d1, 4)}, {g(d2, 4)}"], ["P value", pv(p)], ["Significant?", f"{'Yes' if p < alpha else 'No'} ({stars(p)})"]]
         else:
@@ -666,7 +669,7 @@ def posthoc(table, ks, sm_, post, mse, dfe, kind, o=None, names=None):
         return [(i, j, m[i] - m[j], ci_text(ci.low[i, j], ci.high[i, j]), float(r.pvalue[i, j])) for i, j in pairs], "Tukey's multiple comparisons"
     if post == "dunnett" and raw:
         others = [j for j in range(kk) if j != c]
-        r = st.dunnett(*[sm_[j][0] for j in others], control=sm_[c][0])
+        r = st.dunnett(*[sm_[j][0] for j in others], control=sm_[c][0], rng=20261121)  # 0.4.35: the same P every time (its integral is estimated by quasi-random points)
         ci = r.confidence_interval(0.95)
         who = names[c] if names else "the control group"
         return [(c, j, m[c] - m[j], ci_text(-ci.high[i], -ci.low[i]), float(r.pvalue[i])) for i, j in enumerate(others)], f"Dunnett's multiple comparisons (against {who})"

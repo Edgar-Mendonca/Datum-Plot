@@ -317,6 +317,8 @@ def linear(table, ks, o):
         npar = order + 1 if model == "poly" else 1 if model == "origin" else 2
         if len(x) < npar + 1:
             cols.append(None); checks.append((False, f"{name}: not enough points to fit ({len(x)}).")); continue
+        if model == "poly" and len(np.unique(x)) < order + 1:  # 0.4.35 (step 3): R drops a term here; we said nothing and fitted anyway
+            cols.append(None); checks.append((False, f"{name}: a polynomial of order {order} needs at least {order + 1} different X values ({len(np.unique(x))} here).")); continue
         if model == "deming":
             b, a, sb, sa = deming(x, y, float(o.get("ratio", 1.0)))
             n, t = len(x), st.t.ppf(0.975, len(x) - 2)
