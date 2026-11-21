@@ -566,7 +566,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - **0.4.29** (released after CI green; installer, three guides, SHA256SUMS) (validation round 3, relationships, survival, statistics): as above. Tests: `test_groups.CheckedAgainstR.test_normality_rows_line_up` (each statistic and P on its row, R's values), failing on 0.4.28. Next: round 4 (materials, quality, signals).
 - **0.4.30** (released after CI green; installer, three guides, SHA256SUMS) (validation rounds 4–6): as above. Tests: `test_groups.CheckedAgainstR` (an empty agreement table's message, "No outliers found", 20 000 dots per group under 20 s), each failing on 0.4.29. The plan of PLAN-0.5 is done (no report, as the user chose). Open for the user: the ROC CI method (Hanley & McNeil now; DeLong in R).
 - **0.4.31** (released after CI green; installer, three guides, SHA256SUMS) (C15): as above. Tests: `test_groups.CheckedAgainstR.test_roc_auc_confidence_interval_two_ways` (pROC's DeLong AUC 0.835, CI 0.64559 to 1; Hanley's SE 0.0937), the UI test checks the choice and its ?.
-- **0.4.32** (full check, step 1; C16): as above. Tests: `test_analysis.NotYetChecked` (seven, values from R; four fail on 0.4.31).
+- **0.4.32** (released after CI green; installer, three guides, SHA256SUMS) (full check, step 1; C16): as above. Tests: `test_analysis.NotYetChecked` (seven, values from R; four fail on 0.4.31).
 ---
 
 ## 5. Known limits and next steps
